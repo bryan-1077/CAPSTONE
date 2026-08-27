@@ -1,0 +1,4 @@
+# Ramageddon - Validation Environment Variables
+TAMU_API_KEY = sk-4b6862ada8ff4e82af57e11644c94dce
+TAMU_BASE_URL = https://chat-api.tamu.ai/openai/chat/completions
+TAMU_MODEL = protected.Claude Sonnet 4.5
