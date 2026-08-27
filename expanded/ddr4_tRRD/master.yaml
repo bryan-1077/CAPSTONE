@@ -1,0 +1,9 @@
+design_name: ddr4_tRRD
+design_type: top_level
+interfaces: []
+jedec_profile: DDR4-3200
+source_feature: tRRD
+submodules:
+- design_name: ddr4_tRRD_simple_tRRD
+  name: simple_tRRD
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_tRRD/ddr4_tRRD_simple_tRRD.yaml

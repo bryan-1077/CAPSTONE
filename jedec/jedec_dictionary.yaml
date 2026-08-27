@@ -1,0 +1,117 @@
+# jedec_dictionary.yaml
+# DDR4 Timing Parameter Dictionary
+#
+# Source: JEDEC Standard No. 79-4C (JESD79-4C)
+# Extracted from:
+#   - Table 147 : DDR4-2400 Speed Bins and Operations  (pg. 206)
+#   - Table 150 : DDR4-3200 Speed Bins and Operations
+#   - Table 170 : Timing Parameters by Speed Grade, DDR4-2400 to DDR4-3200 (pg. 241)
+#   - Table  43 : tREFI and tRFC parameters             (pg. 40)
+#
+# Cycle count formula (stored alongside ns values for traceability):
+#   cycles = ceil(timing_ns * clock_frequency_mhz / 1000)
+#
+# Density assumption for tRFC1: 8 Gb device (most common target density).
+# tRFC1 values are density-dependent — see Table 43 for other densities.
+#
+# Speed bin chosen per profile:
+#   DDR4-2400 -> DDR4-2400T (CL-nRCD-nRP = 17-17-17)  [Table 147, most common variant]
+#   DDR4-3200 -> DDR4-3200AA (CL-nRCD-nRP = 22-22-22) [Table 150]
+#
+# NOTE: expand_spec.py reads this file directly. Do not change key names without
+# updating the lookup logic in expand_spec.py.
+# -------------------------------------------------------------------------------
+
+DDR4-2400:
+  # Speed bin: DDR4-2400T  (CL-nRCD-nRP = 17-17-17)
+  # Source: JESD79-4C Table 147, Table 170
+  clock_frequency_mhz: 1200         # tCK(avg) min = 0.833 ns  -> 1 / 0.833ns = 1200 MHz
+  tck_ns: 0.833                     # Average clock period (ns)
+
+  timing_ns:                        # All values in nanoseconds (minimum unless noted)
+    tRCD: 13.75                     # ACT to internal read/write delay  [Table 147, 2400T row, Note 5+12]
+    tRP:  13.75                     # PRE command period                 [Table 147, 2400T row, Note 5+12]
+    tRAS: 32.0                      # ACT to PRE command period (min)   [Table 147, all 2400 bins = 32 ns]
+    tRC:  45.75                     # ACT to ACT or REF command period  [Table 147, 2400T: tRAS+tRP = 32+13.75]
+    tRRD: 3.333                     # Project simplification: preserve existing 4-cycle 2400 baseline and scale by clock
+    tFAW: 25.0                      # Four Activation Window            [Table 170, x8/x16 devices, all 2400 bins]
+    tRFC1: 350.0                    # Refresh cycle time, 1X mode, 8Gb  [Table 43, tRFC1(min), 8Gb = 350 ns]
+    tREFI: 7800.0                   # Average refresh interval (ns)     [Table 43, tREFI(base) = 7.8 us, 0-85C]
+
+  timing_cycles:                    # Precomputed: ceil(timing_ns * freq_mhz / 1000)
+    tRCD: 17                        # ceil(13.75 * 1200 / 1000) = ceil(16.50) = 17
+    tRP:  17                        # ceil(13.75 * 1200 / 1000) = ceil(16.50) = 17
+    tRAS: 39                        # ceil(32.0  * 1200 / 1000) = ceil(38.40) = 39
+    tRC:  55                        # ceil(45.75 * 1200 / 1000) = ceil(54.90) = 55
+    tRRD: 4                         # ceil(3.333 * 1200 / 1000) = ceil(3.9996) = 4
+    tFAW: 30                        # ceil(25.0  * 1200 / 1000) = ceil(30.0)  = 30
+    tRFC1: 420                      # ceil(350.0 * 1200 / 1000) = ceil(420.0) = 420
+    tREFI: 9360                     # ceil(7800.0 * 1200 / 1000) = ceil(9360.0) = 9360
+
+  # CAS Latency options for 2400T (nCK)  [Table 147]
+  # Used by mode register programming — not needed by the FSM generator directly.
+  cas_latency_options: [17]         # DDR4-2400T: CL = 17
+
+
+DDR4-3200:
+  # Speed bin: DDR4-3200AA  (CL-nRCD-nRP = 22-22-22)
+  # Source: JESD79-4C Table 150, Table 170
+  clock_frequency_mhz: 1600         # tCK(avg) min = 0.625 ns  -> 1 / 0.625ns = 1600 MHz
+  tck_ns: 0.625                     # Average clock period (ns)
+
+  timing_ns:                        # All values in nanoseconds (minimum unless noted)
+    tRCD: 13.75                     # ACT to internal read/write delay  [Table 150, 3200AA row]
+    tRP:  13.75                     # PRE command period                 [Table 150, 3200AA row]
+    tRAS: 32.0                      # ACT to PRE command period (min)   [Table 150, all 3200 bins = 32 ns]
+    tRC:  45.75                     # ACT to ACT or REF command period  [tRAS + tRP = 32 + 13.75]
+    tRRD: 3.333                     # Project simplification: preserve existing 2400 baseline and scale by clock
+    tFAW: 25.0                      # Four Activation Window            [Table 170, x8/x16 devices, all 3200 bins]
+    tRFC1: 350.0                    # Refresh cycle time, 1X mode, 8Gb  [Table 43, tRFC1(min), 8Gb = 350 ns]
+    tREFI: 7800.0                   # Average refresh interval (ns)     [Table 43, tREFI(base) = 7.8 us, 0-85C]
+
+  timing_cycles:                    # Precomputed: ceil(timing_ns * freq_mhz / 1000)
+    tRCD: 22                        # ceil(13.75 * 1600 / 1000) = ceil(22.00) = 22
+    tRP:  22                        # ceil(13.75 * 1600 / 1000) = ceil(22.00) = 22
+    tRAS: 52                        # ceil(32.0  * 1600 / 1000) = ceil(51.20) = 52
+    tRC:  74                        # ceil(45.75 * 1600 / 1000) = ceil(73.20) = 74
+    tRRD: 6                         # ceil(3.333 * 1600 / 1000) = ceil(5.3328) = 6
+    tFAW: 40                        # ceil(25.0  * 1600 / 1000) = ceil(40.0)  = 40
+    tRFC1: 560                      # ceil(350.0 * 1600 / 1000) = ceil(560.0) = 560
+    tREFI: 12480                    # ceil(7800.0 * 1600 / 1000) = ceil(12480.0) = 12480
+
+  # CAS Latency options for 3200AA (nCK)  [Table 150]
+  cas_latency_options: [22]         # DDR4-3200AA: CL = 22
+
+
+# -------------------------------------------------------------------------------
+# Counter width reference (for fsm_generator.py / validator.py width inference)
+# Width = ceil(log2(max_cycles + 1))
+#
+# DDR4-2400:
+#   tRCD  = 17 cycles  -> ceil(log2(18)) = 5 bits  (max val 31)
+#   tRP   = 17 cycles  -> 5 bits
+#   tRAS  = 39 cycles  -> ceil(log2(40)) = 6 bits  (max val 63)
+#   tRC   = 55 cycles  -> ceil(log2(56)) = 6 bits
+#   tRRD  = 4 cycles   -> ceil(log2(5))  = 3 bits
+#   tFAW  = 30 cycles  -> ceil(log2(31)) = 5 bits  (max val 31)
+#   tRFC1 = 420 cycles -> ceil(log2(421)) = 9 bits  (max val 511)
+#   tREFI = 9360 cycles-> ceil(log2(9361)) = 14 bits
+#
+# DDR4-3200:
+#   tRCD  = 22 cycles  -> ceil(log2(23)) = 5 bits
+#   tRP   = 22 cycles  -> 5 bits
+#   tRAS  = 52 cycles  -> ceil(log2(53)) = 6 bits
+#   tRC   = 74 cycles  -> ceil(log2(75)) = 7 bits
+#   tRRD  = 6 cycles   -> ceil(log2(7))  = 3 bits
+#   tFAW  = 40 cycles  -> ceil(log2(41)) = 6 bits
+#   tRFC1 = 560 cycles -> ceil(log2(561)) = 10 bits
+#   tREFI = 12480 cycles -> ceil(log2(12481)) = 14 bits
+#
+# tFAW note: the cycle_counter used by tFAW_tracker must be wide enough that it
+# cannot wrap within a single tFAW window. An 8-bit counter (max 255) provides
+# ample headroom over the largest tFAW value (40 cycles at DDR4-3200).
+# The 4 timestamp registers must match the cycle_counter width.
+#
+# These are computed automatically by validator.py from the condition literals.
+# This comment block is for human reference only.
+# -------------------------------------------------------------------------------

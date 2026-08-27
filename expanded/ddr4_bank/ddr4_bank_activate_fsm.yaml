@@ -1,0 +1,37 @@
+clock:
+  name: clk
+design_name: ddr4_bank_activate_fsm
+design_type: fsm
+ports:
+- description: Pulse high for one cycle to begin tRCD count
+  direction: input
+  name: start
+  width: 1
+- description: Held high once tRCD cycles have elapsed, until ack
+  direction: output
+  name: tRCD_done
+  width: 1
+- description: Pulse high to reset back to IDLE after done is received
+  direction: input
+  name: ack
+  width: 1
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: true
+state_machine:
+  reset_state: IDLE
+  states:
+  - IDLE
+  - COUNTING
+  - DONE
+  transitions:
+  - condition: start == 1
+    from: IDLE
+    to: COUNTING
+  - condition: tRCD_counter >= 22
+    from: COUNTING
+    to: DONE
+  - condition: ack == 1
+    from: DONE
+    to: IDLE

@@ -1,0 +1,10 @@
+design_name: ddr4_scheduler
+design_type: memory_controller
+controller_config:
+  protocol: DDR4
+  jedec_profile: DDR4-3200
+  page_policy: open_page
+  topology:
+    banks: 4
+  features:
+  - scheduler

@@ -1,0 +1,9 @@
+design_name: ddr4_tFAW
+design_type: top_level
+interfaces: []
+jedec_profile: DDR4-3200
+source_feature: tFAW_tracker
+submodules:
+- design_name: ddr4_tFAW_tFAW_tracker
+  name: tFAW_tracker
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_tFAW/ddr4_tFAW_tFAW_tracker.yaml
