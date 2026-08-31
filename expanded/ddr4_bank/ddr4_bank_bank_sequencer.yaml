@@ -1,0 +1,93 @@
+clock:
+  name: clk
+design_name: ddr4_bank_bank_sequencer
+design_type: fsm
+output_overrides:
+  cmd_ready: (current_state == IDLE)
+  tRAS_ack: (current_state == PRECHARGING)
+  tRAS_start: (current_state == ACTIVE)
+  tRCD_ack: (current_state == ACTIVE)
+  tRCD_start: (current_state == ACTIVATING)
+  tRP_ack: (current_state == IDLE)
+  tRP_start: (current_state == PRECHARGING)
+ports:
+- description: Command is valid and ready to issue
+  direction: input
+  name: cmd_valid
+  width: 1
+- description: 0=ACTIVATE, 1=READ, 2=WRITE, 3=PRECHARGE
+  direction: input
+  name: cmd_type
+  width: 2
+- description: 'From activate_fsm: tRCD delay satisfied'
+  direction: input
+  name: tRCD_done
+  width: 1
+- description: 'From tRAS_fsm: minimum row active time satisfied'
+  direction: input
+  name: tRAS_done
+  width: 1
+- description: 'From precharge_fsm: row precharge time satisfied'
+  direction: input
+  name: tRP_done
+  width: 1
+- description: High when bank is precharged and ready for ACTIVATE
+  direction: output
+  name: bank_idle
+  width: 1
+- description: High when a row is open and ready for READ or WRITE
+  direction: output
+  name: bank_active
+  width: 1
+- description: High when the bank can accept a new command
+  direction: output
+  name: cmd_ready
+  width: 1
+- description: "Start signal to activate_fsm \u2014 asserted while ACTIVATING"
+  direction: output
+  name: tRCD_start
+  width: 1
+- description: "Start signal to tRAS_fsm \u2014 asserted while row is open"
+  direction: output
+  name: tRAS_start
+  width: 1
+- description: "Start signal to precharge_fsm \u2014 asserted while PRECHARGING"
+  direction: output
+  name: tRP_start
+  width: 1
+- description: "Ack to activate_fsm \u2014 clears its DONE state"
+  direction: output
+  name: tRCD_ack
+  width: 1
+- description: "Ack to tRAS_fsm \u2014 clears its DONE state"
+  direction: output
+  name: tRAS_ack
+  width: 1
+- description: "Ack to precharge_fsm \u2014 clears its DONE state"
+  direction: output
+  name: tRP_ack
+  width: 1
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: true
+state_machine:
+  reset_state: IDLE
+  states:
+  - IDLE
+  - ACTIVATING
+  - ACTIVE
+  - PRECHARGING
+  transitions:
+  - condition: cmd_valid == 1 && cmd_ready == 1
+    from: IDLE
+    to: ACTIVATING
+  - condition: tRCD_done == 1
+    from: ACTIVATING
+    to: ACTIVE
+  - condition: tRAS_done == 1
+    from: ACTIVE
+    to: PRECHARGING
+  - condition: tRP_done == 1
+    from: PRECHARGING
+    to: IDLE

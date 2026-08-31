@@ -1,0 +1,56 @@
+design_name: ddr4_bank
+design_type: top_level
+interfaces:
+- from_module: bank_sequencer
+  from_port: cmd_valid
+  note: Gated by cmd_type == 0 (ACTIVATE) in top-level wrapper
+  signal: activate_start
+  to_module: activate_fsm
+  to_port: start
+  width: 1
+- from_module: bank_sequencer
+  from_port: cmd_valid
+  note: "Starts in parallel with activate_fsm \u2014 same start condition"
+  signal: tRAS_start
+  to_module: tRAS_fsm
+  to_port: start
+  width: 1
+- from_module: bank_sequencer
+  from_port: tRAS_done
+  signal: precharge_start
+  to_module: precharge_fsm
+  to_port: start
+  width: 1
+- from_module: activate_fsm
+  from_port: tRCD_done
+  signal: tRCD_done
+  to_module: bank_sequencer
+  to_port: tRCD_done
+  width: 1
+- from_module: tRAS_fsm
+  from_port: tRAS_done
+  signal: tRAS_done
+  to_module: bank_sequencer
+  to_port: tRAS_done
+  width: 1
+- from_module: precharge_fsm
+  from_port: tRP_done
+  signal: tRP_done
+  to_module: bank_sequencer
+  to_port: tRP_done
+  width: 1
+jedec_profile: DDR4-3200
+source_feature: basic_commands
+submodules:
+- design_name: ddr4_bank_activate_fsm
+  name: activate_fsm
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_activate_fsm.yaml
+- design_name: ddr4_bank_tRAS_fsm
+  name: tRAS_fsm
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_tRAS_fsm.yaml
+- design_name: ddr4_bank_precharge_fsm
+  name: precharge_fsm
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_precharge_fsm.yaml
+- design_name: ddr4_bank_bank_sequencer
+  name: bank_sequencer
+  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_bank_sequencer.yaml

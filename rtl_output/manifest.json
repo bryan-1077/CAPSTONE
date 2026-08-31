@@ -1,0 +1,18 @@
+{
+  "design_name": "ddr4_controller_top",
+  "top_module": "ddr4_controller_top",
+  "modules": [
+    "ddr4_bank_activate_fsm",
+    "ddr4_bank_bank_sequencer",
+    "ddr4_bank_precharge_fsm",
+    "ddr4_bank_tRAS_fsm",
+    "ddr4_bank_top",
+    "ddr4_controller_top",
+    "ddr4_refresh_refresh_controller",
+    "ddr4_request_queue",
+    "ddr4_scheduler_scheduler",
+    "ddr4_tFAW_tFAW_tracker",
+    "ddr4_tRRD_simple_tRRD"
+  ],
+  "filelist": "filelist.f"
+}

@@ -1,0 +1,161 @@
+{
+  "design_name": "ddr4_scheduler_scheduler",
+  "design_type": "datapath",
+  "clock": {
+    "name": "clk",
+    "frequency_mhz": null
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": true
+  },
+  "ports": [
+    {
+      "name": "ref_req",
+      "direction": "input",
+      "width": 1,
+      "description": "Refresh request input"
+    },
+    {
+      "name": "cmd_ready",
+      "direction": "input",
+      "width": 1,
+      "description": "Command interface ready signal"
+    },
+    {
+      "name": "timing_ok",
+      "direction": "input",
+      "width": 1,
+      "description": "Timing checks allow selected request to issue"
+    },
+    {
+      "name": "bank_active",
+      "direction": "input",
+      "width": 4,
+      "description": "Wrapper-provided per-bank row-open status used for row-hit detection"
+    },
+    {
+      "name": "bank_open_row",
+      "direction": "input",
+      "width": 40,
+      "description": "Wrapper-provided open row per bank; four 10-bit rows indexed by request bank"
+    },
+    {
+      "name": "req_array",
+      "direction": "input",
+      "width": 204,
+      "description": "DEPTH-entry request_t array from request queue"
+    },
+    {
+      "name": "req_valid",
+      "direction": "input",
+      "width": 4,
+      "description": "Per-entry request-valid bits from request queue"
+    },
+    {
+      "name": "sel_idx",
+      "direction": "output",
+      "width": 2,
+      "description": "Selected queue entry index"
+    },
+    {
+      "name": "issue_valid",
+      "direction": "output",
+      "width": 1,
+      "description": "Selected request is valid and should be retried until accepted"
+    },
+    {
+      "name": "issue_ref",
+      "direction": "output",
+      "width": 1,
+      "description": "Refresh issue pulse gated by cmd_ready and timing_ok"
+    },
+    {
+      "name": "issue_txn",
+      "direction": "output",
+      "width": 1,
+      "description": "Selected queue transaction issue pulse gated by cmd_ready and timing_ok"
+    }
+  ],
+  "fsm": null,
+  "metadata": {
+    "behavior": {
+      "blocking_policy": "lock selected index and hold it until issue_valid && cmd_ready && timing_ok succeeds",
+      "depth_default": 4,
+      "num_banks": 4,
+      "policy": "row_hit_then_first_valid_lowest_index",
+      "priority_rule": [
+        "select the lowest-index row-hit request if any row-hit request exists",
+        "otherwise select the lowest-index valid request"
+      ],
+      "request_struct": {
+        "fields": [
+          {
+            "name": "bank",
+            "width": 2
+          },
+          {
+            "name": "row",
+            "width": 10
+          },
+          {
+            "name": "col",
+            "width": 6
+          },
+          {
+            "name": "is_write",
+            "width": 1
+          },
+          {
+            "name": "wdata",
+            "width": 32
+          }
+        ],
+        "packed": true,
+        "typedef_name": "request_t"
+      },
+      "row_hit_condition": "row_hit[i] = req_valid[i] && bank_active[req_array[i].bank] && (bank_open_row[req_array[i].bank] == req_array[i].row)"
+    },
+    "implementation_constraints": [
+      "compute row_hit[i] from req_valid[i], req_array[i].bank, req_array[i].row, bank_active, and bank_open_row",
+      "select the lowest-index row-hit request when any row-hit request exists",
+      "fallback to the lowest-index valid request when no row-hit request exists",
+      "scan queue entries in ascending index order",
+      "do not implement reordering beyond row-hit selection versus first-valid fallback",
+      "do not switch selected request while blocked",
+      "do not unlock or reselect merely because req_valid changes; lock clears only on successful_issue",
+      "do not remove queue entries in scheduler",
+      "do not use txn_valid or any direct transaction input as a bypass",
+      "all transaction issues must come from req_array plus req_valid",
+      "issue_ref must be gated by ref_req && cmd_ready && timing_ok",
+      "issue_ref and issue_txn must be mutually exclusive",
+      "when ref_req, issue_valid, cmd_ready, and timing_ok are all true, refresh has priority and issue_txn must be 0",
+      "refresh priority cycles must not create a new transaction lock",
+      "transaction lock acquisition requires !ref_req",
+      "candidate_success is candidate_valid && cmd_ready && timing_ok && !ref_req",
+      "candidate_blocked is candidate_valid && !ref_req && !candidate_success",
+      "new transaction lock acquisition requires candidate_blocked",
+      "do not create a transaction lock when the selected request issues immediately",
+      "issue_valid remains asserted for the selected valid entry while blocked"
+    ],
+    "invariants": [
+      "sel_idx holds stable while issue_valid && (!cmd_ready || !timing_ok)",
+      "successful transaction issue is issue_valid && cmd_ready && timing_ok",
+      "row_hit[i] is true only when req_valid[i] is true, bank_active[req_array[i].bank] is true, and bank_open_row[req_array[i].bank] equals req_array[i].row",
+      "lowest row-hit index is selected when at least one row-hit request exists and no request is already locked",
+      "lowest valid index is selected when no row-hit request exists and no request is already locked",
+      "locked selection clears only after successful transaction issue",
+      "refresh issue is ref_req && cmd_ready && timing_ok",
+      "issue_txn is issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref",
+      "successful transaction issue is issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref",
+      "successful transaction issue must not assert in a refresh-priority cycle",
+      "if already locked and refresh arrives, the lock may remain but no transaction issue occurs until refresh is no longer winning arbitration",
+      "an unlocked selected request that issues immediately must not be retained as a stale lock",
+      "scheduler has no legacy transaction bypass path",
+      "scheduler never writes req_array or req_valid",
+      "issue_txn is a one-cycle successful-issue pulse for the selected queue entry"
+    ],
+    "scheduler_mode": "queue_row_hit_first"
+  }
+}
