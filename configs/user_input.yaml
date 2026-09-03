@@ -1,44 +1,14 @@
-# configs/user_input.yaml — Basic DDR4 Controller
-
-design_name: "ddr4_controller"
-
-# ------------------------------------------------------------
-# PROFILE
-# ------------------------------------------------------------
+design_name: ddr4_controller
 profile:
-  type: "basic"
-
-# ------------------------------------------------------------
-# MEMORY CONFIGURATION
-# ------------------------------------------------------------
+  type: basic
 memory:
-  protocol: "DDR4"
-
-  # speed: "2400" or "3200"
-  speed: "3200" 
-
-# ------------------------------------------------------------
-# TOPOLOGY
-# ------------------------------------------------------------
+  protocol: DDR4
+  speed: '3200'
 topology:
-  # Choose 1, 2, or 4
-  # Note: banks>1 currently requires scheduler="simple"
   banks: 4
-
-# ------------------------------------------------------------
-# FEATURE SELECTION
-# ------------------------------------------------------------
 features:
-
-  # Scheduler type: "simple" or "round_robin"
-  scheduler: "simple"
-
-  # Page policy: "open_page" or "close_page"
-  page_policy: "open_page"
-
-  # Enable refresh controller
+  scheduler: simple
+  page_policy: open_page
   refresh: true
-
-  # Timing constraint trackers
   tFAW: true
   tRRD: true

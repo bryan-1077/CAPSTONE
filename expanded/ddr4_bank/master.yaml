@@ -44,13 +44,13 @@ source_feature: basic_commands
 submodules:
 - design_name: ddr4_bank_activate_fsm
   name: activate_fsm
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_activate_fsm.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_bank/ddr4_bank_activate_fsm.yaml
 - design_name: ddr4_bank_tRAS_fsm
   name: tRAS_fsm
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_tRAS_fsm.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_bank/ddr4_bank_tRAS_fsm.yaml
 - design_name: ddr4_bank_precharge_fsm
   name: precharge_fsm
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_precharge_fsm.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_bank/ddr4_bank_precharge_fsm.yaml
 - design_name: ddr4_bank_bank_sequencer
   name: bank_sequencer
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_bank/ddr4_bank_bank_sequencer.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_bank/ddr4_bank_bank_sequencer.yaml

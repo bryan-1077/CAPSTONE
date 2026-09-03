@@ -6,4 +6,4 @@ source_feature: request_queue
 submodules:
 - design_name: ddr4_request_queue_request_queue
   name: request_queue
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_request_queue/ddr4_request_queue_request_queue.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_request_queue/ddr4_request_queue_request_queue.yaml

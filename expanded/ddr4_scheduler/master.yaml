@@ -6,4 +6,4 @@ source_feature: scheduler
 submodules:
 - design_name: ddr4_scheduler_scheduler
   name: scheduler
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_scheduler/ddr4_scheduler_scheduler.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_scheduler/ddr4_scheduler_scheduler.yaml

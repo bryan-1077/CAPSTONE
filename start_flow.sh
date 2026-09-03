@@ -1,1 +1,1 @@
-python3 run_flow.py configs/user_input.yaml
+python3 configure_from_text.py --run-flow

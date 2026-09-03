@@ -1,4 +1,3 @@
-`timescale 1ns/1ps
 // GENERATED VIA DUAL-LLM FLOW
 module ddr4_request_queue #(
     parameter int DEPTH = 4

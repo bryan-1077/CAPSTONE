@@ -6,4 +6,4 @@ source_feature: refresh_controller
 submodules:
 - design_name: ddr4_refresh_refresh_controller
   name: refresh_controller
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_refresh/ddr4_refresh_refresh_controller.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_refresh/ddr4_refresh_refresh_controller.yaml

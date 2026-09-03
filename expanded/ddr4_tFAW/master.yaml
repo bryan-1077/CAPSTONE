@@ -6,4 +6,4 @@ source_feature: tFAW_tracker
 submodules:
 - design_name: ddr4_tFAW_tFAW_tracker
   name: tFAW_tracker
-  spec: /home/bryan/Desktop/code/CAPSTONE/DEMO/d06_newFeatures/expanded/ddr4_tFAW/ddr4_tFAW_tFAW_tracker.yaml
+  spec: /home/bryan/Desktop/code/CAPSTONE/expanded/ddr4_tFAW/ddr4_tFAW_tFAW_tracker.yaml
