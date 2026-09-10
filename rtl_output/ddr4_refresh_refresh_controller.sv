@@ -59,7 +59,7 @@ module ddr4_refresh_refresh_controller (
     always_comb begin
         next_state = current_state;  // default: hold current state
         case (current_state)
-            IDLE: if (counter >= 14'd12480) next_state = REQUEST;
+            IDLE: if (counter >= 14'd9360) next_state = REQUEST;
             REQUEST: if (ref_ack == 1'd1) next_state = IDLE;
             default: next_state = IDLE;  // illegal encoding -- recover to reset state
         endcase

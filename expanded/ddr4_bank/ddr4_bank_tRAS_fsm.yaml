@@ -29,7 +29,7 @@ state_machine:
   - condition: start == 1
     from: IDLE
     to: COUNTING
-  - condition: tRAS_counter >= 52
+  - condition: tRAS_counter >= 39
     from: COUNTING
     to: DONE
   - condition: ack == 1

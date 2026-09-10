@@ -60,10 +60,10 @@
           },
           "op": ">=",
           "right": {
-            "value": 22
+            "value": 17
           }
         },
-        "raw_condition": "tRP_counter >= 22"
+        "raw_condition": "tRP_counter >= 17"
       },
       {
         "src": "DONE",

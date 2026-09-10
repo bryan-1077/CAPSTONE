@@ -3,12 +3,12 @@ profile:
   type: basic
 memory:
   protocol: DDR4
-  speed: '3200'
+  speed: '2400'
 topology:
-  banks: 4
+  banks: 1
 features:
   scheduler: simple
-  page_policy: open_page
+  page_policy: close_page
   refresh: true
-  tFAW: true
-  tRRD: true
+  tFAW: false
+  tRRD: false

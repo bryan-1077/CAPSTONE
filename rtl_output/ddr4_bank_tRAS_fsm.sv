@@ -62,7 +62,7 @@ module ddr4_bank_tRAS_fsm (
         next_state = current_state;  // default: hold current state
         case (current_state)
             IDLE: if (start == 1'd1) next_state = COUNTING;
-            COUNTING: if (tRAS_counter >= 6'd52) next_state = DONE;
+            COUNTING: if (tRAS_counter >= 6'd39) next_state = DONE;
             DONE: if (ack == 1'd1) next_state = IDLE;
             default: next_state = IDLE;  // illegal encoding -- recover to reset state
         endcase

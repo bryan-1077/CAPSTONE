@@ -8,6 +8,7 @@ Works without renaming your existing files (uses importlib to load by filename).
 
 import sys
 import os
+import argparse
 import importlib.util
 import json
 from datetime import datetime
@@ -228,9 +229,33 @@ Requirements / Notes:
 """
     return task.strip(), name
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Validate one expanded YAML spec and generate its RTL."
+    )
+    parser.add_argument(
+        "yaml_path",
+        nargs="?",
+        default="inputs/input_test_1-0.yaml",
+        help="Expanded YAML spec to generate.",
+    )
+    parser.add_argument(
+        "--no-lint",
+        action="store_true",
+        help="Skip dual-LLM single-file lint.",
+    )
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Use cached dual-LLM RTL and avoid LLM calls for dual-LLM modules.",
+    )
+    return parser.parse_args()
+
+
 # ---------- main ----------
 def main():
-    yaml_path = sys.argv[1] if len(sys.argv) > 1 else "inputs/input_test_1-0.yaml"
+    args = parse_args()
+    yaml_path = args.yaml_path
     root_dir = os.path.dirname(os.path.abspath(__file__))
     yaml_label = display_path(yaml_path, root_dir)
     module_name = os.path.splitext(os.path.basename(yaml_path))[0]
@@ -286,8 +311,16 @@ def main():
     if route == ROUTE_DUAL_LLM:
         with open(yaml_path, "r") as f:
             yaml_text = f.read()
-        print(f"[FLOW] Using DUAL LLM generator for {module_name}")
-        rtl = dual_rtlgen.run_dual_llm_rtlgen(spec, yaml_text)
+        if args.cache:
+            print(f"[FLOW] Using cached DUAL LLM RTL for {module_name}")
+        else:
+            print(f"[FLOW] Using DUAL LLM generator for {module_name}")
+        rtl = dual_rtlgen.run_dual_llm_rtlgen(
+            spec,
+            yaml_text,
+            lint_enabled=not args.no_lint,
+            use_cache=args.cache,
+        )
         rtl = enforce_width_safety(rtl, module_name)
         sv_path = os.path.join(work_dir, module_name + ".sv")
         with open(sv_path, "w") as f:

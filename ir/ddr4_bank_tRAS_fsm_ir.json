@@ -60,10 +60,10 @@
           },
           "op": ">=",
           "right": {
-            "value": 52
+            "value": 39
           }
         },
-        "raw_condition": "tRAS_counter >= 52"
+        "raw_condition": "tRAS_counter >= 39"
       },
       {
         "src": "DONE",

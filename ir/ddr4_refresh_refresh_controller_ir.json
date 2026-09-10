@@ -39,10 +39,10 @@
           },
           "op": ">=",
           "right": {
-            "value": 12480
+            "value": 9360
           }
         },
-        "raw_condition": "counter >= 12480"
+        "raw_condition": "counter >= 9360"
       },
       {
         "src": "REQUEST",

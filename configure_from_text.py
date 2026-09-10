@@ -58,6 +58,21 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run run_flow.py with the written config after confirmation.",
     )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Prompt before each generation-flow step when used with --run-flow.",
+    )
+    parser.add_argument(
+        "--no-lint",
+        action="store_true",
+        help="Skip dual-LLM single-file lint and full-system lint when used with --run-flow.",
+    )
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Use cached dual-LLM RTL when used with --run-flow.",
+    )
     return parser.parse_args()
 
 
@@ -286,9 +301,16 @@ def print_assumptions(assumptions: list[str]) -> None:
         print(f"- {assumption}")
 
 
-def run_flow(config_path: Path) -> int:
+def run_flow(config_path: Path, *, interactive: bool = False,
+             no_lint: bool = False, cache: bool = False) -> int:
     """Run the existing generation flow with the confirmed config."""
     command = [sys.executable, "run_flow.py", str(config_path)]
+    if interactive:
+        command.append("--interactive")
+    if no_lint:
+        command.append("--no-lint")
+    if cache:
+        command.append("--cache")
     completed = subprocess.run(command, cwd=SCRIPT_DIR, check=False)
     return completed.returncode
 
@@ -362,7 +384,12 @@ Supported options:
         print(f"[CONFIG] Wrote {output_path}")
 
         if args.run_flow:
-            return run_flow(output_path)
+            return run_flow(
+                output_path,
+                interactive=args.interactive,
+                no_lint=args.no_lint,
+                cache=args.cache,
+            )
         return 0
 
     print("[ERROR] Too many unclear or invalid configuration attempts. No file written.")

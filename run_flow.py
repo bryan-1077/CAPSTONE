@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -92,6 +93,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Prompt before each flow step.",
     )
+    parser.add_argument(
+        "--no-lint",
+        action="store_true",
+        help="Skip dual-LLM single-file lint and full-system lint.",
+    )
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Use cached dual-LLM RTL for cache-backed modules and avoid LLM calls.",
+    )
     return parser.parse_args()
 
 
@@ -117,6 +128,16 @@ def prompt_yes_no(message: str) -> bool:
 def run_command(command: list[str]) -> None:
     """Run a subprocess in the flow directory and raise on failure."""
     subprocess.run(command, check=True, cwd=SCRIPT_DIR)
+
+
+def design_command(yaml_path: Path, *, no_lint: bool, cache: bool) -> list[str]:
+    """Build the design.py command with generation-flow flags."""
+    command = [sys.executable, "design.py", str(yaml_path)]
+    if no_lint:
+        command.append("--no-lint")
+    if cache:
+        command.append("--cache")
+    return command
 
 
 def load_yaml(path: Path) -> dict:
@@ -476,6 +497,84 @@ def enforce_timescale(rtl_root: str = "rtl_output") -> None:
                 handle.writelines(content)
 
 
+def collect_rtl_lint_files(rtl_root: str = "rtl_output") -> list[Path]:
+    """Return every generated RTL file to include in full-system lint."""
+    rtl_root_path = SCRIPT_DIR / rtl_root
+    if not rtl_root_path.is_dir():
+        return []
+    return sorted(rtl_root_path.rglob("*.sv"))
+
+
+def count_verilator_diagnostics(output: str) -> tuple[int, int]:
+    """Count Verilator error and warning diagnostics without exposing messages."""
+    error_count = 0
+    warning_count = 0
+
+    for line in output.splitlines():
+        text = line.strip()
+        if text.startswith("%Warning-"):
+            warning_count += 1
+        elif text.startswith("%Error-"):
+            error_count += 1
+        elif text.startswith("%Error:") and not text.startswith("%Error: Exiting due to"):
+            error_count += 1
+
+    if error_count == 0:
+        match = re.search(r"Exiting due to\s+(\d+)\s+error", output)
+        if match:
+            error_count = int(match.group(1))
+
+    if warning_count == 0:
+        match = re.search(r"Exiting due to\s+(\d+)\s+warning", output)
+        if match:
+            warning_count = int(match.group(1))
+
+    return error_count, warning_count
+
+
+def run_full_system_lint(rtl_root: str = "rtl_output") -> None:
+    """Run Verilator lint across all generated RTL and print a quiet summary."""
+    rtl_files = collect_rtl_lint_files(rtl_root)
+    file_count = len(rtl_files)
+
+    if file_count == 0:
+        print("[LINT] Full system lint skipped: 0 RTL files found.")
+        return
+
+    verilator_bin = shutil.which("verilator")
+    if not verilator_bin:
+        print(f"[LINT] Full system lint skipped: verilator not found; RTL files={file_count}.")
+        return
+
+    print(f"[LINT] Running full system lint on {file_count} RTL files...")
+
+    command = [verilator_bin, "--lint-only", "--Wall"]
+    if (SCRIPT_DIR / rtl_root / "ddr4_controller_top.sv").is_file():
+        command.extend(["--top-module", "ddr4_controller_top"])
+    command.extend(str(path) for path in rtl_files)
+
+    proc = subprocess.run(
+        command,
+        cwd=SCRIPT_DIR,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        check=False,
+    )
+
+    output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
+    if proc.returncode == 0:
+        print(f"[LINT] Full system lint PASS: Verilator checked {file_count} RTL files.")
+        return
+
+    error_count, warning_count = count_verilator_diagnostics(output)
+    print(
+        "[LINT] Full system lint FAIL: "
+        f"Verilator checked {file_count} RTL files; "
+        f"errors={error_count}; warnings={warning_count}."
+    )
+
+
 def should_run_expand_spec(interactive: bool, source_count: int, source_path: Path) -> bool:
     """Prompt for expand_spec when requested, otherwise run automatically."""
     if not interactive:
@@ -515,7 +614,7 @@ def main() -> int:
             ):
                 continue
 
-            run_command([sys.executable, "design.py", str(yaml_path)])
+            run_command(design_command(yaml_path, no_lint=args.no_lint, cache=args.cache))
 
         if not args.interactive or prompt_yes_no("Run generate_wrapper? (y/n): "):
             print("[FLOW] Generating wrapper...")
@@ -524,6 +623,11 @@ def main() -> int:
 
         print("[FLOW] Enforcing timescale directives...")
         enforce_timescale()
+
+        if args.no_lint:
+            print("[LINT] Full system lint skipped by --no-lint.")
+        else:
+            run_full_system_lint()
     except (subprocess.CalledProcessError, ValueError, OSError, yaml.YAMLError) as exc:
         if isinstance(exc, subprocess.CalledProcessError):
             print(f"[FLOW] ERROR: Command failed with exit code {exc.returncode}: {exc.cmd}")

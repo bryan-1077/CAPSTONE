@@ -5,7 +5,7 @@ This document is a repository-grounded technical reference for the `d05_multiBan
 The document is intentionally code-adjacent:
 
 - It describes the actual current files in this repository snapshot.
-- It prioritizes the currently generated 4-bank DDR4 simple-scheduler memory-system demo configured by `configs/user_input.yaml`.
+- It prioritizes the current generation flow and the active demo configuration in `configs/user_input.yaml`.
 - It distinguishes implemented behavior from planned behavior, support-only utilities, and legacy paths.
 - It avoids claiming full DDR4 controller functionality where the code implements a simpler educational/demo memory system.
 
@@ -47,9 +47,10 @@ This project generates a simplified DDR4 controller-oriented hardware subsystem 
 - a generated directed self-checking testbench,
 - a Verilator plus GTKWave simulation flow.
 
-What it generates today, in the current checked-in demo configuration:
+What it generates today, depending on configuration:
 
 - reusable timing/state modules such as `ddr4_bank_activate_fsm`, `ddr4_bank_tRAS_fsm`, `ddr4_bank_precharge_fsm`, `ddr4_scheduler_scheduler`, and `ddr4_refresh_refresh_controller`,
+- datapath blocks such as `ddr4_request_queue`,
 - optional global timing blocks `ddr4_tFAW_tFAW_tracker` and `ddr4_tRRD_simple_tRRD`,
 - a reusable per-bank integration shell `ddr4_bank_top`,
 - a top-level integrated system `ddr4_controller_top`,
@@ -61,10 +62,10 @@ The project exists because there are two related but different goals:
 - controller generation: generating legal control-path RTL such as FSMs, refresh request logic, timing trackers, and scheduling/arbitration,
 - memory-system behavior: making the generated controller observable as a functioning system that can accept transactions, preserve read/write intent, store data, and return responses in simulation.
 
-That distinction matters. Earlier or narrower versions of this flow could stop at "controller-like control logic." The current `d05_multiBank` demo goes further by integrating:
+That distinction matters. Earlier or narrower versions of this flow could stop at "controller-like control logic." The current demo platform goes further by integrating:
 
 - bank selection,
-- global activation gating,
+- optional global activation gating,
 - typed transaction propagation (`READ` vs `WRITE`),
 - bank-local storage,
 - read response generation.
@@ -86,31 +87,41 @@ configs/user_input.yaml
   -> expanded/<design>/*.yaml + master.yaml
   -> design.py
   -> validator.py -> ir/*.json
-  -> fsm_generator.py or dual_llm_rtlGen.py
+  -> fsm_generator.py, deterministic timing seed, or dual_llm_rtlGen.py
   -> width_safety.py post-processing
-  -> rtl_output/<module>/<module>.sv
+  -> rtl_output/<module>.sv
   -> generate_wrapper.py
   -> rtl_output/ddr4_bank_top.sv
   -> rtl_output/ddr4_controller_top.sv
   -> generate_testbench.py
   -> tb/tb_ddr4_controller_top.sv
+  -> full-system Verilator lint summary
   -> run_sim.sh
   -> Verilator build + run
   -> tb_ddr4_controller_top.vcd
   -> optional GTKWave preset
 ```
 
+`./start_flow.sh` is the convenience entry point. Current flags:
+
+- `--interactive`: prompt before each generation step.
+- `--no-lint`: skip dual-LLM local lint and full-system lint.
+- `--cache`: use the existing user config and reviewed dual-LLM RTL caches without LLM calls.
+- `-h`, `--help`: print flag help.
+
 More specifically:
 
 1. User config entry point
 
-   `configs/user_input.yaml` is the current user-facing configuration. In the checked-in demo it selects:
+   `configs/user_input.yaml` is the current user-facing configuration. In the active generated demo it selects:
 
    - `DDR4`
-   - speed `3200`
-   - `4` banks
+   - speed `2400`
+   - `1` bank
    - scheduler `simple`
-   - `refresh`, `tFAW`, and `tRRD` enabled
+   - page policy `close_page`
+   - `refresh` enabled
+   - `tFAW` and `tRRD` disabled
 
 2. Validation and config expansion
 
@@ -118,11 +129,10 @@ More specifically:
 
    - `inputs/generated/ddr4_bank.yaml`
    - `inputs/generated/ddr4_scheduler.yaml`
-   - `inputs/generated/ddr4_tFAW.yaml`
-   - `inputs/generated/ddr4_tRRD.yaml`
+   - `inputs/generated/ddr4_request_queue.yaml`
    - `inputs/generated/ddr4_refresh.yaml`
 
-   This is important because the rest of the older flow is still organized around per-feature input YAMLs rather than a single monolithic user config.
+   Enabled optional timing features also add `ddr4_tFAW.yaml` and `ddr4_tRRD.yaml`. This is important because the rest of the older flow is still organized around per-feature input YAMLs rather than a single monolithic user config.
 
 3. JEDEC expansion and template concretization
 
@@ -139,7 +149,8 @@ More specifically:
    `design.py` validates each concrete YAML through `validator.py`, writes JSON IR into `ir/`, then routes generation by `design_type`:
 
    - `fsm` -> `fsm_generator.py`
-   - non-FSM, currently `datapath` -> `dual_llm_rtlGen.py`
+   - hardened timing datapaths such as tFAW/tRRD -> deterministic seed plus `width_safety.py`
+   - other non-FSM `datapath` modules -> `dual_llm_rtlGen.py`
 
 5. Post-generation width hardening
 
@@ -163,7 +174,19 @@ More specifically:
 
    `run_flow.py` calls `generate_testbench.generate_testbench()`, which emits `tb/tb_ddr4_controller_top.sv`.
 
-8. Simulation
+8. Full-system lint
+
+   After all RTL, wrapper, testbench, and timescale work completes, `run_flow.py` runs Verilator lint across all `rtl_output/**/*.sv` files unless `--no-lint` is set.
+
+   The full-system lint summary reports only:
+
+   - number of RTL files checked,
+   - aggregate error count,
+   - aggregate warning count.
+
+   It does not print individual diagnostics or abort the flow.
+
+9. Simulation
 
    `run_sim.sh`:
 
@@ -173,9 +196,9 @@ More specifically:
    - writes `tb_ddr4_controller_top.vcd`,
    - optionally launches GTKWave with a preset based on bank count and scheduler mode.
 
-9. Waveform viewing
+10. Waveform viewing
 
-   For the current 4-bank simple-scheduler memory-system demo, `run_sim.sh` prefers:
+   For a 4-bank simple-scheduler memory-system demo, `run_sim.sh` prefers:
 
    - `gtk_presets/memsys_demo_4bank_simple.gtkw`
 
@@ -193,21 +216,20 @@ Practical map of the current directory:
   Timing dictionary and feature templates. This is the declarative source of supported timing profiles and feature skeletons.
 
 - `expanded/`
-  Concrete submodule YAMLs created by `expand_spec.py`. Each directory corresponds to one design family such as `ddr4_bank`, `ddr4_scheduler`, `ddr4_tFAW`, `ddr4_tRRD`, and `ddr4_refresh`.
+  Concrete submodule YAMLs created by `expand_spec.py`. Each directory corresponds to one generated design family such as `ddr4_bank`, `ddr4_scheduler`, `ddr4_request_queue`, `ddr4_refresh`, and optional timing families.
 
 - `ir/`
   JSON IR emitted by `design.py` after validation. These files are the best machine-readable snapshot of what the validators and templates actually resolved to.
 
 - `rtl_output/`
-  Generated SystemVerilog modules plus package metadata. In the current checked-in build this includes:
+  Generated SystemVerilog modules plus package metadata. In the active generated build this includes:
   - `ddr4_controller_top`
   - `ddr4_bank_top`
   - the three bank timing FSMs
   - the bank sequencer
   - scheduler
+  - request queue
   - refresh controller
-  - tFAW tracker
-  - tRRD tracker
   - `README.md`
   - `manifest.json`
   - `filelist.f`
@@ -239,14 +261,15 @@ profile:
   type: "basic"
 memory:
   protocol: "DDR4"
-  speed: "3200"
+  speed: "2400"
 topology:
-  banks: 4
+  banks: 1
 features:
   scheduler: "simple"
+  page_policy: "close_page"
   refresh: true
-  tFAW: true
-  tRRD: true
+  tFAW: false
+  tRRD: false
 ```
 
 Supported options enforced by `run_flow.py`:
@@ -292,21 +315,21 @@ What the dictionary contains:
 - timing precomputed in cycles
 - comments documenting the cycle formula and JEDEC source assumptions
 
-For the current demo configuration, `DDR4-3200` yields:
+For the active demo configuration, `DDR4-2400` yields:
 
-- `tRCD = 22`
-- `tRP = 22`
-- `tRAS = 52`
-- `tRRD = 6`
-- `tFAW = 40`
-- `tRFC1 = 560`
-- `tREFI = 12480`
+- `tRCD = 17`
+- `tRP = 17`
+- `tRAS = 39`
+- `tRRD = 4`
+- `tFAW = 30`
+- `tRFC1 = 420`
+- `tREFI = 9360`
 
 How this becomes cycle-accurate behavior:
 
 - `expand_spec.py` builds a substitution map from template placeholder names to integer timing cycle values.
 - It replaces placeholders such as `{tRCD_cycles}`, `{tRRD_cycles}`, `{tFAW_cycles}`, and `{tREFI_cycles}`.
-- The expanded YAMLs then contain literal integer comparisons like `tRCD_counter >= 22` or `counter >= 12480`.
+- The expanded YAMLs then contain literal integer comparisons like `tRCD_counter >= 17` or `counter >= 9360`.
 - `validator.py` infers widths from those literal thresholds.
 - `fsm_generator.py` and LLM/datapath generation then implement logic using those concrete values.
 
@@ -382,7 +405,8 @@ Outputs:
 - IR JSON,
 - generated RTL,
 - wrapper RTL,
-- generated testbench.
+- generated testbench,
+- full-system lint summary.
 
 Key responsibilities:
 
@@ -393,7 +417,9 @@ Key responsibilities:
 - call `design.py` on each expanded YAML,
 - call `generate_wrapper.py`,
 - call `generate_testbench()`,
-- enforce a common `` `timescale 1ns/1ps `` line on every generated `.sv`.
+- enforce a common `` `timescale 1ns/1ps `` line on every generated `.sv`,
+- run full-system Verilator lint unless `--no-lint` is set,
+- forward `--interactive`, `--no-lint`, and `--cache` into the generation flow.
 
 Current/legacy status:
 
@@ -403,7 +429,8 @@ Notable implementation choices:
 
 - treats user config detection heuristically via presence of `profile`,
 - enforces the multi-bank plus simple-scheduler restriction centrally,
-- manages a fixed set of design families with `MANAGED_DESIGN_ARTIFACTS`.
+- manages a fixed set of design families with `MANAGED_DESIGN_ARTIFACTS`,
+- full-system lint reports only file count plus aggregate warning/error counts.
 
 ### `expand_spec.py`
 
@@ -486,7 +513,7 @@ Inputs:
 Outputs:
 
 - one IR JSON file in `ir/`,
-- one SystemVerilog module under `rtl_output/<module>/`.
+- one SystemVerilog module at `rtl_output/<module>.sv`.
 
 Key responsibilities:
 
@@ -494,6 +521,7 @@ Key responsibilities:
 - validate the spec,
 - serialize IR to JSON,
 - choose deterministic FSM or dual-LLM generation,
+- pass lint/cache controls to `dual_llm_rtlGen.py`,
 - apply `width_safety.py`,
 - write final RTL.
 
@@ -503,8 +531,8 @@ Current/legacy status:
 
 Notable implementation choices:
 
-- generation routing is purely by `design_type`,
-- error messages and comments still contain a few stale naming references from older versions.
+- generation routing starts from `design_type`, with hardened deterministic handling for selected timing datapaths,
+- `--cache` applies to dual-LLM modules; deterministic modules are regenerated normally.
 
 ### `fsm_generator.py`
 
@@ -557,13 +585,15 @@ Outputs:
 Key responsibilities:
 
 - build structured prompt context through `ir_to_llm_context.py`,
-- call generator model,
-- syntax-check the result,
+- call generator model or load reviewed cache,
+- run single-file Verilator lint unless lint is disabled,
+- send lint diagnostics and attempt history back to the generator,
+- force reviewer handoff after three failed local lint runs,
 - call reviewer model,
-- merge spec-grounded reviewer fixes,
+- merge spec- and lint-grounded reviewer fixes,
 - keep a short sliding history,
-- retry syntax repair,
-- detect repeated issues and escalate merge instructions.
+- detect repeated lint/review issue signatures and escalate repair instructions,
+- cache reviewed RTL.
 
 Current/legacy status:
 
@@ -573,7 +603,11 @@ Notable implementation choices:
 
 - JSON-only model protocol,
 - reviewer findings are typed as `SPEC_VIOLATION`, `NON_ISSUE`, or `AMBIGUITY`,
-- syntax checking prefers Verilator lint and falls back to heuristics,
+- local lint uses `verilator --lint-only --Wall` on a temporary single-file module,
+- if a lint-clean merge needs another reviewer pass, that merged RTL is reused instead of generating fresh RTL,
+- if Verilator is unavailable, the direct syntax-check helper falls back to heuristics,
+- `--no-lint` skips local dual-LLM lint,
+- `--cache` returns `.llm_cache/<module>.sv` before making LLM calls,
 - width safety is enforced again after model output.
 
 ### `ir_to_llm_context.py`
@@ -813,21 +847,22 @@ The LLM path exists because not every useful hardware block in this repo fits th
 
 Current use cases:
 
-- `ddr4_tFAW_tFAW_tracker`
-- `ddr4_tRRD_simple_tRRD`
+- datapath modules that do not fit the deterministic FSM generator, such as scheduler/request-queue style blocks,
+- not the hardened tFAW/tRRD timing modules in the current route; those are datapath-shaped in YAML but normalized through deterministic timing implementations.
 
-Both are tagged `design_type: datapath` in the expanded YAML and carry structured behavior descriptions instead of `state_machine` definitions.
+These modules are tagged `design_type: datapath` in the expanded YAML and carry structured behavior descriptions instead of `state_machine` definitions.
 
 How `dual_llm_rtlGen.py` works:
 
 1. Build authoritative structured context from IR and metadata.
-2. LLM #1 generates candidate RTL.
-3. Run syntax checking.
-4. If syntax fails, give syntax diagnostics back to LLM #1 for repair.
-5. LLM #2 reviews the candidate strictly against the structured context.
-6. If LLM #2 finds spec-grounded violations, LLM #1 merges/fixes using the typed review.
-7. Keep a short sliding history to improve convergence and detect repeated failures.
-8. Return the best RTL seen, preferably a syntax-clean one.
+2. LLM #1 generates candidate RTL, unless `--cache` loads a reviewed cached module.
+3. Local single-file Verilator lint runs unless `--no-lint` is set.
+4. If lint fails, diagnostics and attempt history go back to LLM #1 for repair.
+5. After three failed local lint runs, the candidate is forced to LLM #2 with lint context.
+6. LLM #2 reviews the candidate strictly against the structured context.
+7. If LLM #2 finds spec-grounded or lint-grounded violations, LLM #1 merges/fixes using the typed review.
+8. If the merge passes lint but still needs review validation, that merged RTL is carried into the next round.
+9. Cache reviewed RTL in `.llm_cache/`.
 
 Generator/reviewer loop:
 
@@ -835,18 +870,20 @@ Generator/reviewer loop:
 - Reviewer model: intended to act as an adversarial correctness check.
 - Merger: same generator-side model, but forced to reconcile reviewer feedback.
 
-Syntax gating:
+Local lint gating:
 
-- First choice is Verilator lint.
-- If Verilator is unavailable, it falls back to heuristic checks.
-- There are bounded syntax-fix retries per round.
+- Uses `verilator --lint-only --Wall` on a temporary single-file `.sv`.
+- Warnings and errors both count as local lint failure for candidate generation.
+- The local lint fail limit is `3`.
+- Repeated lint diagnostics are called out explicitly to push LLM #1 away from making the same repair.
+- `--no-lint` disables this gate.
 
 Review and merge loop:
 
 - reviewer status and issues are parsed from strict JSON,
 - only `SPEC_VIOLATION` findings are supposed to drive corrective merges,
 - repeated identical issue signatures trigger an escalation mode,
-- the process caps at `MAX_ROUNDS = 4`.
+- the process caps at `MAX_ROUNDS = 3`.
 
 Historically relevant issue classes, as reflected in the code and prompts:
 
@@ -1164,22 +1201,20 @@ Assertions and checks used today:
 
 - handshake violation check for `txn_valid && !cmd_ready`,
 - scheduler mutual-exclusion check,
-- tRRD immediate violation check,
-- tFAW immediate violation check if that condition ever occurs,
-- bank routing checks,
+- optional tRRD/tFAW checks when those modules are enabled,
+- bank routing checks when multiple banks are configured,
 - `cmd_type` preservation checks,
 - memory write/read correctness checks,
 - refresh observation check,
 - final coverage-style checks.
 
-Coverage-style flags in the current checked-in 4-bank testbench:
+Coverage-style flags in the active generated testbench:
 
 - `saw_backpressure`
-- `saw_tRRD_block`
 
 Important nuance:
 
-- current generated testbench does not require a `tFAW` limit event in this 4-bank DDR4-3200 configuration because the generated reachability logic considers it not practically reachable given the much larger bank timing delays.
+- tFAW and tRRD checks only appear when those optional timing modules are enabled.
 
 How pass/fail is determined:
 
@@ -1191,11 +1226,9 @@ How pass/fail is determined:
 What the current generated testbench validates well:
 
 - scheduler simple-mode behavior,
-- bank routing for 4 banks,
 - selected-bank `cmd_ready` behavior,
-- cross-bank shared `tRRD` blocking,
 - command-type preservation,
-- memory write/read correctness and bank isolation,
+- memory write/read correctness,
 - refresh request eventually appearing,
 - backpressure being observable.
 
@@ -1317,6 +1350,20 @@ Evidence in current repo:
 - `run_flow.py` contains the authoritative orchestration,
 - wrapper generation includes interface validation before assembly.
 
+### Lint validation
+
+Method:
+
+- dual-LLM candidates run single-file Verilator lint before reviewer handoff unless `--no-lint` is set,
+- after all RTL files are generated, `run_flow.py` runs full-system Verilator lint over `rtl_output/**/*.sv`,
+- full-system lint reports file count and aggregate warning/error counts only.
+
+Current behavior:
+
+- local lint failures are fed back to LLM #1 for up to three failed lint runs,
+- after the fail limit, LLM #2 receives the lint context for review/merge,
+- full-system lint is informational and does not abort the flow.
+
 ### Testbench validation
 
 Method:
@@ -1327,9 +1374,8 @@ Method:
 
 Current checked-in status:
 
-- `run_sim.sh` was rerun against the current checked-in generated design,
-- Verilator compile completed,
-- simulation reached `TEST PASS`.
+- `run_flow.py` now emits local and full-system lint summaries during generation,
+- `run_sim.sh` remains the generated design simulation entry point.
 
 What "testbench validated" means here:
 
@@ -1351,7 +1397,7 @@ This is important because some implemented behaviors are better observed than as
 Important clarification:
 
 - a feature can be implemented and visible in waveforms without being fully asserted in the current generated testbench.
-- In the current 4-bank DDR4-3200 demo, `tFAW` is instantiated and part of the architecture, but the checked-in testbench does not require reaching the blocking threshold.
+- In tFAW-enabled demos, `tFAW` can be instantiated and visible without the directed testbench necessarily reaching the blocking threshold.
 
 ## 21. Completed Work
 
@@ -1363,8 +1409,13 @@ The current repo, as represented by the checked-in artifacts and source, has com
 - JEDEC timing/profile expansion for DDR4-2400 and DDR4-3200
 - deterministic FSM generation for core control modules
 - structured dual-LLM path for datapath blocks
+- single-file Verilator lint loop for dual-LLM candidates
+- forced reviewer handoff with lint context after three local lint failures
+- reviewed dual-LLM RTL cache mode through `--cache`
 - width-safe normalization for tFAW and tRRD generated outputs
 - wrapper interface validation before top-level assembly
+- full-system Verilator lint summary after RTL generation
+- `start_flow.sh` flags for `--interactive`, `--no-lint`, `--cache`, and help output
 - reusable `ddr4_bank_top` integration block
 - 1-bank, 2-bank, and 4-bank wrapper scaling logic
 - explicit multi-bank external bank selection
@@ -1421,31 +1472,31 @@ Practical current demo flow:
 
 1. Generate or reuse the current generated design.
 2. Run `./run_sim.sh`.
-3. If desired, open GTKWave and use the 4-bank simple preset.
+3. If desired, open GTKWave with the preset selected by `run_sim.sh`.
 
-Main demo scenario in the current checked-in build:
+Main demo scenario in the active generated build:
 
-- 4-bank DDR4-3200
+- 1-bank DDR4-2400
 - simple scheduler
 - refresh enabled
-- tFAW enabled
-- tRRD enabled
+- tFAW disabled
+- tRRD disabled
+- close-page policy
 - memory-system behavior enabled through wrapper-local banked storage and read responses
 
 What to show in waveform:
 
-- external transaction stream: `txn_valid`, `txn_is_write`, `txn_bank`, `txn_addr`, `txn_wdata`
+- external transaction stream: `txn_valid`, `txn_is_write`, `txn_addr`, `txn_wdata`
 - scheduler decisions: `issue_ref`, `issue_txn`
-- shared gates: `tRRD_block`, `tFAW_ok`, `act_pulse`
-- bank routing: `bank_cmd_valid`, `bank_cmd_ready`, `bankN_cmd_type`
-- bank state summaries: each `u_bankN.u_bank_sequencer.current_state`
+- bank command path: `bank_cmd_valid`, `bank_cmd_ready`, `cmd_type`
+- bank state summary: `u_bank0.u_bank_sequencer.current_state`
 - memory-response path: `accepted_read`, `read_rsp_pending_q`, `rsp_valid`, `rsp_rdata`
 
 Main story of the system:
 
 - a single external transaction stream is routed to one selected bank,
 - each bank has reusable generated timing/control logic,
-- global DDR-inspired timing gates can block activation across banks,
+- optional global DDR-inspired timing gates can block activation across banks,
 - read/write intent is preserved across the control path,
 - accepted writes update bank-local storage,
 - accepted reads produce a one-cycle-later response,
@@ -1455,10 +1506,10 @@ Main story of the system:
 
 Authoritative baseline for this document:
 
-- current checked-in generated top-level is `rtl_output/ddr4_controller_top.sv`
-- current checked-in demo bank wrapper is `rtl_output/ddr4_bank_top.sv`
-- current checked-in self-checking testbench is `tb/tb_ddr4_controller_top.sv`
-- current checked-in user demo config is `configs/user_input.yaml`
+- active generated top-level is `rtl_output/ddr4_controller_top.sv`
+- active generated bank wrapper is `rtl_output/ddr4_bank_top.sv`
+- active generated self-checking testbench is `tb/tb_ddr4_controller_top.sv`
+- active user demo config is `configs/user_input.yaml`
 
 Repository honesty notes:
 
