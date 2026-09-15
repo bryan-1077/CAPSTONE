@@ -76,6 +76,16 @@ LOCALIZATION_HINTS = {
         "ddr4_controller_top",
     ],
 }
+READ_DATA_MISMATCH_SIGNALS = (
+    "rsp_rdata",
+    "rsp_valid",
+    "bank_mem",
+    "service_bank",
+    "service_addr",
+    "service_wdata",
+    "service_is_write",
+    "selected_req",
+)
 
 
 @dataclass(frozen=True)
@@ -924,6 +934,63 @@ def add_partial_module_suspects(
             )
 
 
+def has_functional_failure_evidence(parsed: ParsedFailure) -> bool:
+    return bool(
+        parsed.testbench_errors
+        or parsed.assert_failures
+        or parsed.flow_errors
+        or parsed.status_markers.get("test_fail")
+    )
+
+
+def is_read_data_mismatch(parsed: ParsedFailure) -> bool:
+    evidence = [parsed.summary]
+    for item in parsed.testbench_errors:
+        evidence.append(str(item.get("message") or ""))
+        evidence.append(str(item.get("raw") or ""))
+    lowered = " ".join(evidence).lower()
+    return (
+        any(word in lowered for word in ("read", "rsp", "response"))
+        and "data" in lowered
+        and any(word in lowered for word in ("unexpected", "mismatch", "expected", "returned"))
+    )
+
+
+def add_read_data_mismatch_suspects(
+    suspects: dict[str, dict[str, object]],
+    file_text: dict[Path, str],
+    file_to_modules: dict[Path, list[str]],
+) -> None:
+    for path, text in file_text.items():
+        lowered = text.lower()
+        matched = [
+            signal
+            for signal in READ_DATA_MISMATCH_SIGNALS
+            if signal.lower() in lowered
+        ]
+        if not matched:
+            continue
+
+        score = 25 + (20 * len(matched))
+        if "rsp_rdata" in matched and "bank_mem" in matched:
+            score += 80
+        if "service_bank" in matched and "service_addr" in matched:
+            score += 40
+        if path.name == "ddr4_controller_top.sv":
+            score += 40
+
+        modules = file_to_modules.get(path, [path.stem])
+        for signal in matched:
+            add_suspect(
+                suspects,
+                path,
+                score if signal == matched[0] else 0,
+                "BIST read-data mismatch matches response/storage datapath signal(s).",
+                module=modules[0],
+                term=signal,
+            )
+
+
 def localize_rtl(raw_log: str, parsed: ParsedFailure) -> RTLLocalization:
     index = collect_rtl_index()
     rtl_files = index["rtl_files"]
@@ -935,6 +1002,9 @@ def localize_rtl(raw_log: str, parsed: ParsedFailure) -> RTLLocalization:
     notes: list[str] = []
 
     for diagnostic in parsed.verilator_diagnostics:
+        severity = diagnostic.get("severity")
+        if severity == "warning" and has_functional_failure_evidence(parsed):
+            continue
         path = resolve_rtl_path(diagnostic.get("file"), rtl_files)
         if not path:
             continue
@@ -942,12 +1012,18 @@ def localize_rtl(raw_log: str, parsed: ParsedFailure) -> RTLLocalization:
         add_suspect(
             suspects,
             path,
-            100 if diagnostic.get("severity") == "error" else 40,
+            100 if severity == "error" else 25,
             "Verilator diagnostic points at this RTL file.",
             module=modules[0],
         )
 
     terms = extract_failure_terms(raw_log, parsed)
+    if is_read_data_mismatch(parsed):
+        add_read_data_mismatch_suspects(suspects, file_text, file_to_modules)
+        for term in READ_DATA_MISMATCH_SIGNALS:
+            if term not in terms:
+                terms.append(term)
+
     for term in terms:
         add_hint_suspects(suspects, term, module_to_file)
         add_partial_module_suspects(suspects, term, module_to_file)
@@ -1105,7 +1181,15 @@ def parsed_failure_detected(parsed: ParsedFailure) -> bool:
         return True
     if parsed.status_markers.get("errors_reported"):
         return True
-    return any(value > 0 for value in parsed.counts.values())
+    if parsed.status_markers.get("test_pass"):
+        return False
+    failure_count_keys = (
+        "verilator_errors",
+        "testbench_errors",
+        "assert_failures",
+        "flow_errors",
+    )
+    return any(parsed.counts.get(key, 0) > 0 for key in failure_count_keys)
 
 
 def record_status(

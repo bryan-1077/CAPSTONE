@@ -22,6 +22,12 @@ from run_flow import (
     write_yaml,
 )
 
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+except AttributeError:
+    pass
+
 
 CONFIG_OUTPUT_PATH = SCRIPT_DIR / "configs" / "user_input.yaml"
 TAMU_API_URL = "https://chat-api.tamu.ai/openai/chat/completions"
@@ -311,7 +317,9 @@ def run_flow(config_path: Path, *, interactive: bool = False,
         command.append("--no-lint")
     if cache:
         command.append("--cache")
-    completed = subprocess.run(command, cwd=SCRIPT_DIR, check=False)
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    completed = subprocess.run(command, cwd=SCRIPT_DIR, check=False, env=env)
     return completed.returncode
 
 

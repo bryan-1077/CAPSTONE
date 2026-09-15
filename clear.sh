@@ -99,6 +99,7 @@ generated_dirs=(
 
 generated_files=(
     "$SCRIPT_DIR/flow.log"
+    "$SCRIPT_DIR/flow_lint.log"
     "$SCRIPT_DIR/bist.log"
 )
 

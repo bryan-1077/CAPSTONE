@@ -226,3 +226,106 @@ Analyze repeated RTL fixes and recommend changes to:
 - feature templates
 - validation checks
 - testbench generation
+
+## Current Status
+
+The BIST-centered debug loop has been proven end-to-end on controlled RTL
+data-path bugs:
+
+```text
+capture failure
+  -> classify as data mismatch
+  -> localize likely RTL
+  -> build focused prompt context
+  -> propose RTL patch with LLM
+  -> validate patch
+  -> apply patch
+  -> run lint
+  -> rerun BIST
+  -> record fixed status
+```
+
+Known working path:
+
+```sh
+python debug_agent.py bist --command './run_sim.sh --no-wave-prompt' --name <name>
+python debug_agent.py repair debug/failures/<id> --target-command './run_sim.sh --no-wave-prompt' --demo-mode
+```
+
+The localizer now handles read-data mismatch failures by prioritizing
+controller response/storage datapath signals such as `rsp_rdata`, `bank_mem`,
+`service_bank`, `service_addr`, `service_wdata`, and `selected_req`.
+
+## Near-Term TODOs
+
+### Stabilize Automation Commands
+
+- [x] Add a first-class noninteractive simulation mode to `run_sim.sh`, such as
+  `--no-wave-prompt` or `NO_GTKWAVE_PROMPT=1`, so automated debug runs do not
+  rely on overriding `GTKWAVE_BIN`.
+- [x] Keep the existing plain-Python CLI stable as the baseline smoke-test path:
+  `bist`, `lint`, `verif`, `pd`, `propose`, `validate`, `apply`, and `repair`.
+- [x] Ensure target-check pass/fail handling continues to prefer explicit BIST
+  markers (`TEST PASS`, `TEST FAIL`, `Errors: N`) over benign tool warnings.
+
+### Improve BIST Localization
+
+- [ ] Add more BIST failure heuristics:
+  - [ ] ready/valid or stall failures -> scheduler, request queue, controller
+  - [ ] tRRD/tFAW timing failures -> tRRD, tFAW, scheduler, controller
+  - [ ] refresh failures -> refresh controller, scheduler, controller
+  - [ ] row hit/miss/open-row failures -> controller, bank top, bank sequencer
+  - [ ] queue full/empty/order failures -> request queue
+- [x] Keep localization scoring explainable in `suspected_modules.json`.
+- [ ] Expand focused snippet selection so prompts include nearby assignments,
+  control conditions, and state captures around matched terms.
+
+### Add LangGraph Orchestration
+
+- [ ] Add a LangGraph/LangChain wrapper around the existing debug-agent functions
+  instead of replacing them.
+- [ ] Implement proposed graph nodes:
+
+```text
+run_or_ingest
+  -> parse_failure
+  -> classify_failure
+  -> localize_rtl
+  -> build_patch_context
+  -> propose_patch
+  -> validate_patch
+  -> apply_patch
+  -> run_checks
+  -> record_result
+```
+
+- [ ] Add conditional graph routing:
+
+```text
+fixed -> record_result
+patch_invalid and attempts < max_attempts -> propose_patch
+lint_failed and attempts < max_attempts -> propose_patch with lint feedback
+target_failed and attempts < max_attempts -> propose_patch with target feedback
+attempts >= max_attempts -> needs_human
+```
+
+- [ ] Preserve all existing artifacts (`prompt.md`, `response.md`, `patch.diff`,
+  `validation.json`, `checks.json`, `fix.md`, `status.json`) as graph state
+  outputs.
+
+### Add Multi-Attempt Autorepair
+
+- [ ] Extend `repair` or add `autorepair` so one command can loop through multiple
+  attempts up to `--max-attempts`.
+- [ ] Include prior patch diffs, validation failures, lint logs, and target logs in
+  the next attempt prompt.
+- [ ] Stop automatically when lint and the target check both pass.
+- [ ] Mark `needs_human` when repeated attempts fail or the patch validator rejects
+  all attempts.
+
+### Defer Until Examples Are Available
+
+- [ ] PD report schema support should wait for representative PD logs.
+- [ ] External verification adapters should wait for representative verif command
+  output or report files.
+- [x] Avoid overfitting parser/localizer behavior to imagined PD or verif formats.

@@ -32,6 +32,12 @@ import requests
 from ir_to_llm_context import build_llm_context, llm_context_to_string
 from width_safety import enforce_width_safety
 
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+except AttributeError:
+    pass
+
 # ---------------------------------------------------------------------------
 # Configuration  — edit these to change models or loop behaviour
 # ---------------------------------------------------------------------------
@@ -57,6 +63,9 @@ API_BASE = "https://chat-api.tamu.ai"
 ENDPOINT = API_BASE + "/openai/chat/completions"
 DUAL_LLM_MARKER = "// GENERATED VIA DUAL-LLM FLOW"
 CACHE_DIRNAME = ".llm_cache"
+RTL_OUTPUT_DIRNAME = "rtl_output"
+DEFAULT_INTEGRATION_TOP_MODULE = os.environ.get(
+    "DUAL_LLM_INTEGRATION_TOP_MODULE", "ddr4_controller_top")
 
 # ---------------------------------------------------------------------------
 # API helper
@@ -118,8 +127,129 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
 
 
 # ---------------------------------------------------------------------------
-# Local lint checker
+# RTL linter
 # ---------------------------------------------------------------------------
+
+LINT_MODE_SINGLE_FILE = "single_file"
+LINT_MODE_INTEGRATION = "integration"
+
+_LINT_BLOCKING_WARNING_CODES = {
+    "WIDTH",
+    "WIDTHTRUNC",
+    "WIDTHEXPAND",
+    "WIDTHCONCAT",
+    "WIDTHXZEXPAND",
+    "LATCH",
+    "MULTIDRIVEN",
+    "BLKANDNBLK",
+    "PROCASSWIRE",
+}
+
+_LINT_NONBLOCKING_WARNING_CODES = {
+    "UNUSEDSIGNAL",
+    "UNDRIVEN",
+    "UNUSEDPARAM",
+    "DECLFILENAME",
+    "PINMISSING",
+    "PINCONNECTEMPTY",
+}
+
+_SINGLE_FILE_IGNORED_PATTERNS = [
+    r"can't find definition of module",
+    r"cannot find file containing module",
+    r"can't locate package",
+    r"package .* not found",
+]
+
+
+def _make_lint_result(mode, tool, blocking=None, nonblocking=None, ignored=None):
+    blocking = blocking or []
+    nonblocking = nonblocking or []
+    ignored = ignored or []
+    error_count, warning_count = _lint_error_warning_counts(
+        blocking, nonblocking, ignored)
+    return {
+        "mode": mode,
+        "tool": tool,
+        "ok": len(blocking) == 0,
+        "blocking": blocking,
+        "nonblocking": nonblocking,
+        "ignored": ignored,
+        "error_count": error_count,
+        "warning_count": warning_count,
+    }
+
+
+def _verilator_warning_code(line):
+    match = re.search(r"%Warning-([A-Z0-9_]+)", line)
+    return match.group(1) if match else ""
+
+
+def _is_single_file_ignored(line):
+    lower = line.lower()
+    return any(re.search(pattern, lower) for pattern in _SINGLE_FILE_IGNORED_PATTERNS)
+
+
+def _is_verilator_exit_summary(line):
+    return bool(re.search(r"%Error:\s+Exiting due to \d+ error", line))
+
+
+def _lint_error_warning_counts(blocking, nonblocking, ignored):
+    diagnostics = list(blocking) + list(nonblocking) + list(ignored)
+    warning_count = sum(1 for item in diagnostics if "%Warning" in item)
+    error_count = sum(
+        1 for item in diagnostics
+        if "%Error" in item and not _is_verilator_exit_summary(item)
+    )
+    error_count += sum(
+        1 for item in blocking
+        if "%Error" not in item and "%Warning" not in item
+    )
+    return error_count, warning_count
+
+
+def _classify_verilator_diagnostic(line, mode):
+    if mode == LINT_MODE_SINGLE_FILE and _is_single_file_ignored(line):
+        return "ignored"
+    if "%Error" in line:
+        return "blocking"
+    if "%Warning" in line:
+        code = _verilator_warning_code(line)
+        if code in _LINT_BLOCKING_WARNING_CODES:
+            return "blocking"
+        if code in _LINT_NONBLOCKING_WARNING_CODES:
+            return "nonblocking"
+        return "nonblocking"
+    return "blocking"
+
+
+def _extract_verilator_diagnostics(output, mode):
+    blocking = []
+    nonblocking = []
+    ignored = []
+
+    for line in output.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if "%Error" not in text and "%Warning" not in text:
+            continue
+
+        bucket = _classify_verilator_diagnostic(text, mode)
+        if bucket == "blocking":
+            blocking.append(text)
+        elif bucket == "ignored":
+            ignored.append(text)
+        else:
+            nonblocking.append(text)
+
+    if ignored:
+        blocking = [
+            item for item in blocking
+            if not _is_verilator_exit_summary(item)
+        ]
+
+    return blocking, nonblocking, ignored
 
 # Patterns that strongly suggest broken SystemVerilog
 _SV_ERROR_PATTERNS = [
@@ -132,7 +262,7 @@ _SV_ERROR_PATTERNS = [
 _SV_REQUIRED = ["module", "endmodule"]
 
 
-def _heuristic_syntax_check(rtl_code):
+def _heuristic_lint_candidate(rtl_code, mode):
     """
     Lightweight regex-based syntax check.
     Returns (ok: bool, issues: list[str]).
@@ -143,7 +273,7 @@ def _heuristic_syntax_check(rtl_code):
     code = rtl_code.strip()
 
     if not code:
-        return False, ["RTL output is empty"]
+        return _make_lint_result(mode, "heuristic", ["RTL output is empty"])
 
     for keyword in _SV_REQUIRED:
         if keyword not in code:
@@ -175,83 +305,71 @@ def _heuristic_syntax_check(rtl_code):
     if "1'b'" in code:
         issues.append("Literal typo detected: 1'b' (extra apostrophe)")
 
-    return (len(issues) == 0), issues
+    return _make_lint_result(mode, "heuristic", issues)
 
 
-def _extract_first_module_name(rtl_code):
-    match = re.search(r"\bmodule\s+([A-Za-z_][A-Za-z0-9_$]*)", rtl_code or "")
-    if match:
-        return match.group(1)
-    return "candidate"
+def _has_module_declaration(rtl_code):
+    return bool(re.search(r"\bmodule\s+\w+", rtl_code or ""))
 
 
-def _safe_sv_filename(name):
-    safe = re.sub(r"[^A-Za-z0-9_$]", "_", name or "candidate")
-    if not safe:
-        safe = "candidate"
-    return safe + ".sv"
-
-
-def _run_verilator_single_file_lint(rtl_code):
+def _run_verilator_lint_file_set(file_paths, mode, top_module=None):
     """
-    Run Verilator lint-only mode on a temporary single SystemVerilog file.
-    Returns (ok: bool, issues: list[str]), or (None, None) when Verilator
-    is unavailable or the tool invocation itself fails unexpectedly.
+    Run Verilator lint-only mode on a set of SystemVerilog files.
+    Returns a structured lint result, or None when Verilator is unavailable or
+    the tool invocation itself fails unexpectedly.
     """
     verilator_bin = shutil.which("verilator")
     if not verilator_bin:
-        return None, None
+        return None
 
-    temp_dir = tempfile.mkdtemp(prefix="dual_llm_verilator_")
-    sv_path = os.path.join(
-        temp_dir,
-        _safe_sv_filename(_extract_first_module_name(rtl_code))
-    )
+    cmd = [verilator_bin, "--lint-only", "-Wno-fatal", "--sv"]
+    if top_module:
+        cmd.extend(["--top-module", top_module])
+    cmd.extend(file_paths)
 
     try:
-        with open(sv_path, "w") as fh:
-            fh.write(rtl_code)
-            if rtl_code and not rtl_code.endswith("\n"):
-                fh.write("\n")
-
         proc = subprocess.run(
-            [verilator_bin, "--lint-only", "--Wall", sv_path],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True
         )
+    except OSError:
+        return None
 
-        output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
-        errors = []
-        warnings = []
-        for line in output.splitlines():
-            text = line.strip()
-            if not text:
-                continue
-            if text.startswith("%Error-") or (
-                text.startswith("%Error:") and not text.startswith("%Error: Exiting due to")
-            ):
-                errors.append(text)
-            elif text.startswith("%Warning-"):
-                warnings.append(text)
+    output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
+    blocking, nonblocking, ignored = _extract_verilator_diagnostics(output, mode)
+    if proc.returncode != 0 and not blocking and not ignored:
+        fallback = [line.strip() for line in output.splitlines() if line.strip()]
+        blocking = fallback or ["Verilator lint failed with no diagnostic output"]
 
-        if not errors:
-            match = re.search(r"Exiting due to\s+(\d+)\s+error", output)
-            if match and int(match.group(1)) > 0:
-                errors.append(match.group(0))
+    return _make_lint_result(
+        mode, "verilator", blocking, nonblocking, ignored
+    )
 
-        if errors:
-            return False, errors
 
-        if proc.returncode != 0 and not warnings:
-            if output:
-                return False, [line.strip() for line in output.splitlines() if line.strip()]
-            return False, ["Verilator lint failed with no diagnostic output"]
+def _run_verilator_lint_candidate(rtl_code, mode, module_name=None):
+    """
+    Run Verilator lint-only mode on a temporary single SystemVerilog file.
+    Returns a structured lint result, or None when Verilator is unavailable or
+    the tool invocation itself fails unexpectedly.
+    """
+    verilator_bin = shutil.which("verilator")
+    if not verilator_bin:
+        return None
 
-        return True, warnings
+    temp_dir = tempfile.mkdtemp(prefix="dual_llm_verilator_")
+    sv_path = os.path.join(temp_dir, "candidate.sv")
+
+    try:
+        with open(sv_path, "w") as fh:
+            fh.write(rtl_code)
+
+        top_module = module_name if mode == LINT_MODE_SINGLE_FILE else None
+        return _run_verilator_lint_file_set([sv_path], mode, top_module)
 
     except OSError:
-        return None, None
+        return None
 
     finally:
         try:
@@ -260,20 +378,167 @@ def _run_verilator_single_file_lint(rtl_code):
             pass
 
 
+def _project_root():
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def _rtl_output_dir(rtl_dir=None):
+    if rtl_dir:
+        return os.path.abspath(rtl_dir)
+    return os.path.join(_project_root(), RTL_OUTPUT_DIRNAME)
+
+
+def _discover_integration_lint_files(rtl_dir):
+    if not os.path.isdir(rtl_dir):
+        return []
+    return [
+        os.path.join(rtl_dir, name)
+        for name in sorted(os.listdir(rtl_dir))
+        if name.endswith((".sv", ".v"))
+    ]
+
+
+def _integration_unavailable_result(message, rtl_dir, top_module):
+    result = _make_lint_result(
+        LINT_MODE_INTEGRATION, "verilator", [message])
+    result["integration_available"] = False
+    result["rtl_dir"] = rtl_dir
+    result["top_module"] = top_module
+    result["files"] = []
+    return result
+
+
+def _run_integration_lint(rtl_code=None, module_name=None, top_module=None, rtl_dir=None):
+    """
+    Run a whole-system lint over rtl_output, optionally replacing one module
+    with a candidate RTL body in a temporary mirror.
+    """
+    top_module = top_module or DEFAULT_INTEGRATION_TOP_MODULE
+    source_dir = _rtl_output_dir(rtl_dir)
+    source_files = _discover_integration_lint_files(source_dir)
+    if not source_files:
+        return _integration_unavailable_result(
+            "Integration RTL file set is empty or missing: {}".format(source_dir),
+            source_dir,
+            top_module
+        )
+
+    top_filename = "{}.sv".format(top_module)
+    source_names = {os.path.basename(path) for path in source_files}
+    if top_filename not in source_names:
+        return _integration_unavailable_result(
+            "Integration top RTL is missing: {}".format(
+                os.path.join(source_dir, top_filename)),
+            source_dir,
+            top_module
+        )
+
+    if rtl_code is not None and not module_name:
+        return _integration_unavailable_result(
+            "Integration candidate lint requires module_name for RTL overlay",
+            source_dir,
+            top_module
+        )
+
+    temp_dir = tempfile.mkdtemp(prefix="dual_llm_integration_")
+    temp_rtl_dir = os.path.join(temp_dir, RTL_OUTPUT_DIRNAME)
+    candidate_filename = "{}.sv".format(module_name) if module_name else None
+
+    try:
+        os.makedirs(temp_rtl_dir, exist_ok=True)
+        copied_candidate = False
+        temp_files = []
+        for source_path in source_files:
+            filename = os.path.basename(source_path)
+            temp_path = os.path.join(temp_rtl_dir, filename)
+            if rtl_code is not None and filename == candidate_filename:
+                with open(temp_path, "w") as fh:
+                    fh.write(rtl_code)
+                copied_candidate = True
+            else:
+                shutil.copy2(source_path, temp_path)
+            temp_files.append(temp_path)
+
+        if rtl_code is not None and not copied_candidate:
+            temp_path = os.path.join(temp_rtl_dir, candidate_filename)
+            with open(temp_path, "w") as fh:
+                fh.write(rtl_code)
+            temp_files.append(temp_path)
+
+        result = _run_verilator_lint_file_set(
+            temp_files, LINT_MODE_INTEGRATION, top_module)
+        if result is None:
+            result = _integration_unavailable_result(
+                "Verilator is not available; integration lint requires Verilator",
+                source_dir,
+                top_module
+            )
+        else:
+            result["integration_available"] = True
+            result["rtl_dir"] = source_dir
+            result["top_module"] = top_module
+            result["files"] = [os.path.basename(path) for path in temp_files]
+            if module_name:
+                result["module_name"] = module_name
+        return result
+    finally:
+        try:
+            shutil.rmtree(temp_dir)
+        except OSError:
+            pass
+
+
+def lint_candidate(rtl_code, module_name=None, mode=LINT_MODE_SINGLE_FILE):
+    """
+    Run the configured RTL linter.
+
+    single_file mode is intentionally dependency-light for per-module LLM output.
+    integration mode overlays the candidate into the generated rtl_output set
+    and lints the configured top module.
+    """
+    if mode not in (LINT_MODE_SINGLE_FILE, LINT_MODE_INTEGRATION):
+        raise ValueError("unknown lint mode: {}".format(mode))
+
+    if mode == LINT_MODE_INTEGRATION:
+        return _run_integration_lint(rtl_code, module_name)
+
+    if not _has_module_declaration(rtl_code):
+        result = _heuristic_lint_candidate(rtl_code, mode)
+    else:
+        result = _run_verilator_lint_candidate(rtl_code, mode, module_name)
+    if result is None:
+        result = _heuristic_lint_candidate(rtl_code, mode)
+
+    if module_name:
+        result["module_name"] = module_name
+    return result
+
+
+def lint_full_system(top_module=None, rtl_dir=None):
+    """Run full integration lint against the generated rtl_output file set."""
+    return _run_integration_lint(
+        top_module=top_module or DEFAULT_INTEGRATION_TOP_MODULE,
+        rtl_dir=rtl_dir
+    )
+
+
+def lint_blocking_issues(rtl_code, module_name=None, mode=LINT_MODE_SINGLE_FILE):
+    """Return only linter findings that should block the LLM reviewer."""
+    return lint_candidate(rtl_code, module_name, mode)["blocking"]
+
+
 def lint_rtl_single_file(rtl_code):
     """
     Run Verilator single-file lint checking when available, otherwise fall back
     to a lightweight heuristic checker.
     Returns (ok: bool, issues: list[str]).
     """
-    ok, issues = _run_verilator_single_file_lint(rtl_code)
-    if ok is None:
-        return _heuristic_syntax_check(rtl_code)
-    return ok, issues
+    result = lint_candidate(rtl_code, mode=LINT_MODE_SINGLE_FILE)
+    return result["ok"], result["blocking"]
 
 
 def syntax_check(rtl_code):
-    """Compatibility wrapper for older call sites."""
+    """Compatibility wrapper around single-file linting."""
     return lint_rtl_single_file(rtl_code)
 
 
@@ -657,6 +922,37 @@ def _format_issue_block(title, issues):
     return "\n".join(lines)
 
 
+def _format_lint_block(title, lint_result):
+    if not lint_result:
+        return "{}\n- (none)".format(title)
+
+    ignored_label = (
+        "Ignored single-file findings"
+        if lint_result.get("mode") == LINT_MODE_SINGLE_FILE
+        else "Ignored findings"
+    )
+    lines = [
+        title,
+        "- mode: {}".format(lint_result.get("mode", "unknown")),
+        "- tool: {}".format(lint_result.get("tool", "unknown")),
+        "- ok: {}".format("yes" if lint_result.get("ok") else "no"),
+    ]
+
+    for key, label in (
+        ("blocking", "Blocking findings"),
+        ("nonblocking", "Nonblocking findings"),
+        ("ignored", ignored_label),
+    ):
+        values = lint_result.get(key, [])
+        lines.append("{}:".format(label))
+        if values:
+            lines.extend("- {}".format(item) for item in values)
+        else:
+            lines.append("- (none)")
+
+    return "\n".join(lines)
+
+
 def _format_lint_report(lint_ok, lint_issues, lint_fail_count=0):
     status = "PASS" if lint_ok else "FAIL"
     lines = [
@@ -670,6 +966,11 @@ def _format_lint_report(lint_ok, lint_issues, lint_fail_count=0):
         lines.append("Diagnostics:")
         lines.append("- (none)")
     return "\n".join(lines)
+
+
+def _lint_block_banner(attempt, total):
+    return "[dual_llm] -- Lint Block {}/{} -------------------------".format(
+        attempt, total)
 
 
 def _format_lint_attempt_history(lint_attempts):
@@ -785,11 +1086,15 @@ def _history_block(history, current_round):
         parts.append(_format_issue_block(
             "LLM #1 issues:", h.get("llm1_issues", [])))
         if "llm1_lint_ok" in h:
-            parts.append(_format_lint_report(
-                h.get("llm1_lint_ok"),
-                h.get("llm1_lint_issues", []),
-                h.get("llm1_lint_fail_count", 0)
-            ))
+            if h.get("lint_result"):
+                parts.append(_format_lint_block(
+                    "Single-file lint report:", h.get("lint_result")))
+            else:
+                parts.append(_format_lint_report(
+                    h.get("llm1_lint_ok"),
+                    h.get("llm1_lint_issues", []),
+                    h.get("llm1_lint_fail_count", 0)
+                ))
         parts.append("--- LLM #1 output ---\n" + h.get("llm1_code", "(none)"))
         parts.append("LLM #2 status: {}".format(h.get("llm2_status", "(none)")))
         parts.append(_format_issue_block(
@@ -978,6 +1283,7 @@ Rules:
 # ---------------------------------------------------------------------------
 
 def _llm1_generate(design, yaml_text, history, lint_issues=None,
+                   lint_result=None,
                    previous_rtl="", lint_attempts=None):
     """
     LLM #1 call for initial generation or local lint repair.
@@ -986,7 +1292,23 @@ def _llm1_generate(design, yaml_text, history, lint_issues=None,
     bundle = _design_context_bundle(design)
     hist = _history_block(history, len(history) + 1)
 
-    if lint_issues:
+    if lint_result and lint_result.get("blocking"):
+        user_msg = (
+            "The RTL you previously generated has blocking single-file lint errors."
+            " Fix them without changing any behavior"
+            " that already matches STRUCTURED LLM CONTEXT.\n\n"
+            "{lint_report}\n\n"
+            "CURRENT RTL:\n{current_rtl}\n\n"
+            "DESIGN CONTEXT:\n{ctx}\n\n"
+            "PREVIOUS ATTEMPTS (last 2 rounds):\n{hist}\n\n"
+            "Return JSON only."
+        ).format(
+            lint_report=_format_lint_block("LINTER REPORT:", lint_result),
+            current_rtl=previous_rtl,
+            ctx=bundle["prompt_text"],
+            hist=hist
+        )
+    elif lint_issues:
         repeated_lint_warning = ""
         if lint_attempts and len(lint_attempts) >= 2:
             latest_signature = _lint_issue_signature(lint_attempts[-1].get("issues", []))
@@ -1035,7 +1357,8 @@ def _llm1_generate(design, yaml_text, history, lint_issues=None,
 # LLM #2: review + fix
 # ---------------------------------------------------------------------------
 
-def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None):
+def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None,
+                 lint_result=None):
     """
     LLM #2 call: reviews rtl_code, returns parsed JSON payload.
     """
@@ -1043,7 +1366,17 @@ def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None):
     hist = _history_block(history, len(history) + 1)
 
     lint_section = ""
-    if lint_report:
+    if lint_result:
+        lint_section = (
+            "{lint_report}\n\n"
+            "Use the linter report as mechanical RTL context. Blocking findings should"
+            " already be repaired; ignored findings are single-file/integration-sensitive"
+            " and should not become spec violations by themselves.\n\n"
+        ).format(
+            lint_report=_format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
+        )
+    elif lint_report:
         lint_section = (
             "LOCAL VERILATOR LINT REPORT:\n{lint_report}\n\n"
         ).format(lint_report=lint_report)
@@ -1069,12 +1402,19 @@ def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None):
     )
 
 
-def _llm2_review_compact(design, rtl_code, lint_report=None):
+def _llm2_review_compact(design, rtl_code, lint_report=None, lint_result=None):
     """
     Retry reviewer with a smaller prompt and a smaller response schema.
     """
     lint_section = ""
-    if lint_report:
+    if lint_result:
+        lint_section = (
+            "{lint_report}\n\n"
+        ).format(
+            lint_report=_format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
+        )
+    elif lint_report:
         lint_section = (
             "LOCAL VERILATOR LINT REPORT:\n{lint_report}\n\n"
         ).format(lint_report=lint_report)
@@ -1220,9 +1560,12 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             round_record["llm1_status"] = llm1_payload["status"]
             round_record["llm1_issues"] = llm1_payload["issues"]
 
-        # ── Step 2: Single-file Verilator lint; repair until fail limit ──
+        # ── Step 2: Single-file lint; blocking repairs stay in this round ──
         if lint_enabled:
-            lint_ok, lint_issues = lint_rtl_single_file(llm1_code)
+            lint_result = lint_candidate(
+                llm1_code, design.design_name, mode=LINT_MODE_SINGLE_FILE)
+            lint_ok = lint_result["ok"]
+            lint_issues = lint_result["blocking"]
             lint_fail_count = 0 if lint_ok else 1
             lint_attempts = []
             if not lint_ok:
@@ -1231,18 +1574,23 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
                     "issues": lint_issues
                 })
             while not lint_ok and lint_fail_count < MAX_LOCAL_LINT_FAILS:
-                print("[dual_llm] Step 2: Local lint failed ({}/{}): {}".format(
+                print(_lint_block_banner(lint_fail_count, MAX_LOCAL_LINT_FAILS))
+                print("[dual_llm] Step 2: Blocking lint issues ({}/{}): {}".format(
                     lint_fail_count, MAX_LOCAL_LINT_FAILS, "; ".join(lint_issues)))
                 llm1_payload = _llm1_generate(
                     design, yaml_text, history,
                     lint_issues=lint_issues,
+                    lint_result=lint_result,
                     previous_rtl=llm1_code,
                     lint_attempts=lint_attempts
                 )
                 llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
                 round_record["llm1_status"] = llm1_payload["status"]
                 round_record["llm1_issues"] = llm1_payload["issues"]
-                lint_ok, lint_issues = lint_rtl_single_file(llm1_code)
+                lint_result = lint_candidate(
+                    llm1_code, design.design_name, mode=LINT_MODE_SINGLE_FILE)
+                lint_ok = lint_result["ok"]
+                lint_issues = lint_result["blocking"]
                 if not lint_ok:
                     lint_fail_count += 1
                     lint_attempts.append({
@@ -1253,6 +1601,8 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             lint_ok = True
             lint_issues = []
             lint_fail_count = 0
+            lint_result = _make_lint_result(
+                LINT_MODE_SINGLE_FILE, "disabled", [], [], [])
             print("[dual_llm] Step 2: Local lint skipped by --no-lint.")
 
         force_lint_handoff = lint_enabled and not lint_ok
@@ -1263,19 +1613,23 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
                   "Forcing reviewer handoff with lint context.".format(
                       lint_fail_count, MAX_LOCAL_LINT_FAILS))
         else:
-            print("[dual_llm] Step 2: Local lint OK.")
+            print("[dual_llm] Step 2: Single-file lint OK.")
+            if lint_result["nonblocking"]:
+                print("[dual_llm] Step 2: Nonblocking lint findings: {}".format(
+                    "; ".join(lint_result["nonblocking"][:5])))
+            if lint_result["ignored"]:
+                print("[dual_llm] Step 2: Ignored single-file findings: {}".format(
+                    "; ".join(lint_result["ignored"][:5])))
 
         round_record["llm1_code"] = llm1_code
         round_record["llm1_lint_ok"] = lint_ok
         round_record["llm1_lint_fail_count"] = lint_fail_count
         round_record["llm1_lint_issues"] = lint_issues
+        round_record["lint_result"] = lint_result
         forced_lint_report = None
         if force_lint_handoff:
-            forced_lint_report = _format_lint_report(
-                lint_ok,
-                lint_issues,
-                lint_fail_count
-            )
+            forced_lint_report = _format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
 
         # ── Step 3: LLM #2 reviews ──
         print("[dual_llm] Step 3: LLM #2 reviewing...")
@@ -1285,7 +1639,8 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
                 yaml_text,
                 llm1_code,
                 history,
-                lint_report=forced_lint_report
+                lint_report=forced_lint_report,
+                lint_result=lint_result
             )
         except RuntimeError as e:
             print("[dual_llm] Reviewer failed: {}".format(e))
@@ -1296,10 +1651,11 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             print("[dual_llm] Reviewer JSON invalid; retrying compact review...")
             try:
                 compact_review = _llm2_review_compact(
-                    design,
-                    llm1_code,
-                    lint_report=forced_lint_report
-                )
+                        design,
+                        llm1_code,
+                        lint_report=forced_lint_report,
+                        lint_result=lint_result
+                    )
             except RuntimeError as e:
                 print("[dual_llm] Compact reviewer failed: {}".format(e))
                 print("[dual_llm] Reviewer unavailable; using cached fallback...")

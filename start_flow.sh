@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/flow.log"
+export PYTHONUNBUFFERED=1
 exec > >(tee "$LOG_FILE") 2>&1
 
 usage() {
@@ -57,7 +58,7 @@ if [ "$cache" -eq 1 ]; then
 fi
 
 if [ "$cache" -eq 1 ]; then
-    python3 run_flow.py configs/user_input.yaml "${flow_args[@]}"
+    python3 -u run_flow.py configs/user_input.yaml "${flow_args[@]}"
 else
-    python3 configure_from_text.py --run-flow "${flow_args[@]}"
+    python3 -u configure_from_text.py --run-flow "${flow_args[@]}"
 fi

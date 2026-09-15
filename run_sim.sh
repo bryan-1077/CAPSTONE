@@ -8,6 +8,37 @@ exec > >(tee "$LOG_FILE") 2>&1
 
 GTK_PRESET_DIR="$SCRIPT_DIR/gtk_presets"
 GTKWAVE_BIN="${GTKWAVE_BIN:-gtkwave}"
+NO_GTKWAVE_PROMPT="${NO_GTKWAVE_PROMPT:-0}"
+
+usage() {
+    cat <<'EOF'
+Usage: ./run_sim.sh [--no-wave-prompt] [-h|--help]
+
+Options:
+  --no-wave-prompt  Do not prompt to open the generated VCD in GTKWave.
+  -h, --help        Show this help message.
+EOF
+}
+
+parse_args() {
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --no-wave-prompt)
+                NO_GTKWAVE_PROMPT=1
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "[ERROR] Unknown option: $1"
+                usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
 
 detect_scheduler_mode() {
     local expanded_yaml="$SCRIPT_DIR/expanded/ddr4_scheduler/ddr4_scheduler_scheduler.yaml"
@@ -118,6 +149,10 @@ open_waveform() {
     local open_wave=""
     local preset_label=""
 
+    if [ "$NO_GTKWAVE_PROMPT" = "1" ]; then
+        return 0
+    fi
+
     if ! command -v "$GTKWAVE_BIN" >/dev/null 2>&1 || [ ! -f "$vcd_file" ]; then
         return 0
     fi
@@ -151,6 +186,8 @@ main() {
     local rtl_files=""
     local tb_file="$SCRIPT_DIR/tb/tb_ddr4_controller_top.sv"
     local vcd_file="$SCRIPT_DIR/tb_ddr4_controller_top.vcd"
+
+    parse_args "$@"
 
     cd "$SCRIPT_DIR"
 
