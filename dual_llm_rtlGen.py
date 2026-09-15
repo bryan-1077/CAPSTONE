@@ -37,7 +37,7 @@ from width_safety import enforce_width_safety
 # ---------------------------------------------------------------------------
 
 # LLM #1: generator / merger
-LLM1_MODEL = "protected.gpt-4.1"
+LLM1_MODEL = "protected.gpt-5.4"
 
 # LLM #2: reviewer / fixer — different model for diverse critique
 LLM2_MODEL = "protected.Claude Sonnet 4.6"
@@ -222,24 +222,33 @@ def _run_verilator_single_file_lint(rtl_code):
         )
 
         output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
-        if proc.returncode == 0:
-            return True, []
-
-        issues = []
+        errors = []
+        warnings = []
         for line in output.splitlines():
             text = line.strip()
             if not text:
                 continue
-            if "%Error" in text or "%Warning" in text:
-                issues.append(text)
+            if text.startswith("%Error-") or (
+                text.startswith("%Error:") and not text.startswith("%Error: Exiting due to")
+            ):
+                errors.append(text)
+            elif text.startswith("%Warning-"):
+                warnings.append(text)
 
-        if not issues and output:
-            issues = [line.strip() for line in output.splitlines() if line.strip()]
+        if not errors:
+            match = re.search(r"Exiting due to\s+(\d+)\s+error", output)
+            if match and int(match.group(1)) > 0:
+                errors.append(match.group(0))
 
-        if not issues:
-            issues = ["Verilator lint failed with no diagnostic output"]
+        if errors:
+            return False, errors
 
-        return False, issues
+        if proc.returncode != 0 and not warnings:
+            if output:
+                return False, [line.strip() for line in output.splitlines() if line.strip()]
+            return False, ["Verilator lint failed with no diagnostic output"]
+
+        return True, warnings
 
     except OSError:
         return None, None

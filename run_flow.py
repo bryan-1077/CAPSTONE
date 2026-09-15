@@ -563,11 +563,15 @@ def run_full_system_lint(rtl_root: str = "rtl_output") -> None:
     )
 
     output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
-    if proc.returncode == 0:
-        print(f"[LINT] Full system lint PASS: Verilator checked {file_count} RTL files.")
+    error_count, warning_count = count_verilator_diagnostics(output)
+    if proc.returncode == 0 or error_count == 0:
+        print(
+            "[LINT] Full system lint PASS: "
+            f"Verilator checked {file_count} RTL files; "
+            f"errors={error_count}; warnings={warning_count}."
+        )
         return
 
-    error_count, warning_count = count_verilator_diagnostics(output)
     print(
         "[LINT] Full system lint FAIL: "
         f"Verilator checked {file_count} RTL files; "

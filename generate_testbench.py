@@ -1147,7 +1147,7 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
                                      pattern_tfaw_hard_block_start);
 """
 
-    if design.has_tfaw and design.tfaw_limit_reachable:
+    if design.has_tfaw and design.has_trrd and design.tfaw_limit_reachable:
         timing_stress_summary_block = """
     task automatic report_timing_stress_summary(
         input int accept_start,
@@ -1205,7 +1205,7 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
         end
     endtask
 """
-    elif design.has_tfaw:
+    elif design.has_tfaw and design.has_trrd:
         timing_stress_summary_block = f"""
     task automatic report_timing_stress_summary(
         input int accept_start,
@@ -1258,7 +1258,7 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
         end
     endtask
 """
-    else:
+    elif design.has_trrd:
         timing_stress_summary_block = """
     task automatic report_timing_stress_summary(
         input int accept_start,
@@ -1305,26 +1305,88 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
         end
     endtask
 """
+    else:
+        timing_stress_summary_block = """
+    task automatic report_timing_stress_summary(
+        input int accept_start,
+        input int stall_busy_start,
+        input int stall_trrd_start,
+        input int stall_refresh_start,
+        input int stall_other_start,
+        input int tfaw_admission_start,
+        input int tfaw_hard_block_start
+    );
+        int accepted_delta;
+        int stall_busy_delta;
+        int stall_trrd_delta;
+        int stall_refresh_delta;
+        int stall_other_delta;
+        int total_stall_delta;
+        real stall_cycles_per_txn;
+        begin
+            accepted_delta = dut.cnt_accept - accept_start;
+            stall_busy_delta = dut.cnt_stall_busy - stall_busy_start;
+            stall_trrd_delta = dut.cnt_stall_trrd - stall_trrd_start;
+            stall_refresh_delta = dut.cnt_stall_refresh - stall_refresh_start;
+            stall_other_delta = dut.cnt_stall_other - stall_other_start;
+            total_stall_delta = stall_busy_delta + stall_trrd_delta + stall_refresh_delta + stall_other_delta;
+            stall_cycles_per_txn = 0.0;
+
+            if (accepted_delta != 0) begin
+                stall_cycles_per_txn = $itor(total_stall_delta) / $itor(accepted_delta);
+            end
+
+            `CHECK(stall_trrd_delta == 0,
+                   "tRRD stalls should remain zero when tRRD is disabled")
+
+            $display("----- TIMING STRESS SUMMARY -----");
+            $display("Accepted Transactions   : %0d", accepted_delta);
+            $display("Busy Stall Cycles        : %0d", stall_busy_delta);
+            $display("tRRD Stall Cycles        : %0d", stall_trrd_delta);
+            $display("Refresh Stall Cycles     : %0d", stall_refresh_delta);
+            $display("Other Stall Cycles       : %0d", stall_other_delta);
+            $display("Stall / Accepted Txn     : %0.2f cycles", stall_cycles_per_txn);
+            $display("Timing Observation      : tRRD/tFAW throttling is disabled; timing stress still exercises repeated non-hit service.");
+            $display("Pattern Explanation     : consecutive non-hit accesses keep the slow path active without expecting feature-disabled timing stalls.");
+        end
+    endtask
+"""
+
+    expects_backpressure = design.has_trrd or (design.has_tfaw and design.tfaw_limit_reachable)
+    if expects_backpressure:
+        corner_backpressure_block = """        wait(cmd_ready === 1'b0);
+        `INFO("Observed backpressure while controller was busy")
+"""
+    else:
+        corner_backpressure_block = """        `INFO("No timing backpressure expected for this feature set")
+"""
 
     page_policy_display = design.page_policy
     if design.is_close_page:
-        coverage_goal_checks = f"""            `CHECK(saw_row_closed, "Row-closed access was never observed")
-            `CHECK(!saw_row_hit, "Close-page should not produce row-hit reuse in this serialized demo")
-            `CHECK(!saw_row_miss, "Close-page should classify the serialized non-hits as row-closed")
-            `CHECK(saw_backpressure, "Controller backpressure was never observed")
-{tRRD_coverage_line}"""
+        coverage_goal_lines = [
+            '            `CHECK(saw_row_closed, "Row-closed access was never observed")',
+            '            `CHECK(!saw_row_hit, "Close-page should not produce row-hit reuse in this serialized demo")',
+            '            `CHECK(!saw_row_miss, "Close-page should classify the serialized non-hits as row-closed")',
+        ]
         performance_policy_observation = (
             "Close-page removed row reuse, so repeated-row traffic stayed on the non-hit path."
         )
     else:
-        coverage_goal_checks = f"""            `CHECK(saw_row_closed, "Row-closed access was never observed")
-            `CHECK(saw_row_hit, "Row-hit access was never observed")
-            `CHECK(saw_row_miss, "Row-miss access was never observed")
-            `CHECK(saw_backpressure, "Controller backpressure was never observed")
-{tRRD_coverage_line}"""
+        coverage_goal_lines = [
+            '            `CHECK(saw_row_closed, "Row-closed access was never observed")',
+            '            `CHECK(saw_row_hit, "Row-hit access was never observed")',
+            '            `CHECK(saw_row_miss, "Row-miss access was never observed")',
+        ]
         performance_policy_observation = (
             "Open-page preserved row reuse whenever the workload stayed on an already-open row."
         )
+    if expects_backpressure:
+        coverage_goal_lines.append(
+            '            `CHECK(saw_backpressure, "Controller backpressure was never observed")'
+        )
+    if tRRD_coverage_line:
+        coverage_goal_lines.append(tRRD_coverage_line.rstrip())
+    coverage_goal_checks = "\n".join(coverage_goal_lines)
 
     return f"""`timescale 1ns/1ps
 
@@ -1410,7 +1472,8 @@ module {tb_module};
 
     task automatic check_coverage_goals;
         begin
-{coverage_goal_checks}        end
+{coverage_goal_checks}
+        end
     endtask
 
     task automatic report_results;
@@ -2105,8 +2168,7 @@ module {tb_module};
 {timing_stress_block}
         log_phase("CORNER CASES");
         `INFO("Corner cases")
-        wait(cmd_ready === 1'b0);
-        `INFO("Observed backpressure while controller was busy")
+{corner_backpressure_block.rstrip()}
 {refresh_sequence_block}
         `INFO("=== TEST END ===");
         $display("===== TEST COMPLETE =====");

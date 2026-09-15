@@ -1,129 +1,120 @@
 `timescale 1ns/1ps
 // GENERATED VIA DUAL-LLM FLOW
-module ddr4_scheduler_scheduler #(parameter int DEPTH = 4) (
-    input  logic clk,
-    input  logic rst_n,
-    input  logic [3:0] bank_active,
-    input  logic [39:0] bank_open_row,
-    input  logic cmd_ready,
-    output logic issue_ref,
-    output logic issue_txn,
-    output logic issue_valid,
-    input  logic ref_req,
-    input  logic [DEPTH*51-1:0] req_array,
-    input  logic [DEPTH-1:0] req_valid,
-    output logic [((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1:0] sel_idx,
-    input  logic timing_ok
+module ddr4_scheduler_scheduler (
+  input  logic         clk,
+  input  logic         rst_n,
+  input  logic [3:0]   bank_active,
+  input  logic [39:0]  bank_open_row,
+  input  logic         cmd_ready,
+  output logic         issue_ref,
+  output logic         issue_txn,
+  output logic         issue_valid,
+  input  logic         ref_req,
+  input  logic [203:0] req_array,
+  input  logic [3:0]   req_valid,
+  output logic [1:0]   sel_idx,
+  input  logic         timing_ok
 );
-    // Localparams
-    localparam int REQUEST_WIDTH = 51;
-    localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
+  localparam int DEPTH = 4;
+  localparam int REQUEST_WIDTH = 51;
+  localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
 
-    // Request structure definition
-    typedef struct packed {
-        logic [1:0] bank;
-        logic [9:0] row;
-        logic [5:0] col;
-        logic is_write;
-        logic [31:0] wdata;
-    } request_t;
+  typedef struct packed {
+    logic [1:0]  bank;
+    logic [9:0]  row;
+    logic [5:0]  col;
+    logic        is_write;
+    logic [31:0] wdata;
+  } request_t;
 
-    // Internal unpacked requests
-    request_t req_unpack   [DEPTH-1:0];
+  request_t req_unpacked [0:DEPTH-1];
+  logic [DEPTH-1:0] row_hit;
+  logic             any_row_hit;
+  logic             candidate_valid;
+  logic [SEL_WIDTH-1:0] candidate_idx;
+  logic             candidate_success;
+  logic             candidate_blocked;
+  logic             locked_valid;
+  logic [SEL_WIDTH-1:0] locked_idx;
+  logic             successful_issue;
 
-    // Unpack req_array
-    always_comb begin
-        for (int ui = 0; ui < DEPTH; ui++) begin
-            req_unpack[ui] = request_t'(req_array[ui*REQUEST_WIDTH +: REQUEST_WIDTH]);
-        end
+  always_comb begin
+    for (int i = 0; i < DEPTH; i++) begin
+      req_unpacked[i] = req_array[(i*REQUEST_WIDTH) +: REQUEST_WIDTH];
     end
+  end
 
-    // Compute row_hit per entry
-    logic [DEPTH-1:0] row_hit;
-    always_comb begin
-        for (int ri = 0; ri < DEPTH; ri++) begin
-            logic [1:0] bank_idx;
-            logic [9:0] open_row;
-            bank_idx = req_unpack[ri].bank;
-            open_row = bank_open_row[bank_idx*10 +: 10];
-            row_hit[ri] = req_valid[ri] && bank_active[bank_idx] && (open_row == req_unpack[ri].row);
-        end
+  always_comb begin
+    for (int j = 0; j < DEPTH; j++) begin
+      row_hit[j] = req_valid[j] &&
+                   bank_active[req_unpacked[j].bank] &&
+                   (bank_open_row[(req_unpacked[j].bank * 10) +: 10] == req_unpacked[j].row);
     end
+  end
 
-    // Selection candidate
-    logic candidate_valid;
-    logic [SEL_WIDTH-1:0] candidate_idx;
+  always_comb begin
+    any_row_hit = 1'b0;
+    candidate_valid = 1'b0;
+    candidate_idx = SEL_WIDTH'(0);
 
-    always_comb begin
-        candidate_valid = 1'b0;
-        candidate_idx = '0;
-        // Search for the lowest row-hit
-        for (int si = 0; si < DEPTH; si++) begin
-            if (row_hit[si]) begin
-                candidate_valid = 1'b1;
-                candidate_idx = SEL_WIDTH'(si);
-                break;
-            end
+    if (!locked_valid) begin
+      for (int k = 0; k < DEPTH; k++) begin
+        if (!any_row_hit && row_hit[k]) begin
+          any_row_hit = 1'b1;
+          candidate_valid = 1'b1;
+          candidate_idx = SEL_WIDTH'(k);
         end
-        // Fallback to lowest valid if no row-hit
-        if (!candidate_valid) begin
-            for (int fi = 0; fi < DEPTH; fi++) begin
-                if (req_valid[fi]) begin
-                    candidate_valid = 1'b1;
-                    candidate_idx = SEL_WIDTH'(fi);
-                    break;
-                end
-            end
+      end
+
+      if (!any_row_hit) begin
+        for (int m = 0; m < DEPTH; m++) begin
+          if (!candidate_valid && req_valid[m]) begin
+            candidate_valid = 1'b1;
+            candidate_idx = SEL_WIDTH'(m);
+          end
         end
+      end
     end
+  end
 
-    // State: locked index/register
-    logic locked;
-    logic [SEL_WIDTH-1:0] locked_idx;
-
-    // Track lock and sel_idx according to blocking policy
-    always_ff @(posedge clk) begin
-        if (!rst_n) begin
-            locked <= 1'b0;
-            locked_idx <= '0;
-        end else begin
-            // Successful transaction issue (unlocked after pulse)
-            if (locked && (issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref)) begin
-                locked <= 1'b0;
-            end
-            // Lock acquisition (only when not refresh, only blocked candidate)
-            else if (!locked && candidate_valid && !ref_req) begin
-                // Candidate can acquire lock ONLY if it is blocked (i.e. not immediately issuing)
-                if (!(cmd_ready && timing_ok)) begin
-                    locked <= 1'b1;
-                    locked_idx <= candidate_idx;
-                end
-            end
-        end
+  always_comb begin
+    issue_valid = 1'b0;
+    if (locked_valid) begin
+      issue_valid = req_valid[locked_idx];
+    end else begin
+      issue_valid = candidate_valid;
     end
+  end
 
-    // Output selection
-    always_comb begin
-        if (locked) begin
-            sel_idx = locked_idx;
-        end else begin
-            sel_idx = candidate_valid ? candidate_idx : '0;
-        end
+  always_comb begin
+    issue_ref = ref_req && cmd_ready && timing_ok;
+    issue_txn = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+    successful_issue = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+    candidate_success = candidate_valid && cmd_ready && timing_ok && !ref_req;
+    candidate_blocked = candidate_valid && !ref_req && !candidate_success;
+  end
+
+  always_ff @(posedge clk) begin
+    if (!rst_n) begin
+      locked_valid <= 1'b0;
+      locked_idx <= SEL_WIDTH'(0);
+    end else begin
+      if (successful_issue) begin
+        locked_valid <= 1'b0;
+      end else if (!locked_valid && candidate_blocked) begin
+        locked_valid <= 1'b1;
+        locked_idx <= candidate_idx;
+      end
     end
+  end
 
-    // Issue valid generation
-    always_comb begin
-        if (locked) begin
-            issue_valid = req_valid[locked_idx];
-        end else begin
-            issue_valid = candidate_valid ? req_valid[candidate_idx] : 1'b0;
-        end
+  always_comb begin
+    sel_idx = 2'(0);
+    if (locked_valid) begin
+      sel_idx = 2'(locked_idx);
+    end else begin
+      sel_idx = 2'(candidate_idx);
     end
-
-    // Issue reference (refresh)
-    assign issue_ref = ref_req && cmd_ready && timing_ok;
-
-    // Issue transaction: only one successful transaction per pulse, mutual exclusion with issue_ref
-    assign issue_txn = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+  end
 
 endmodule

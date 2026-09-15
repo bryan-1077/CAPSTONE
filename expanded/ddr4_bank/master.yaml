@@ -39,7 +39,7 @@ interfaces:
   to_module: bank_sequencer
   to_port: tRP_done
   width: 1
-jedec_profile: DDR4-2400
+jedec_profile: DDR4-3200
 source_feature: basic_commands
 submodules:
 - design_name: ddr4_bank_activate_fsm

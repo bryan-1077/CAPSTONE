@@ -36,7 +36,7 @@ state_machine:
   - IDLE
   - REQUEST
   transitions:
-  - condition: counter >= 9360
+  - condition: counter >= 12480
     from: IDLE
     to: REQUEST
   - condition: ref_ack == 1

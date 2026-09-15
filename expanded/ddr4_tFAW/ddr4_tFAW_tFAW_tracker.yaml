@@ -1,0 +1,148 @@
+behavior:
+  block_expression: (next_count >= 4)
+  combinational_behavior: 'next_window must be computed first as {act_window[TFAW_CYCLES-2:0],
+    act_pulse}. next_count is then the full unsaturated population count of next_window.
+    Do not count the shifted-out pre-shift bit act_window[TFAW_CYCLES-1]. act_count
+    is a registered post-update quantity captured on the clock edge from the saturated
+    population count of next_window, so do not require act_count to equal next_count
+    in the same pre-update combinational instant. tFAW_block is asserted when the
+    number of ACT pulses in the next window, including the current cycle, would be
+    4 or greater. Use the direct comparison (next_count >= 4), not (act_count >= 4).
+    tFAW_ok is the inverse of tFAW_block.
+
+    '
+  correctness_criteria:
+  - act_window must be TFAW_CYCLES bits wide
+  - next_window must be TFAW_CYCLES bits wide
+  - act_window must shift every cycle and insert act_pulse into bit 0
+  - the effective count must include the current cycle's act_pulse sample
+  - the effective count must exclude the shifted-out oldest bit from the pre-shift
+    act_window
+  - next_count must be computed from next_window
+  - next_count must equal the unsaturated population count of next_window
+  - next_count must be wide enough to represent values from 0 through TFAW_CYCLES
+  - act_count must never exceed 4
+  - on each rising edge, act_count must capture the saturated population count of
+    next_window on the same edge that act_window captures next_window
+  - after each sequential update, act_count must equal the saturated population count
+    of act_window
+  - tFAW_block must be 1 when next_count >= 4
+  - tFAW_ok must be 1 when next_count < 4
+  - act_window and act_count must reset to 0 on asynchronous reset
+  - all constants and parameters must be explicitly cast or sized to the consuming
+    signal width
+  count_source: next_window
+  internal_signals:
+    act_count:
+      description: 'Registered saturated count of ACT commands. On each clock edge,
+        act_count captures the saturated population count of next_window; therefore,
+        after the update, it equals the saturated population count of act_window.
+        Reset value: 0.
+
+        '
+      type: logic
+      width: 3
+    act_window:
+      description: 'One bit per cycle in the rolling tFAW window. On each clock edge
+        the register shifts left and inserts act_pulse into bit 0. Reset value: 0.
+
+        '
+      type: logic
+      width: TFAW_CYCLES
+    next_count:
+      description: 'Full unsaturated population count of the updated shift register.
+        This count includes the current cycle''s act_pulse via next_window, is the
+        source for tFAW_block, and therefore must be wide enough to represent any
+        value from 0 through TFAW_CYCLES.
+
+        '
+      type: logic
+      width: $clog2(TFAW_CYCLES + 1)
+    next_window:
+      description: 'Updated shift-register value for the next cycle. It must equal
+        {act_window[TFAW_CYCLES-2:0], act_pulse}, which drops the oldest pre-shift
+        bit and inserts act_pulse into bit 0.
+
+        '
+      type: logic
+      width: TFAW_CYCLES
+  rtl_parameters:
+    TFAW_CYCLES: 40
+    TFAW_LIMIT: 4
+  sequential_behavior: "On every rising clock edge:\n  1. Form next_window = {act_window[TFAW_CYCLES-2:0],\
+    \ act_pulse}\n     from the pre-update act_window and the current act_pulse.\n\
+    \  2. Update act_window <= next_window.\n  3. On the same clock edge, update act_count\
+    \ <= saturated population\n     count of next_window.\n  4. Therefore, after the\
+    \ sequential update, act_count equals the\n     saturated population count of\
+    \ act_window.\nOn asynchronous reset (rst_n low):\n  act_window <= 0\n  act_count\
+    \  <= 0\n"
+  tFAW_cycles: 40
+  tFAW_limit: 4
+  updated_window_expression: '{act_window[TFAW_CYCLES-2:0], act_pulse}'
+  window_size: 40
+clock:
+  name: clk
+design_name: ddr4_tFAW_tFAW_tracker
+design_type: datapath
+forbidden_patterns:
+- timestamp tracking
+- decrement logic
+- aging logic outside the shift register
+- wraparound handling
+- alternate non-shift-register tracking structures
+- counting the shifted-out oldest bit
+implementation_constraints:
+- use shift register only
+- use cycle-based window
+- include current cycle in the effective count
+- use saturation at 4
+- parameterize window size
+- reset behavior must match the specification exactly
+- all parameter-based arithmetic and comparisons must use explicit width matching
+invariants:
+- act_window width == TFAW_CYCLES
+- next_window width == TFAW_CYCLES
+- act_count <= 4
+- after each sequential update, act_count equals the saturated population count of
+  act_window
+- the current cycle's act_pulse is included in the updated window count
+- the oldest pre-shift bit is excluded from the updated window count
+- next_count is computed from next_window, not from the full pre-shift act_window
+  plus act_pulse
+- next_count is the unsaturated population count of next_window
+- next_count width == $clog2(TFAW_CYCLES + 1)
+- on each rising edge, act_window captures next_window and act_count captures the
+  saturated population count of next_window
+- tFAW_block == (next_count >= 4)
+- tFAW_ok == !tFAW_block
+- reset clears act_window and act_count
+ports:
+- description: Asserted for exactly one cycle when an ACT command is issued
+  direction: input
+  name: act_pulse
+  width: 1
+- description: 'High when the number of ACT pulses in the next window (including the
+    current cycle) would remain below 4.
+
+    '
+  direction: output
+  name: tFAW_ok
+  width: 1
+- description: 'High when the number of ACT pulses in the next window (including the
+    current cycle) would be 4 or greater.
+
+    '
+  direction: output
+  name: tFAW_block
+  width: 1
+- description: 'Saturated registered number of ACTIVATE commands in the rolling cycle
+    window after the most recent clock edge (0 to 4).
+
+    '
+  direction: output
+  name: act_count
+  width: 3
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: false

@@ -3,6 +3,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$SCRIPT_DIR/bist.log"
+exec > >(tee "$LOG_FILE") 2>&1
+
 GTK_PRESET_DIR="$SCRIPT_DIR/gtk_presets"
 GTKWAVE_BIN="${GTKWAVE_BIN:-gtkwave}"
 

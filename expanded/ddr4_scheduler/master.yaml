@@ -1,7 +1,7 @@
 design_name: ddr4_scheduler
 design_type: top_level
 interfaces: []
-jedec_profile: DDR4-2400
+jedec_profile: DDR4-3200
 source_feature: scheduler
 submodules:
 - design_name: ddr4_scheduler_scheduler

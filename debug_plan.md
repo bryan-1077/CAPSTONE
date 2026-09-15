@@ -4,11 +4,26 @@
 
 Build an automated post-generation RTL debug loop for failures from BIST, external verification, and PD-originated logic issues. For the near term, fixes are applied directly to `rtl_output/*.sv`. Later, recurring fixes can be analyzed and backported into the generation flow.
 
-## Architecture
+## Implementation Approach
 
-Use LangGraph as the workflow orchestrator and LangChain/model tooling for LLM calls, structured outputs, and tool integration.
+Start with a small plain-Python `debug_agent.py` so the debug flow works before new workflow dependencies are installed. Keep each step as a standalone function that can later be wrapped as a LangGraph node.
 
-Planned graph:
+LangGraph/LangChain can be added after Phase 1 if the graph abstraction is still useful. Do not make them required for the first working debug loop.
+
+## Target Architecture
+
+Near-term function flow:
+
+```text
+run_or_ingest
+  -> parse_failure
+  -> classify_failure
+  -> localize_rtl
+  -> write_patch_plan
+  -> record_status
+```
+
+Later graph flow:
 
 ```text
 run_check
@@ -50,19 +65,38 @@ Create one directory per failure:
 
 ```text
 debug/
+  fixtures/
+  schemas/
+  templates/
   failures/
     0001_short_failure_name/
-      metadata.json
-      command.txt
-      raw.log
-      parsed_failure.json
-      suspected_modules.json
-      patch_plan.md
-      patch.diff
-      attempt_01.log
-      attempt_02.log
-      fix.md
-      status.json
+      debug.log
+      intake/
+        metadata.json
+        rtl_state.json
+        command.txt
+        raw.log
+      analysis/
+        parsed_failure.json
+        classification.json
+        suspected_modules.json
+        patch_plan.md
+      attempts/
+        attempt_01/
+          prompt.md
+          response.md
+          patch.diff
+          validation.json
+          apply.json
+          checks.json
+          apply.log
+          lint.log
+          target.log
+          metadata.json
+          status.json
+      result/
+        fix.md
+        status.json
 ```
 
 Each failure record should preserve:
@@ -144,17 +178,33 @@ Implement `debug_agent.py` with:
 - failure parsing
 - failure classification
 - suspected RTL file identification
-- `patch_plan.md` generation
+- deterministic `patch_plan.md` generation
 - no automatic RTL edits
+
+Supported initial commands:
+
+```sh
+python debug_agent.py bist --command ./run_sim.sh
+python debug_agent.py lint --command "python run_flow.py configs/user_input.yaml --cache"
+python debug_agent.py verif --command ./run_verif.sh
+python debug_agent.py pd --log reports/pd_report.log
+```
 
 ### Phase 2: Controlled RTL Patching
 
 Add:
 
-- RTL patch generation
+- proposal-only RTL patch generation
+- patch validation guardrail
 - patch application
-- failing-check rerun
+- one-step `repair` command for propose -> validate -> apply -> check
+- default lint/structural check rerun after applying a patch
+- target failing-check rerun after lint passes
+- failed-patch rollback unless explicitly kept
 - attempt tracking
+- prior-attempt context included in retry prompts
+- repair orchestration record
+- `needs_human` status after the attempt limit is reached
 - final `fix.md` and `status.json`
 
 ### Phase 3: Richer Debug Context

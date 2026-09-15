@@ -29,7 +29,7 @@ state_machine:
   - condition: start == 1
     from: IDLE
     to: COUNTING
-  - condition: tRP_counter >= 17
+  - condition: tRP_counter >= 22
     from: COUNTING
     to: DONE
   - condition: ack == 1

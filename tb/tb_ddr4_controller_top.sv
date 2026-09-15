@@ -13,9 +13,9 @@ module tb_ddr4_controller_top;
 
     localparam int MAX_CYCLES = 20000;
     localparam time SIM_END_TIME = 200000ns;
-    localparam int REFRESH_WAIT_CYCLES = 9392;
-    localparam int BANK_COUNT = 1;
-    localparam int TXN_BANK_WIDTH = 1;
+    localparam int REFRESH_WAIT_CYCLES = 12512;
+    localparam int BANK_COUNT = 4;
+    localparam int TXN_BANK_WIDTH = 2;
     localparam int ADDR_WIDTH = 4;
     localparam int DATA_WIDTH = 32;
     localparam int ROW_WIDTH = 2;
@@ -30,7 +30,7 @@ module tb_ddr4_controller_top;
     localparam int ROW_CLASS_CLOSED = 0;
     localparam int ROW_CLASS_HIT = 1;
     localparam int ROW_CLASS_MISS = 2;
-    localparam string PAGE_POLICY = "close_page";
+    localparam string PAGE_POLICY = "open_page";
 
     int error_count = 0;
     int cycle = 0;
@@ -52,6 +52,10 @@ module tb_ddr4_controller_top;
     bit saw_row_hit = 0;
     bit saw_row_miss = 0;
 
+    bit saw_tFAW_block = 0;
+    int observed_tfaw_admission_stall_cycles = 0;
+    int observed_tfaw_hard_block_cycles = 0;
+
     logic [DATA_WIDTH-1:0] pattern_data;
     logic [DATA_WIDTH-1:0] high_locality_expected_data [0:COL_COUNT-1];
 
@@ -61,7 +65,7 @@ module tb_ddr4_controller_top;
     logic txn_is_write;
     logic [ADDR_WIDTH-1:0] txn_addr;
     logic [DATA_WIDTH-1:0] txn_wdata;
-
+    logic [1:0] txn_bank;
     logic cmd_ready;
     logic rsp_valid;
     logic [DATA_WIDTH-1:0] rsp_rdata;
@@ -123,7 +127,7 @@ module tb_ddr4_controller_top;
         .txn_is_write(txn_is_write),
         .txn_addr(txn_addr),
         .txn_wdata(txn_wdata),
-
+        .txn_bank(txn_bank),
         .cmd_ready(cmd_ready),
         .rsp_valid(rsp_valid),
         .rsp_rdata(rsp_rdata)
@@ -132,9 +136,10 @@ module tb_ddr4_controller_top;
     task automatic check_coverage_goals;
         begin
             `CHECK(saw_row_closed, "Row-closed access was never observed")
-            `CHECK(!saw_row_hit, "Close-page should not produce row-hit reuse in this serialized demo")
-            `CHECK(!saw_row_miss, "Close-page should classify the serialized non-hits as row-closed")
+            `CHECK(saw_row_hit, "Row-hit access was never observed")
+            `CHECK(saw_row_miss, "Row-miss access was never observed")
             `CHECK(saw_backpressure, "Controller backpressure was never observed")
+            `CHECK(saw_tRRD_block, "tRRD block never occurred")
         end
     endtask
 
@@ -198,7 +203,7 @@ module tb_ddr4_controller_top;
             $display("Stall Cycles          : %0d", dut.cnt_stall);
             $display("Row Hit Ratio         : %0.2f%%", row_hit_ratio);
             $display("Non-Hit Ratio         : %0.2f%%", non_hit_ratio);
-            $display("Policy Observation    : Close-page removed row reuse, so repeated-row traffic stayed on the non-hit path.");
+            $display("Policy Observation    : Open-page preserved row reuse whenever the workload stayed on an already-open row.");
             $display("===== STALL BREAKDOWN =====");
             $display("Busy Stall Cycles     : %0d", dut.cnt_stall_busy);
             $display("tRRD Stall Cycles     : %0d", dut.cnt_stall_trrd);
@@ -404,6 +409,8 @@ module tb_ddr4_controller_top;
         int stall_refresh_delta;
         int stall_other_delta;
         int total_stall_delta;
+        int tfaw_admission_delta;
+        int tfaw_hard_block_delta;
         real stall_cycles_per_txn;
         begin
             accepted_delta = dut.cnt_accept - accept_start;
@@ -412,6 +419,8 @@ module tb_ddr4_controller_top;
             stall_refresh_delta = dut.cnt_stall_refresh - stall_refresh_start;
             stall_other_delta = dut.cnt_stall_other - stall_other_start;
             total_stall_delta = stall_busy_delta + stall_trrd_delta + stall_refresh_delta + stall_other_delta;
+            tfaw_admission_delta = observed_tfaw_admission_stall_cycles - tfaw_admission_start;
+            tfaw_hard_block_delta = observed_tfaw_hard_block_cycles - tfaw_hard_block_start;
             stall_cycles_per_txn = 0.0;
 
             if (accepted_delta != 0) begin
@@ -428,8 +437,10 @@ module tb_ddr4_controller_top;
             $display("Refresh Stall Cycles     : %0d", stall_refresh_delta);
             $display("Other Stall Cycles       : %0d", stall_other_delta);
             $display("Stall / Accepted Txn     : %0.2f cycles", stall_cycles_per_txn);
-            $display("Timing Observation      : tRRD throttled requests in the ACT-heavy sequence.");
-            $display("tFAW Status             : disabled in this configuration.");
+            $display("tFAW Admission Stalls    : %0d", tfaw_admission_delta);
+            $display("tFAW Hard-Block Cycles   : %0d", tfaw_hard_block_delta);
+            $display("Timing Observation      : tRRD throttled requests; additional ACT pressure also showed up as tFAW admission stalls inside the 'other' bucket.");
+            $display("tFAW Status             : enabled, but the hard block threshold is not realistically reachable in this config (window=40, limit=4).");
             $display("Pattern Explanation     : consecutive non-hit accesses across banks increased ACT pressure and exposed timing throttling.");
         end
     endtask
@@ -668,6 +679,7 @@ module tb_ddr4_controller_top;
     );
         begin
             @(negedge clk);
+            txn_bank = bank_sel[TXN_BANK_WIDTH-1:0];
             txn_addr = make_addr(row_sel, col_sel);
             txn_is_write = 1'b0;
             txn_wdata = '0;
@@ -696,6 +708,7 @@ module tb_ddr4_controller_top;
             txn_id = txn_id + 1;
             request_id = txn_id;
             active_txn_id = request_id;
+            txn_bank = bank_sel[TXN_BANK_WIDTH-1:0];
             txn_is_write = is_write;
             txn_addr = make_addr(row_sel, col_sel);
             txn_wdata = data;
@@ -938,15 +951,47 @@ module tb_ddr4_controller_top;
 
 
     always @(posedge clk) begin
+        if (rst_n && dut.accepted_slow) begin
+            `CHECK(dut.tfaw_can_accept_act,
+                   "tFAW admission violation: slow activate accepted when tFAW window was full")
+        end
+    end
+
+    always @(posedge clk) begin
+        if (rst_n && dut.u_tRRD.tRRD_block && dut.act_pulse) begin
+            `CHECK(0, "tRRD violation: act during block")
+        end
+    end
+
+    always @(posedge clk) begin
         if (!rst_n) begin
             saw_backpressure <= 1'b0;
             saw_tRRD_block <= 1'b0;
             saw_row_closed <= 1'b0;
             saw_row_hit <= 1'b0;
             saw_row_miss <= 1'b0;
+
+            saw_tFAW_block <= 1'b0;
+            observed_tfaw_admission_stall_cycles <= 0;
+            observed_tfaw_hard_block_cycles <= 0;
         end else begin
             if (!saw_backpressure && (txn_valid === 1'b1) && (cmd_ready === 1'b0)) begin
                 saw_backpressure <= 1'b1;
+            end
+
+            if (!saw_tRRD_block && dut.tRRD_block) begin
+                saw_tRRD_block <= 1'b1;
+            end
+
+            if (!saw_tFAW_block && dut.tFAW_block) begin
+                saw_tFAW_block <= 1'b1;
+            end
+            if (txn_valid && !cmd_ready && !dut.service_pending_q &&
+                (!dut.tRRD_block) && !dut.tfaw_can_accept_act) begin
+                observed_tfaw_admission_stall_cycles <= observed_tfaw_admission_stall_cycles + 1;
+            end
+            if (txn_valid && !cmd_ready && !dut.service_pending_q && dut.tFAW_block) begin
+                observed_tfaw_hard_block_cycles <= observed_tfaw_hard_block_cycles + 1;
             end
             if (dut.accept_txn && dut.is_row_closed) begin
                 saw_row_closed <= 1'b1;
@@ -970,6 +1015,14 @@ module tb_ddr4_controller_top;
     always @(posedge clk) begin
         if (rst_n && txn_valid && !cmd_ready && detail_logging_enabled()) begin
             $display("[STALL][id=%0d][cycle=%0d] txn blocked (cmd_ready=0)",
+                     active_txn_id, cycle);
+        end
+    end
+
+    always @(posedge clk) begin
+        if (rst_n && txn_valid && dut.tRRD_block && !dut.is_row_hit && !dut.accept_txn &&
+            detail_logging_enabled()) begin
+            $display("[tRRD ][id=%0d][cycle=%0d] BLOCKED activation",
                      active_txn_id, cycle);
         end
     end
@@ -1005,6 +1058,7 @@ module tb_ddr4_controller_top;
         txn_is_write = 1'b0;
         txn_addr = '0;
         txn_wdata = '0;
+        txn_bank = '0;
         rst_n = 1'b0;
         txn_id = 0;
         active_txn_id = 0;
@@ -1017,6 +1071,10 @@ module tb_ddr4_controller_top;
         saw_row_closed = 1'b0;
         saw_row_hit = 1'b0;
         saw_row_miss = 1'b0;
+
+        saw_tFAW_block = 1'b0;
+        observed_tfaw_admission_stall_cycles = 0;
+        observed_tfaw_hard_block_cycles = 0;
 
 
         sched_ref_req = 1'b0;
@@ -1079,38 +1137,58 @@ module tb_ddr4_controller_top;
         `INFO("Row-buffer phase")
         issue_write_and_wait_complete(0, 1, 1, DATA_WIDTH'(32'h11110001),
                                       ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, closed_latency,
-                                      "First access to bank 0 opens row 1 only for the current service");
-        check_row_state(0, 1'b0, 0, "Close-page clears bank 0 after the first access");
+                                      "First access to bank 0 opens row 1 on the slow path");
+        check_row_state(0, 1'b1, 1, "Bank 0 keeps row 1 open after the first access");
+
+        wait(dut.tRRD_block === 1'b1);
+        expect_access_ready(0, 1, 2, 1'b1,
+                            "Row hit remains ready while shared tRRD blocking is active");
+        expect_access_ready(0, 2, 0, 1'b0,
+                            "Row miss stalls while shared tRRD blocking is active");
         issue_read_and_wait_response(0, 1, 1, DATA_WIDTH'(32'h11110001),
-                                     ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, hit_latency,
-                                     "Second access to bank 0 row 1 reopens the row instead of hitting");
-        check_row_state(0, 1'b0, 0, "Repeated row access also leaves bank 0 closed");
+                                     ROW_CLASS_HIT, HIT_SERVICE_CYCLES, hit_latency,
+                                     "Second access to bank 0 row 1 is a row hit on the fast path");
+        check_row_state(0, 1'b1, 1, "Row hit keeps bank 0 row 1 open");
 
         issue_write_and_wait_complete(0, 2, 0, DATA_WIDTH'(32'h22220002),
-                                      ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, miss_latency,
-                                      "Accessing bank 0 row 2 remains a closed-row non-hit under close-page");
-        check_row_state(0, 1'b0, 0, "Bank 0 closes again after the row-2 access");
+                                      ROW_CLASS_MISS, SLOW_SERVICE_CYCLES, miss_latency,
+                                      "Accessing bank 0 row 2 causes a row miss and row replacement");
+        check_row_state(0, 1'b1, 2, "Row miss updates bank 0 to keep row 2 open");
 
         issue_read_and_wait_response(0, 2, 0, DATA_WIDTH'(32'h22220002),
-                                     ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, hit_latency_after_miss,
-                                     "Reading bank 0 row 2 still reopens from the closed state");
+                                     ROW_CLASS_HIT, HIT_SERVICE_CYCLES, hit_latency_after_miss,
+                                     "Reading bank 0 row 2 after replacement is a row hit");
         issue_read_and_wait_response(0, 1, 1, DATA_WIDTH'(32'h11110001),
-                                     ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, closed_readback_latency,
-                                     "Returning to bank 0 row 1 preserves data but not row residency");
-        check_row_state(0, 1'b0, 0, "Bank 0 remains closed after reading row 1 back");
+                                     ROW_CLASS_MISS, SLOW_SERVICE_CYCLES, closed_readback_latency,
+                                     "Returning to bank 0 row 1 preserves the original row-1 data");
+        check_row_state(0, 1'b1, 1, "Bank 0 re-opens row 1 after reading it back");
 
-        `CHECK(hit_latency == SLOW_SERVICE_CYCLES,
-               "Close-page should remove the row-hit fast path for repeated-row traffic")
-        `CHECK(hit_latency_after_miss == SLOW_SERVICE_CYCLES,
-               "Close-page should keep post-switch reads on the slow path as well")
-        `CHECK(closed_readback_latency == SLOW_SERVICE_CYCLES,
-               "Close-page should preserve data correctness while keeping row reuse disabled")
+        `CHECK(hit_latency < closed_latency,
+               "Row-hit service should be faster than the first closed-row access")
+        `CHECK(hit_latency < miss_latency,
+               "Row-hit service should be faster than a row miss")
+        `CHECK(hit_latency_after_miss == HIT_SERVICE_CYCLES,
+               "Row-hit latency after a miss should remain on the fast path")
 
+
+        log_phase("BANK ISOLATION");
+        `INFO("Bank isolation phase")
+        issue_write_and_wait_complete(1, 3, 1, DATA_WIDTH'(32'h33330003),
+                                      ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, bank1_closed_latency,
+                                      "Closed-bank WRITE on bank 1 opens an independent row");
+        check_row_state(0, 1'b1, 1, "Bank 0 row state is preserved while bank 1 opens a row");
+        check_row_state(1, 1'b1, 3, "Bank 1 tracks its own open row");
+        issue_read_and_wait_response(1, 3, 1, DATA_WIDTH'(32'h33330003),
+                                     ROW_CLASS_HIT, HIT_SERVICE_CYCLES, bank1_hit_latency,
+                                     "Bank 1 row hit returns its own stored data");
+        issue_read_and_wait_response(0, 1, 1, DATA_WIDTH'(32'h11110001),
+                                     ROW_CLASS_HIT, HIT_SERVICE_CYCLES, bank0_hit_latency_after_isolation,
+                                     "Bank 0 data and row-open state remain intact after bank 1 traffic");
 
 
         log_phase("ACCESS PATTERNS");
         `INFO("Pattern comparison phase")
-        check_row_state(0, 1'b0, 0, "Pattern comparison begins with bank 0 closed under close-page");
+        check_row_state(0, 1'b1, 1, "Pattern comparison begins with bank 0 row 1 open");
 
         log_test_pattern("HIGH LOCALITY");
         pattern_accept_start = dut.cnt_accept;
@@ -1130,11 +1208,11 @@ module tb_ddr4_controller_top;
             pattern_data = high_locality_data(pattern_iteration, pattern_col);
             high_locality_expected_data[pattern_col] = pattern_data;
             issue_write_and_wait_complete(0, 1, pattern_col, pattern_data,
-                                          ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, pattern_latency,
-                                          "High locality: close-page keeps same-row traffic on the non-hit path");
+                                          ROW_CLASS_HIT, HIT_SERVICE_CYCLES, pattern_latency,
+                                          "High locality: bank 0 stays on row 1 while columns change");
             issue_read_and_wait_response(0, 1, pattern_col, high_locality_expected_data[pattern_col],
-                                         ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, pattern_latency,
-                                         "High locality: close-page reopens row 1 instead of reusing it");
+                                         ROW_CLASS_HIT, HIT_SERVICE_CYCLES, pattern_latency,
+                                         "High locality: bank 0 reuses the same open row for readback");
         end
         clear_pattern_detail_logging();
         report_pattern_summary("HIGH LOCALITY",
@@ -1149,9 +1227,9 @@ module tb_ddr4_controller_top;
                                pattern_stall_trrd_start,
                                pattern_stall_refresh_start,
                                pattern_stall_other_start,
-                               "Close-page removed row reuse, reducing hit rate under HIGH LOCALITY.");
-        $display("Pattern Explanation   : bank 0 stayed on row 1, but close-page cleared the row after every completed access.");
-        check_row_state(0, 1'b0, 0, "High locality pattern leaves bank 0 closed under close-page");
+                               "Open-page preserved row reuse in HIGH LOCALITY.");
+        $display("Pattern Explanation   : bank 0 stayed on row 1 while columns changed, so the open row matched every request.");
+        check_row_state(0, 1'b1, 1, "High locality pattern keeps bank 0 row 1 open");
 
         log_test_pattern("LOW LOCALITY");
         pattern_accept_start = dut.cnt_accept;
@@ -1170,11 +1248,11 @@ module tb_ddr4_controller_top;
             pattern_col = pattern_iteration % COL_COUNT;
             pattern_data = low_locality_data(pattern_iteration, pattern_col);
             issue_write_and_wait_complete(0, 2, pattern_col, pattern_data,
-                                          ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, pattern_latency,
-                                          "Low locality: close-page still treats alternating-row traffic as closed-row access");
+                                          ROW_CLASS_MISS, SLOW_SERVICE_CYCLES, pattern_latency,
+                                          "Low locality: alternating from row 1 to row 2 displaces the open row");
             issue_read_and_wait_response(0, 1, pattern_col, high_locality_expected_data[pattern_col],
-                                         ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, pattern_latency,
-                                         "Low locality: switching back to row 1 still reopens from closed");
+                                         ROW_CLASS_MISS, SLOW_SERVICE_CYCLES, pattern_latency,
+                                         "Low locality: alternating back to row 1 forces another non-hit");
         end
         clear_pattern_detail_logging();
         report_pattern_summary("LOW LOCALITY",
@@ -1189,9 +1267,9 @@ module tb_ddr4_controller_top;
                                pattern_stall_trrd_start,
                                pattern_stall_refresh_start,
                                pattern_stall_other_start,
-                               "Close-page keeps both locality patterns on the non-hit path, so LOW LOCALITY changes less than open-page.");
-        $display("Pattern Explanation   : close-page cleared bank 0 after every access, so alternating rows looked similar to repeated-row traffic.");
-        check_row_state(0, 1'b0, 0, "Low locality pattern also leaves bank 0 closed under close-page");
+                               "Open-page helps most when requests stay on one row; LOW LOCALITY kept displacing the open row.");
+        $display("Pattern Explanation   : bank 0 alternated rows 1 and 2, so each new access displaced the prior open row.");
+        check_row_state(0, 1'b1, 1, "Low locality pattern ends with bank 0 row 1 reopened");
 
 
         log_test_pattern("TIMING STRESS");
@@ -1207,8 +1285,8 @@ module tb_ddr4_controller_top;
         pattern_stall_refresh_start = dut.cnt_stall_refresh;
         pattern_stall_other_start = dut.cnt_stall_other;
 
-        pattern_tfaw_admission_start = 0;
-        pattern_tfaw_hard_block_start = 0;
+        pattern_tfaw_admission_start = observed_tfaw_admission_stall_cycles;
+        pattern_tfaw_hard_block_start = observed_tfaw_hard_block_cycles;
         set_pattern_detail_logging("TIMING STRESS", PATTERN_DETAIL_LOG_LIMIT);
         for (pattern_iteration = 0; pattern_iteration < TIMING_STRESS_OPS; pattern_iteration = pattern_iteration + 1) begin
             pattern_bank = timing_stress_bank(pattern_iteration);
@@ -1216,8 +1294,8 @@ module tb_ddr4_controller_top;
             pattern_col = timing_stress_col(pattern_iteration);
             pattern_data = timing_stress_data(pattern_bank, pattern_iteration, pattern_row, pattern_col);
             issue_write_and_wait_complete(pattern_bank, pattern_row, pattern_col, pattern_data,
-                                          ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, pattern_latency,
-                                          "Timing stress: close-page keeps each ACT-heavy access on the closed-row path");
+                                          (((pattern_bank >= 2) && ((pattern_iteration / BANK_COUNT) == 0)) ? ROW_CLASS_CLOSED : ROW_CLASS_MISS), SLOW_SERVICE_CYCLES, pattern_latency,
+                                          "Timing stress: alternating banks and rows keeps ACT pressure high under open-page");
         end
         clear_pattern_detail_logging();
         report_pattern_summary("TIMING STRESS",
@@ -1232,7 +1310,7 @@ module tb_ddr4_controller_top;
                                pattern_stall_trrd_start,
                                pattern_stall_refresh_start,
                                pattern_stall_other_start,
-                               "Close-page kept the timing-stress sequence on the non-hit path, so ACT pressure stayed consistently high.");
+                               "Open-page still lost row reuse once the timing-stress pattern kept switching rows and banks.");
         report_timing_stress_summary(pattern_accept_start,
                                      pattern_stall_busy_start,
                                      pattern_stall_trrd_start,

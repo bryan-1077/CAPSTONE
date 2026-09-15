@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$SCRIPT_DIR/flow.log"
+exec > >(tee "$LOG_FILE") 2>&1
+
 usage() {
     cat <<'EOF'
 Usage: ./start_flow.sh [FLAGS]

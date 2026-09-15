@@ -1,4 +1,4 @@
-design_name: ddr4_refresh
+design_name: ddr4_tRRD
 design_type: memory_controller
 controller_config:
   protocol: DDR4
@@ -7,4 +7,4 @@ controller_config:
   topology:
     banks: 4
   features:
-  - refresh_controller
+  - tRRD

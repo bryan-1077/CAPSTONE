@@ -48,9 +48,26 @@ import yaml
 # can be called from any working directory.
 # ---------------------------------------------------------------------------
 SCRIPT_DIR          = os.path.dirname(os.path.abspath(__file__))
-JEDEC_DICT_PATH     = os.path.join(SCRIPT_DIR, "jedec/jedec_dictionary.yaml")
-TEMPLATES_PATH      = os.path.join(SCRIPT_DIR, "jedec/feature_templates.yaml")
 DEFAULT_OUTPUT_DIR  = os.path.join(SCRIPT_DIR, "expanded")
+
+
+def first_existing_path(*relative_paths):
+    """Resolve the first existing repo-relative path, falling back to the first."""
+    candidates = [os.path.join(SCRIPT_DIR, path) for path in relative_paths]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return candidates[0]
+
+
+JEDEC_DICT_PATH     = first_existing_path(
+    "jedec/jedec_dictionary.yaml",
+    "ir/jedec/jedec_dictionary.yaml",
+)
+TEMPLATES_PATH      = first_existing_path(
+    "jedec/feature_templates.yaml",
+    "ir/jedec/feature_templates.yaml",
+)
 
 
 # ---------------------------------------------------------------------------

@@ -1,2 +1,8 @@
 .md
 !README.md
+__pycache__/
+obj_dir/
+flow.log
+bist.log
+debug/failures/*
+!debug/failures/.gitkeep

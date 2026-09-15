@@ -62,7 +62,7 @@ module ddr4_bank_activate_fsm (
         next_state = current_state;  // default: hold current state
         case (current_state)
             IDLE: if (start == 1'd1) next_state = COUNTING;
-            COUNTING: if (tRCD_counter >= 5'd17) next_state = DONE;
+            COUNTING: if (tRCD_counter >= 5'd22) next_state = DONE;
             DONE: if (ack == 1'd1) next_state = IDLE;
             default: next_state = IDLE;  // illegal encoding -- recover to reset state
         endcase
