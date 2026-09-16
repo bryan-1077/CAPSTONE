@@ -342,8 +342,31 @@ def display_path(path: Path) -> str:
         return str(path.resolve())
 
 
+def debug_log_label(message: str) -> str:
+    lowered = message.lower()
+    if any(word in lowered for word in ("created failure workspace", "running bist command", "ingesting", "captured raw log")):
+        return "intake"
+    if any(word in lowered for word in ("parsing failure", "failure detected", "failure summary", "evidence counts", "classifying", "classification", "localizing", "suspect:", "writing analysis", "patch plan")):
+        return "analyze"
+    if any(word in lowered for word in ("starting patch proposal", "created patch attempt", "collecting patch context", "wrote prompt", "calling patch llm", "offline mode", "patch proposal", "patch diff bytes", "patch normalization")):
+        return "propose"
+    if any(word in lowered for word in ("validating patch", "patch validation", "validation issue", "validation warning", "attempt:")):
+        return "validate"
+    if any(word in lowered for word in ("applying patch", "validated touched files", "applying unified diff", "patch apply", "rtl modified")):
+        return "apply"
+    if any(word in lowered for word in ("running lint", "lint result", "running target", "target result", "skipping target", "checks failed", "rollback")):
+        return "check"
+    if any(word in lowered for word in ("starting repair", "repair flow", "repair failed", "repair stopped", "validation passed")):
+        return "repair"
+    if any(word in lowered for word in ("status:", "status json", "debug log", "final status")):
+        return "result"
+    if "error" in lowered:
+        return "error"
+    return "debug"
+
+
 def log_debug(failure_dir: Path | None, message: str) -> None:
-    line = f"[DEBUG] {message}"
+    line = f"[debug:{debug_log_label(message)}] {message}"
     print(line)
     if failure_dir is None:
         return
