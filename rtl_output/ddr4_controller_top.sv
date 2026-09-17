@@ -376,7 +376,7 @@ module ddr4_controller_top (
                         bank_mem[service_bank_q][service_addr_q] <= service_wdata_q;
                     end else begin
                         rsp_valid_q <= 1'b1;
-                        rsp_rdata_q <= bank_mem[service_bank_q][service_addr_q];
+                        rsp_rdata_q <= bank_mem[service_bank_q][{open_row[service_bank_q], service_addr_q[COL_WIDTH-1:0]}];
                     end
                 end
             end
@@ -414,7 +414,9 @@ module ddr4_controller_top (
                 service_prev_row_valid_q <= selected_row_open_valid;
                 service_bank_q <= selected_bank[BANK_SEL_WIDTH-1:0];
                 service_addr_q <= selected_addr;
-                service_wdata_q <= selected_req.wdata;
+                if (accepted_slow) begin
+                    service_wdata_q <= selected_req.wdata;
+                end
                 service_row_q <= requested_row;
                 service_prev_row_q <= selected_open_row;
                 if (accepted_hit) begin

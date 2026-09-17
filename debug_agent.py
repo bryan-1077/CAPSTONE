@@ -8,11 +8,16 @@ import hashlib
 import json
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable, Literal, TypedDict
+
+import debug_investigation as investigation
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -25,7 +30,7 @@ RTL_OUTPUT_DIR = SCRIPT_DIR / "rtl_output"
 MANIFEST_PATH = RTL_OUTPUT_DIR / "manifest.json"
 SUPPORTED_SOURCES = ("lint", "bist", "verif", "pd")
 FAILURE_SUBDIRS = ("intake", "analysis", "attempts", "result")
-DEFAULT_PATCH_MODEL = "protected.gpt-5.4"
+DEFAULT_PATCH_MODEL = "protected.Claude Opus 4.8"
 TAMU_API_URL = "https://chat-api.tamu.ai/openai/chat/completions"
 MAX_PATCH_CONTEXT_CHARS = 12000
 MAX_ATTEMPT_CONTEXT_CHARS = 4000
@@ -34,10 +39,12 @@ MAX_PROMPT_FAILURE_ITEMS = 12
 MAX_LOG_EXCERPT_RADIUS = 8
 MAX_FOCUSED_SNIPPETS_PER_FILE = 8
 FOCUSED_SNIPPET_RADIUS = 5
+GRAPH_CHECKPOINT_VERSION = 1
 DEFAULT_LINT_COMMAND = (
     "verilator --lint-only --Wall -Wno-fatal --top-module ddr4_controller_top "
     "$(find rtl_output -name '*.sv' | sort)"
 )
+AUTO_LINT_COMMAND = "auto"
 PATCH_SUCCESS_STATUSES = {
     "fixed",
     "patch_applied",
@@ -88,6 +95,50 @@ READ_DATA_MISMATCH_SIGNALS = (
 )
 
 
+class DebugGraphState(TypedDict, total=False):
+    failure_id: str
+    failure_dir: str
+    source: str
+    command: str | None
+    log: str | None
+    name: str | None
+    evidence_refs: dict[str, object]
+    artifact_refs: dict[str, object]
+    intake: dict[str, object]
+    parsed_failure: dict[str, object]
+    classification: dict[str, object]
+    localization: dict[str, object]
+    suspects: list[dict[str, object]]
+    hypotheses: list[dict[str, object]]
+    investigation: dict[str, object]
+    inspected_files: list[dict[str, object]]
+    attempt_dir: str | None
+    attempts: list[dict[str, object]]
+    validation: dict[str, object]
+    patch_context: dict[str, object]
+    check_results: list[dict[str, object]]
+    status: dict[str, object]
+    steps: list[dict[str, object]]
+    budgets: dict[str, object]
+    rtl_revision: dict[str, object]
+    input_hashes: dict[str, object]
+    checkpoint: dict[str, object]
+    stale_inputs: dict[str, object]
+    repair: bool
+    investigate: bool
+    resume: bool
+    force_stale: bool
+    model: str
+    offline: bool
+    max_attempts: int
+    lint_command: str | None
+    target_command: str | None
+    keep_failed_patch: bool
+    demo_mode: bool
+    graph_backend: str
+    stop_reason: str
+
+
 @dataclass(frozen=True)
 class IntakeResult:
     source: str
@@ -130,8 +181,129 @@ class RTLLocalization:
 
 
 def parse_args() -> argparse.Namespace:
-    if len(sys.argv) > 1 and sys.argv[1] in {"propose", "validate", "apply", "repair"}:
+    if len(sys.argv) > 1 and sys.argv[1] in {"propose", "validate", "apply", "repair", "graph", "auto"}:
         mode = sys.argv[1]
+        if mode == "auto":
+            parser = argparse.ArgumentParser(
+                description="Run a failure check and immediately send it through the LangGraph debug flow."
+            )
+            parser.add_argument("mode", choices=("auto",))
+            parser.add_argument("source", choices=SUPPORTED_SOURCES)
+            intake = parser.add_mutually_exclusive_group(required=True)
+            intake.add_argument("--command", help="Failure command to run and capture.")
+            intake.add_argument("--log", help="Existing failure log to ingest.")
+            parser.add_argument("--name", help="Optional short name for the failure workspace.")
+            parser.add_argument("--repair", action="store_true", help="Continue through proposal, validation, and apply.")
+            parser.add_argument("--investigate", action="store_true", help="Stop after investigation and evidence assessment.")
+            parser.add_argument("--model", default=DEFAULT_PATCH_MODEL)
+            parser.add_argument("--offline", action="store_true", help="Collect evidence without model calls and stop for review.")
+            parser.add_argument("--max-attempts", type=int, default=MAX_REPAIR_ATTEMPTS)
+            parser.add_argument("--lint-command", default=AUTO_LINT_COMMAND)
+            parser.add_argument("--target-command", help="Command to rerun after a patch; defaults to --command.")
+            parser.add_argument("--keep-failed-patch", action="store_true")
+            parser.add_argument("--demo-mode", action="store_true")
+            parser.add_argument("--require-langgraph", action="store_true")
+            parser.add_argument("--investigation-steps", type=int, default=8)
+            parser.add_argument("--investigation-context-chars", type=int, default=64000)
+            return parser.parse_args()
+        if mode == "graph":
+            parser = argparse.ArgumentParser(
+                description=(
+                    "Run the RTL debug flow through LangGraph orchestration when "
+                    "available, with a local node-runner fallback."
+                )
+            )
+            parser.add_argument("mode", choices=("graph",))
+            parser.add_argument(
+                "source",
+                nargs="?",
+                choices=SUPPORTED_SOURCES,
+                help="Failure source for a new graph-run intake.",
+            )
+            parser.add_argument(
+                "--failure-dir",
+                help="Existing debug/failures/<id> directory to continue through the graph.",
+            )
+            intake = parser.add_mutually_exclusive_group()
+            intake.add_argument(
+                "--command",
+                help="Failing command to run and capture for a new graph-run intake.",
+            )
+            intake.add_argument(
+                "--log",
+                help="Existing failure log to ingest for a new graph-run intake.",
+            )
+            parser.add_argument(
+                "--name",
+                help="Optional short name for the failure directory when creating one.",
+            )
+            parser.add_argument(
+                "--repair",
+                action="store_true",
+                help="Continue past analysis into one propose -> validate -> apply repair attempt.",
+            )
+            parser.add_argument(
+                "--resume",
+                action="store_true",
+                help="Resume from the saved graph checkpoint for --failure-dir when inputs are unchanged.",
+            )
+            parser.add_argument(
+                "--force-stale",
+                action="store_true",
+                help="Allow graph repair to continue even when saved checkpoint inputs are stale.",
+            )
+            parser.add_argument(
+                "--model",
+                default=DEFAULT_PATCH_MODEL,
+                help=f"LLM model for patch proposal generation. Default: {DEFAULT_PATCH_MODEL}",
+            )
+            parser.add_argument(
+                "--offline",
+                action="store_true",
+                help="Collect investigation evidence without model calls; stop for human assessment.",
+            )
+            parser.add_argument(
+                "--max-attempts",
+                type=int,
+                default=MAX_REPAIR_ATTEMPTS,
+                help=f"Maximum numbered repair attempts before marking needs_human. Default: {MAX_REPAIR_ATTEMPTS}",
+            )
+            parser.add_argument(
+                "--lint-command",
+                default=AUTO_LINT_COMMAND,
+                help=(
+                    "Lint/structural check to run after applying the patch. "
+                    "Default: auto-select single-file lint for standalone verif reports, "
+                    "otherwise full-RTL Verilator lint."
+                ),
+            )
+            parser.add_argument(
+                "--target-command",
+                help="Original failing check to rerun after lint passes.",
+            )
+            parser.add_argument(
+                "--keep-failed-patch",
+                action="store_true",
+                help="Leave an applied patch in the RTL tree even if lint or target checks fail.",
+            )
+            parser.add_argument(
+                "--demo-mode",
+                action="store_true",
+                help="Alias for --keep-failed-patch during iterative demo repair.",
+            )
+            parser.add_argument(
+                "--require-langgraph",
+                action="store_true",
+                help="Fail instead of using the local fallback when LangGraph is not installed.",
+            )
+            parser.add_argument("--investigation-steps", type=int, default=8,
+                                help="Maximum read/search actions per investigation (default: 8).")
+            parser.add_argument("--investigation-context-chars", type=int, default=64000,
+                                help="Maximum collected evidence characters (default: 64000).")
+            parser.add_argument("--investigate", action="store_true",
+                                help="Investigate and assess evidence without proposing or applying a patch.")
+            return parser.parse_args()
+
         if mode == "propose":
             parser = argparse.ArgumentParser(
                 description="Generate a proposal-only RTL patch attempt for an existing failure."
@@ -188,8 +360,12 @@ def parse_args() -> argparse.Namespace:
             )
             parser.add_argument(
                 "--lint-command",
-                default=DEFAULT_LINT_COMMAND,
-                help="Lint/structural check to run after applying the patch. Defaults to full-RTL Verilator lint.",
+                default=AUTO_LINT_COMMAND,
+                help=(
+                    "Lint/structural check to run after applying the patch. "
+                    "Default: auto-select single-file lint for standalone verif reports, "
+                    "otherwise full-RTL Verilator lint."
+                ),
             )
             parser.add_argument(
                 "--target-command",
@@ -214,8 +390,12 @@ def parse_args() -> argparse.Namespace:
         parser.add_argument("attempt_dir", help="Path to an attempts/attempt_XX directory.")
         parser.add_argument(
             "--lint-command",
-            default=DEFAULT_LINT_COMMAND,
-            help="Lint/structural check to run after applying the patch. Defaults to full-RTL Verilator lint.",
+            default=AUTO_LINT_COMMAND,
+            help=(
+                "Lint/structural check to run after applying the patch. "
+                "Default: auto-select single-file lint for standalone verif reports, "
+                "otherwise full-RTL Verilator lint."
+            ),
         )
         parser.add_argument(
             "--target-command",
@@ -442,6 +622,58 @@ def ingest_log(log_path: str) -> tuple[str, str, str]:
     return raw_log, started_at, finished_at
 
 
+def collect_sibling_verif_evidence(log_path: str | None, raw_log: str, intake_path: Path) -> None:
+    if not log_path:
+        return
+
+    source_path = Path(log_path).expanduser()
+    if not source_path.is_absolute():
+        source_path = (Path.cwd() / source_path).resolve()
+    if not source_path.is_file():
+        return
+
+    report = parse_verif_json_report(raw_log)
+    if not report:
+        return
+
+    evidence_dir = intake_path / "evidence"
+    copied: list[dict[str, object]] = []
+    candidates: list[Path] = []
+    top_module = str(report.get("top_module_name") or "").strip()
+    if top_module:
+        candidates.extend([
+            source_path.parent / f"{top_module}.sv",
+            source_path.parent / f"{top_module}.yaml",
+            source_path.parent / f"{top_module}.yml",
+        ])
+
+    for field in ("top_module_file", "spec_file"):
+        field_path = Path(str(report.get(field) or "")).name
+        if field_path:
+            candidates.append(source_path.parent / field_path)
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        if candidate in seen or not candidate.is_file():
+            continue
+        seen.add(candidate)
+        evidence_dir.mkdir(parents=True, exist_ok=True)
+        destination = evidence_dir / candidate.name
+        shutil.copy2(candidate, destination)
+        copied.append(
+            {
+                "source": str(candidate),
+                "captured_as": display_path(destination),
+                "sha256": file_sha256(destination),
+                "bytes": destination.stat().st_size,
+            }
+        )
+
+    if copied:
+        write_json(intake_path / "evidence_files.json", copied)
+
+
 def capture_intake(args: argparse.Namespace, failure_dir: Path) -> IntakeResult:
     intake_path = intake_dir(failure_dir)
     if args.command:
@@ -462,6 +694,8 @@ def capture_intake(args: argparse.Namespace, failure_dir: Path) -> IntakeResult:
     raw_log, started_at, finished_at = ingest_log(args.log)
     write_text(intake_path / "command.txt", f"# ingested log\n{args.log}\n")
     write_text(intake_path / "raw.log", raw_log)
+    if args.source == "verif":
+        collect_sibling_verif_evidence(args.log, raw_log, intake_path)
     return IntakeResult(
         source=args.source,
         mode="log",
@@ -540,6 +774,90 @@ def parse_flow_error(line: str) -> dict[str, object] | None:
     return {
         "message": stripped,
         "raw": stripped,
+    }
+
+
+def string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item).strip()]
+
+
+def parse_verif_json_report(raw_log: str) -> dict[str, object] | None:
+    try:
+        data = json.loads(raw_log)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    known_keys = {
+        "is_valid",
+        "error_code",
+        "failure_stage",
+        "issues",
+        "spec_issues",
+        "validation_stages",
+        "verification_readiness",
+    }
+    if not any(key in data for key in known_keys):
+        return None
+
+    issues = string_list(data.get("issues"))
+    spec_issues = string_list(data.get("spec_issues"))
+    warnings = string_list(data.get("warnings"))
+    stage_errors: list[dict[str, str]] = []
+    validation_stages = data.get("validation_stages")
+    if isinstance(validation_stages, dict):
+        for stage_name, stage_data in validation_stages.items():
+            if not isinstance(stage_data, dict):
+                continue
+            for error in string_list(stage_data.get("errors")):
+                stage_errors.append({"stage": str(stage_name), "message": error})
+
+    merged_issues: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for source_name, values in (
+        ("issues", issues),
+        ("spec_issues", spec_issues),
+        ("validation_stages", [item["message"] for item in stage_errors]),
+    ):
+        for message in values:
+            if message in seen:
+                continue
+            seen.add(message)
+            stage = str(data.get("failure_stage") or "")
+            if source_name == "validation_stages":
+                stage = next(
+                    (item["stage"] for item in stage_errors if item["message"] == message),
+                    stage,
+                )
+            merged_issues.append(
+                {
+                    "source": source_name,
+                    "stage": stage,
+                    "message": message,
+                }
+            )
+
+    return {
+        "is_valid": data.get("is_valid"),
+        "severity": data.get("severity"),
+        "error_code": data.get("error_code"),
+        "failure_stage": data.get("failure_stage"),
+        "summary": data.get("summary"),
+        "issues": merged_issues,
+        "warnings": warnings,
+        "rtl_files": string_list(data.get("rtl_files")),
+        "top_module_name": data.get("top_module_name"),
+        "top_module_file": data.get("top_module_file"),
+        "spec_file": data.get("spec_file"),
+        "compile_tool": data.get("compile_tool"),
+        "compile_passed": data.get("compile_passed"),
+        "yaml_sane": data.get("yaml_sane"),
+        "spec_consistent": data.get("spec_consistent"),
+        "rtl_sane": data.get("rtl_sane"),
     }
 
 
@@ -628,6 +946,49 @@ def parse_failure(raw_log: str, intake: IntakeResult) -> ParsedFailure:
         if errors_match:
             status_markers["errors_reported"] = int(errors_match.group(1))
 
+    verif_report = parse_verif_json_report(raw_log) if intake.source == "verif" else None
+    if verif_report:
+        status_markers["verif_report"] = {
+            "is_valid": verif_report.get("is_valid"),
+            "severity": verif_report.get("severity"),
+            "error_code": verif_report.get("error_code"),
+            "failure_stage": verif_report.get("failure_stage"),
+            "top_module_name": verif_report.get("top_module_name"),
+            "top_module_file": verif_report.get("top_module_file"),
+            "spec_file": verif_report.get("spec_file"),
+            "compile_tool": verif_report.get("compile_tool"),
+            "compile_passed": verif_report.get("compile_passed"),
+            "yaml_sane": verif_report.get("yaml_sane"),
+            "spec_consistent": verif_report.get("spec_consistent"),
+            "rtl_sane": verif_report.get("rtl_sane"),
+        }
+        issues = verif_report.get("issues")
+        if isinstance(issues, list):
+            for issue_index, issue in enumerate(issues, start=1):
+                if not isinstance(issue, dict):
+                    continue
+                message = str(issue.get("message") or "").strip()
+                if not message:
+                    continue
+                stage = str(issue.get("stage") or verif_report.get("failure_stage") or "verif")
+                top_module = str(verif_report.get("top_module_name") or "")
+                flow_errors.append(
+                    {
+                        "message": f"[VERIF] {stage}: {message}",
+                        "raw": message,
+                        "log_line": issue_index,
+                        "source": issue.get("source"),
+                        "stage": stage,
+                        "code": verif_report.get("error_code"),
+                        "severity": verif_report.get("severity"),
+                        "file": verif_report.get("top_module_file"),
+                        "rtl_files": verif_report.get("rtl_files"),
+                        "module": top_module,
+                    }
+                )
+        if verif_report.get("is_valid") is False:
+            status_markers["verif_fail"] = True
+
     counts = {
         "verilator_errors": sum(1 for item in verilator_diagnostics if item["severity"] == "error"),
         "verilator_warnings": sum(1 for item in verilator_diagnostics if item["severity"] == "warning"),
@@ -635,6 +996,9 @@ def parse_failure(raw_log: str, intake: IntakeResult) -> ParsedFailure:
         "assert_failures": len(assert_failures),
         "flow_errors": len(flow_errors),
     }
+    if verif_report:
+        issues = verif_report.get("issues")
+        counts["verif_issues"] = len(issues) if isinstance(issues, list) else 0
 
     summary = summarize_failure(
         intake,
@@ -717,6 +1081,29 @@ def classify_failure(parsed: ParsedFailure) -> FailureClassification:
             return FailureClassification("PD structural logic issue", "medium", reasons)
         reasons.append("PD source did not match a known timing or structural pattern.")
         return FailureClassification("unknown", "low", reasons)
+
+    if parsed.source == "verif":
+        report = parsed.status_markers.get("verif_report")
+        report = report if isinstance(report, dict) else {}
+        error_code = str(report.get("error_code") or "").lower()
+        failure_stage = str(report.get("failure_stage") or "").lower()
+        messages = " ".join(str(item.get("message") or "") for item in parsed.flow_errors).lower()
+
+        if parsed.flow_errors:
+            reasons.append(f"Found {len(parsed.flow_errors)} external verification issue(s).")
+        if error_code:
+            reasons.append(f"Verifier error_code={report.get('error_code')}.")
+        if failure_stage:
+            reasons.append(f"Verifier failure_stage={report.get('failure_stage')}.")
+
+        if "yaml_rtl_mismatch" in error_code or "yaml_vs_rtl" in failure_stage:
+            return FailureClassification("YAML/RTL mismatch", "high", reasons)
+        if any(word in messages for word in ("protocol", "timing", "handshake", "ready", "valid")):
+            return FailureClassification("protocol violation", "medium", reasons)
+        if any(word in messages for word in ("coverage", "unverified", "not_tested")):
+            return FailureClassification("coverage missing", "medium", reasons)
+        if parsed.flow_errors:
+            return FailureClassification("unknown", "medium", reasons)
 
     if parsed.flow_errors:
         reasons.append(f"Found {len(parsed.flow_errors)} flow-level error(s).")
@@ -853,6 +1240,8 @@ def extract_tokens(text: str) -> list[str]:
         "code", "capstone", "obj_dir", "directory", "entering",
         "leaving", "make", "into", "needing", "rev", "fedora",
         "testbench", "tb_ddr4_controller_top",
+        "yaml", "verif", "but", "does", "not", "describes", "clearly",
+        "drive", "driven", "assign", "directly",
     }
 
     terms: list[str] = []
@@ -1040,7 +1429,35 @@ def localize_rtl(raw_log: str, parsed: ParsedFailure) -> RTLLocalization:
             module=modules[0],
         )
 
+    for error in parsed.flow_errors:
+        raw_paths: list[object] = []
+        if error.get("file"):
+            raw_paths.append(error.get("file"))
+        rtl_files_from_error = error.get("rtl_files")
+        if isinstance(rtl_files_from_error, list):
+            raw_paths.extend(rtl_files_from_error)
+
+        for raw_path in raw_paths:
+            path = resolve_rtl_path(raw_path, rtl_files)
+            if not path:
+                continue
+            modules = file_to_modules.get(path, [path.stem])
+            module = str(error.get("module") or modules[0])
+            add_suspect(
+                suspects,
+                path,
+                95,
+                "External verification report points at this RTL file.",
+                module=module,
+            )
+
     terms = extract_failure_terms(raw_log, parsed)
+    verif_report = parsed.status_markers.get("verif_report")
+    if isinstance(verif_report, dict):
+        for field in ("top_module_name", "error_code", "failure_stage"):
+            value = str(verif_report.get(field) or "").strip()
+            if value and value not in terms:
+                terms.append(value)
     if is_read_data_mismatch(parsed):
         add_read_data_mismatch_suspects(suspects, file_text, file_to_modules)
         for term in READ_DATA_MISMATCH_SIGNALS:
@@ -1117,6 +1534,8 @@ def build_repair_hypothesis(classification: FailureClassification) -> str:
         return "Inspect whether the generated RTL can reach the missing scenario before changing behavior."
     if label == "protocol violation":
         return "Review ready/valid, timing, and command sequencing behavior around the suspected modules."
+    if label == "YAML/RTL mismatch":
+        return "Compare the YAML-described intent against the suspected RTL and make the smallest RTL change that satisfies the verifier report."
     if label == "PD timing logic issue":
         return "Review logic depth and timing-owned control behavior before considering structural changes."
     if label == "PD structural logic issue":
@@ -1129,6 +1548,8 @@ def build_risk_note(classification: FailureClassification) -> str:
         return "Low functional-risk if the patch only fixes malformed syntax or invalid connections."
     if classification.label in {"data mismatch", "protocol violation", "BIST assertion"}:
         return "Moderate functional-risk; a passing local test may still hide protocol or sequencing regressions."
+    if classification.label == "YAML/RTL mismatch":
+        return "Moderate spec-alignment risk; confirm the YAML is authoritative before changing RTL behavior."
     if classification.label.startswith("PD "):
         return "Moderate implementation-risk; confirm the issue is logic-owned before changing RTL behavior."
     return "Unknown risk until the failure is localized more precisely."
@@ -1592,6 +2013,7 @@ def collect_patch_context(failure_dir: Path, top_n: int = 3) -> dict[str, object
         "localization": localization,
         "patch_plan": patch_plan,
         "previous_attempts": collect_previous_attempts_context(failure_dir),
+        "investigation": read_optional_json(analysis_path / "investigation.json"),
         "rtl_files": rtl_files,
     }
 
@@ -1692,6 +2114,10 @@ def build_patch_prompt(context: dict[str, object]) -> str:
             json.dumps(context.get("failure_summary"), indent=2, sort_keys=True),
             "```",
             "",
+            "## Investigation Evidence and Uncertainty",
+            "",
+            json.dumps(context.get("investigation"), indent=2, sort_keys=True),
+            "",
             "## Failure Log Excerpt",
             "",
             "```text",
@@ -1755,7 +2181,8 @@ def extract_response_text(data: dict[str, object]) -> str:
     return ""
 
 
-def call_patch_llm(prompt: str, model: str) -> str:
+def call_patch_llm(prompt: str, model: str, *, system_prompt: str | None = None,
+                   diagnostic_path: Path | None = None) -> str:
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "")
     if not api_key:
         raise RuntimeError("TAMUS_AI_CHAT_API_KEY is not set; use --offline or export it before proposing online.")
@@ -1778,13 +2205,15 @@ def call_patch_llm(prompt: str, model: str) -> str:
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an expert ASIC RTL debug engineer. Return only a minimal unified diff or NO_PATCH.",
+                    "content": system_prompt or "You are an expert ASIC RTL debug engineer. Return only a minimal unified diff or NO_PATCH.",
                 },
                 {"role": "user", "content": prompt},
             ],
         },
         timeout=120,
     )
+    if diagnostic_path:
+        write_json(diagnostic_path, {"model": model, "http_status": response.status_code})
     if response.status_code != 200:
         text = (response.text or "").strip()
         if len(text) > 800:
@@ -1792,9 +2221,18 @@ def call_patch_llm(prompt: str, model: str) -> str:
         raise RuntimeError(f"Patch proposal API failed with HTTP {response.status_code}: {text}")
 
     data = response.json()
+    choices = data.get("choices", [])
+    metadata = {"model": model, "http_status": response.status_code,
+                "usage": data.get("usage"), "finish_reasons": [
+                    item.get("finish_reason") for item in choices if isinstance(item, dict)
+                ] if isinstance(choices, list) else []}
     text = extract_response_text(data)
+    metadata["content_characters"] = len(text)
+    if diagnostic_path:
+        write_json(diagnostic_path, metadata)
     if not text:
-        raise RuntimeError("Patch proposal API returned no message content.")
+        raise RuntimeError(f"Model API returned no message content; finish_reasons={metadata['finish_reasons']}; "
+                           f"usage={metadata['usage']}")
     return text
 
 
@@ -1813,7 +2251,7 @@ def split_hunks(file_lines: list[str]) -> list[tuple[int, int]]:
     hunks = []
     starts = [
         index for index, line in enumerate(file_lines)
-        if line.startswith("@@ ")
+        if line == "@@" or line.startswith("@@ ")
     ]
     for position, start in enumerate(starts):
         end = starts[position + 1] if position + 1 < len(starts) else len(file_lines)
@@ -1858,6 +2296,40 @@ def normalize_hunk_header(header: str, body: list[str]) -> tuple[str, str | None
     if normalized == header:
         return header, None
     return normalized, f"Normalized hunk counts: `{header}` -> `{normalized}`"
+
+
+def restore_missing_hunk_locations(file_lines: list[str], old_path: str, new_path: str) -> tuple[list[str], str | None]:
+    hunks = split_hunks(file_lines)
+    if not any(file_lines[start] == "@@" for start, _ in hunks):
+        return file_lines, None
+    name = normalize_diff_path(old_path)
+    path = (SCRIPT_DIR / name).resolve()
+    if (name != normalize_diff_path(new_path) or not name.startswith("rtl_output/")
+            or not path.is_relative_to(RTL_OUTPUT_DIR.resolve()) or not path.is_file()):
+        return file_lines, "Cannot reconstruct bare hunk headers outside an existing RTL file."
+    try:
+        source = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        return file_lines, f"Cannot read source for bare hunk headers: {exc}"
+    repaired = list(file_lines)
+    offset = 0
+    previous_end = 0
+    for start, end in hunks:
+        body = file_lines[start + 1:end]
+        if any(not line or line[0] not in " +-" for line in body):
+            return file_lines, "Cannot reconstruct bare hunk headers with malformed or newline-marker bodies."
+        original = [line[1:] for line in body if line[0] in " -"]
+        replacement = [line[1:] for line in body if line[0] in " +"]
+        matches = [i for i in range(len(source) - len(original) + 1)
+                   if original and source[i:i + len(original)] == original]
+        if len(matches) != 1 or matches[0] < previous_end:
+            return file_lines, "Cannot reconstruct bare hunk headers: source context is missing, ambiguous, or overlapping."
+        position = matches[0]
+        new_start = position + offset + (1 if replacement else 0)
+        repaired[start] = f"@@ -{position + 1},{len(original)} +{new_start},{len(replacement)} @@"
+        previous_end = position + len(original)
+        offset += len(replacement) - len(original)
+    return repaired, f"Reconstructed bare hunk locations from unique exact source matches in {name}."
 
 
 def normalize_patch_text(patch_text: str) -> tuple[str, list[str]]:
@@ -1905,6 +2377,9 @@ def normalize_patch_text(patch_text: str) -> tuple[str, list[str]]:
                 index += 1
 
             file_lines = lines[file_start:index]
+            file_lines, location_warning = restore_missing_hunk_locations(file_lines, old_path, new_path)
+            if location_warning:
+                warnings.append(location_warning)
             for hunk_start, hunk_end in reversed(split_hunks(file_lines)):
                 header, warning = normalize_hunk_header(
                     file_lines[hunk_start],
@@ -2284,6 +2759,121 @@ def run_named_check(attempt_dir: Path, name: str, command: str) -> dict[str, obj
     }
 
 
+def single_file_lint_command(path_text: str) -> str:
+    return "verilator --lint-only --Wall -Wno-fatal " + shlex.quote(path_text)
+
+
+def existing_rtl_file(path_text: object) -> str | None:
+    if not path_text:
+        return None
+    resolved = resolve_rtl_path(path_text, sorted(RTL_OUTPUT_DIR.rglob("*.sv")) if RTL_OUTPUT_DIR.is_dir() else [])
+    if not resolved:
+        return None
+    return display_path(resolved)
+
+
+def first_suspect_rtl_file(failure_dir: Path) -> str | None:
+    localization = read_optional_json(analysis_dir(failure_dir) / "suspected_modules.json")
+    if not isinstance(localization, dict):
+        return None
+    suspects = localization.get("suspects")
+    if not isinstance(suspects, list):
+        return None
+    for suspect in suspects:
+        if not isinstance(suspect, dict):
+            continue
+        path = existing_rtl_file(suspect.get("file"))
+        if path:
+            return path
+    return None
+
+
+def verif_report_rtl_file(failure_dir: Path) -> str | None:
+    parsed = read_optional_json(analysis_dir(failure_dir) / "parsed_failure.json")
+    if not isinstance(parsed, dict):
+        return None
+
+    markers = parsed.get("status_markers")
+    report = markers.get("verif_report") if isinstance(markers, dict) else None
+    if isinstance(report, dict):
+        for field in ("top_module_file",):
+            path = existing_rtl_file(report.get(field))
+            if path:
+                return path
+        top_module = str(report.get("top_module_name") or "").strip()
+        if top_module:
+            path = existing_rtl_file(RTL_OUTPUT_DIR / f"{top_module}.sv")
+            if path:
+                return path
+
+    for error in parsed.get("flow_errors", []) if isinstance(parsed.get("flow_errors"), list) else []:
+        if not isinstance(error, dict):
+            continue
+        path = existing_rtl_file(error.get("file"))
+        if path:
+            return path
+        rtl_files = error.get("rtl_files")
+        if isinstance(rtl_files, list):
+            for rtl_file in rtl_files:
+                path = existing_rtl_file(rtl_file)
+                if path:
+                    return path
+
+    return None
+
+
+def failure_is_standalone_verif(failure_dir: Path) -> bool:
+    parsed = read_optional_json(analysis_dir(failure_dir) / "parsed_failure.json")
+    classification = read_optional_json(analysis_dir(failure_dir) / "classification.json")
+    if not isinstance(parsed, dict) or not isinstance(classification, dict):
+        return False
+    if parsed.get("source") != "verif":
+        return False
+    if classification.get("label") == "YAML/RTL mismatch":
+        return True
+    markers = parsed.get("status_markers")
+    report = markers.get("verif_report") if isinstance(markers, dict) else None
+    return isinstance(report, dict) and bool(report.get("top_module_name"))
+
+
+def derive_lint_plan(
+    failure_dir: Path,
+    touched_files: list[str],
+    requested_lint_command: str | None,
+) -> dict[str, object]:
+    if requested_lint_command and requested_lint_command != AUTO_LINT_COMMAND:
+        return {
+            "scope": "custom",
+            "reason": "User supplied --lint-command.",
+            "command": requested_lint_command,
+            "requested": requested_lint_command,
+        }
+
+    if failure_is_standalone_verif(failure_dir):
+        lint_file = None
+        if len(touched_files) == 1:
+            lint_file = existing_rtl_file(touched_files[0])
+        if not lint_file:
+            lint_file = verif_report_rtl_file(failure_dir)
+        if not lint_file:
+            lint_file = first_suspect_rtl_file(failure_dir)
+        if lint_file:
+            return {
+                "scope": "single_file",
+                "reason": "Standalone verifier report targets one RTL module.",
+                "command": single_file_lint_command(lint_file),
+                "requested": requested_lint_command or AUTO_LINT_COMMAND,
+                "rtl_file": lint_file,
+            }
+
+    return {
+        "scope": "full_rtl",
+        "reason": "Integrated or ambiguous failure; using full RTL lint.",
+        "command": DEFAULT_LINT_COMMAND,
+        "requested": requested_lint_command or AUTO_LINT_COMMAND,
+    }
+
+
 def collect_file_hashes(paths: list[str]) -> dict[str, str]:
     hashes = {}
     for path_text in paths:
@@ -2562,11 +3152,22 @@ def apply_attempt(args: argparse.Namespace) -> int:
         return 1
 
     after_hashes = collect_file_hashes(touched_files)
-    lint_command = args.lint_command or DEFAULT_LINT_COMMAND
-    log_debug(failure_dir, f"Running lint check: {lint_command}")
-    checks: list[dict[str, object]] = [
-        run_named_check(attempt_dir, "lint", lint_command)
-    ]
+    lint_plan = derive_lint_plan(
+        failure_dir,
+        touched_files,
+        getattr(args, "lint_command", AUTO_LINT_COMMAND),
+    )
+    lint_command = str(lint_plan["command"])
+    log_debug(
+        failure_dir,
+        f"Running lint check ({lint_plan['scope']}): {lint_command}",
+    )
+    lint_check = run_named_check(attempt_dir, "lint", lint_command)
+    lint_check["scope"] = lint_plan["scope"]
+    lint_check["reason"] = lint_plan["reason"]
+    if lint_plan.get("rtl_file"):
+        lint_check["rtl_file"] = lint_plan["rtl_file"]
+    checks: list[dict[str, object]] = [lint_check]
     log_debug(failure_dir, f"Lint result: {'PASS' if checks[-1].get('passed') else 'FAIL'}")
     if args.target_command and (not checks or checks[-1].get("passed") is True):
         log_debug(failure_dir, f"Running target check: {args.target_command}")
@@ -2610,6 +3211,7 @@ def apply_attempt(args: argparse.Namespace) -> int:
         "after_hashes": after_hashes,
         "keep_failed_patch": keep_failed_patch,
         "rollback": rollback,
+        "lint_plan": lint_plan,
         "checks": checks,
         "rtl_modified": rtl_modified,
     }
@@ -2937,6 +3539,1049 @@ def repair_failure(args: argparse.Namespace) -> int:
     return apply_rc
 
 
+def graph_checkpoint_path(failure_dir: Path) -> Path:
+    return result_dir(failure_dir) / "graph_checkpoint.json"
+
+
+def graph_state_path(failure_dir: Path) -> Path:
+    return result_dir(failure_dir) / "graph_state.json"
+
+
+def git_head_revision() -> str | None:
+    proc = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=SCRIPT_DIR,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip() or None
+
+
+def hash_records(records: object) -> str:
+    payload = json.dumps(records, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def current_rtl_revision() -> dict[str, object]:
+    files = []
+    if RTL_OUTPUT_DIR.is_dir():
+        for path in sorted(RTL_OUTPUT_DIR.rglob("*.sv")):
+            files.append(
+                {
+                    "path": display_path(path),
+                    "sha256": file_sha256(path),
+                    "bytes": path.stat().st_size,
+                }
+            )
+    return {
+        "git_head": git_head_revision(),
+        "rtl_root": display_path(RTL_OUTPUT_DIR),
+        "file_count": len(files),
+        "files": files,
+        "signature": hash_records(files),
+    }
+
+
+def graph_artifact_refs(failure_dir: Path) -> dict[str, object]:
+    refs: dict[str, object] = {
+        "debug_log": display_path(failure_dir / "debug.log"),
+        "raw_log": display_path(intake_dir(failure_dir) / "raw.log"),
+        "intake_metadata": display_path(intake_dir(failure_dir) / "metadata.json"),
+        "rtl_state": display_path(intake_dir(failure_dir) / "rtl_state.json"),
+        "parsed_failure": display_path(analysis_dir(failure_dir) / "parsed_failure.json"),
+        "classification": display_path(analysis_dir(failure_dir) / "classification.json"),
+        "localization": display_path(analysis_dir(failure_dir) / "suspected_modules.json"),
+        "patch_plan": display_path(analysis_dir(failure_dir) / "patch_plan.md"),
+        "investigation": display_path(analysis_dir(failure_dir) / "investigation.json"),
+        "patch_context": display_path(result_dir(failure_dir) / "patch_context.json"),
+        "status": display_path(result_dir(failure_dir) / "status.json"),
+        "graph": display_path(result_dir(failure_dir) / "graph.json"),
+        "graph_state": display_path(graph_state_path(failure_dir)),
+        "graph_checkpoint": display_path(graph_checkpoint_path(failure_dir)),
+    }
+    evidence_dir = intake_dir(failure_dir) / "evidence"
+    if evidence_dir.is_dir():
+        refs["evidence_files"] = [
+            display_path(path)
+            for path in sorted(evidence_dir.iterdir())
+            if path.is_file()
+        ]
+    return refs
+
+
+def existing_attempt_refs(failure_dir: Path) -> list[dict[str, object]]:
+    refs = []
+    for attempt_dir in numbered_attempt_dirs(failure_dir):
+        checks = read_optional_json(attempt_dir / "checks.json")
+        check_results = checks.get("checks", []) if isinstance(checks, dict) else []
+        refs.append(
+            {
+                "attempt": attempt_dir.name,
+                "path": display_path(attempt_dir),
+                "status": read_optional_json(attempt_dir / "status.json"),
+                "metadata": read_optional_json(attempt_dir / "metadata.json"),
+                "validation": read_optional_json(attempt_dir / "validation.json"),
+                "apply": read_optional_json(attempt_dir / "apply.json"),
+                "checks": check_results if isinstance(check_results, list) else [],
+                "artifacts": {
+                    "prompt": display_path(attempt_dir / "prompt.md"),
+                    "response": display_path(attempt_dir / "response.md"),
+                    "patch": display_path(attempt_dir / "patch.diff"),
+                    "validation": display_path(attempt_dir / "validation.json"),
+                    "apply": display_path(attempt_dir / "apply.json"),
+                    "checks": display_path(attempt_dir / "checks.json"),
+                },
+            }
+        )
+    return refs
+
+
+def graph_input_hashes(failure_dir: Path) -> dict[str, object]:
+    watched = [
+        intake_dir(failure_dir) / "metadata.json",
+        intake_dir(failure_dir) / "raw.log",
+        analysis_dir(failure_dir) / "parsed_failure.json",
+        analysis_dir(failure_dir) / "classification.json",
+        analysis_dir(failure_dir) / "suspected_modules.json",
+        analysis_dir(failure_dir) / "patch_plan.md",
+    ]
+    record = read_optional_json(analysis_dir(failure_dir) / "investigation.json")
+    if isinstance(record, dict):
+        for item in record.get("evidence", []):
+            path = (SCRIPT_DIR / item["path"]).resolve()
+            if path.is_relative_to(SCRIPT_DIR) and path not in watched:
+                watched.append(path)
+    files = []
+    for path in watched:
+        if path.is_file():
+            files.append(
+                {
+                    "path": display_path(path),
+                    "sha256": file_sha256(path),
+                    "bytes": path.stat().st_size,
+                }
+            )
+    rtl_revision = current_rtl_revision()
+    return {
+        "files": files,
+        "files_signature": hash_records(files),
+        "rtl_signature": rtl_revision["signature"],
+        "signature": hash_records(
+            {
+                "files": files,
+                "rtl_signature": rtl_revision["signature"],
+            }
+        ),
+    }
+
+
+def compare_graph_inputs(saved: object, current: dict[str, object]) -> dict[str, object]:
+    if not isinstance(saved, dict):
+        return {
+            "stale": True,
+            "reason": "No saved checkpoint input hashes were available.",
+            "changed": [],
+        }
+    changed = []
+    for key in ("files_signature", "rtl_signature", "signature"):
+        if saved.get(key) != current.get(key):
+            changed.append(key)
+    return {
+        "stale": bool(changed),
+        "changed": changed,
+        "saved_signature": saved.get("signature"),
+        "current_signature": current.get("signature"),
+    }
+
+
+def graph_state_snapshot(state: DebugGraphState, failure_dir: Path) -> DebugGraphState:
+    snapshot = dict(state)
+    snapshot["failure_id"] = failure_dir.name
+    snapshot["failure_dir"] = display_path(failure_dir)
+    snapshot["artifact_refs"] = graph_artifact_refs(failure_dir)
+    snapshot["evidence_refs"] = {
+        key: value
+        for key, value in graph_artifact_refs(failure_dir).items()
+        if key in {"raw_log", "rtl_state", "evidence_files"}
+    }
+    snapshot["attempts"] = existing_attempt_refs(failure_dir)
+    snapshot["rtl_revision"] = current_rtl_revision()
+    snapshot["input_hashes"] = graph_input_hashes(failure_dir)
+    localization = read_optional_json(analysis_dir(failure_dir) / "suspected_modules.json")
+    if isinstance(localization, dict):
+        suspects = localization.get("suspects")
+        if isinstance(suspects, list):
+            snapshot["suspects"] = suspects
+            snapshot["inspected_files"] = [
+                {
+                    "path": item.get("file"),
+                    "module": item.get("module"),
+                    "source": "localization",
+                    "score": item.get("score"),
+                }
+                for item in suspects
+                if isinstance(item, dict)
+            ]
+    if state.get("investigation"):
+        investigation_data = read_optional_json(analysis_dir(failure_dir) / "investigation.json")
+        if isinstance(investigation_data, dict):
+            snapshot["inspected_files"] = [
+                {key: item[key] for key in ("path", "start_line", "end_line", "sha256")}
+                for item in investigation_data.get("evidence", [])
+            ]
+    classification = read_optional_json(analysis_dir(failure_dir) / "classification.json")
+    if isinstance(classification, dict) and not state.get("investigation"):
+        snapshot["hypotheses"] = [
+            {
+                "kind": "repair_hypothesis",
+                "classification": classification.get("label"),
+                "summary": build_repair_hypothesis(FailureClassification(**classification)),
+                "evidence": display_path(analysis_dir(failure_dir) / "patch_plan.md"),
+            }
+        ]
+    checks = []
+    for attempt in snapshot.get("attempts", []):
+        if isinstance(attempt, dict):
+            attempt_checks = attempt.get("checks")
+            if isinstance(attempt_checks, list):
+                checks.extend(attempt_checks)
+    snapshot["check_results"] = checks
+    return snapshot
+
+
+def write_graph_checkpoint(failure_dir: Path, state: DebugGraphState, node: str) -> DebugGraphState:
+    snapshot = graph_state_snapshot(state, failure_dir)
+    checkpoint = {
+        "version": GRAPH_CHECKPOINT_VERSION,
+        "node": node,
+        "saved_at": utc_now(),
+        "failure_id": failure_dir.name,
+        "input_hashes": snapshot.get("input_hashes", {}),
+        "rtl_revision": snapshot.get("rtl_revision", {}),
+        "state": snapshot,
+    }
+    snapshot["checkpoint"] = {
+        key: value
+        for key, value in checkpoint.items()
+        if key != "state"
+    }
+    write_json(graph_state_path(failure_dir), snapshot)
+    write_json(graph_checkpoint_path(failure_dir), checkpoint)
+    return snapshot
+
+
+def load_graph_checkpoint(failure_dir: Path) -> dict[str, object] | None:
+    path = graph_checkpoint_path(failure_dir)
+    if not path.is_file():
+        return None
+    data = read_json(path)
+    return data if isinstance(data, dict) else None
+
+
+def merge_resume_checkpoint(args: argparse.Namespace, initial_state: DebugGraphState) -> DebugGraphState:
+    if not args.resume or not args.failure_dir:
+        return initial_state
+    failure_dir = resolve_failure_dir(args.failure_dir)
+    checkpoint = load_graph_checkpoint(failure_dir)
+    if not checkpoint:
+        return initial_state
+    saved_state = checkpoint.get("state")
+    if isinstance(saved_state, dict):
+        merged = dict(saved_state)
+        merged.update(initial_state)
+        merged["checkpoint"] = {
+            key: value
+            for key, value in checkpoint.items()
+            if key != "state"
+        }
+        current_hashes = graph_input_hashes(failure_dir)
+        stale = compare_graph_inputs(checkpoint.get("input_hashes"), current_hashes)
+        merged["input_hashes"] = current_hashes
+        merged["stale_inputs"] = stale
+        return merged
+    return initial_state
+
+
+def graph_inputs_are_stale(state: DebugGraphState) -> bool:
+    stale = state.get("stale_inputs")
+    return isinstance(stale, dict) and bool(stale.get("stale"))
+
+
+def graph_node_update(state: DebugGraphState, update: DebugGraphState, node: str) -> DebugGraphState:
+    merged = dict(state)
+    merged.update(update)
+    failure_dir_text = merged.get("failure_dir")
+    if not failure_dir_text:
+        return update
+    failure_dir = resolve_failure_dir(str(failure_dir_text))
+    snapshot = write_graph_checkpoint(failure_dir, merged, node)
+    return {
+        key: snapshot[key]
+        for key in (
+            "failure_id",
+            "failure_dir",
+            "evidence_refs",
+            "artifact_refs",
+            "suspects",
+            "hypotheses",
+            "investigation",
+            "inspected_files",
+            "attempts",
+            "check_results",
+            "budgets",
+            "rtl_revision",
+            "input_hashes",
+            "checkpoint",
+            "stale_inputs",
+            "steps",
+            "status",
+            "attempt_dir",
+            "validation",
+            "patch_context",
+            "stop_reason",
+            "graph_backend",
+        )
+        if key in snapshot
+    } | update
+
+
+def graph_step(
+    state: DebugGraphState,
+    name: str,
+    returncode: int = 0,
+    **extra: object,
+) -> list[dict[str, object]]:
+    steps = list(state.get("steps", []))
+    step: dict[str, object] = {
+        "name": name,
+        "returncode": returncode,
+        "finished_at": utc_now(),
+    }
+    step.update(extra)
+    steps.append(step)
+    return steps
+
+
+def graph_failure_dir(state: DebugGraphState) -> Path:
+    failure_dir_text = state.get("failure_dir")
+    if not failure_dir_text:
+        raise FileNotFoundError("Graph state does not contain a failure_dir.")
+    return resolve_failure_dir(str(failure_dir_text))
+
+
+def read_intake_record(failure_dir: Path) -> IntakeResult:
+    metadata_path = intake_dir(failure_dir) / "metadata.json"
+    if not metadata_path.is_file():
+        raise FileNotFoundError(f"Missing intake metadata: {metadata_path}")
+    metadata = read_json(metadata_path)
+    if not isinstance(metadata, dict):
+        raise ValueError(f"Invalid intake metadata: {metadata_path}")
+    return IntakeResult(**metadata)
+
+
+def read_parsed_record(failure_dir: Path) -> ParsedFailure:
+    parsed_path = analysis_dir(failure_dir) / "parsed_failure.json"
+    parsed = read_json(parsed_path)
+    if not isinstance(parsed, dict):
+        raise ValueError(f"Invalid parsed failure JSON: {parsed_path}")
+    return ParsedFailure(**parsed)
+
+
+def read_classification_record(failure_dir: Path) -> FailureClassification:
+    classification_path = analysis_dir(failure_dir) / "classification.json"
+    classification = read_json(classification_path)
+    if not isinstance(classification, dict):
+        raise ValueError(f"Invalid classification JSON: {classification_path}")
+    return FailureClassification(**classification)
+
+
+def read_localization_record(failure_dir: Path) -> RTLLocalization:
+    localization_path = analysis_dir(failure_dir) / "suspected_modules.json"
+    localization = read_json(localization_path)
+    if not isinstance(localization, dict):
+        raise ValueError(f"Invalid localization JSON: {localization_path}")
+    return RTLLocalization(**localization)
+
+
+def graph_run_or_ingest_node(state: DebugGraphState) -> DebugGraphState:
+    existing_failure_dir = state.get("failure_dir")
+    if existing_failure_dir:
+        failure_dir = resolve_failure_dir(str(existing_failure_dir))
+        log_debug(failure_dir, f"Graph continuing existing failure workspace: {display_path(failure_dir)}")
+        intake = read_intake_record(failure_dir)
+        return graph_node_update(state, {
+            "failure_dir": display_path(failure_dir),
+            "intake": asdict(intake),
+            "steps": graph_step(state, "run_or_ingest", 0, reused=True),
+        }, "run_or_ingest")
+
+    source = state.get("source")
+    command = state.get("command")
+    log = state.get("log")
+    if source not in SUPPORTED_SOURCES:
+        raise ValueError("Graph intake requires a supported source when --failure-dir is not provided.")
+    if not command and not log:
+        raise ValueError("Graph intake requires --command or --log when --failure-dir is not provided.")
+
+    failure_dir = make_failure_dir(
+        str(source),
+        str(state.get("name") or "") or None,
+        str(command) if command else None,
+        str(log) if log else None,
+    )
+    log_debug(failure_dir, f"Graph created failure workspace: {display_path(failure_dir)}")
+    if command:
+        log_debug(failure_dir, f"Graph running {source} command: {command}")
+    else:
+        log_debug(failure_dir, f"Graph ingesting {source} log: {log}")
+
+    intake_args = argparse.Namespace(
+        source=source,
+        command=command,
+        log=log,
+        name=state.get("name"),
+    )
+    intake = capture_intake(intake_args, failure_dir)
+    write_json(intake_dir(failure_dir) / "metadata.json", asdict(intake))
+    write_json(intake_dir(failure_dir) / "rtl_state.json", collect_rtl_state())
+    log_debug(failure_dir, f"Graph captured raw log: {display_path(intake_dir(failure_dir) / 'raw.log')}")
+    return graph_node_update(state, {
+        "failure_dir": display_path(failure_dir),
+        "intake": asdict(intake),
+        "steps": graph_step(state, "run_or_ingest", 0, created=True),
+    }, "run_or_ingest")
+
+
+def graph_parse_failure_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    intake_data = state.get("intake")
+    intake = IntakeResult(**intake_data) if isinstance(intake_data, dict) else read_intake_record(failure_dir)
+    raw_log = (intake_dir(failure_dir) / "raw.log").read_text(encoding="utf-8", errors="replace")
+    parsed = parse_failure(raw_log, intake)
+    write_json(analysis_dir(failure_dir) / "parsed_failure.json", asdict(parsed))
+    failure_detected = parsed_failure_detected(parsed)
+    log_debug(failure_dir, f"Graph parsed failure evidence: {'failure' if failure_detected else 'no failure'}")
+    log_debug(failure_dir, f"Graph failure summary: {parsed.summary}")
+    return graph_node_update(state, {
+        "parsed_failure": asdict(parsed),
+        "steps": graph_step(state, "parse_failure", 0, failure_detected=failure_detected),
+    }, "parse_failure")
+
+
+def graph_classify_failure_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    parsed_data = state.get("parsed_failure")
+    parsed = ParsedFailure(**parsed_data) if isinstance(parsed_data, dict) else read_parsed_record(failure_dir)
+    classification = classify_failure(parsed)
+    write_json(analysis_dir(failure_dir) / "classification.json", asdict(classification))
+    log_debug(
+        failure_dir,
+        f"Graph classification: {classification.label} ({classification.confidence} confidence)",
+    )
+    return graph_node_update(state, {
+        "classification": asdict(classification),
+        "steps": graph_step(state, "classify_failure", 0, label=classification.label),
+    }, "classify_failure")
+
+
+def graph_localize_rtl_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    parsed_data = state.get("parsed_failure")
+    parsed = ParsedFailure(**parsed_data) if isinstance(parsed_data, dict) else read_parsed_record(failure_dir)
+    raw_log = (intake_dir(failure_dir) / "raw.log").read_text(encoding="utf-8", errors="replace")
+    localization = localize_rtl(raw_log, parsed)
+    write_json(analysis_dir(failure_dir) / "suspected_modules.json", asdict(localization))
+    log_debug(failure_dir, f"Graph localized {len(localization.suspects)} RTL suspect(s)")
+    return graph_node_update(state, {
+        "localization": asdict(localization),
+        "suspects": localization.suspects,
+        "steps": graph_step(state, "localize_rtl", 0, suspects=len(localization.suspects)),
+    }, "localize_rtl")
+
+
+def graph_write_patch_plan_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    parsed = read_parsed_record(failure_dir)
+    classification = read_classification_record(failure_dir)
+    localization = read_localization_record(failure_dir)
+    write_patch_plan(failure_dir, parsed, classification, localization)
+    intake_data = state.get("intake")
+    intake = IntakeResult(**intake_data) if isinstance(intake_data, dict) else read_intake_record(failure_dir)
+    record_status(failure_dir, intake, parsed, classification)
+    status = current_result_status(failure_dir)
+    log_debug(failure_dir, "Graph wrote patch plan and phase-1 status")
+    return graph_node_update(state, {
+        "status": status if isinstance(status, dict) else {},
+        "steps": graph_step(state, "write_patch_plan", 0),
+    }, "write_patch_plan")
+
+
+def route_after_patch_plan(state: DebugGraphState) -> Literal["investigate", "record_result"]:
+    return "investigate" if state.get("repair") or state.get("investigate") else "record_result"
+
+
+def investigation_record(state: DebugGraphState) -> dict:
+    failure_dir = graph_failure_dir(state)
+    parsed = read_json(analysis_dir(failure_dir) / "parsed_failure.json")
+    if state.get("investigation"):
+        record = read_optional_json(analysis_dir(failure_dir) / "investigation.json")
+        if isinstance(record, dict):
+            investigation.configure_evidence_policy(record, parsed)
+            return record
+    budgets = state.get("budgets", {})
+    record = investigation.new_investigation(
+        SCRIPT_DIR, failure_dir, state.get("suspects", []),
+        parsed_failure_terms(parsed),
+        int(budgets.get("investigation_steps_max", 8)),
+        int(budgets.get("investigation_context_chars_max", 64000)),
+        parsed=parsed,
+    )
+    investigation.configure_evidence_policy(record, parsed)
+    return record
+
+
+def save_investigation(state: DebugGraphState, record: dict, node: str) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    path = analysis_dir(failure_dir) / "investigation.json"
+    write_json(path, record)
+    budgets = dict(state.get("budgets", {}))
+    budgets.update(investigation_steps_used=len(record["actions"]),
+                   investigation_context_chars_used=record["chars_used"],
+                   investigation_assessments_used=record["assessments"],
+                   investigation_assessments_max=record["max_actions"] + 1,
+                   investigation_reruns_max=0, investigation_reruns_used=0)
+    update = {
+        "investigation": {"artifact": display_path(path), "decision": record["decision"]},
+        "hypotheses": record["hypotheses"], "budgets": budgets,
+        "stop_reason": record.get("stop_reason", ""),
+        "steps": graph_step(state, node, 0, decision=record["decision"]),
+    }
+    if record.get("stop_reason"):
+        status = {"status": "needs_human", "phase": "investigation",
+                  "reason": record["stop_reason"], "rtl_modified": False,
+                  "unresolved_questions": record["unresolved_questions"],
+                  "investigation": display_path(path)}
+        write_json(result_dir(failure_dir) / "status.json", status)
+        update["status"] = status
+    log_debug(failure_dir, f"Graph {node}: {record['decision']} "
+              f"({len(record['actions'])}/{record['max_actions']} inspections; "
+              f"{record['chars_used']}/{record['max_chars']} evidence characters)")
+    if node == "investigate" and record["actions"]:
+        action = record["actions"][-1]
+        log_debug(failure_dir, f"Inspection request: {json.dumps(action['request'], sort_keys=True)}")
+        added = [item for item in record["evidence"] if item["id"] in action["evidence_ids"]]
+        log_debug(failure_dir, f"Inspection result: {action['status']}; "
+                  f"added {sum(len(item['text']) for item in added)} characters")
+        for item in added:
+            log_debug(failure_dir, f"Evidence {item['id']}: {item['path']}:{item['start_line']}-{item['end_line']} "
+                      f"({item['kind']}, {len(item['text'])} characters)")
+        if action.get("error"):
+            log_debug(failure_dir, f"Inspection error: {action['error']}")
+        for search in action.get("search_results", []):
+            log_debug(failure_dir, f"Search coverage: {json.dumps(search, sort_keys=True)}")
+        for selection in action.get("source_selections", []):
+            log_debug(failure_dir, f"Context selection: {json.dumps(selection, sort_keys=True)}")
+    elif node == "assess_evidence":
+        for hypothesis in record["hypotheses"]:
+            log_debug(failure_dir, f"Hypothesis: {hypothesis['summary']}; uncertainty: {hypothesis['uncertainty']}")
+        for question in record["unresolved_questions"]:
+            log_debug(failure_dir, f"Open question: {question}")
+        log_debug(failure_dir, f"Next queued actions: {json.dumps(record['pending'][:4], sort_keys=True)}")
+    if record.get("stop_reason"):
+        log_debug(failure_dir, f"Investigation stopped: {record['stop_reason']}; "
+                  + "; ".join(record["unresolved_questions"]))
+    return graph_node_update(state, update, node)
+
+
+def graph_investigate_node(state: DebugGraphState) -> DebugGraphState:
+    record = investigation_record(state)
+    stale = graph_inputs_are_stale(state) or not investigation.evidence_unchanged(record, SCRIPT_DIR)
+    if stale:
+        if state.get("force_stale"):
+            fresh = dict(state)
+            fresh["investigation"] = {}
+            record = investigation_record(fresh)
+            state = dict(state)
+            state["stale_inputs"] = {"stale": False, "reason": "Forced fresh investigation"}
+        else:
+            record.update(decision="evidence_unavailable", stop_reason="stale_inputs")
+            record["unresolved_questions"] = ["Inputs changed; start a fresh investigation against the current sources."]
+            return save_investigation(state, record, "investigate")
+    if not record.get("stop_reason") and record["decision"] != "sufficient_evidence":
+        investigation.inspect(record, SCRIPT_DIR)
+    return save_investigation(state, record, "investigate")
+
+
+def graph_assess_evidence_node(state: DebugGraphState) -> DebugGraphState:
+    record = investigation_record(state)
+    if record.get("stop_reason"):
+        return save_investigation(state, record, "assess_evidence")
+    if not investigation.evidence_unchanged(record, SCRIPT_DIR):
+        record.update(decision="evidence_unavailable", stop_reason="stale_inputs")
+        return save_investigation(state, record, "assess_evidence")
+    if record["decision"] != "sufficient_evidence" and not state.get("offline"):
+        if record["assessments"] >= record["max_actions"] + 1:
+            record.update(decision="evidence_unavailable", stop_reason="assessment_budget_exhausted")
+            return save_investigation(state, record, "assess_evidence")
+        failure_dir = graph_failure_dir(state)
+        summary = compact_parsed_failure(read_json(analysis_dir(failure_dir) / "parsed_failure.json"))
+        prompt = investigation.assessment_prompt(record, summary)
+        record["assessments"] += 1
+        prefix = analysis_dir(failure_dir) / f"assessment_{record['assessments']:03d}"
+        prefix.with_suffix(".prompt.md").write_text(prompt, encoding="utf-8")
+        try:
+            response = call_patch_llm(prompt, str(state.get("model", DEFAULT_PATCH_MODEL)),
+                                      system_prompt="You are an RTL investigator. Return only the requested JSON evidence assessment.",
+                                      diagnostic_path=prefix.with_suffix(".api.json"))
+            prefix.with_suffix(".response.md").write_text(response, encoding="utf-8")
+            investigation.accept_assessment(record, response)
+        except Exception as exc:
+            write_json(prefix.with_suffix(".error.json"), {"error_type": type(exc).__name__, "message": str(exc)})
+            record.update(decision="evidence_unavailable", stop_reason="assessment_failed")
+            record["unresolved_questions"] = [f"Evidence assessment failed: {exc}"]
+    elif state.get("offline"):
+        record["unresolved_questions"] = ["Offline inspection cannot establish a causal explanation; online evidence assessment is required."]
+    if record["decision"] != "sufficient_evidence" and not record.get("stop_reason"):
+        if record["decision"] == "evidence_unavailable" or not record["pending"]:
+            record["stop_reason"] = "evidence_unavailable"
+        elif not investigation.can_inspect(record):
+            record["stop_reason"] = ("investigation_context_exhausted" if investigation.context_exhausted(record)
+                                     else "investigation_steps_exhausted")
+    return save_investigation(state, record, "assess_evidence")
+
+
+def route_after_assessment(state: DebugGraphState) -> Literal["investigate", "build_patch_context", "record_result"]:
+    if state.get("stop_reason"):
+        return "record_result"
+    if state.get("investigation", {}).get("decision") == "sufficient_evidence":
+        return "build_patch_context" if state.get("repair") else "record_result"
+    return "investigate"
+
+
+def graph_build_patch_context_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    record = investigation_record(state)
+    if record["decision"] != "sufficient_evidence" or not investigation.evidence_unchanged(record, SCRIPT_DIR):
+        record.update(decision="evidence_unavailable", stop_reason="evidence_not_current_or_sufficient")
+        return save_investigation(state, record, "build_patch_context")
+    if graph_inputs_are_stale(state) and not state.get("force_stale"):
+        stale = state.get("stale_inputs", {})
+        status = {
+            "status": "needs_human",
+            "phase": "graph_stale_inputs",
+            "reason": "Saved graph checkpoint inputs differ from current failure artifacts or RTL.",
+            "stale_inputs": stale,
+            "rtl_modified": False,
+        }
+        write_json(result_dir(failure_dir) / "status.json", status)
+        log_debug(failure_dir, "Graph context build stopped: checkpoint inputs are stale")
+        return graph_node_update(state, {
+            "status": status,
+            "stop_reason": "stale_inputs",
+            "steps": graph_step(state, "build_patch_context", 1, stale_inputs=stale),
+        }, "build_patch_context")
+
+    context = collect_patch_context(failure_dir)
+    context_path = result_dir(failure_dir) / "patch_context.json"
+    write_json(context_path, context)
+    log_debug(failure_dir, f"Graph patch context: {display_path(context_path)}")
+    return graph_node_update(state, {
+        "patch_context": {
+            "artifact": display_path(context_path),
+            "rtl_files": [
+                item.get("path")
+                for item in context.get("rtl_files", [])
+                if isinstance(item, dict)
+            ],
+        },
+        "steps": graph_step(
+            state,
+            "build_patch_context",
+            0,
+            artifact=display_path(context_path),
+        ),
+    }, "build_patch_context")
+
+
+def route_after_build_patch_context(state: DebugGraphState) -> Literal["propose_patch", "record_result"]:
+    return "record_result" if state.get("stop_reason") else "propose_patch"
+
+
+def graph_propose_patch_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    if graph_inputs_are_stale(state) and not state.get("force_stale"):
+        stale = state.get("stale_inputs", {})
+        status = {
+            "status": "needs_human",
+            "phase": "graph_stale_inputs",
+            "reason": "Saved graph checkpoint inputs differ from current failure artifacts or RTL.",
+            "stale_inputs": stale,
+            "rtl_modified": False,
+        }
+        write_json(result_dir(failure_dir) / "status.json", status)
+        log_debug(failure_dir, "Graph repair stopped: checkpoint inputs are stale")
+        return graph_node_update(state, {
+            "status": status,
+            "stop_reason": "stale_inputs",
+            "steps": graph_step(state, "propose_patch", 1, stale_inputs=stale),
+        }, "propose_patch")
+    before_attempts = {path.name for path in numbered_attempt_dirs(failure_dir)}
+    propose_args = argparse.Namespace(
+        mode="propose",
+        failure_dir=str(failure_dir),
+        model=state.get("model", DEFAULT_PATCH_MODEL),
+        offline=bool(state.get("offline", False)),
+        max_attempts=int(state.get("max_attempts", MAX_REPAIR_ATTEMPTS)),
+    )
+    returncode = propose_patch(propose_args)
+    new_attempts = [
+        path for path in numbered_attempt_dirs(failure_dir)
+        if path.name not in before_attempts
+    ]
+    attempt_dir = new_attempts[-1] if new_attempts else None
+    stop_reason = "" if returncode == 0 and attempt_dir else "proposal_failed"
+    return graph_node_update(state, {
+        "attempt_dir": display_path(attempt_dir) if attempt_dir else None,
+        "status": current_result_status(failure_dir) or {},
+        "stop_reason": stop_reason,
+        "steps": graph_step(
+            state,
+            "propose_patch",
+            returncode,
+            attempt=attempt_dir.name if attempt_dir else None,
+        ),
+    }, "propose_patch")
+
+
+def route_after_propose(state: DebugGraphState) -> Literal["validate_patch", "record_result"]:
+    return "validate_patch" if state.get("attempt_dir") and not state.get("stop_reason") else "record_result"
+
+
+def graph_validate_patch_node(state: DebugGraphState) -> DebugGraphState:
+    attempt_dir_text = state.get("attempt_dir")
+    if not attempt_dir_text:
+        raise FileNotFoundError("Graph validate step has no attempt_dir.")
+    returncode = validate_attempt(
+        argparse.Namespace(mode="validate", attempt_dir=str(SCRIPT_DIR / str(attempt_dir_text)))
+    )
+    attempt_dir = resolve_attempt_dir(str(SCRIPT_DIR / str(attempt_dir_text)))
+    validation = read_json(attempt_dir / "validation.json") if (attempt_dir / "validation.json").is_file() else {}
+    stop_reason = ""
+    if returncode != 0:
+        stop_reason = "validation_failed"
+    elif not (isinstance(validation, dict) and validation.get("can_apply")):
+        stop_reason = "no_applicable_patch"
+    return graph_node_update(state, {
+        "validation": validation if isinstance(validation, dict) else {},
+        "status": current_result_status(attempt_dir.parent.parent) or {},
+        "stop_reason": stop_reason,
+        "steps": graph_step(state, "validate_patch", returncode, attempt=attempt_dir.name),
+    }, "validate_patch")
+
+
+def route_after_validate(state: DebugGraphState) -> Literal["apply_patch", "record_result"]:
+    validation = state.get("validation", {})
+    can_apply = isinstance(validation, dict) and bool(validation.get("can_apply"))
+    return "apply_patch" if can_apply and not state.get("stop_reason") else "record_result"
+
+
+def graph_apply_patch_node(state: DebugGraphState) -> DebugGraphState:
+    record = investigation_record(state)
+    if record["decision"] != "sufficient_evidence" or not investigation.evidence_unchanged(record, SCRIPT_DIR):
+        record.update(decision="evidence_unavailable", stop_reason="evidence_not_current_or_sufficient")
+        return save_investigation(state, record, "apply_patch")
+    attempt_dir_text = state.get("attempt_dir")
+    if not attempt_dir_text:
+        raise FileNotFoundError("Graph apply step has no attempt_dir.")
+    attempt_dir = resolve_attempt_dir(str(SCRIPT_DIR / str(attempt_dir_text)))
+    if graph_inputs_are_stale(state) and not state.get("force_stale"):
+        failure_dir = attempt_dir.parent.parent
+        stale = state.get("stale_inputs", {})
+        status = {
+            "status": "needs_human",
+            "phase": "graph_stale_inputs",
+            "reason": "Saved graph checkpoint inputs changed before patch application.",
+            "stale_inputs": stale,
+            "rtl_modified": False,
+        }
+        write_json(result_dir(failure_dir) / "status.json", status)
+        log_debug(failure_dir, "Graph apply stopped: checkpoint inputs are stale")
+        return graph_node_update(state, {
+            "status": status,
+            "stop_reason": "stale_inputs",
+            "steps": graph_step(state, "apply_patch", 1, attempt=attempt_dir.name, stale_inputs=stale),
+        }, "apply_patch")
+    apply_args = argparse.Namespace(
+        mode="apply",
+        attempt_dir=str(attempt_dir),
+        lint_command=state.get("lint_command") or AUTO_LINT_COMMAND,
+        target_command=state.get("target_command"),
+        keep_failed_patch=bool(state.get("keep_failed_patch", False)),
+        demo_mode=bool(state.get("demo_mode", False)),
+    )
+    returncode = apply_attempt(apply_args)
+    status = current_result_status(attempt_dir.parent.parent)
+    return graph_node_update(state, {
+        "status": status if isinstance(status, dict) else {},
+        "stop_reason": "" if returncode == 0 else "checks_failed",
+        "steps": graph_step(state, "apply_patch", returncode, attempt=attempt_dir.name),
+    }, "apply_patch")
+
+
+def graph_record_result_node(state: DebugGraphState) -> DebugGraphState:
+    failure_dir = graph_failure_dir(state)
+    status = current_result_status(failure_dir)
+    record = {
+        "backend": state.get("graph_backend", "unknown"),
+        "failure_dir": display_path(failure_dir),
+        "repair_requested": bool(state.get("repair", False)),
+        "investigation": state.get("investigation", {}),
+        "status": status if isinstance(status, dict) else {},
+        "artifact_refs": state.get("artifact_refs", {}),
+        "evidence_refs": state.get("evidence_refs", {}),
+        "attempts": state.get("attempts", []),
+        "check_results": state.get("check_results", []),
+        "budgets": state.get("budgets", {}),
+        "rtl_revision": state.get("rtl_revision", {}),
+        "input_hashes": state.get("input_hashes", {}),
+        "stale_inputs": state.get("stale_inputs", {}),
+        "steps": state.get("steps", []),
+        "stop_reason": state.get("stop_reason") or None,
+        "finished_at": utc_now(),
+    }
+    write_json(result_dir(failure_dir) / "graph.json", record)
+    log_debug(failure_dir, f"Graph result recorded: {display_path(result_dir(failure_dir) / 'graph.json')}")
+    return graph_node_update(state, {
+        "status": status if isinstance(status, dict) else {},
+        "steps": graph_step(state, "record_result", 0),
+    }, "record_result")
+
+
+def build_langgraph_runner() -> Callable[[DebugGraphState], DebugGraphState]:
+    from langgraph.checkpoint.memory import MemorySaver
+    from langgraph.graph import END, START, StateGraph
+
+    graph = StateGraph(DebugGraphState)
+    graph.add_node("run_or_ingest", graph_run_or_ingest_node)
+    graph.add_node("parse_failure", graph_parse_failure_node)
+    graph.add_node("classify_failure", graph_classify_failure_node)
+    graph.add_node("localize_rtl", graph_localize_rtl_node)
+    graph.add_node("write_patch_plan", graph_write_patch_plan_node)
+    graph.add_node("investigate", graph_investigate_node)
+    graph.add_node("assess_evidence", graph_assess_evidence_node)
+    graph.add_node("build_patch_context", graph_build_patch_context_node)
+    graph.add_node("propose_patch", graph_propose_patch_node)
+    graph.add_node("validate_patch", graph_validate_patch_node)
+    graph.add_node("apply_patch", graph_apply_patch_node)
+    graph.add_node("record_result", graph_record_result_node)
+    graph.add_edge(START, "run_or_ingest")
+    graph.add_edge("run_or_ingest", "parse_failure")
+    graph.add_edge("parse_failure", "classify_failure")
+    graph.add_edge("classify_failure", "localize_rtl")
+    graph.add_edge("localize_rtl", "write_patch_plan")
+    graph.add_conditional_edges("write_patch_plan", route_after_patch_plan)
+    graph.add_edge("investigate", "assess_evidence")
+    graph.add_conditional_edges("assess_evidence", route_after_assessment)
+    graph.add_conditional_edges("build_patch_context", route_after_build_patch_context)
+    graph.add_conditional_edges("propose_patch", route_after_propose)
+    graph.add_conditional_edges("validate_patch", route_after_validate)
+    graph.add_edge("apply_patch", "record_result")
+    graph.add_edge("record_result", END)
+    compiled = graph.compile(checkpointer=MemorySaver())
+
+    def invoke(state: DebugGraphState) -> DebugGraphState:
+        thread_id = state.get("failure_dir") or state.get("name") or utc_now()
+        return compiled.invoke(
+            state,
+            config={"configurable": {"thread_id": str(thread_id)},
+                    "recursion_limit": 30 + 2 * int(state.get("budgets", {}).get("investigation_steps_max", 8))},
+        )
+
+    return invoke
+
+
+def run_fallback_graph(state: DebugGraphState) -> DebugGraphState:
+    current = dict(state)
+    for node in (
+        graph_run_or_ingest_node,
+        graph_parse_failure_node,
+        graph_classify_failure_node,
+        graph_localize_rtl_node,
+        graph_write_patch_plan_node,
+    ):
+        current.update(node(current))
+
+    if route_after_patch_plan(current) == "record_result":
+        current.update(graph_record_result_node(current))
+        return current
+
+    while True:
+        current.update(graph_investigate_node(current))
+        current.update(graph_assess_evidence_node(current))
+        route = route_after_assessment(current)
+        if route == "record_result":
+            current.update(graph_record_result_node(current))
+            return current
+        if route == "build_patch_context":
+            break
+
+    current.update(graph_build_patch_context_node(current))
+    if route_after_build_patch_context(current) == "record_result":
+        current.update(graph_record_result_node(current))
+        return current
+
+    current.update(graph_propose_patch_node(current))
+    if route_after_propose(current) == "record_result":
+        current.update(graph_record_result_node(current))
+        return current
+
+    current.update(graph_validate_patch_node(current))
+    if route_after_validate(current) == "record_result":
+        current.update(graph_record_result_node(current))
+        return current
+
+    current.update(graph_apply_patch_node(current))
+    current.update(graph_record_result_node(current))
+    return current
+
+
+def validate_graph_args(args: argparse.Namespace) -> str | None:
+    if args.investigate and args.repair:
+        return "Choose --investigate for inspection only, or --repair for investigation followed by repair."
+    if not 1 <= args.investigation_steps <= 100:
+        return "--investigation-steps must be between 1 and 100."
+    if not 1000 <= args.investigation_context_chars <= 200000:
+        return "--investigation-context-chars must be between 1000 and 200000."
+    if args.failure_dir:
+        return None
+    if not args.source:
+        return "graph requires SOURCE unless --failure-dir is provided."
+    if not args.command and not args.log:
+        return "graph requires --command or --log unless --failure-dir is provided."
+    return None
+
+
+def run_graph_flow(args: argparse.Namespace) -> int:
+    error = validate_graph_args(args)
+    if error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    initial_state: DebugGraphState = {
+        "failure_dir": args.failure_dir,
+        "source": args.source,
+        "command": args.command,
+        "log": args.log,
+        "name": args.name,
+        "repair": bool(args.repair),
+        "investigate": bool(args.investigate),
+        "resume": bool(args.resume),
+        "force_stale": bool(args.force_stale),
+        "model": args.model,
+        "offline": bool(args.offline),
+        "max_attempts": args.max_attempts,
+        "lint_command": args.lint_command,
+        "target_command": args.target_command,
+        "keep_failed_patch": bool(args.keep_failed_patch or args.demo_mode),
+        "demo_mode": bool(args.demo_mode),
+        "budgets": {
+            "repair_attempts_max": args.max_attempts,
+            "repair_attempts_used": 0,
+            "investigation_steps_max": args.investigation_steps,
+            "investigation_steps_used": 0,
+            "investigation_context_chars_max": args.investigation_context_chars,
+        },
+        "steps": [],
+    }
+    initial_state = merge_resume_checkpoint(args, initial_state)
+    if not args.resume:
+        initial_state["investigation"] = {}
+        initial_state["stop_reason"] = ""
+    elif initial_state.get("investigation"):
+        record = investigation_record(initial_state)
+        # A resumed run may reassess saved evidence, but never replenish tool budgets.
+        record.pop("stop_reason", None)
+        if record["decision"] == "evidence_unavailable":
+            record["decision"] = "insufficient_evidence"
+        write_json(analysis_dir(graph_failure_dir(initial_state)) / "investigation.json", record)
+        initial_state["stop_reason"] = ""
+
+    try:
+        runner = build_langgraph_runner()
+        initial_state["graph_backend"] = "langgraph"
+        final_state = runner(initial_state)
+    except ImportError as exc:
+        if args.require_langgraph:
+            print(f"error: LangGraph is not installed: {exc}", file=sys.stderr)
+            return 1
+        initial_state["graph_backend"] = "local_fallback"
+        final_state = run_fallback_graph(initial_state)
+
+    failure_dir_text = final_state.get("failure_dir")
+    if failure_dir_text:
+        failure_dir = resolve_failure_dir(str(SCRIPT_DIR / str(failure_dir_text)))
+        status = current_result_status(failure_dir)
+        final_status = status.get("status") if isinstance(status, dict) else "unknown"
+        log_debug(failure_dir, f"Graph final status: {final_status}")
+        if args.investigate and final_status == "needs_human":
+            return 1
+        if args.repair:
+            return 0 if final_status in PATCH_SUCCESS_STATUSES else 1
+    return 0
+
+
+def run_auto_flow(args: argparse.Namespace) -> int:
+    if not args.repair and not args.investigate:
+        print("error: auto requires --repair or --investigate.", file=sys.stderr)
+        return 2
+
+    ensure_debug_layout()
+    failure_dir = make_failure_dir(args.source, args.name, args.command, args.log)
+    log_debug(failure_dir, f"Auto flow created failure workspace: {display_path(failure_dir)}")
+    intake_args = argparse.Namespace(
+        source=args.source,
+        command=args.command,
+        log=args.log,
+        name=args.name,
+    )
+    try:
+        intake = capture_intake(intake_args, failure_dir)
+        write_json(intake_dir(failure_dir) / "metadata.json", asdict(intake))
+        write_json(intake_dir(failure_dir) / "rtl_state.json", collect_rtl_state())
+        log_debug(failure_dir, f"Auto flow captured raw log: {display_path(intake_dir(failure_dir) / 'raw.log')}")
+    except Exception as exc:
+        log_debug(failure_dir, f"Auto intake failed: {exc}")
+        return 1
+
+    graph_args = argparse.Namespace(
+        mode="graph",
+        source=args.source,
+        failure_dir=display_path(failure_dir),
+        command=None,
+        log=None,
+        name=args.name,
+        repair=bool(args.repair),
+        investigate=bool(args.investigate),
+        resume=False,
+        force_stale=False,
+        model=args.model,
+        offline=bool(args.offline),
+        max_attempts=args.max_attempts,
+        lint_command=args.lint_command,
+        target_command=args.target_command or args.command,
+        keep_failed_patch=bool(args.keep_failed_patch or args.demo_mode),
+        demo_mode=bool(args.demo_mode),
+        require_langgraph=bool(args.require_langgraph),
+        investigation_steps=args.investigation_steps,
+        investigation_context_chars=args.investigation_context_chars,
+    )
+    return run_graph_flow(graph_args)
+
+
 def run_phase1(args: argparse.Namespace) -> int:
     ensure_debug_layout()
     failure_dir = make_failure_dir(args.source, args.name, args.command, args.log)
@@ -3019,6 +4664,10 @@ def run_phase1(args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = parse_args()
+    if getattr(args, "mode", None) == "auto":
+        return run_auto_flow(args)
+    if getattr(args, "mode", None) == "graph":
+        return run_graph_flow(args)
     if getattr(args, "mode", None) == "propose":
         return propose_patch(args)
     if getattr(args, "mode", None) == "validate":
