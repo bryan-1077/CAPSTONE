@@ -1,0 +1,213 @@
+[*] GTKWave save file for the single-bank round-robin DDR4 controller demo
+[dumpfile] "tb_ddr4_controller_top.vcd"
+[savefile] "round_robin_controller_demo.gtkw"
+[timestart] 0
+[size] 1600 900
+[pos] -1 -1
+*-2.000000 0
+[signals_width] 320
+[sst_expanded] 1
+[pattern_trace] 0
+[treeopen] tb_ddr4_controller_top.
+[treeopen] tb_ddr4_controller_top.sched_policy_dut.
+[treeopen] tb_ddr4_controller_top.dut.
+[treeopen] tb_ddr4_controller_top.dut.u_scheduler.
+[treeopen] tb_ddr4_controller_top.dut.u_refresh_controller.
+[treeopen] tb_ddr4_controller_top.dut.u_bank_sequencer.
+[treeopen] tb_ddr4_controller_top.dut.u_activate_fsm.
+[treeopen] tb_ddr4_controller_top.dut.u_tRAS_fsm.
+[treeopen] tb_ddr4_controller_top.dut.u_precharge_fsm.
+[treeopen] tb_ddr4_controller_top.dut.u_tFAW_tracker.
+[treeopen] tb_ddr4_controller_top.dut.u_tRRD.
+@800200
+-TB / Coverage
+@22
+tb_ddr4_controller_top.clk
+@22
+tb_ddr4_controller_top.rst_n
+@22
+tb_ddr4_controller_top.txn_valid
+@22
+tb_ddr4_controller_top.cmd_ready
+@24
+tb_ddr4_controller_top.cycle[31:0]
+@24
+tb_ddr4_controller_top.error_count[31:0]
+@22
+tb_ddr4_controller_top.traffic_started
+@22
+tb_ddr4_controller_top.saw_backpressure
+@22
+tb_ddr4_controller_top.saw_tRRD_block
+@22
+tb_ddr4_controller_top.results_reported
+@1000200
+-TB / Coverage
+@800200
+-Standalone scheduler policy DUT
+@22
+tb_ddr4_controller_top.sched_ref_req
+@22
+tb_ddr4_controller_top.sched_txn_valid
+@22
+tb_ddr4_controller_top.sched_cmd_ready
+@22
+tb_ddr4_controller_top.sched_issue_ref
+@22
+tb_ddr4_controller_top.sched_issue_txn
+@24
+tb_ddr4_controller_top.sched_policy_dut.current_state[2:0]
+@24
+tb_ddr4_controller_top.sched_policy_dut.next_state[2:0]
+@1000200
+-Standalone scheduler policy DUT
+@800200
+-Top-level control
+@22
+tb_ddr4_controller_top.dut.ref_req
+@22
+tb_ddr4_controller_top.dut.issue_ref
+@22
+tb_ddr4_controller_top.dut.issue_txn
+@22
+tb_ddr4_controller_top.dut.cmd_valid_internal
+@22
+tb_ddr4_controller_top.dut.act_allowed
+@22
+tb_ddr4_controller_top.dut.activating
+@22
+tb_ddr4_controller_top.dut.prev_activating
+@22
+tb_ddr4_controller_top.dut.act_pulse
+@22
+tb_ddr4_controller_top.dut.tRCD_start
+@22
+tb_ddr4_controller_top.dut.tRCD_done
+@22
+tb_ddr4_controller_top.dut.tRAS_start
+@22
+tb_ddr4_controller_top.dut.tRAS_done
+@22
+tb_ddr4_controller_top.dut.tRP_start
+@22
+tb_ddr4_controller_top.dut.tRP_done
+@1000200
+-Top-level control
+@800200
+-Timing constraints
+@22
+tb_ddr4_controller_top.dut.tFAW_ok
+@22
+tb_ddr4_controller_top.dut.tRRD_block
+@22
+tb_ddr4_controller_top.dut.u_tFAW_tracker.tFAW_block
+@24
+tb_ddr4_controller_top.dut.u_tFAW_tracker.act_count[2:0]
+@24
+tb_ddr4_controller_top.dut.u_tFAW_tracker.act_window[39:0]
+@24
+tb_ddr4_controller_top.dut.u_tRRD.counter[2:0]
+@22
+tb_ddr4_controller_top.dut.u_tRRD.tRRD_block
+@1000200
+-Timing constraints
+@800200
+-Top-level scheduler + refresh
+@22
+tb_ddr4_controller_top.dut.u_scheduler.ref_req
+@22
+tb_ddr4_controller_top.dut.u_scheduler.txn_valid
+@22
+tb_ddr4_controller_top.dut.u_scheduler.cmd_ready
+@22
+tb_ddr4_controller_top.dut.u_scheduler.issue_ref
+@22
+tb_ddr4_controller_top.dut.u_scheduler.issue_txn
+@24
+tb_ddr4_controller_top.dut.u_scheduler.current_state[2:0]
+@24
+tb_ddr4_controller_top.dut.u_scheduler.next_state[2:0]
+@22
+tb_ddr4_controller_top.dut.u_refresh_controller.ref_req
+@22
+tb_ddr4_controller_top.dut.u_refresh_controller.ref_ack
+@24
+tb_ddr4_controller_top.dut.u_refresh_controller.current_state[0:0]
+@24
+tb_ddr4_controller_top.dut.u_refresh_controller.next_state[0:0]
+@24
+tb_ddr4_controller_top.dut.u_refresh_controller.counter[13:0]
+@1000200
+-Top-level scheduler + refresh
+@800200
+-Bank sequencer
+@24
+tb_ddr4_controller_top.dut.u_bank_sequencer.current_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_bank_sequencer.next_state[1:0]
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.cmd_valid
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.cmd_ready
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRCD_start
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRCD_done
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRAS_start
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRAS_done
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRP_start
+@22
+tb_ddr4_controller_top.dut.u_bank_sequencer.tRP_done
+@1000200
+-Bank sequencer
+@800200
+-Activate FSM
+@22
+tb_ddr4_controller_top.dut.u_activate_fsm.start
+@22
+tb_ddr4_controller_top.dut.u_activate_fsm.ack
+@24
+tb_ddr4_controller_top.dut.u_activate_fsm.current_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_activate_fsm.next_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_activate_fsm.tRCD_counter[4:0]
+@22
+tb_ddr4_controller_top.dut.u_activate_fsm.tRCD_done
+@1000200
+-Activate FSM
+@800200
+-tRAS FSM
+@22
+tb_ddr4_controller_top.dut.u_tRAS_fsm.start
+@22
+tb_ddr4_controller_top.dut.u_tRAS_fsm.ack
+@24
+tb_ddr4_controller_top.dut.u_tRAS_fsm.current_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_tRAS_fsm.next_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_tRAS_fsm.tRAS_counter[5:0]
+@22
+tb_ddr4_controller_top.dut.u_tRAS_fsm.tRAS_done
+@1000200
+-tRAS FSM
+@800200
+-Precharge FSM
+@22
+tb_ddr4_controller_top.dut.u_precharge_fsm.start
+@22
+tb_ddr4_controller_top.dut.u_precharge_fsm.ack
+@24
+tb_ddr4_controller_top.dut.u_precharge_fsm.current_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_precharge_fsm.next_state[1:0]
+@24
+tb_ddr4_controller_top.dut.u_precharge_fsm.tRP_counter[4:0]
+@22
+tb_ddr4_controller_top.dut.u_precharge_fsm.tRP_done
+@1000200
+-Precharge FSM

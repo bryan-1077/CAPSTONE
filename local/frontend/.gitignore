@@ -1,0 +1,21 @@
+# Documentation
+*.md
+!README.md
+
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+
+# Flow/runtime logs
+*.log
+
+# Simulator and waveform artifacts
+obj_dir/
+*.vcd
+*.fst
+*.vvp
+
+# LLM/generated repair scratch space
+.llm_cache/
+debug/failures/*
+!debug/failures/.gitkeep

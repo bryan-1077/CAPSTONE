@@ -1,0 +1,92 @@
+{
+  "design_name": "ddr4_bank_activate_fsm",
+  "design_type": "fsm",
+  "clock": {
+    "name": "clk",
+    "frequency_mhz": null
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": true
+  },
+  "ports": [
+    {
+      "name": "start",
+      "direction": "input",
+      "width": 1,
+      "description": "Pulse high for one cycle to begin tRCD count"
+    },
+    {
+      "name": "tRCD_done",
+      "direction": "output",
+      "width": 1,
+      "description": "Held high once tRCD cycles have elapsed, until ack"
+    },
+    {
+      "name": "ack",
+      "direction": "input",
+      "width": 1,
+      "description": "Pulse high to reset back to IDLE after done is received"
+    }
+  ],
+  "fsm": {
+    "states": [
+      "IDLE",
+      "COUNTING",
+      "DONE"
+    ],
+    "transitions": [
+      {
+        "src": "IDLE",
+        "dst": "COUNTING",
+        "condition": {
+          "left": {
+            "name": "start"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "start == 1"
+      },
+      {
+        "src": "COUNTING",
+        "dst": "DONE",
+        "condition": {
+          "left": {
+            "name": "tRCD_counter"
+          },
+          "op": ">=",
+          "right": {
+            "value": 22
+          }
+        },
+        "raw_condition": "tRCD_counter >= 22"
+      },
+      {
+        "src": "DONE",
+        "dst": "IDLE",
+        "condition": {
+          "left": {
+            "name": "ack"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "ack == 1"
+      }
+    ],
+    "reset_state": "IDLE"
+  },
+  "metadata": {
+    "inferred_signal_widths": {
+      "start": 1,
+      "tRCD_counter": 5,
+      "ack": 1
+    }
+  }
+}
