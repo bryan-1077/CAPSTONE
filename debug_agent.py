@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import os
@@ -545,13 +546,13 @@ def debug_log_label(message: str) -> str:
     return "debug"
 
 
-def log_debug(failure_dir: Path | None, message: str) -> None:
-    line = f"[debug:{debug_log_label(message)}] {message}"
-    print(line)
+def log_debug(failure_dir: Path | None, message: str, *, section: bool = False) -> None:
+    line = f"===== {message} =====" if section else f"[debug:{debug_log_label(message)}] {message}"
+    print(("\n" if section else "") + line, flush=True)
     if failure_dir is None:
         return
     log_path = failure_dir / "debug.log"
-    timestamped = f"{utc_now()} {line}\n"
+    timestamped = ("\n" if section else "") + f"{utc_now()} {line}\n"
     with log_path.open("a", encoding="utf-8") as handle:
         handle.write(timestamped)
 
@@ -2308,11 +2309,13 @@ def restore_missing_hunk_locations(file_lines: list[str], old_path: str, new_pat
             or not path.is_relative_to(RTL_OUTPUT_DIR.resolve()) or not path.is_file()):
         return file_lines, "Cannot reconstruct bare hunk headers outside an existing RTL file."
     try:
-        source = path.read_text(encoding="utf-8").splitlines()
+        raw = path.read_bytes().decode("utf-8")
     except (OSError, UnicodeError) as exc:
         return file_lines, f"Cannot read source for bare hunk headers: {exc}"
-    repaired = list(file_lines)
-    offset = 0
+    if not raw.endswith("\n") or "\r" in raw:
+        return file_lines, "Cannot reconstruct bare hunk headers for non-LF or unterminated source files."
+    source = raw.splitlines()
+    repaired = []
     previous_end = 0
     for start, end in hunks:
         body = file_lines[start + 1:end]
@@ -2325,11 +2328,15 @@ def restore_missing_hunk_locations(file_lines: list[str], old_path: str, new_pat
         if len(matches) != 1 or matches[0] < previous_end:
             return file_lines, "Cannot reconstruct bare hunk headers: source context is missing, ambiguous, or overlapping."
         position = matches[0]
-        new_start = position + offset + (1 if replacement else 0)
-        repaired[start] = f"@@ -{position + 1},{len(original)} +{new_start},{len(replacement)} @@"
+        repaired.extend(source[previous_end:position])
+        repaired.extend(replacement)
         previous_end = position + len(original)
-        offset += len(replacement) - len(original)
-    return repaired, f"Reconstructed bare hunk locations from unique exact source matches in {name}."
+    repaired.extend(source[previous_end:])
+    # Generate counts and surrounding context together; header-only recovery can
+    # leave a trailing-context-free hunk that Git interprets as an EOF change.
+    result = list(difflib.unified_diff(source, repaired, fromfile=old_path,
+                                     tofile=new_path, lineterm=""))
+    return result, f"Reconstructed unified diff from unique exact source matches in {name}."
 
 
 def normalize_patch_text(patch_text: str) -> tuple[str, list[str]]:
@@ -2642,6 +2649,7 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
 def validate_attempt(args: argparse.Namespace) -> int:
     attempt_dir = resolve_attempt_dir(args.attempt_dir)
     failure_dir = attempt_dir.parent.parent
+    log_debug(failure_dir, f"VALIDATE PATCH | {attempt_dir.name}", section=True)
     log_debug(failure_dir, f"Validating patch attempt: {attempt_dir.name}")
     patch_path = attempt_dir / "patch.diff"
     patch_text, normalization_warnings, normalized = normalize_patch_file(patch_path)
@@ -3066,6 +3074,7 @@ def build_fix_report(
 def apply_attempt(args: argparse.Namespace) -> int:
     attempt_dir = resolve_attempt_dir(args.attempt_dir)
     failure_dir = attempt_dir.parent.parent
+    log_debug(failure_dir, f"APPLY AND CHECK | {attempt_dir.name}", section=True)
     log_debug(failure_dir, f"Applying patch attempt: {attempt_dir.name}")
     patch_path = attempt_dir / "patch.diff"
     patch_text, normalization_warnings, normalized = normalize_patch_file(patch_path)
@@ -3257,6 +3266,7 @@ def propose_patch(args: argparse.Namespace) -> int:
         return 1
 
     attempt_dir = next_attempt_dir(failure_dir)
+    log_debug(failure_dir, f"PATCH ATTEMPT {int(attempt_dir.name.split('_')[-1])} | PROPOSE", section=True)
     log_debug(failure_dir, f"Created patch attempt: {attempt_dir.name}")
     started_at = utc_now()
     previous_status_path = result_dir(failure_dir) / "status.json"
@@ -3958,6 +3968,7 @@ def graph_run_or_ingest_node(state: DebugGraphState) -> DebugGraphState:
 
 def graph_parse_failure_node(state: DebugGraphState) -> DebugGraphState:
     failure_dir = graph_failure_dir(state)
+    log_debug(failure_dir, "FAILURE ANALYSIS", section=True)
     intake_data = state.get("intake")
     intake = IntakeResult(**intake_data) if isinstance(intake_data, dict) else read_intake_record(failure_dir)
     raw_log = (intake_dir(failure_dir) / "raw.log").read_text(encoding="utf-8", errors="replace")
@@ -4112,6 +4123,9 @@ def graph_investigate_node(state: DebugGraphState) -> DebugGraphState:
             record["unresolved_questions"] = ["Inputs changed; start a fresh investigation against the current sources."]
             return save_investigation(state, record, "investigate")
     if not record.get("stop_reason") and record["decision"] != "sufficient_evidence":
+        if investigation.can_inspect(record) and record["pending"]:
+            log_debug(graph_failure_dir(state),
+                      f"INVESTIGATION {len(record['actions']) + 1}/{record['max_actions']}", section=True)
         investigation.inspect(record, SCRIPT_DIR)
     return save_investigation(state, record, "investigate")
 
@@ -4526,6 +4540,7 @@ def run_graph_flow(args: argparse.Namespace) -> int:
         failure_dir = resolve_failure_dir(str(SCRIPT_DIR / str(failure_dir_text)))
         status = current_result_status(failure_dir)
         final_status = status.get("status") if isinstance(status, dict) else "unknown"
+        log_debug(failure_dir, "DEBUG RESULT", section=True)
         log_debug(failure_dir, f"Graph final status: {final_status}")
         if args.investigate and final_status == "needs_human":
             return 1
@@ -4541,6 +4556,7 @@ def run_auto_flow(args: argparse.Namespace) -> int:
 
     ensure_debug_layout()
     failure_dir = make_failure_dir(args.source, args.name, args.command, args.log)
+    log_debug(failure_dir, f"DEBUG RUN | {args.source.upper()} | {failure_dir.name}", section=True)
     log_debug(failure_dir, f"Auto flow created failure workspace: {display_path(failure_dir)}")
     intake_args = argparse.Namespace(
         source=args.source,

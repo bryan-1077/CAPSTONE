@@ -1,8 +1,9 @@
 import json
+import io
 import os
 import tempfile
 import unittest
-from contextlib import ExitStack
+from contextlib import ExitStack, redirect_stdout
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -285,6 +286,20 @@ class InvestigationTests(unittest.TestCase):
         self.assertIn("Inspection request:", text)
         self.assertIn("rtl_output/counter.sv:1-1", text)
         self.assertIn("Evidence E1", text)
+
+    def test_section_headers_in_terminal_and_log(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            agent.log_debug(self.failure, "INVESTIGATION 2/8", section=True)
+            agent.log_debug(self.failure, "Collected evidence")
+            agent.log_debug(None, "DEBUG RESULT", section=True)
+        text = output.getvalue()
+        self.assertIn("\n===== INVESTIGATION 2/8 =====\n", text)
+        self.assertIn("[debug:debug] Collected evidence", text)
+        self.assertIn("\n===== DEBUG RESULT =====\n", text)
+        saved = (self.failure / "debug.log").read_text()
+        self.assertIn("===== INVESTIGATION 2/8 =====", saved)
+        self.assertIn("[debug:debug] Collected evidence", saved)
 
     def test_empty_api_response_saves_metadata_without_credentials(self):
         response = Mock(status_code=200)

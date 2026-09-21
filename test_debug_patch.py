@@ -19,16 +19,20 @@ class BareHunkTests(unittest.TestCase):
             source = root / "rtl_output/test.sv"
             original = "a\nb\nc\nd\ne\nf\ng\nh\ni\n"
             source.write_text(original)
-            text = "--- a/rtl_output/test.sv\n+++ b/rtl_output/test.sv\n@@\n a\n-b\n+B\n+extra\n c\n@@\n g\n-h\n+H\n i\n"
+            text = "--- a/rtl_output/test.sv\n+++ b/rtl_output/test.sv\n@@\n a\n-b\n+B\n+extra\n c\n@@\n g\n-h\n+H\n"
             normalized, warnings = self.normalize(root, text)
-            self.assertIn("@@ -1,3 +1,4 @@", normalized)
-            self.assertIn("@@ -7,3 +8,3 @@", normalized)
+            self.assertIn("@@ -1,9 +1,10 @@", normalized)
+            self.assertIn("\n i\n", normalized)
             checked = subprocess.run(["git", "apply", "--check", "-"], input=normalized,
                                      text=True, capture_output=True, cwd=root)
             self.assertEqual(checked.returncode, 0, checked.stderr)
             self.assertEqual(source.read_text(), original)
             self.assertTrue(any("unique exact" in warning for warning in warnings))
             self.assertEqual(self.normalize(root, normalized)[0], normalized)
+            applied = subprocess.run(["git", "apply", "-"], input=normalized,
+                                     text=True, capture_output=True, cwd=root)
+            self.assertEqual(applied.returncode, 0, applied.stderr)
+            self.assertEqual(source.read_text(), "a\nB\nextra\nc\nd\ne\nf\ng\nH\ni\n")
 
     def test_unsafe_or_unmatched_context_is_not_reconstructed(self):
         with tempfile.TemporaryDirectory() as directory:
