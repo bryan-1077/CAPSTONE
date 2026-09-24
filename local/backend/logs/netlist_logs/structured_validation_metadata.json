@@ -1,9 +1,532 @@
 {
+  "directory_resolution": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    }
+  },
+  "log_entries": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    },
+    "netlist_generate_1_completed": {
+      "completion_code": "0",
+      "environment_error": null,
+      "run_completed": true,
+      "timeout_sec": 14400
+    },
+    "netlist_generate_1_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    },
+    "netlist_review_1_local_result": {
+      "applicable_recipe_ids": [],
+      "blocking_errors": [],
+      "candidate_path": "build_netlist_200MHz_01",
+      "chosen_recipe_id": null,
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_generic.sdc",
+          "results/ddr4_controller_top_generic.v",
+          "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+        ],
+        "input_builddir": "build_prep_200MHz_01",
+        "key_files": {
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_200MHz_01 --top ddr4_controller_top\n\nPrep review note:\n  - README macro scan result: none detected.\n  - If a downstream check reports missing macro application, re-run/inspect the macro scan.\n  - run_genus_mc.tcl supports opt-in defines via GENUS_DEFINES, but does not enable any by default.\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+          "output:agent_netlist_progress.log": "[2026-09-24T13:23:23-05:00] netlist launcher started\n[2026-09-24T13:23:23-05:00] builddir=build_prep_200MHz_01\n[2026-09-24T13:23:23-05:00] builddir_source=state.prep_candidate_path\n[2026-09-24T13:23:23-05:00] outdir=build_netlist_200MHz_01\n[2026-09-24T13:23:23-05:00] outdir_source=state.remote_netlist_dir\n[2026-09-24T13:23:23-05:00] netlist_script=scripts_200MHz_01/run_genus_netlist_200MHz_01.py\nEDA_NETLIST_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:23:23-05:00] netlist still running\n[2026-09-24T13:24:23-05:00] netlist still running\n[2026-09-24T13:25:23-05:00] netlist still running\n[2026-09-24T13:26:00-05:00] netlist exited rc=0\nEDA_NETLIST_RUN_COMPLETE:0\n",
+          "output:agent_netlist_stderr.log": "",
+          "output:agent_netlist_stdout.log": "\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2714927_50459845-6bef-4187-bb04-a1855c7e974d_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Gsk9Tv\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:23:24.501625] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl \nDate:    Thu Sep 24 13:23:24 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2714927\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:23:24.006792] Periodic Lic check successful\n[13:23:24.531097] Feature usage summary:\n[13:23:24.531098] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***********************************************************************************************************\n\n\n\nFinished executable startup (0 seconds elapsed).\n\nLoading tool scripts...\nFinished loading tool scripts (12 seconds elapsed).\n\n#@ Processing -files option\n@genus:root: 1> source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n#@ Begin verbose source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n@file(run_genus_netlist.tcl) 1: set TOP \"ddr4_controller_top\"\n@file(run_genus_netlist.tcl) 2: set OUTDIR \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\"\n@file(run_genus_netlist.tcl) 3: set FILEL\n...<truncated>...",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Prefer top_module.txt (prep-selected top) if present; allow env override.\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(GENUS_TOP)] && [string trim $::env(GENUS_TOP)] ne \"\"} {\n    set TOP [string trim $::env(GENUS_TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\n# Optional user-driven SystemVerilog `define support via GENUS_DEFINES (space-separated).\n# NOTE: This prep bundle does not auto-enable any macros.\nset hdl_defs {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set hdl_defs [split [string trim $::env(GENUS_DEFINES)]]\n}\n# Apply defines via Genus database knob when provided.\nif {[llength $hdl_defs] > 0} {\n    set_db hdl_define $hdl_defs\n}\nputs \"DEFINES  = $hdl_defs\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Read HDL (try to pass optional defines; fall back if unsupported)\nif {[llength $hdl_defs] > 0} {\n    if {[catch {read_hdl -sv -define $hdl_defs -f $FILELIST} err]} {\n        puts \"WARNING: read_hdl -define not supported or failed ($err); retrying without defines\"\n        read_hdl -sv -f $FILELIST\n    }\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP\n...<truncated>...",
+          "top_module.txt": "ddr4_controller_top\n"
+        },
+        "log_classification": {
+          "blackbox_lines": [],
+          "blackbox_modules": [],
+          "config_error_lines": [],
+          "constant_expression_lines": [],
+          "elaborate_error_lines": [],
+          "fallback_used": false,
+          "generic_interface_lines": [],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "interactive_prompt_fallthrough": false,
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_reporting": true,
+          "reached_syn_generic": true,
+          "saw_elaborate": false,
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source.",
+          "semantic_diagnostics": [],
+          "semantic_error_lines": [],
+          "unsynthesizable_process_lines": []
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "prep_artifact_status": {
+          "README_prepared.txt": true,
+          "constraints/mc_genus.sdc": true,
+          "filelist_genus.f": true,
+          "run_genus_mc.tcl": true,
+          "top_module.txt": true
+        },
+        "resolved_top": "ddr4_controller_top",
+        "synthesis_top_checks": {
+          "generic_interface_port_examples": [],
+          "selected_top_has_generic_interface_ports": false,
+          "selected_top_module": "ddr4_controller_top",
+          "selected_top_path": "rtl/ddr4_controller_top.sv"
+        }
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "netlist",
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_netlist_instructions.md",
+      "suggested_fixes": [],
+      "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings.",
+      "warnings": []
+    },
+    "netlist_review_1_result": {
+      "ai_review": {
+        "api_error": null,
+        "available": true,
+        "enabled": true,
+        "errors": [],
+        "model": "protected.gpt-5.2",
+        "pass": true,
+        "request_metadata": {
+          "api_style": "chat_completions_fallback",
+          "base_url": "https://chat-api.tamu.ai/openai",
+          "builddir": "build_prep_200MHz_01",
+          "candidate_path": "build_netlist_200MHz_01",
+          "execution_ok": true,
+          "local_error_count": 0,
+          "local_warning_count": 0,
+          "model": "protected.gpt-5.2",
+          "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+        },
+        "suggested_fixes": [
+          "(Optional) Filter/ignore known-nonfunctional SKY130 cells (decap/diode/bleeder) in mapping if they cause noise in reports; otherwise accept LBR-9 as benign.",
+          "Enhance the netlist-stage log classifier to detect the `elaborate` step and to explicitly parse/report any unresolved references from `check_design -unresolved` output."
+        ],
+        "summary": "Netlist-stage Genus run for top `ddr4_controller_top` completed successfully (rc=0), reached synthesis/reporting, and produced expected key artifacts (`results/ddr4_controller_top_generic.v`, `.sdc`, and `.db`). No evidence of unresolved generic interfaces or unsynthesizable-process/CDFG issues. Only non-blocking liberty/library warnings (LBR-9/LBR-40) observed, typical for SKY130.",
+        "warnings": [
+          "Genus library read produced warnings about unusable cells with no output pins (LBR-9) and unsupported constructs in the liberty (LBR-40). This is common for SKY130 decap/diode/bleeder-type cells and usually non-blocking, but it can slightly reduce the available mapping set.",
+          "Log classifier indicates `saw_elaborate=false` even though synthesis completed and outputs were generated; this looks like a log-parsing/coverage gap rather than a real tool failure. Consider improving log scraping to confirm `elaborate` and `check_design -unresolved` results are captured."
+        ]
+      },
+      "applicable_recipe_ids": [],
+      "blocking_errors": [],
+      "candidate_path": "build_netlist_200MHz_01",
+      "chosen_recipe_id": null,
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_generic.sdc",
+          "results/ddr4_controller_top_generic.v",
+          "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+        ],
+        "input_builddir": "build_prep_200MHz_01",
+        "key_files": {
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_200MHz_01 --top ddr4_controller_top\n\nPrep review note:\n  - README macro scan result: none detected.\n  - If a downstream check reports missing macro application, re-run/inspect the macro scan.\n  - run_genus_mc.tcl supports opt-in defines via GENUS_DEFINES, but does not enable any by default.\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+          "output:agent_netlist_progress.log": "[2026-09-24T13:23:23-05:00] netlist launcher started\n[2026-09-24T13:23:23-05:00] builddir=build_prep_200MHz_01\n[2026-09-24T13:23:23-05:00] builddir_source=state.prep_candidate_path\n[2026-09-24T13:23:23-05:00] outdir=build_netlist_200MHz_01\n[2026-09-24T13:23:23-05:00] outdir_source=state.remote_netlist_dir\n[2026-09-24T13:23:23-05:00] netlist_script=scripts_200MHz_01/run_genus_netlist_200MHz_01.py\nEDA_NETLIST_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:23:23-05:00] netlist still running\n[2026-09-24T13:24:23-05:00] netlist still running\n[2026-09-24T13:25:23-05:00] netlist still running\n[2026-09-24T13:26:00-05:00] netlist exited rc=0\nEDA_NETLIST_RUN_COMPLETE:0\n",
+          "output:agent_netlist_stderr.log": "",
+          "output:agent_netlist_stdout.log": "\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2714927_50459845-6bef-4187-bb04-a1855c7e974d_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Gsk9Tv\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:23:24.501625] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl \nDate:    Thu Sep 24 13:23:24 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2714927\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:23:24.006792] Periodic Lic check successful\n[13:23:24.531097] Feature usage summary:\n[13:23:24.531098] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***********************************************************************************************************\n\n\n\nFinished executable startup (0 seconds elapsed).\n\nLoading tool scripts...\nFinished loading tool scripts (12 seconds elapsed).\n\n#@ Processing -files option\n@genus:root: 1> source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n#@ Begin verbose source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n@file(run_genus_netlist.tcl) 1: set TOP \"ddr4_controller_top\"\n@file(run_genus_netlist.tcl) 2: set OUTDIR \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\"\n@file(run_genus_netlist.tcl) 3: set FILEL\n...<truncated>...",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Prefer top_module.txt (prep-selected top) if present; allow env override.\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(GENUS_TOP)] && [string trim $::env(GENUS_TOP)] ne \"\"} {\n    set TOP [string trim $::env(GENUS_TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\n# Optional user-driven SystemVerilog `define support via GENUS_DEFINES (space-separated).\n# NOTE: This prep bundle does not auto-enable any macros.\nset hdl_defs {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set hdl_defs [split [string trim $::env(GENUS_DEFINES)]]\n}\n# Apply defines via Genus database knob when provided.\nif {[llength $hdl_defs] > 0} {\n    set_db hdl_define $hdl_defs\n}\nputs \"DEFINES  = $hdl_defs\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Read HDL (try to pass optional defines; fall back if unsupported)\nif {[llength $hdl_defs] > 0} {\n    if {[catch {read_hdl -sv -define $hdl_defs -f $FILELIST} err]} {\n        puts \"WARNING: read_hdl -define not supported or failed ($err); retrying without defines\"\n        read_hdl -sv -f $FILELIST\n    }\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP\n...<truncated>...",
+          "top_module.txt": "ddr4_controller_top\n"
+        },
+        "log_classification": {
+          "blackbox_lines": [],
+          "blackbox_modules": [],
+          "config_error_lines": [],
+          "constant_expression_lines": [],
+          "elaborate_error_lines": [],
+          "fallback_used": false,
+          "generic_interface_lines": [],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "interactive_prompt_fallthrough": false,
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_reporting": true,
+          "reached_syn_generic": true,
+          "saw_elaborate": false,
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source.",
+          "semantic_diagnostics": [],
+          "semantic_error_lines": [],
+          "unsynthesizable_process_lines": []
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "prep_artifact_status": {
+          "README_prepared.txt": true,
+          "constraints/mc_genus.sdc": true,
+          "filelist_genus.f": true,
+          "run_genus_mc.tcl": true,
+          "top_module.txt": true
+        },
+        "resolved_top": "ddr4_controller_top",
+        "synthesis_top_checks": {
+          "generic_interface_port_examples": [],
+          "selected_top_has_generic_interface_ports": false,
+          "selected_top_module": "ddr4_controller_top",
+          "selected_top_path": "rtl/ddr4_controller_top.sv"
+        }
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "netlist",
+      "local_review": {
+        "blocking_errors": [],
+        "errors": [],
+        "failure_class": "non_fatal_warning_only_issue",
+        "failure_stage_owner": "netlist",
+        "pass": true,
+        "route_back_to_stage": null,
+        "suggested_fixes": [],
+        "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings.",
+        "warnings": []
+      },
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_netlist_instructions.md",
+      "suggested_fixes": [
+        "(Optional) Filter/ignore known-nonfunctional SKY130 cells (decap/diode/bleeder) in mapping if they cause noise in reports; otherwise accept LBR-9 as benign.",
+        "Enhance the netlist-stage log classifier to detect the `elaborate` step and to explicitly parse/report any unresolved references from `check_design -unresolved` output."
+      ],
+      "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings. Netlist-stage Genus run for top `ddr4_controller_top` completed successfully (rc=0), reached synthesis/reporting, and produced expected key artifacts (`results/ddr4_controller_top_generic.v`, `.sdc`, and `.db`). No evidence of unresolved generic interfaces or unsynthesizable-process/CDFG issues. Only non-blocking liberty/library warnings (LBR-9/LBR-40) observed, typical for SKY130.",
+      "warnings": [
+        "Genus library read produced warnings about unusable cells with no output pins (LBR-9) and unsupported constructs in the liberty (LBR-40). This is common for SKY130 decap/diode/bleeder-type cells and usually non-blocking, but it can slightly reduce the available mapping set.",
+        "Log classifier indicates `saw_elaborate=false` even though synthesis completed and outputs were generated; this looks like a log-parsing/coverage gap rather than a real tool failure. Consider improving log scraping to confirm `elaborate` and `check_design -unresolved` results are captured."
+      ]
+    },
+    "netlist_review_1_routing": {
+      "blocking_errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "netlist",
+      "is_gdsii_owned": false,
+      "is_mapped_owned": false,
+      "is_netlist_owned": true,
+      "is_prep_owned": false,
+      "route_back_to_stage": null
+    },
+    "stage_routing_decision_netlist_1": {
+      "attempt": 1,
+      "blocking_errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "netlist",
+      "is_gdsii_owned": false,
+      "is_mapped_owned": false,
+      "is_netlist_owned": true,
+      "is_prep_owned": false,
+      "route_back_to_stage": null,
+      "stage": "netlist"
+    }
+  },
+  "review_context": {
+    "detected_outputs": [
+      "results/ddr4_controller_top_generic.sdc",
+      "results/ddr4_controller_top_generic.v",
+      "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+    ],
+    "input_builddir": "build_prep_200MHz_01",
+    "key_files": {
+      "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_200MHz_01 --top ddr4_controller_top\n\nPrep review note:\n  - README macro scan result: none detected.\n  - If a downstream check reports missing macro application, re-run/inspect the macro scan.\n  - run_genus_mc.tcl supports opt-in defines via GENUS_DEFINES, but does not enable any by default.\n",
+      "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+      "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+      "output:agent_netlist_progress.log": "[2026-09-24T13:23:23-05:00] netlist launcher started\n[2026-09-24T13:23:23-05:00] builddir=build_prep_200MHz_01\n[2026-09-24T13:23:23-05:00] builddir_source=state.prep_candidate_path\n[2026-09-24T13:23:23-05:00] outdir=build_netlist_200MHz_01\n[2026-09-24T13:23:23-05:00] outdir_source=state.remote_netlist_dir\n[2026-09-24T13:23:23-05:00] netlist_script=scripts_200MHz_01/run_genus_netlist_200MHz_01.py\nEDA_NETLIST_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:23:23-05:00] netlist still running\n[2026-09-24T13:24:23-05:00] netlist still running\n[2026-09-24T13:25:23-05:00] netlist still running\n[2026-09-24T13:26:00-05:00] netlist exited rc=0\nEDA_NETLIST_RUN_COMPLETE:0\n",
+      "output:agent_netlist_stderr.log": "",
+      "output:agent_netlist_stdout.log": "\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2714927_50459845-6bef-4187-bb04-a1855c7e974d_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Gsk9Tv\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:23:24.501625] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl \nDate:    Thu Sep 24 13:23:24 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2714927\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:23:24.006792] Periodic Lic check successful\n[13:23:24.531097] Feature usage summary:\n[13:23:24.531098] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***********************************************************************************************************\n\n\n\nFinished executable startup (0 seconds elapsed).\n\nLoading tool scripts...\nFinished loading tool scripts (12 seconds elapsed).\n\n#@ Processing -files option\n@genus:root: 1> source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n#@ Begin verbose source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n@file(run_genus_netlist.tcl) 1: set TOP \"ddr4_controller_top\"\n@file(run_genus_netlist.tcl) 2: set OUTDIR \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\"\n@file(run_genus_netlist.tcl) 3: set FILEL\n...<truncated>...",
+      "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Prefer top_module.txt (prep-selected top) if present; allow env override.\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(GENUS_TOP)] && [string trim $::env(GENUS_TOP)] ne \"\"} {\n    set TOP [string trim $::env(GENUS_TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\n# Optional user-driven SystemVerilog `define support via GENUS_DEFINES (space-separated).\n# NOTE: This prep bundle does not auto-enable any macros.\nset hdl_defs {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set hdl_defs [split [string trim $::env(GENUS_DEFINES)]]\n}\n# Apply defines via Genus database knob when provided.\nif {[llength $hdl_defs] > 0} {\n    set_db hdl_define $hdl_defs\n}\nputs \"DEFINES  = $hdl_defs\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Read HDL (try to pass optional defines; fall back if unsupported)\nif {[llength $hdl_defs] > 0} {\n    if {[catch {read_hdl -sv -define $hdl_defs -f $FILELIST} err]} {\n        puts \"WARNING: read_hdl -define not supported or failed ($err); retrying without defines\"\n        read_hdl -sv -f $FILELIST\n    }\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP\n...<truncated>...",
+      "top_module.txt": "ddr4_controller_top\n"
+    },
+    "log_classification": {
+      "blackbox_lines": [],
+      "blackbox_modules": [],
+      "config_error_lines": [],
+      "constant_expression_lines": [],
+      "elaborate_error_lines": [],
+      "fallback_used": false,
+      "generic_interface_lines": [],
+      "inspected_logs": [
+        "genus.log"
+      ],
+      "interactive_prompt_fallthrough": false,
+      "made_meaningful_progress": true,
+      "primary_log": "genus.log",
+      "reached_reporting": true,
+      "reached_syn_generic": true,
+      "saw_elaborate": false,
+      "selection_reason": "candidate/genus.log present; using it as the primary truth source.",
+      "semantic_diagnostics": [],
+      "semantic_error_lines": [],
+      "unsynthesizable_process_lines": []
+    },
+    "output_inventory": {
+      "files": [
+        ".rs_antgamez1203.tstamp",
+        "agent_netlist_progress.log",
+        "agent_netlist_stderr.log",
+        "agent_netlist_stdout.log",
+        "genus.cmd",
+        "genus.log",
+        "reports/area_generic.rpt",
+        "reports/check_design_post_generic.rpt",
+        "reports/check_unresolved_pre_sdc.rpt",
+        "reports/gates_generic.rpt",
+        "reports/messages_generic.rpt",
+        "reports/power_generic.rpt",
+        "reports/qor_generic.rpt",
+        "reports/timing_generic.rpt",
+        "results/ddr4_controller_top_generic.sdc",
+        "results/ddr4_controller_top_generic.v",
+        "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+        "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+        "run_genus_netlist.tcl",
+        "run_wrapper.log"
+      ],
+      "total_files": 20,
+      "truncated": false
+    },
+    "prep_artifact_status": {
+      "README_prepared.txt": true,
+      "constraints/mc_genus.sdc": true,
+      "filelist_genus.f": true,
+      "run_genus_mc.tcl": true,
+      "top_module.txt": true
+    },
+    "resolved_top": "ddr4_controller_top",
+    "synthesis_top_checks": {
+      "generic_interface_port_examples": [],
+      "selected_top_has_generic_interface_ports": false,
+      "selected_top_module": "ddr4_controller_top",
+      "selected_top_path": "rtl/ddr4_controller_top.sv"
+    }
+  },
   "routing": {
-    "failure_class": null,
-    "failure_stage_owner": null,
+    "failure_class": "non_fatal_warning_only_issue",
+    "failure_stage_owner": "gdsii",
     "route_back_to_stage": null,
-    "rtl_failure_category": null,
-    "rtl_failure_handoff_owner": null
+    "rtl_failure_category": "routing_error",
+    "rtl_failure_handoff_owner": "backend"
+  },
+  "validation_entries": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    },
+    "netlist_review": {
+      "ai_review": {
+        "api_error": null,
+        "available": true,
+        "enabled": true,
+        "errors": [],
+        "model": "protected.gpt-5.2",
+        "pass": true,
+        "request_metadata": {
+          "api_style": "chat_completions_fallback",
+          "base_url": "https://chat-api.tamu.ai/openai",
+          "builddir": "build_prep_200MHz_01",
+          "candidate_path": "build_netlist_200MHz_01",
+          "execution_ok": true,
+          "local_error_count": 0,
+          "local_warning_count": 0,
+          "model": "protected.gpt-5.2",
+          "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+        },
+        "suggested_fixes": [
+          "(Optional) Filter/ignore known-nonfunctional SKY130 cells (decap/diode/bleeder) in mapping if they cause noise in reports; otherwise accept LBR-9 as benign.",
+          "Enhance the netlist-stage log classifier to detect the `elaborate` step and to explicitly parse/report any unresolved references from `check_design -unresolved` output."
+        ],
+        "summary": "Netlist-stage Genus run for top `ddr4_controller_top` completed successfully (rc=0), reached synthesis/reporting, and produced expected key artifacts (`results/ddr4_controller_top_generic.v`, `.sdc`, and `.db`). No evidence of unresolved generic interfaces or unsynthesizable-process/CDFG issues. Only non-blocking liberty/library warnings (LBR-9/LBR-40) observed, typical for SKY130.",
+        "warnings": [
+          "Genus library read produced warnings about unusable cells with no output pins (LBR-9) and unsupported constructs in the liberty (LBR-40). This is common for SKY130 decap/diode/bleeder-type cells and usually non-blocking, but it can slightly reduce the available mapping set.",
+          "Log classifier indicates `saw_elaborate=false` even though synthesis completed and outputs were generated; this looks like a log-parsing/coverage gap rather than a real tool failure. Consider improving log scraping to confirm `elaborate` and `check_design -unresolved` results are captured."
+        ]
+      },
+      "applicable_recipe_ids": [],
+      "attempt": 1,
+      "blocking_errors": [],
+      "candidate_path": "build_netlist_200MHz_01",
+      "chosen_recipe_id": null,
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_generic.sdc",
+          "results/ddr4_controller_top_generic.v",
+          "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+        ],
+        "input_builddir": "build_prep_200MHz_01",
+        "key_files": {
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_200MHz_01 --top ddr4_controller_top\n\nPrep review note:\n  - README macro scan result: none detected.\n  - If a downstream check reports missing macro application, re-run/inspect the macro scan.\n  - run_genus_mc.tcl supports opt-in defines via GENUS_DEFINES, but does not enable any by default.\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+          "output:agent_netlist_progress.log": "[2026-09-24T13:23:23-05:00] netlist launcher started\n[2026-09-24T13:23:23-05:00] builddir=build_prep_200MHz_01\n[2026-09-24T13:23:23-05:00] builddir_source=state.prep_candidate_path\n[2026-09-24T13:23:23-05:00] outdir=build_netlist_200MHz_01\n[2026-09-24T13:23:23-05:00] outdir_source=state.remote_netlist_dir\n[2026-09-24T13:23:23-05:00] netlist_script=scripts_200MHz_01/run_genus_netlist_200MHz_01.py\nEDA_NETLIST_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:23:23-05:00] netlist still running\n[2026-09-24T13:24:23-05:00] netlist still running\n[2026-09-24T13:25:23-05:00] netlist still running\n[2026-09-24T13:26:00-05:00] netlist exited rc=0\nEDA_NETLIST_RUN_COMPLETE:0\n",
+          "output:agent_netlist_stderr.log": "",
+          "output:agent_netlist_stdout.log": "\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2714927_50459845-6bef-4187-bb04-a1855c7e974d_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Gsk9Tv\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:23:24.501625] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl \nDate:    Thu Sep 24 13:23:24 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2714927\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:23:24.006792] Periodic Lic check successful\n[13:23:24.531097] Feature usage summary:\n[13:23:24.531098] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***********************************************************************************************************\n\n\n\nFinished executable startup (0 seconds elapsed).\n\nLoading tool scripts...\nFinished loading tool scripts (12 seconds elapsed).\n\n#@ Processing -files option\n@genus:root: 1> source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n#@ Begin verbose source /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/run_genus_netlist.tcl\n@file(run_genus_netlist.tcl) 1: set TOP \"ddr4_controller_top\"\n@file(run_genus_netlist.tcl) 2: set OUTDIR \"/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\"\n@file(run_genus_netlist.tcl) 3: set FILEL\n...<truncated>...",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Prefer top_module.txt (prep-selected top) if present; allow env override.\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(GENUS_TOP)] && [string trim $::env(GENUS_TOP)] ne \"\"} {\n    set TOP [string trim $::env(GENUS_TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\n# Optional user-driven SystemVerilog `define support via GENUS_DEFINES (space-separated).\n# NOTE: This prep bundle does not auto-enable any macros.\nset hdl_defs {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set hdl_defs [split [string trim $::env(GENUS_DEFINES)]]\n}\n# Apply defines via Genus database knob when provided.\nif {[llength $hdl_defs] > 0} {\n    set_db hdl_define $hdl_defs\n}\nputs \"DEFINES  = $hdl_defs\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Read HDL (try to pass optional defines; fall back if unsupported)\nif {[llength $hdl_defs] > 0} {\n    if {[catch {read_hdl -sv -define $hdl_defs -f $FILELIST} err]} {\n        puts \"WARNING: read_hdl -define not supported or failed ($err); retrying without defines\"\n        read_hdl -sv -f $FILELIST\n    }\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP\n...<truncated>...",
+          "top_module.txt": "ddr4_controller_top\n"
+        },
+        "log_classification": {
+          "blackbox_lines": [],
+          "blackbox_modules": [],
+          "config_error_lines": [],
+          "constant_expression_lines": [],
+          "elaborate_error_lines": [],
+          "fallback_used": false,
+          "generic_interface_lines": [],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "interactive_prompt_fallthrough": false,
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_reporting": true,
+          "reached_syn_generic": true,
+          "saw_elaborate": false,
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source.",
+          "semantic_diagnostics": [],
+          "semantic_error_lines": [],
+          "unsynthesizable_process_lines": []
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "prep_artifact_status": {
+          "README_prepared.txt": true,
+          "constraints/mc_genus.sdc": true,
+          "filelist_genus.f": true,
+          "run_genus_mc.tcl": true,
+          "top_module.txt": true
+        },
+        "resolved_top": "ddr4_controller_top",
+        "synthesis_top_checks": {
+          "generic_interface_port_examples": [],
+          "selected_top_has_generic_interface_ports": false,
+          "selected_top_module": "ddr4_controller_top",
+          "selected_top_path": "rtl/ddr4_controller_top.sv"
+        }
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "execution_context": {
+        "builddir": "build_prep_200MHz_01",
+        "exit_code": 0,
+        "ok": true,
+        "outdir": "build_netlist_200MHz_01"
+      },
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "netlist",
+      "local_review": {
+        "blocking_errors": [],
+        "errors": [],
+        "failure_class": "non_fatal_warning_only_issue",
+        "failure_stage_owner": "netlist",
+        "pass": true,
+        "route_back_to_stage": null,
+        "suggested_fixes": [],
+        "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings.",
+        "warnings": []
+      },
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_netlist_instructions.md",
+      "suggested_fixes": [
+        "(Optional) Filter/ignore known-nonfunctional SKY130 cells (decap/diode/bleeder) in mapping if they cause noise in reports; otherwise accept LBR-9 as benign.",
+        "Enhance the netlist-stage log classifier to detect the `elaborate` step and to explicitly parse/report any unresolved references from `check_design -unresolved` output."
+      ],
+      "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings. Netlist-stage Genus run for top `ddr4_controller_top` completed successfully (rc=0), reached synthesis/reporting, and produced expected key artifacts (`results/ddr4_controller_top_generic.v`, `.sdc`, and `.db`). No evidence of unresolved generic interfaces or unsynthesizable-process/CDFG issues. Only non-blocking liberty/library warnings (LBR-9/LBR-40) observed, typical for SKY130.",
+      "warnings": [
+        "Genus library read produced warnings about unusable cells with no output pins (LBR-9) and unsupported constructs in the liberty (LBR-40). This is common for SKY130 decap/diode/bleeder-type cells and usually non-blocking, but it can slightly reduce the available mapping set.",
+        "Log classifier indicates `saw_elaborate=false` even though synthesis completed and outputs were generated; this looks like a log-parsing/coverage gap rather than a real tool failure. Consider improving log scraping to confirm `elaborate` and `check_design -unresolved` results are captured."
+      ]
+    }
   }
 }

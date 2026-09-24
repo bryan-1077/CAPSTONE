@@ -65,7 +65,7 @@ def main() -> int:
     parser.add_argument("--ssh-port", type=int, default=int(os.getenv("EDA_SSH_PORT", DEFAULT_SSH_PORT)))
     parser.add_argument("--ssh-key-file", default=os.getenv("EDA_SSH_KEY_FILE", "~/.ssh/id_ed25519"))
     parser.add_argument("--remote-root", default=os.getenv("EDA_REMOTE_PROJECT_ROOT", DEFAULT_REMOTE_PROJECT_ROOT))
-    parser.add_argument("--local-staging-dir", type=Path, default=Path(".timing_closure_remote"))
+    parser.add_argument("--local-staging-dir", type=Path, default=REPO_ROOT / "logs" / "timing_closure" / "remote")
     parser.add_argument("--target-period", type=float, default=None)
     parser.add_argument("--max-paths", type=int, default=10)
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")

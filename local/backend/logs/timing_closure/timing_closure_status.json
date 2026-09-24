@@ -1,50 +1,27 @@
 {
-  "run_name": "target_230MHz",
-  "run_id": "eb924cdbec6542568d8ae6da331d1bfe",
+  "run_name": "target_200MHz",
+  "run_id": "d885ff0431b94d899138ca130f36b108",
   "status": "failed",
-  "message": "Setup timing remains violated after 3 backend attempts; latest WNS -0.019 ns. See timing_closure/timing_closure_report.md for critical-path recommendations.",
+  "message": "GDSII review failed after 1 iterations: GDSII output directory does not contain an expected layout artifact (*.gds or *.gdsii).; GDSII generation command failed with exit code 1: srun: job 644297 queued and waiting for resources\nsrun: job 644297 has been allocated resources\nTraceback (most recent call last):\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 1673, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 1657, in main\n    run_bash(bash_cmd, logfile=wrapper_log, cwd=outdir)\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 35, in run_bash\n    raise RuntimeError(\nRuntimeError: Command failed with exit code 7. See log: /home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_01/logs/run_wrapper.log\nsrun: error: n01-zeus: task 0: Exited with exit code 1; GDSII stage did not complete successfully: wrapper raised RuntimeError after underlying Innovus run returned non-zero (wrapper exit code 7; stage rc=1). No *.gds/*.gdsii was produced.; Failure is GDSII-owned (post-launch tool execution): Innovus was found, licensed, and began importing LEF/lib/netlist/MMMC/SDC; the mapped handoff contract appears present (mapped .v/.sdc/.db).",
   "attempts": [
     {
       "attempt": 1,
-      "outdir": "build_GDSII_230MHz_01",
-      "mapped_snapshot": "build_mapped_snapshot_230MHz_01",
-      "target_period_ns": 4.3478260869565215,
+      "outdir": "build_GDSII_200MHz_01",
+      "mapped_snapshot": "build_mapped_snapshot_200MHz_01",
+      "target_period_ns": 5.0,
       "settings": {
         "innovus_utilization": 0.6,
         "innovus_ccopt_target_skew": 0.25,
         "innovus_ccopt_target_max_transition": 0.5
       },
-      "status": "violated",
-      "wns_ns": -0.789,
-      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/eb924cdbec6542568d8ae6da331d1bfe/build_GDSII_230MHz_01__reports__timing_postroute.rpt"
-    },
-    {
-      "attempt": 2,
-      "outdir": "build_GDSII_230MHz_02",
-      "mapped_snapshot": "build_mapped_snapshot_230MHz_01",
-      "target_period_ns": 4.3478260869565215,
-      "settings": {
-        "innovus_utilization": 0.55,
-        "innovus_ccopt_target_skew": 0.18,
-        "innovus_ccopt_target_max_transition": 0.35
-      },
-      "status": "violated",
-      "wns_ns": -0.305,
-      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/eb924cdbec6542568d8ae6da331d1bfe/build_GDSII_230MHz_02__reports__timing_postroute.rpt"
-    },
-    {
-      "attempt": 3,
-      "outdir": "build_GDSII_230MHz_03",
-      "mapped_snapshot": "build_mapped_snapshot_230MHz_01",
-      "target_period_ns": 4.3478260869565215,
-      "settings": {
-        "innovus_utilization": 0.5,
-        "innovus_ccopt_target_skew": 0.12,
-        "innovus_ccopt_target_max_transition": 0.25
-      },
-      "status": "violated",
-      "wns_ns": -0.019,
-      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/eb924cdbec6542568d8ae6da331d1bfe/build_GDSII_230MHz_03__reports__timing_postroute.rpt"
+      "status": "implementation_failed",
+      "kind": "preset",
+      "source_outdir": null
     }
-  ]
+  ],
+  "limits": {
+    "max_die_area_mm2": 8.0,
+    "max_power_w": 2.0
+  },
+  "best_attempt": null
 }

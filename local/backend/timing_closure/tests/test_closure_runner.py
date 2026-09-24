@@ -98,6 +98,15 @@ class ClosureTests(unittest.TestCase):
         self.assertEqual(result["timing_closure_run_name"], "target_210MHz")
         self.assertTrue((self.repo / "logs" / "timing_closure" / "target_210MHz" / "attempt_2_state.json").exists())
         self.assertEqual([a["wns_ns"] for a in status["attempts"]], [-0.119, 0.012])
+        log_dir = self.repo / "logs" / "timing_closure"
+        self.assertIn("passed", (log_dir / "timing_closure_report.md").read_text())
+        self.assertEqual(
+            (log_dir / "timing_closure_report.md").read_text(),
+            (log_dir / "target_210MHz" / "timing_closure_report.md").read_text(),
+        )
+        self.assertTrue(list((log_dir / "remote").rglob("*.rpt")))
+        self.assertFalse((self.repo / ".timing_closure_remote").exists())
+        self.assertFalse((self.repo / "timing_closure" / "timing_closure_report.md").exists())
 
     def test_exhaustion_does_not_report_success(self):
         result = self.run_closure(FakeSSH([-0.119, -0.1, -0.08]))

@@ -258,6 +258,8 @@ proc ecoRoute {} {puts ROUTED}
             ]
             completed = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertTrue((Path(directory) / "logs" / "collectGenusLibrary.log").exists())
+            self.assertEqual(list(Path(directory).glob("*.log")), [])
             scripts = list((Path(directory) / "tcl").glob("*.tcl"))
             script = next(p.read_text() for p in scripts if "restoreDesign" in p.read_text())
             self.assertNotIn("\ninit_design\n", script)

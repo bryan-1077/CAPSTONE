@@ -5,6 +5,39 @@ import subprocess
 import sys
 import traceback
 from pathlib import Path
+from uuid import uuid4
+
+
+def collect_legacy_logs(backend_root: Path) -> list[Path]:
+    """Archive old local run output without replacing current logs or state.
+
+    Preserve relative paths and sidecar names together in a unique batch.
+    Remote build outputs and explicitly configured output paths are untouched.
+    """
+    root = Path(backend_root)
+    sources = []
+    for directory in (root, root / "timing_closure"):
+        if directory.is_dir():
+            sources.extend(
+                path for path in sorted(directory.iterdir())
+                if path.is_file() and not path.is_symlink() and (
+                    ".log" in path.suffixes
+                    or path.name in {"timing_closure_status.json", "timing_closure_report.md"}
+                )
+            )
+    staging = root / ".timing_closure_remote"
+    if staging.is_dir() and not staging.is_symlink():
+        sources.append(staging)
+    if not sources:
+        return []
+    archive = root / "logs" / "legacy" / uuid4().hex
+    destinations = []
+    for source in sources:
+        destination = archive / source.relative_to(root)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        source.rename(destination)
+        destinations.append(destination)
+    return destinations
 
 
 class TeeStream:
@@ -63,6 +96,29 @@ def run_with_session_logging(
     parser_outdir: Path,
     result_printer=None,
 ):
+    backend_root = Path(parser_script_path).resolve().parent
+    collect_legacy_logs(backend_root)
+    try:
+        return _run_with_session_logging(
+            run_callable,
+            log_path=Path(parser_outdir) / Path(log_path).name,
+            parser_script_path=parser_script_path,
+            parser_outdir=parser_outdir,
+            result_printer=result_printer,
+        )
+    finally:
+        # Also collect files emitted by older helpers on failed/interrupted runs.
+        collect_legacy_logs(backend_root)
+
+
+def _run_with_session_logging(
+    run_callable,
+    *,
+    log_path: Path,
+    parser_script_path: Path,
+    parser_outdir: Path,
+    result_printer=None,
+):
     flow_error = None
     result = None
     state_path = Path(f"{log_path}.state.json")
@@ -71,7 +127,7 @@ def run_with_session_logging(
     with SessionLogCapture(log_path):
         try:
             result = run_callable()
-        except Exception as exc:
+        except (Exception, KeyboardInterrupt, SystemExit) as exc:
             flow_error = exc
             traceback.print_exc()
 
@@ -123,8 +179,13 @@ def run_with_session_logging(
         )
 
     if flow_error is not None:
-        if isinstance(flow_error, SystemExit):
+        if isinstance(flow_error, (SystemExit, KeyboardInterrupt)):
             raise flow_error
         raise SystemExit(1)
 
     return result
+
+
+if __name__ == "__main__":
+    for archived in collect_legacy_logs(Path(__file__).resolve().parent):
+        print(f"Archived: {archived}")

@@ -920,7 +920,7 @@ def build_innovus_tcl(
     lines.append("init_design")
     lines.append("saveDesign $DBS_DIR/01_init.enc")
     lines.append("")
-    lines.append("if {[catch {collectGenusLibrary > $OUTDIR/collectGenusLibrary.log} cgl_err]} {")
+    lines.append("if {[catch {collectGenusLibrary > $OUTDIR/logs/collectGenusLibrary.log} cgl_err]} {")
     lines.append('    puts "WARN: collectGenusLibrary failed: $cgl_err"')
     lines.append("} else {")
     lines.append('    puts "INFO: wrote collectGenusLibrary.log"')
@@ -1238,7 +1238,7 @@ def build_innovus_tcl(
     lines.append("catch {report_area > $REPORTS_DIR/area_postroute.rpt}")
     lines.extend([
         'if {[catch {',
-        '    report_power -unit W > $REPORTS_DIR/power_postroute.rpt',
+        '    report_power -power_unit W > $REPORTS_DIR/power_postroute.rpt',
         '    set power_units [open $REPORTS_DIR/power_postroute.rpt a]',
         '    puts $power_units "Power Units: W"',
         '    close $power_units',
@@ -1498,7 +1498,7 @@ def main():
     )
     mmmc_file = tcldir / "mmmc.tcl"
     tcl_path = tcldir / "run_innovus.tcl"
-    wrapper_log = outdir / "run_wrapper.log"
+    wrapper_log = logsdir / "run_wrapper.log"
     innovus_log = logsdir / "innovus.log"
     native_log = logsdir / "innovus_native.log"
 
@@ -1522,7 +1522,7 @@ def main():
     write_text(reportsdir / "netlist_constant_usage.rpt", constant_usage_txt)
     write_text(reportsdir / "{0}.conn.rpt".format(top), format_connectivity_note(top))
     write_text(reportsdir / "power.rpt", format_power_note())
-    write_text(outdir / "collectGenusLibrary.log", format_collect_genus_library_log(timing_libs))
+    write_text(logsdir / "collectGenusLibrary.log", format_collect_genus_library_log(timing_libs))
 
     write_tcl(
         tcl_path=tcl_path,

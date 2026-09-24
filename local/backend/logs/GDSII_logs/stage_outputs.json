@@ -1,1 +1,52 @@
-{}
+{
+  "candidate_paths": {
+    "gdsii_candidate_path": "build_GDSII_200MHz_01",
+    "remote_gdsii_dir": "build_GDSII_200MHz_01"
+  },
+  "directory_resolution": {
+    "gdsii_directory_resolution": {
+      "mappeddir": "build_mapped_snapshot_200MHz_01",
+      "mappeddir_source": "state.remote_mapped_dir",
+      "netlist_dir": "build_netlist_200MHz_01",
+      "netlist_dir_source": "state.remote_netlist_dir",
+      "outdir": "build_GDSII_200MHz_01",
+      "outdir_source": "state.remote_gdsii_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    }
+  },
+  "directory_resolution_logs": {
+    "gdsii_directory_resolution": {
+      "mappeddir": "build_mapped_snapshot_200MHz_01",
+      "mappeddir_source": "state.remote_mapped_dir",
+      "netlist_dir": "build_netlist_200MHz_01",
+      "netlist_dir_source": "state.remote_netlist_dir",
+      "outdir": "build_GDSII_200MHz_01",
+      "outdir_source": "state.remote_gdsii_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    },
+    "gdsii_generate_1_directory_resolution": {
+      "mappeddir": "build_mapped_snapshot_200MHz_01",
+      "mappeddir_source": "state.remote_mapped_dir",
+      "netlist_dir": "build_netlist_200MHz_01",
+      "netlist_dir_source": "state.remote_netlist_dir",
+      "outdir": "build_GDSII_200MHz_01",
+      "outdir_source": "state.remote_gdsii_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    }
+  },
+  "execution_context": {
+    "exit_code": 1,
+    "mappeddir": "build_mapped_snapshot_200MHz_01",
+    "ok": false,
+    "outdir": "build_GDSII_200MHz_01"
+  },
+  "output_files": {
+    "gdsii_output_files": []
+  },
+  "review_context_inventory": {
+    "detected_outputs": []
+  }
+}

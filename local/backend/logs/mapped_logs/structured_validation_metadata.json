@@ -1,9 +1,671 @@
 {
+  "directory_resolution": {
+    "mapped_directory_resolution": {
+      "builddir": "build_netlist_200MHz_01",
+      "builddir_source": "state.remote_netlist_dir",
+      "outdir": "build_mapped_200MHz_01",
+      "outdir_source": "state.remote_mapped_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    }
+  },
+  "log_entries": {
+    "mapped_directory_resolution": {
+      "builddir": "build_netlist_200MHz_01",
+      "builddir_source": "state.remote_netlist_dir",
+      "outdir": "build_mapped_200MHz_01",
+      "outdir_source": "state.remote_mapped_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    },
+    "mapped_generate_1_completed": {
+      "completion_code": "0",
+      "environment_error": null,
+      "run_completed": true,
+      "timeout_sec": 14400
+    },
+    "mapped_generate_1_directory_resolution": {
+      "builddir": "build_netlist_200MHz_01",
+      "builddir_source": "state.remote_netlist_dir",
+      "outdir": "build_mapped_200MHz_01",
+      "outdir_source": "state.remote_mapped_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    },
+    "mapped_review_1_local_result": {
+      "blocking_errors": [],
+      "candidate_path": "build_mapped_200MHz_01",
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_mapped.db",
+          "results/ddr4_controller_top_mapped.sdc",
+          "results/ddr4_controller_top_mapped.v"
+        ],
+        "input_builddir": "build_netlist_200MHz_01",
+        "input_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "key_files": {
+          "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_stderr.log": "",
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+        },
+        "log_classification": {
+          "blocking_diagnostics": [],
+          "config_error_lines": [],
+          "database141_lines": [],
+          "fallback_used": false,
+          "ignored_library_info_lines": [
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+          ],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_mapping": true,
+          "reached_reporting": true,
+          "resolved_top": "ddr4_controller_top",
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source."
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_mapped_progress.log",
+            "agent_mapped_stderr.log",
+            "agent_mapped_stdout.log",
+            "fv/ddr4_controller_top/fv_map.fv.json",
+            "fv/ddr4_controller_top/fv_map.map.do",
+            "fv/ddr4_controller_top/fv_map.user_hier.json",
+            "fv/ddr4_controller_top/fv_map.v.gz",
+            "fv/ddr4_controller_top/read_libs.tcl",
+            "fv/ddr4_controller_top/rtl_to_fv_map.do",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_mapped.rpt",
+            "reports/check_design_post_mapped.rpt",
+            "reports/gates_mapped.rpt",
+            "reports/messages_mapped.rpt",
+            "reports/power_mapped.rpt",
+            "reports/qor_mapped.rpt",
+            "reports/timing_mapped.rpt",
+            "results/ddr4_controller_top_mapped.db",
+            "results/ddr4_controller_top_mapped.sdc",
+            "results/ddr4_controller_top_mapped.v",
+            "run_genus_mapped.tcl",
+            "run_wrapper.log",
+            "setup_summary.txt"
+          ],
+          "total_files": 25,
+          "truncated": false
+        },
+        "resolved_top": "ddr4_controller_top"
+      },
+      "errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "mapped_netlist",
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
+      "suggested_fixes": [],
+      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings.",
+      "warnings": [
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+      ]
+    },
+    "mapped_review_1_result": {
+      "ai_review": {
+        "api_error": null,
+        "available": true,
+        "enabled": true,
+        "errors": [],
+        "model": "protected.gpt-5.2",
+        "pass": true,
+        "request_metadata": {
+          "api_style": "chat_completions_fallback",
+          "base_url": "https://chat-api.tamu.ai/openai",
+          "builddir": "build_netlist_200MHz_01",
+          "candidate_path": "build_mapped_200MHz_01",
+          "execution_ok": true,
+          "local_error_count": 0,
+          "local_warning_count": 11,
+          "model": "protected.gpt-5.2",
+          "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+        },
+        "suggested_fixes": [
+          "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
+          "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+        ],
+        "summary": "Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+        "warnings": [
+          "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
+          "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+        ]
+      },
+      "blocking_errors": [],
+      "candidate_path": "build_mapped_200MHz_01",
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_mapped.db",
+          "results/ddr4_controller_top_mapped.sdc",
+          "results/ddr4_controller_top_mapped.v"
+        ],
+        "input_builddir": "build_netlist_200MHz_01",
+        "input_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "key_files": {
+          "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_stderr.log": "",
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+        },
+        "log_classification": {
+          "blocking_diagnostics": [],
+          "config_error_lines": [],
+          "database141_lines": [],
+          "fallback_used": false,
+          "ignored_library_info_lines": [
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+          ],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_mapping": true,
+          "reached_reporting": true,
+          "resolved_top": "ddr4_controller_top",
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source."
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_mapped_progress.log",
+            "agent_mapped_stderr.log",
+            "agent_mapped_stdout.log",
+            "fv/ddr4_controller_top/fv_map.fv.json",
+            "fv/ddr4_controller_top/fv_map.map.do",
+            "fv/ddr4_controller_top/fv_map.user_hier.json",
+            "fv/ddr4_controller_top/fv_map.v.gz",
+            "fv/ddr4_controller_top/read_libs.tcl",
+            "fv/ddr4_controller_top/rtl_to_fv_map.do",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_mapped.rpt",
+            "reports/check_design_post_mapped.rpt",
+            "reports/gates_mapped.rpt",
+            "reports/messages_mapped.rpt",
+            "reports/power_mapped.rpt",
+            "reports/qor_mapped.rpt",
+            "reports/timing_mapped.rpt",
+            "results/ddr4_controller_top_mapped.db",
+            "results/ddr4_controller_top_mapped.sdc",
+            "results/ddr4_controller_top_mapped.v",
+            "run_genus_mapped.tcl",
+            "run_wrapper.log",
+            "setup_summary.txt"
+          ],
+          "total_files": 25,
+          "truncated": false
+        },
+        "resolved_top": "ddr4_controller_top"
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "mapped_netlist",
+      "local_review": {
+        "blocking_errors": [],
+        "errors": [],
+        "failure_class": "non_fatal_warning_only_issue",
+        "failure_stage_owner": "mapped_netlist",
+        "pass": true,
+        "route_back_to_stage": null,
+        "suggested_fixes": [],
+        "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings.",
+        "warnings": [
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+        ]
+      },
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
+      "suggested_fixes": [
+        "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
+        "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+      ],
+      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+      "warnings": [
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
+        "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
+        "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+      ]
+    },
+    "mapped_review_1_routing": {
+      "blocking_errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "mapped_netlist",
+      "is_gdsii_owned": false,
+      "is_mapped_owned": true,
+      "is_netlist_owned": false,
+      "is_prep_owned": false,
+      "route_back_to_stage": null
+    },
+    "stage_routing_decision_mapped_1": {
+      "attempt": 1,
+      "blocking_errors": [],
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "mapped_netlist",
+      "is_gdsii_owned": false,
+      "is_mapped_owned": true,
+      "is_netlist_owned": false,
+      "is_prep_owned": false,
+      "route_back_to_stage": null,
+      "stage": "mapped_netlist"
+    }
+  },
+  "review_context": {
+    "detected_outputs": [
+      "results/ddr4_controller_top_mapped.db",
+      "results/ddr4_controller_top_mapped.sdc",
+      "results/ddr4_controller_top_mapped.v"
+    ],
+    "input_builddir": "build_netlist_200MHz_01",
+    "input_inventory": {
+      "files": [
+        ".rs_antgamez1203.tstamp",
+        "agent_netlist_progress.log",
+        "agent_netlist_stderr.log",
+        "agent_netlist_stdout.log",
+        "genus.cmd",
+        "genus.log",
+        "reports/area_generic.rpt",
+        "reports/check_design_post_generic.rpt",
+        "reports/check_unresolved_pre_sdc.rpt",
+        "reports/gates_generic.rpt",
+        "reports/messages_generic.rpt",
+        "reports/power_generic.rpt",
+        "reports/qor_generic.rpt",
+        "reports/timing_generic.rpt",
+        "results/ddr4_controller_top_generic.sdc",
+        "results/ddr4_controller_top_generic.v",
+        "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+        "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+        "run_genus_netlist.tcl",
+        "run_wrapper.log"
+      ],
+      "total_files": 20,
+      "truncated": false
+    },
+    "key_files": {
+      "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+      "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+      "output:agent_mapped_stderr.log": "",
+      "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+    },
+    "log_classification": {
+      "blocking_diagnostics": [],
+      "config_error_lines": [],
+      "database141_lines": [],
+      "fallback_used": false,
+      "ignored_library_info_lines": [
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+        "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+      ],
+      "inspected_logs": [
+        "genus.log"
+      ],
+      "made_meaningful_progress": true,
+      "primary_log": "genus.log",
+      "reached_mapping": true,
+      "reached_reporting": true,
+      "resolved_top": "ddr4_controller_top",
+      "selection_reason": "candidate/genus.log present; using it as the primary truth source."
+    },
+    "output_inventory": {
+      "files": [
+        ".rs_antgamez1203.tstamp",
+        "agent_mapped_progress.log",
+        "agent_mapped_stderr.log",
+        "agent_mapped_stdout.log",
+        "fv/ddr4_controller_top/fv_map.fv.json",
+        "fv/ddr4_controller_top/fv_map.map.do",
+        "fv/ddr4_controller_top/fv_map.user_hier.json",
+        "fv/ddr4_controller_top/fv_map.v.gz",
+        "fv/ddr4_controller_top/read_libs.tcl",
+        "fv/ddr4_controller_top/rtl_to_fv_map.do",
+        "genus.cmd",
+        "genus.log",
+        "reports/area_mapped.rpt",
+        "reports/check_design_post_mapped.rpt",
+        "reports/gates_mapped.rpt",
+        "reports/messages_mapped.rpt",
+        "reports/power_mapped.rpt",
+        "reports/qor_mapped.rpt",
+        "reports/timing_mapped.rpt",
+        "results/ddr4_controller_top_mapped.db",
+        "results/ddr4_controller_top_mapped.sdc",
+        "results/ddr4_controller_top_mapped.v",
+        "run_genus_mapped.tcl",
+        "run_wrapper.log",
+        "setup_summary.txt"
+      ],
+      "total_files": 25,
+      "truncated": false
+    },
+    "resolved_top": "ddr4_controller_top"
+  },
   "routing": {
-    "failure_class": null,
-    "failure_stage_owner": null,
+    "failure_class": "non_fatal_warning_only_issue",
+    "failure_stage_owner": "gdsii",
     "route_back_to_stage": null,
-    "rtl_failure_category": null,
-    "rtl_failure_handoff_owner": null
+    "rtl_failure_category": "routing_error",
+    "rtl_failure_handoff_owner": "backend"
+  },
+  "validation_entries": {
+    "mapped_directory_resolution": {
+      "builddir": "build_netlist_200MHz_01",
+      "builddir_source": "state.remote_netlist_dir",
+      "outdir": "build_mapped_200MHz_01",
+      "outdir_source": "state.remote_mapped_dir",
+      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir_source": "state.prep_candidate_path"
+    },
+    "mapped_review": {
+      "ai_review": {
+        "api_error": null,
+        "available": true,
+        "enabled": true,
+        "errors": [],
+        "model": "protected.gpt-5.2",
+        "pass": true,
+        "request_metadata": {
+          "api_style": "chat_completions_fallback",
+          "base_url": "https://chat-api.tamu.ai/openai",
+          "builddir": "build_netlist_200MHz_01",
+          "candidate_path": "build_mapped_200MHz_01",
+          "execution_ok": true,
+          "local_error_count": 0,
+          "local_warning_count": 11,
+          "model": "protected.gpt-5.2",
+          "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+        },
+        "suggested_fixes": [
+          "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
+          "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+        ],
+        "summary": "Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+        "warnings": [
+          "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
+          "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+        ]
+      },
+      "attempt": 1,
+      "blocking_errors": [],
+      "candidate_path": "build_mapped_200MHz_01",
+      "context": {
+        "detected_outputs": [
+          "results/ddr4_controller_top_mapped.db",
+          "results/ddr4_controller_top_mapped.sdc",
+          "results/ddr4_controller_top_mapped.v"
+        ],
+        "input_builddir": "build_netlist_200MHz_01",
+        "input_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_netlist_progress.log",
+            "agent_netlist_stderr.log",
+            "agent_netlist_stdout.log",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_generic.rpt",
+            "reports/check_design_post_generic.rpt",
+            "reports/check_unresolved_pre_sdc.rpt",
+            "reports/gates_generic.rpt",
+            "reports/messages_generic.rpt",
+            "reports/power_generic.rpt",
+            "reports/qor_generic.rpt",
+            "reports/timing_generic.rpt",
+            "results/ddr4_controller_top_generic.sdc",
+            "results/ddr4_controller_top_generic.v",
+            "results/ddr4_controller_top_generic/cmn/ddr4_controller_top.metrics.json",
+            "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+            "run_genus_netlist.tcl",
+            "run_wrapper.log"
+          ],
+          "total_files": 20,
+          "truncated": false
+        },
+        "key_files": {
+          "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
+          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_stderr.log": "",
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+        },
+        "log_classification": {
+          "blocking_diagnostics": [],
+          "config_error_lines": [],
+          "database141_lines": [],
+          "fallback_used": false,
+          "ignored_library_info_lines": [
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+            "Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+          ],
+          "inspected_logs": [
+            "genus.log"
+          ],
+          "made_meaningful_progress": true,
+          "primary_log": "genus.log",
+          "reached_mapping": true,
+          "reached_reporting": true,
+          "resolved_top": "ddr4_controller_top",
+          "selection_reason": "candidate/genus.log present; using it as the primary truth source."
+        },
+        "output_inventory": {
+          "files": [
+            ".rs_antgamez1203.tstamp",
+            "agent_mapped_progress.log",
+            "agent_mapped_stderr.log",
+            "agent_mapped_stdout.log",
+            "fv/ddr4_controller_top/fv_map.fv.json",
+            "fv/ddr4_controller_top/fv_map.map.do",
+            "fv/ddr4_controller_top/fv_map.user_hier.json",
+            "fv/ddr4_controller_top/fv_map.v.gz",
+            "fv/ddr4_controller_top/read_libs.tcl",
+            "fv/ddr4_controller_top/rtl_to_fv_map.do",
+            "genus.cmd",
+            "genus.log",
+            "reports/area_mapped.rpt",
+            "reports/check_design_post_mapped.rpt",
+            "reports/gates_mapped.rpt",
+            "reports/messages_mapped.rpt",
+            "reports/power_mapped.rpt",
+            "reports/qor_mapped.rpt",
+            "reports/timing_mapped.rpt",
+            "results/ddr4_controller_top_mapped.db",
+            "results/ddr4_controller_top_mapped.sdc",
+            "results/ddr4_controller_top_mapped.v",
+            "run_genus_mapped.tcl",
+            "run_wrapper.log",
+            "setup_summary.txt"
+          ],
+          "total_files": 25,
+          "truncated": false
+        },
+        "resolved_top": "ddr4_controller_top"
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "execution_context": {
+        "builddir": "build_netlist_200MHz_01",
+        "exit_code": 0,
+        "ok": true,
+        "outdir": "build_mapped_200MHz_01"
+      },
+      "failure_class": "non_fatal_warning_only_issue",
+      "failure_stage_owner": "mapped_netlist",
+      "local_review": {
+        "blocking_errors": [],
+        "errors": [],
+        "failure_class": "non_fatal_warning_only_issue",
+        "failure_stage_owner": "mapped_netlist",
+        "pass": true,
+        "route_back_to_stage": null,
+        "suggested_fixes": [],
+        "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings.",
+        "warnings": [
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+          "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+        ]
+      },
+      "pass": true,
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
+      "suggested_fixes": [
+        "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
+        "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+      ],
+      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+      "warnings": [
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+        "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
+        "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
+        "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+      ]
+    }
   }
 }

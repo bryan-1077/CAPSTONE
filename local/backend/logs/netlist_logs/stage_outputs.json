@@ -1,1 +1,53 @@
-{}
+{
+  "candidate_paths": {
+    "netlist_candidate_path": "build_netlist_200MHz_01",
+    "netlist_resolved_top": "ddr4_controller_top",
+    "remote_netlist_dir": "build_netlist_200MHz_01"
+  },
+  "directory_resolution": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    }
+  },
+  "directory_resolution_logs": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    },
+    "netlist_generate_1_directory_resolution": {
+      "builddir": "build_prep_200MHz_01",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_200MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
+    }
+  },
+  "execution_context": {
+    "builddir": "build_prep_200MHz_01",
+    "exit_code": 0,
+    "ok": true,
+    "outdir": "build_netlist_200MHz_01"
+  },
+  "output_files": {
+    "netlist_output_files": [
+      "results/ddr4_controller_top_generic.sdc",
+      "results/ddr4_controller_top_generic.v",
+      "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+    ]
+  },
+  "outputs": {
+    "netlist_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01"
+  },
+  "review_context_inventory": {
+    "detected_outputs": [
+      "results/ddr4_controller_top_generic.sdc",
+      "results/ddr4_controller_top_generic.v",
+      "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+    ],
+    "resolved_top": "ddr4_controller_top"
+  }
+}
