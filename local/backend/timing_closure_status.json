@@ -1,0 +1,33 @@
+{
+  "run_id": "7467f0fc6d8c445180bc578a9a4e637c",
+  "status": "running",
+  "message": "Timing closure attempt 2/3: target 4.762 ns, output build_GDSII_tc_7467f0fc6d8c445180bc578a9a4e637c_02",
+  "attempts": [
+    {
+      "attempt": 1,
+      "outdir": "build_GDSII_tc_7467f0fc6d8c445180bc578a9a4e637c_01",
+      "mapped_snapshot": "build_mapped_tc_7467f0fc6d8c445180bc578a9a4e637c",
+      "target_period_ns": 4.762,
+      "settings": {
+        "innovus_utilization": 0.6,
+        "innovus_ccopt_target_skew": 0.25,
+        "innovus_ccopt_target_max_transition": 0.5
+      },
+      "status": "violated",
+      "wns_ns": -0.521,
+      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/7467f0fc6d8c445180bc578a9a4e637c/build_GDSII_tc_7467f0fc6d8c445180bc578a9a4e637c_01__reports__timing_postroute.rpt"
+    },
+    {
+      "attempt": 2,
+      "outdir": "build_GDSII_tc_7467f0fc6d8c445180bc578a9a4e637c_02",
+      "mapped_snapshot": "build_mapped_tc_7467f0fc6d8c445180bc578a9a4e637c",
+      "target_period_ns": 4.762,
+      "settings": {
+        "innovus_utilization": 0.55,
+        "innovus_ccopt_target_skew": 0.18,
+        "innovus_ccopt_target_max_transition": 0.35
+      },
+      "status": "running"
+    }
+  ]
+}

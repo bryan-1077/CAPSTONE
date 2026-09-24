@@ -1,0 +1,15 @@
+Cadence Innovus report_timing
+WNS (ns): -0.184
+TNS (ns): -1.512
+violating paths: 12
+Path 1:
+Path Group: reg2reg
+Startpoint: u_ctrl/state_reg[2]/Q
+Endpoint: u_datapath/data_reg[31]/D
+clock period: 4.762
+clock skew 0.312
+net delay dominated by routed net ctrl_enable_net fanout 84 capacitance 0.42
+route detour length high
+data arrival time 4.946
+data required time 4.762
+slack (VIOLATED) -0.184

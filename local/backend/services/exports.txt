@@ -1,0 +1,18 @@
+export OPENAI_API_KEY="sk-5313881325b54fafbd4cd59417bedf56"
+
+export OPENAI_BASE_URL="https://chat-api.tamu.ai/openai"
+
+export OPENAI_MODEL="protected.gpt-5.2"
+
+
+
+
+
+
+
+
+
+
+
+
+

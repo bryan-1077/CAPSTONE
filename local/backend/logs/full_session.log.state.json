@@ -1,0 +1,22 @@
+{
+  "attempts": [
+    {
+      "error": "Setup timing remains violated after 3 backend attempts; latest WNS -0.019 ns. See timing_closure/timing_closure_report.md for critical-path recommendations.",
+      "gdsii_dir": "build_GDSII_230MHz_03",
+      "mhz": 230,
+      "period_ns": 4.3478260869565215,
+      "state_path": "/home/antgamez1203/eda_agents/logs/max_clocking/20260924T151221Z_09c3e33e/230MHz.state.json",
+      "status": "failed",
+      "wns_ns": -0.019
+    }
+  ],
+  "best_mhz": null,
+  "best_state_path": null,
+  "current_stage": "failed",
+  "first_failed_mhz": 230,
+  "last_error": "Setup timing remains violated after 3 backend attempts; latest WNS -0.019 ns. See timing_closure/timing_closure_report.md for critical-path recommendations.",
+  "mode": "max_clocking",
+  "report_path": "/home/antgamez1203/eda_agents/logs/max_clocking/20260924T151221Z_09c3e33e/report.md",
+  "start_mhz": 230,
+  "step_mhz": 10
+}

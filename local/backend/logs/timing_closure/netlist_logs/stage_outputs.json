@@ -1,0 +1,38 @@
+{
+  "candidate_paths": {
+    "netlist_candidate_path": "build_netlist_mc_lang",
+    "netlist_resolved_top": "ddr4_controller_top"
+  },
+  "directory_resolution": {
+    "netlist_directory_resolution": {
+      "builddir": "build_prep_mc",
+      "builddir_source": "state.prep_candidate_path",
+      "outdir": "build_netlist_mc_lang",
+      "outdir_source": "derived_from_prepare_dir:build_prep_mc"
+    }
+  },
+  "execution_context": {
+    "builddir": "build_prep_mc",
+    "exit_code": 0,
+    "ok": true,
+    "outdir": "build_netlist_mc_lang"
+  },
+  "output_files": {
+    "netlist_output_files": [
+      "results/ddr4_controller_top_generic.sdc",
+      "results/ddr4_controller_top_generic.v",
+      "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+    ]
+  },
+  "outputs": {
+    "netlist_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_netlist_mc_lang"
+  },
+  "review_context_inventory": {
+    "detected_outputs": [
+      "results/ddr4_controller_top_generic.sdc",
+      "results/ddr4_controller_top_generic.v",
+      "results/ddr4_controller_top_generic/syn/ddr4_controller_top.db"
+    ],
+    "resolved_top": "ddr4_controller_top"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "review_payload_ai": {
+    "api_error": null,
+    "available": true,
+    "enabled": true,
+    "errors": [],
+    "model": "protected.gpt-5.2",
+    "pass": true,
+    "request_metadata": {
+      "api_style": "chat_completions_fallback",
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "builddir": "build_netlist_mc_lang",
+      "candidate_path": "build_mapped_mc_lang",
+      "execution_ok": true,
+      "local_error_count": 0,
+      "local_warning_count": 0,
+      "model": "protected.gpt-5.2",
+      "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+    },
+    "suggested_fixes": [
+      "Update mapped-stage log selection to prefer agent_mapped_stdout.log (or genus.log if present) over agent_mapped_progress.log so mapping/reporting progress can be reliably detected.",
+      "Ensure the mapped wrapper copies/saves the full Genus session log (genus.log) into the output directory to avoid fallback classification and improve debuggability.",
+      "If the Liberty warnings become problematic, filter out/ignore decap cells from the synthesis library set or use a Genus-compatible Liberty variant for SKY130; otherwise treat as informational since mapping completed and outputs were produced."
+    ],
+    "summary": "Mapped stage appears successful: command exited rc=0 and expected mapped outputs (mapped .db/.sdc/.v) and reports are present; input generic bundle contract is satisfied. Only non-blocking issues found: incomplete log capture/selection and informational Liberty/library warnings.",
+    "warnings": [
+      "Local classifier used a fallback primary log because build_mapped_mc_lang/genus.log was missing; ensure full Genus log capture is retained for deterministic triage.",
+      "Genus reported Liberty parsing limitations and cell usability warnings (e.g., [LBR-40] unknown attributes like 'define'/'library_features' ignored; [LBR-9] decap cells have no output pins and will be marked unusable). These are typically non-fatal but should be tracked if mapping coverage/QoR issues arise."
+    ]
+  },
+  "validation_ai_review": {
+    "api_error": null,
+    "available": true,
+    "enabled": true,
+    "errors": [],
+    "model": "protected.gpt-5.2",
+    "pass": true,
+    "request_metadata": {
+      "api_style": "chat_completions_fallback",
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "builddir": "build_netlist_mc_lang",
+      "candidate_path": "build_mapped_mc_lang",
+      "execution_ok": true,
+      "local_error_count": 0,
+      "local_warning_count": 0,
+      "model": "protected.gpt-5.2",
+      "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+    },
+    "suggested_fixes": [
+      "Update mapped-stage log selection to prefer agent_mapped_stdout.log (or genus.log if present) over agent_mapped_progress.log so mapping/reporting progress can be reliably detected.",
+      "Ensure the mapped wrapper copies/saves the full Genus session log (genus.log) into the output directory to avoid fallback classification and improve debuggability.",
+      "If the Liberty warnings become problematic, filter out/ignore decap cells from the synthesis library set or use a Genus-compatible Liberty variant for SKY130; otherwise treat as informational since mapping completed and outputs were produced."
+    ],
+    "summary": "Mapped stage appears successful: command exited rc=0 and expected mapped outputs (mapped .db/.sdc/.v) and reports are present; input generic bundle contract is satisfied. Only non-blocking issues found: incomplete log capture/selection and informational Liberty/library warnings.",
+    "warnings": [
+      "Local classifier used a fallback primary log because build_mapped_mc_lang/genus.log was missing; ensure full Genus log capture is retained for deterministic triage.",
+      "Genus reported Liberty parsing limitations and cell usability warnings (e.g., [LBR-40] unknown attributes like 'define'/'library_features' ignored; [LBR-9] decap cells have no output pins and will be marked unusable). These are typically non-fatal but should be tracked if mapping coverage/QoR issues arise."
+    ]
+  },
+  "validation_local_review": {
+    "blocking_errors": [],
+    "errors": [],
+    "failure_class": "non_fatal_warning_only_issue",
+    "failure_stage_owner": "mapped_netlist",
+    "pass": true,
+    "route_back_to_stage": null,
+    "suggested_fixes": [],
+    "summary": "No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 0 warnings.",
+    "warnings": []
+  }
+}
