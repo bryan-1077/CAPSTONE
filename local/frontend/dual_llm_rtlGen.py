@@ -1,0 +1,1901 @@
+"""
+dual_llm_rtlgen.py  —  Dual-LLM RTL generation loop
+Replaces rtlGen.py for non-FSM design types.
+
+Flow per round:
+  1. LLM #1 (Generator)  generates or merges RTL
+  2. Single-file lint     Verilator lint pass; if errors, back to LLM #1 with report
+  3. LLM #2 (Reviewer)   reviews code, produces critique + corrected RTL
+  4. LLM #1 (Merger)     receives both versions + report, produces merged output
+  5. Exit if LLM #2 reports clean  OR  round >= MAX_ROUNDS
+
+Context window: sliding 2-round window passed to both LLMs each round.
+
+Usage:
+  from dual_llm_rtlgen import run_dual_llm_rtlgen
+  rtl_code = run_dual_llm_rtlgen(design, yaml_text)
+
+  python3 dual_llm_rtlgen.py inputs/some_spec.yaml
+"""
+
+import os
+import re
+import sys
+import json
+import argparse
+import hashlib
+import shutil
+import tempfile
+import subprocess
+import requests
+
+from ir_to_llm_context import build_llm_context, llm_context_to_string
+from width_safety import enforce_width_safety
+
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+except AttributeError:
+    pass
+
+# ---------------------------------------------------------------------------
+# Configuration  — edit these to change models or loop behaviour
+# ---------------------------------------------------------------------------
+
+# LLM #1: generator / merger
+LLM1_MODEL = "protected.gpt-5.4"
+
+# LLM #2: reviewer / fixer — different model for diverse critique
+LLM2_MODEL = "protected.Claude Sonnet 4.6"
+
+# Maximum full rounds before accepting best-so-far output
+MAX_ROUNDS = 3
+
+# Maximum failed single-file lint runs before forcing the RTL to reviewer.
+# The initial generator output counts as the first failed lint run.
+MAX_LOCAL_LINT_FAILS = 3
+
+# Avoid flooding logs with huge malformed reviewer/generator responses.
+RAW_RESPONSE_PREVIEW_CHARS = 1000
+
+# TAMU API base
+API_BASE = "https://chat-api.tamu.ai"
+ENDPOINT = API_BASE + "/openai/chat/completions"
+DUAL_LLM_MARKER = "// GENERATED VIA DUAL-LLM FLOW"
+CACHE_DIRNAME = ".llm_cache"
+RTL_OUTPUT_DIRNAME = "rtl_output"
+DEFAULT_INTEGRATION_TOP_MODULE = os.environ.get(
+    "DUAL_LLM_INTEGRATION_TOP_MODULE", "ddr4_controller_top")
+
+# ---------------------------------------------------------------------------
+# API helper
+# ---------------------------------------------------------------------------
+
+def _call_llm(model, system_prompt, user_message, label="LLM"):
+    """
+    Single-shot call to the TAMU LLM API.
+    Returns the response text string, or raises RuntimeError on failure.
+    """
+    api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("TAMUS_AI_CHAT_API_KEY not set. Run: source ~/.bashrc")
+
+    payload = {
+        "model": model,
+        "max_tokens": 4096,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_message}
+        ]
+    }
+
+    try:
+        resp = requests.post(
+            ENDPOINT,
+            headers={
+                "Authorization": "Bearer " + api_key,
+                "Content-Type":  "application/json"
+            },
+            json=payload,
+            timeout=120
+        )
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError("[{}] Network error: {}".format(label, e))
+
+    if resp.status_code != 200:
+        key_fingerprint = hashlib.sha256(api_key.encode()).hexdigest()[:12]
+        raise RuntimeError(
+            "[{}] {} {} -> HTTP {}: {}; Allow={!r}; "
+            "API key length={}, sha256[:12]={}".format(
+                label,
+                resp.request.method,
+                resp.url,
+                resp.status_code,
+                resp.text[:300],
+                resp.headers.get("Allow"),
+                len(api_key),
+                key_fingerprint,
+            )
+        )
+
+    try:
+        data = resp.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except (KeyError, ValueError) as e:
+        raise RuntimeError("[{}] Unexpected response shape: {}".format(label, e))
+
+
+# ---------------------------------------------------------------------------
+# RTL linter
+# ---------------------------------------------------------------------------
+
+LINT_MODE_SINGLE_FILE = "single_file"
+LINT_MODE_INTEGRATION = "integration"
+
+_LINT_BLOCKING_WARNING_CODES = {
+    "WIDTH",
+    "WIDTHTRUNC",
+    "WIDTHEXPAND",
+    "WIDTHCONCAT",
+    "WIDTHXZEXPAND",
+    "LATCH",
+    "MULTIDRIVEN",
+    "BLKANDNBLK",
+    "PROCASSWIRE",
+}
+
+_LINT_NONBLOCKING_WARNING_CODES = {
+    "UNUSEDSIGNAL",
+    "UNDRIVEN",
+    "UNUSEDPARAM",
+    "DECLFILENAME",
+    "PINMISSING",
+    "PINCONNECTEMPTY",
+}
+
+_SINGLE_FILE_IGNORED_PATTERNS = [
+    r"can't find definition of module",
+    r"cannot find file containing module",
+    r"can't locate package",
+    r"package .* not found",
+]
+
+
+def _make_lint_result(mode, tool, blocking=None, nonblocking=None, ignored=None):
+    blocking = blocking or []
+    nonblocking = nonblocking or []
+    ignored = ignored or []
+    error_count, warning_count = _lint_error_warning_counts(
+        blocking, nonblocking, ignored)
+    return {
+        "mode": mode,
+        "tool": tool,
+        "ok": len(blocking) == 0,
+        "blocking": blocking,
+        "nonblocking": nonblocking,
+        "ignored": ignored,
+        "error_count": error_count,
+        "warning_count": warning_count,
+    }
+
+
+def _verilator_warning_code(line):
+    match = re.search(r"%Warning-([A-Z0-9_]+)", line)
+    return match.group(1) if match else ""
+
+
+def _is_single_file_ignored(line):
+    lower = line.lower()
+    return any(re.search(pattern, lower) for pattern in _SINGLE_FILE_IGNORED_PATTERNS)
+
+
+def _is_verilator_exit_summary(line):
+    return bool(re.search(r"%Error:\s+Exiting due to \d+ error", line))
+
+
+def _lint_error_warning_counts(blocking, nonblocking, ignored):
+    diagnostics = list(blocking) + list(nonblocking) + list(ignored)
+    warning_count = sum(1 for item in diagnostics if "%Warning" in item)
+    error_count = sum(
+        1 for item in diagnostics
+        if "%Error" in item and not _is_verilator_exit_summary(item)
+    )
+    error_count += sum(
+        1 for item in blocking
+        if "%Error" not in item and "%Warning" not in item
+    )
+    return error_count, warning_count
+
+
+def _classify_verilator_diagnostic(line, mode):
+    if mode == LINT_MODE_SINGLE_FILE and _is_single_file_ignored(line):
+        return "ignored"
+    if "%Error" in line:
+        return "blocking"
+    if "%Warning" in line:
+        code = _verilator_warning_code(line)
+        if code in _LINT_BLOCKING_WARNING_CODES:
+            return "blocking"
+        if code in _LINT_NONBLOCKING_WARNING_CODES:
+            return "nonblocking"
+        return "nonblocking"
+    return "blocking"
+
+
+def _extract_verilator_diagnostics(output, mode):
+    blocking = []
+    nonblocking = []
+    ignored = []
+
+    for line in output.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if "%Error" not in text and "%Warning" not in text:
+            continue
+
+        bucket = _classify_verilator_diagnostic(text, mode)
+        if bucket == "blocking":
+            blocking.append(text)
+        elif bucket == "ignored":
+            ignored.append(text)
+        else:
+            nonblocking.append(text)
+
+    if ignored:
+        blocking = [
+            item for item in blocking
+            if not _is_verilator_exit_summary(item)
+        ]
+
+    return blocking, nonblocking, ignored
+
+# Patterns that strongly suggest broken SystemVerilog
+_SV_ERROR_PATTERNS = [
+    (r"endmodule\s*$",         False,  "missing endmodule"),
+    (r"module\s+\w+",          False,  "missing module declaration"),
+    (r"begin(?!.*end)",        True,   "unmatched begin/end (heuristic)"),
+]
+
+# Keywords that must appear in valid SV
+_SV_REQUIRED = ["module", "endmodule"]
+
+
+def _heuristic_lint_candidate(rtl_code, mode):
+    """
+    Lightweight regex-based syntax check.
+    Returns (ok: bool, issues: list[str]).
+
+    This is the fallback when Verilator is unavailable.
+    """
+    issues = []
+    code = rtl_code.strip()
+
+    if not code:
+        return _make_lint_result(mode, "heuristic", ["RTL output is empty"])
+
+    for keyword in _SV_REQUIRED:
+        if keyword not in code:
+            issues.append("Missing required keyword: '{}'".format(keyword))
+
+    # Count module/endmodule — should be equal
+    mod_count     = len(re.findall(r"\bmodule\b",    code))
+    endmod_count  = len(re.findall(r"\bendmodule\b", code))
+    if mod_count != endmod_count:
+        issues.append(
+            "module/endmodule count mismatch: {} module vs {} endmodule".format(
+                mod_count, endmod_count)
+        )
+
+    # begin/end balance
+    begin_count = len(re.findall(r"\bbegin\b", code))
+    end_count   = len(re.findall(r"\bend\b",   code))
+    if begin_count != end_count:
+        issues.append(
+            "begin/end count mismatch: {} begin vs {} end".format(
+                begin_count, end_count)
+        )
+
+    # Stray Python repr artifacts (common LLM failure mode for this project)
+    if "dataclass" in code or "SignalRef(" in code or "Compare(" in code:
+        issues.append("RTL contains Python dataclass repr — LLM serialised IR object instead of generating SV")
+
+    # Obvious literal typos from known bugs
+    if "1'b'" in code:
+        issues.append("Literal typo detected: 1'b' (extra apostrophe)")
+
+    return _make_lint_result(mode, "heuristic", issues)
+
+
+def _has_module_declaration(rtl_code):
+    return bool(re.search(r"\bmodule\s+\w+", rtl_code or ""))
+
+
+def _run_verilator_lint_file_set(file_paths, mode, top_module=None):
+    """
+    Run Verilator lint-only mode on a set of SystemVerilog files.
+    Returns a structured lint result, or None when Verilator is unavailable or
+    the tool invocation itself fails unexpectedly.
+    """
+    verilator_bin = shutil.which("verilator")
+    if not verilator_bin:
+        return None
+
+    cmd = [verilator_bin, "--lint-only", "-Wno-fatal", "--sv"]
+    if top_module:
+        cmd.extend(["--top-module", top_module])
+    cmd.extend(file_paths)
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+        )
+    except OSError:
+        return None
+
+    output = ((proc.stdout or "") + "\n" + (proc.stderr or "")).strip()
+    blocking, nonblocking, ignored = _extract_verilator_diagnostics(output, mode)
+    if proc.returncode != 0 and not blocking and not ignored:
+        fallback = [line.strip() for line in output.splitlines() if line.strip()]
+        blocking = fallback or ["Verilator lint failed with no diagnostic output"]
+
+    return _make_lint_result(
+        mode, "verilator", blocking, nonblocking, ignored
+    )
+
+
+def _run_verilator_lint_candidate(rtl_code, mode, module_name=None):
+    """
+    Run Verilator lint-only mode on a temporary single SystemVerilog file.
+    Returns a structured lint result, or None when Verilator is unavailable or
+    the tool invocation itself fails unexpectedly.
+    """
+    verilator_bin = shutil.which("verilator")
+    if not verilator_bin:
+        return None
+
+    temp_dir = tempfile.mkdtemp(prefix="dual_llm_verilator_")
+    sv_path = os.path.join(temp_dir, "candidate.sv")
+
+    try:
+        with open(sv_path, "w") as fh:
+            fh.write(rtl_code)
+
+        top_module = module_name if mode == LINT_MODE_SINGLE_FILE else None
+        return _run_verilator_lint_file_set([sv_path], mode, top_module)
+
+    except OSError:
+        return None
+
+    finally:
+        try:
+            shutil.rmtree(temp_dir)
+        except OSError:
+            pass
+
+
+def _project_root():
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def _rtl_output_dir(rtl_dir=None):
+    if rtl_dir:
+        return os.path.abspath(rtl_dir)
+    return os.path.join(_project_root(), RTL_OUTPUT_DIRNAME)
+
+
+def _discover_integration_lint_files(rtl_dir):
+    if not os.path.isdir(rtl_dir):
+        return []
+    return [
+        os.path.join(rtl_dir, name)
+        for name in sorted(os.listdir(rtl_dir))
+        if name.endswith((".sv", ".v"))
+    ]
+
+
+def _integration_unavailable_result(message, rtl_dir, top_module):
+    result = _make_lint_result(
+        LINT_MODE_INTEGRATION, "verilator", [message])
+    result["integration_available"] = False
+    result["rtl_dir"] = rtl_dir
+    result["top_module"] = top_module
+    result["files"] = []
+    return result
+
+
+def _run_integration_lint(rtl_code=None, module_name=None, top_module=None, rtl_dir=None):
+    """
+    Run a whole-system lint over rtl_output, optionally replacing one module
+    with a candidate RTL body in a temporary mirror.
+    """
+    top_module = top_module or DEFAULT_INTEGRATION_TOP_MODULE
+    source_dir = _rtl_output_dir(rtl_dir)
+    source_files = _discover_integration_lint_files(source_dir)
+    if not source_files:
+        return _integration_unavailable_result(
+            "Integration RTL file set is empty or missing: {}".format(source_dir),
+            source_dir,
+            top_module
+        )
+
+    top_filename = "{}.sv".format(top_module)
+    source_names = {os.path.basename(path) for path in source_files}
+    if top_filename not in source_names:
+        return _integration_unavailable_result(
+            "Integration top RTL is missing: {}".format(
+                os.path.join(source_dir, top_filename)),
+            source_dir,
+            top_module
+        )
+
+    if rtl_code is not None and not module_name:
+        return _integration_unavailable_result(
+            "Integration candidate lint requires module_name for RTL overlay",
+            source_dir,
+            top_module
+        )
+
+    temp_dir = tempfile.mkdtemp(prefix="dual_llm_integration_")
+    temp_rtl_dir = os.path.join(temp_dir, RTL_OUTPUT_DIRNAME)
+    candidate_filename = "{}.sv".format(module_name) if module_name else None
+
+    try:
+        os.makedirs(temp_rtl_dir, exist_ok=True)
+        copied_candidate = False
+        temp_files = []
+        for source_path in source_files:
+            filename = os.path.basename(source_path)
+            temp_path = os.path.join(temp_rtl_dir, filename)
+            if rtl_code is not None and filename == candidate_filename:
+                with open(temp_path, "w") as fh:
+                    fh.write(rtl_code)
+                copied_candidate = True
+            else:
+                shutil.copy2(source_path, temp_path)
+            temp_files.append(temp_path)
+
+        if rtl_code is not None and not copied_candidate:
+            temp_path = os.path.join(temp_rtl_dir, candidate_filename)
+            with open(temp_path, "w") as fh:
+                fh.write(rtl_code)
+            temp_files.append(temp_path)
+
+        result = _run_verilator_lint_file_set(
+            temp_files, LINT_MODE_INTEGRATION, top_module)
+        if result is None:
+            result = _integration_unavailable_result(
+                "Verilator is not available; integration lint requires Verilator",
+                source_dir,
+                top_module
+            )
+        else:
+            result["integration_available"] = True
+            result["rtl_dir"] = source_dir
+            result["top_module"] = top_module
+            result["files"] = [os.path.basename(path) for path in temp_files]
+            if module_name:
+                result["module_name"] = module_name
+        return result
+    finally:
+        try:
+            shutil.rmtree(temp_dir)
+        except OSError:
+            pass
+
+
+def lint_candidate(rtl_code, module_name=None, mode=LINT_MODE_SINGLE_FILE):
+    """
+    Run the configured RTL linter.
+
+    single_file mode is intentionally dependency-light for per-module LLM output.
+    integration mode overlays the candidate into the generated rtl_output set
+    and lints the configured top module.
+    """
+    if mode not in (LINT_MODE_SINGLE_FILE, LINT_MODE_INTEGRATION):
+        raise ValueError("unknown lint mode: {}".format(mode))
+
+    if mode == LINT_MODE_INTEGRATION:
+        return _run_integration_lint(rtl_code, module_name)
+
+    if not _has_module_declaration(rtl_code):
+        result = _heuristic_lint_candidate(rtl_code, mode)
+    else:
+        result = _run_verilator_lint_candidate(rtl_code, mode, module_name)
+    if result is None:
+        result = _heuristic_lint_candidate(rtl_code, mode)
+
+    if module_name:
+        result["module_name"] = module_name
+    return result
+
+
+def lint_full_system(top_module=None, rtl_dir=None):
+    """Run full integration lint against the generated rtl_output file set."""
+    return _run_integration_lint(
+        top_module=top_module or DEFAULT_INTEGRATION_TOP_MODULE,
+        rtl_dir=rtl_dir
+    )
+
+
+def lint_blocking_issues(rtl_code, module_name=None, mode=LINT_MODE_SINGLE_FILE):
+    """Return only linter findings that should block the LLM reviewer."""
+    return lint_candidate(rtl_code, module_name, mode)["blocking"]
+
+
+def lint_rtl_single_file(rtl_code):
+    """
+    Run Verilator single-file lint checking when available, otherwise fall back
+    to a lightweight heuristic checker.
+    Returns (ok: bool, issues: list[str]).
+    """
+    result = lint_candidate(rtl_code, mode=LINT_MODE_SINGLE_FILE)
+    return result["ok"], result["blocking"]
+
+
+def syntax_check(rtl_code):
+    """Compatibility wrapper around single-file linting."""
+    return lint_rtl_single_file(rtl_code)
+
+
+def _add_dual_llm_marker(rtl_code):
+    """Tag RTL that came through this dual-LLM pipeline."""
+    if DUAL_LLM_MARKER in rtl_code:
+        return rtl_code
+    lines = rtl_code.splitlines()
+    insert_at = 0
+    while insert_at < len(lines) and lines[insert_at].strip().startswith("`timescale"):
+        insert_at += 1
+    lines.insert(insert_at, DUAL_LLM_MARKER)
+    return "\n".join(lines) + ("\n" if rtl_code.endswith("\n") else "")
+
+
+def _finalize_dual_llm_rtl(rtl_code, module_name):
+    return _add_dual_llm_marker(enforce_width_safety(rtl_code, module_name))
+
+
+def _cache_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), CACHE_DIRNAME)
+
+
+def _cache_path(module_name):
+    return os.path.join(_cache_dir(), "{}.sv".format(module_name))
+
+
+def _cache_display_path(module_name):
+    return os.path.join(CACHE_DIRNAME, "{}.sv".format(module_name))
+
+
+def _write_reviewed_cache(module_name, rtl_code):
+    cached_rtl = _finalize_dual_llm_rtl(rtl_code, module_name)
+    os.makedirs(_cache_dir(), exist_ok=True)
+    with open(_cache_path(module_name), "w") as fh:
+        fh.write(cached_rtl)
+    print("[dual_llm] Cached reviewed RTL: {}".format(
+        _cache_display_path(module_name)))
+    return cached_rtl
+
+
+def _load_reviewed_cache(module_name, lint_enabled=True, cache_only=False):
+    path = _cache_path(module_name)
+    if not os.path.exists(path):
+        return None
+
+    with open(path, "r") as fh:
+        cached_rtl = fh.read()
+
+    if not lint_enabled:
+        print("[dual_llm] Using cached reviewed RTL without local lint: {}".format(
+            _cache_display_path(module_name)))
+        return _finalize_dual_llm_rtl(cached_rtl, module_name)
+
+    lint_ok, lint_issues = lint_rtl_single_file(cached_rtl)
+    if lint_ok:
+        if cache_only:
+            print("[dual_llm] Using cached reviewed RTL: {}".format(
+                _cache_display_path(module_name)))
+        else:
+            print("[dual_llm] WARNING: Reviewer failed; using cached reviewed RTL for {}".format(
+                module_name))
+        return _finalize_dual_llm_rtl(cached_rtl, module_name)
+
+    print("[dual_llm] Cached reviewed RTL failed local lint: {}".format(
+        "; ".join(lint_issues)))
+    return None
+
+
+def _reviewer_failed_fallback(module_name, lint_enabled=True):
+    cached_rtl = _load_reviewed_cache(module_name, lint_enabled=lint_enabled)
+    if cached_rtl:
+        return cached_rtl
+
+    print("[dual_llm] ERROR: Reviewer failed and no cache exists for {}".format(
+        module_name))
+    raise RuntimeError(
+        "dual_llm_rtlgen: reviewer unavailable and no cached reviewed RTL exists for {}".format(
+            module_name)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Structured-response helpers
+# ---------------------------------------------------------------------------
+
+_ALLOWED_STATUS = {"VALID", "INVALID", "AMBIGUOUS"}
+_ALLOWED_ISSUE_TYPES = {"SPEC_VIOLATION", "NON_ISSUE", "AMBIGUITY"}
+_STATUS_ALIASES = {
+    "CLEAN": "VALID",
+}
+
+
+def _strip_code_fences(text):
+    """Best-effort cleanup if a model wraps RTL in markdown fences."""
+    if not text:
+        return ""
+    text = text.strip()
+    match = re.search(r"```(?:systemverilog|verilog|sv)?\s*(.*?)```", text,
+                      re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return text
+
+
+def _string_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _normalize_issue(issue):
+    if isinstance(issue, dict):
+        issue_type = str(issue.get("type", "AMBIGUITY")).strip().upper()
+        description = str(issue.get("description", "")).strip()
+        location = str(issue.get("location", "unspecified")).strip()
+    else:
+        issue_type = "AMBIGUITY"
+        description = str(issue).strip()
+        location = "unspecified"
+
+    if issue_type not in _ALLOWED_ISSUE_TYPES:
+        issue_type = "AMBIGUITY"
+    if not description:
+        description = "Issue description missing"
+    if not location:
+        location = "unspecified"
+
+    return {
+        "type": issue_type,
+        "description": description,
+        "location": location
+    }
+
+
+def _make_payload(fallback_rtl, status, issues, invariants=None):
+    status = _STATUS_ALIASES.get(status, status)
+    if status not in _ALLOWED_STATUS:
+        status = "AMBIGUOUS"
+
+    normalized = []
+    for issue in issues or []:
+        normalized.append(_normalize_issue(issue))
+
+    return {
+        "invariants": _string_list(invariants),
+        "status": status,
+        "issues": normalized,
+        "corrected_rtl": _strip_code_fences(fallback_rtl or "")
+    }
+
+
+def _parse_llm_json_payload(response_text, fallback_rtl, label, fallback_invariants=None):
+    try:
+        response_text = (response_text or "").strip()
+        json_match = re.search(r"\{[\s\S]*\}", response_text)
+        if json_match:
+            response_text = json_match.group(0)
+
+        data = json.loads(response_text)
+        if not isinstance(data, dict):
+            raise ValueError("top-level JSON value must be an object")
+
+        payload = _make_payload(
+            fallback_rtl,
+            str(data.get("status", "AMBIGUOUS")).strip().upper(),
+            data.get("issues", []),
+            data.get("invariants", fallback_invariants)
+        )
+
+        corrected_rtl = _strip_code_fences(data.get("corrected_rtl", ""))
+        if corrected_rtl:
+            payload["corrected_rtl"] = corrected_rtl
+        else:
+            payload["issues"].append({
+                "type": "AMBIGUITY",
+                "description": "{} returned empty corrected_rtl; using fallback RTL".format(label),
+                "location": "response.corrected_rtl"
+            })
+
+        payload["parse_failed"] = False
+        return payload
+
+    except Exception as e:
+        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
+        if response_text:
+            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
+            suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
+            print("Raw response (first {} chars):\n{}{}".format(
+                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
+        payload = _make_payload(
+            fallback_rtl,
+            "AMBIGUOUS",
+            [{
+                "type": "AMBIGUITY",
+                "description": "{} returned invalid JSON".format(label),
+                "location": "response"
+            }],
+            fallback_invariants
+        )
+        payload["parse_failed"] = True
+        return payload
+
+
+def _make_review_payload(fallback_rtl, status, issues, invariants=None,
+                         corrected_rtl=""):
+    payload = _make_payload(fallback_rtl, status, issues, invariants)
+    if corrected_rtl:
+        payload["corrected_rtl"] = _strip_code_fences(corrected_rtl)
+    payload["parse_failed"] = False
+    return payload
+
+
+def _parse_review_json_payload(response_text, fallback_rtl, label,
+                               fallback_invariants=None):
+    try:
+        response_text = (response_text or "").strip()
+        json_match = re.search(r"\{[\s\S]*\}", response_text)
+        if json_match:
+            response_text = json_match.group(0)
+
+        data = json.loads(response_text)
+        if not isinstance(data, dict):
+            raise ValueError("top-level JSON value must be an object")
+
+        return _make_review_payload(
+            fallback_rtl,
+            str(data.get("status", "AMBIGUOUS")).strip().upper(),
+            data.get("issues", []),
+            data.get("invariants", fallback_invariants),
+            data.get("corrected_rtl", "")
+        )
+
+    except Exception as e:
+        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
+        if response_text:
+            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
+            suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
+            print("Raw response (first {} chars):\n{}{}".format(
+                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
+        payload = _make_review_payload(
+            fallback_rtl,
+            "AMBIGUOUS",
+            [{
+                "type": "AMBIGUITY",
+                "description": "{} returned invalid JSON".format(label),
+                "location": "response"
+            }],
+            fallback_invariants
+        )
+        payload["parse_failed"] = True
+        return payload
+
+
+def _parse_review_json_compact(response_text, label):
+    try:
+        response_text = (response_text or "").strip()
+        json_match = re.search(r"\{[\s\S]*\}", response_text)
+        if json_match:
+            response_text = json_match.group(0)
+
+        data = json.loads(response_text)
+        if not isinstance(data, dict):
+            raise ValueError("top-level JSON value must be an object")
+
+        status = str(data.get("status", "AMBIGUOUS")).strip().upper()
+        status = _STATUS_ALIASES.get(status, status)
+        if status not in _ALLOWED_STATUS:
+            status = "AMBIGUOUS"
+
+        issues = []
+        for issue in (data.get("issues", []) or [])[:5]:
+            normalized = _normalize_issue(issue)
+            if normalized["type"] != "SPEC_VIOLATION":
+                normalized["type"] = "AMBIGUITY"
+            issues.append(normalized)
+
+        return {
+            "status": status,
+            "issues": issues,
+            "parse_failed": False
+        }
+
+    except Exception as e:
+        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
+        if response_text:
+            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
+            suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
+            print("Raw response (first {} chars):\n{}{}".format(
+                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
+        return {
+            "status": "AMBIGUOUS",
+            "issues": [{
+                "type": "AMBIGUITY",
+                "description": "{} returned invalid JSON".format(label),
+                "location": "response"
+            }],
+            "parse_failed": True
+        }
+
+
+def _filter_issues(issues, issue_type):
+    return [issue for issue in issues if issue.get("type") == issue_type]
+
+
+def _lint_diagnostics_as_review_issues(lint_issues):
+    issues = []
+    for diagnostic in (lint_issues or [])[:5]:
+        issues.append({
+            "type": "SPEC_VIOLATION",
+            "description": "Verilator single-file lint failed: {}".format(diagnostic),
+            "location": "local_verilator_lint"
+        })
+    return issues
+
+
+def _normalize_lint_diagnostic(diagnostic):
+    text = str(diagnostic or "")
+    text = re.sub(
+        r"/tmp/dual_llm_verilator_[^/\s:]+/[^:\s]+",
+        "<candidate.sv>",
+        text
+    )
+    text = re.sub(r":\d+:\d+", ":<line>:<col>", text)
+    text = re.sub(r":\d+", ":<line>", text)
+    return text.strip()
+
+
+def _lint_issue_signature(lint_issues):
+    return tuple(sorted(
+        _normalize_lint_diagnostic(issue)
+        for issue in (lint_issues or [])
+        if str(issue).strip()
+    ))
+
+
+def _issue_signature(issues):
+    """Convert structured issues into a deterministic comparable signature."""
+    if not issues:
+        return tuple()
+
+    signature = []
+    for issue in issues:
+        normalized = _normalize_issue(issue)
+        signature.append(
+            "{type}|{location}|{description}".format(
+                type=normalized["type"],
+                location=normalized["location"],
+                description=normalized["description"]
+            )
+        )
+    return tuple(sorted(signature))
+
+
+def _format_string_block(title, items):
+    if not items:
+        return "{}\n- (none)".format(title)
+    return "{}\n{}".format(
+        title,
+        "\n".join("- {}".format(item) for item in items)
+    )
+
+
+def _format_issue_block(title, issues):
+    if not issues:
+        return "{}\n- (none)".format(title)
+    lines = [title]
+    for issue in issues:
+        lines.append(
+            "- [{type}] {description} @ {location}".format(
+                type=issue.get("type", "AMBIGUITY"),
+                description=issue.get("description", ""),
+                location=issue.get("location", "unspecified")
+            )
+        )
+    return "\n".join(lines)
+
+
+def _format_lint_block(title, lint_result):
+    if not lint_result:
+        return "{}\n- (none)".format(title)
+
+    ignored_label = (
+        "Ignored single-file findings"
+        if lint_result.get("mode") == LINT_MODE_SINGLE_FILE
+        else "Ignored findings"
+    )
+    lines = [
+        title,
+        "- mode: {}".format(lint_result.get("mode", "unknown")),
+        "- tool: {}".format(lint_result.get("tool", "unknown")),
+        "- ok: {}".format("yes" if lint_result.get("ok") else "no"),
+    ]
+
+    for key, label in (
+        ("blocking", "Blocking findings"),
+        ("nonblocking", "Nonblocking findings"),
+        ("ignored", ignored_label),
+    ):
+        values = lint_result.get(key, [])
+        lines.append("{}:".format(label))
+        if values:
+            lines.extend("- {}".format(item) for item in values)
+        else:
+            lines.append("- (none)")
+
+    return "\n".join(lines)
+
+
+def _format_lint_report(lint_ok, lint_issues, lint_fail_count=0):
+    status = "PASS" if lint_ok else "FAIL"
+    lines = [
+        "Verilator single-file lint status: {}".format(status),
+        "Failed lint count this round: {}".format(lint_fail_count),
+    ]
+    if lint_issues:
+        lines.append("Diagnostics:")
+        lines.extend("- {}".format(issue) for issue in lint_issues)
+    else:
+        lines.append("Diagnostics:")
+        lines.append("- (none)")
+    return "\n".join(lines)
+
+
+def _lint_block_banner(attempt, total):
+    return "[dual_llm] -- Lint Block {}/{} -------------------------".format(
+        attempt, total)
+
+
+def _format_lint_attempt_history(lint_attempts):
+    if not lint_attempts:
+        return "LOCAL LINT ATTEMPT HISTORY:\n- (none)"
+
+    lines = ["LOCAL LINT ATTEMPT HISTORY:"]
+    previous_signature = None
+    for attempt in lint_attempts:
+        attempt_num = attempt.get("attempt", "?")
+        issues = attempt.get("issues", [])
+        signature = _lint_issue_signature(issues)
+        repeated = signature and signature == previous_signature
+        suffix = " (same normalized diagnostics as previous failed lint)" if repeated else ""
+        lines.append("Attempt {}{}".format(attempt_num, suffix))
+        for issue in issues:
+            lines.append("- {}".format(issue))
+        previous_signature = signature
+    return "\n".join(lines)
+
+
+def _design_context_bundle(design):
+    """Return authoritative context plus convenient prompt fragments."""
+
+    ctx = build_llm_context(design)
+    ctx_str = llm_context_to_string(ctx)
+    invariants = _string_list(ctx.get("invariants"))
+    implementation_constraints = _string_list(
+        ctx.get("implementation_constraints")
+    )
+    forbidden_patterns = _string_list(ctx.get("forbidden_patterns"))
+    must_not_assume = []
+    validator_alignment = ctx.get("validator_alignment", {})
+    if isinstance(validator_alignment, dict):
+        must_not_assume = _string_list(validator_alignment.get("must_not_assume"))
+
+    lines = [
+        "Design name:  {}".format(design.design_name),
+        "Design type:  {}".format(design.design_type),
+    ]
+
+    if design.clock:
+        lines.append("Clock: {} @ {} MHz".format(
+            design.clock.name,
+            design.clock.frequency_mhz or "unspecified"
+        ))
+
+    if design.reset:
+        lines.append("Reset: {} | active_{} | {}".format(
+            design.reset.name,
+            "low" if design.reset.active_low else "high",
+            "synchronous" if design.reset.synchronous else "asynchronous"
+        ))
+
+    lines.append("\nSTRUCTURED LLM CONTEXT (authoritative):")
+    lines.append(ctx_str)
+    lines.append("")
+    lines.append(_format_string_block("AUTHORITATIVE INVARIANTS:", invariants))
+    lines.append("")
+    lines.append(_format_string_block(
+        "IMPLEMENTATION CONSTRAINTS:", implementation_constraints))
+    lines.append("")
+    lines.append(_format_string_block(
+        "FORBIDDEN PATTERNS:", forbidden_patterns))
+    lines.append("")
+    lines.append(_format_string_block(
+        "MUST NOT ASSUME:", must_not_assume))
+
+    return {
+        "ctx": ctx,
+        "ctx_str": ctx_str,
+        "prompt_text": "\n".join(lines),
+        "invariants": invariants,
+        "implementation_constraints": implementation_constraints,
+        "forbidden_patterns": forbidden_patterns,
+        "must_not_assume": must_not_assume
+    }
+
+
+def _compact_review_context(design):
+    ctx = build_llm_context(design)
+    compact_keys = [
+        "module",
+        "clock",
+        "reset",
+        "request_payload",
+        "scheduler_policy",
+        "invariants",
+        "implementation_constraints",
+        "forbidden_patterns",
+        "validator_alignment",
+    ]
+    compact = {
+        key: ctx[key]
+        for key in compact_keys
+        if key in ctx
+    }
+    return json.dumps(compact, indent=2, sort_keys=True)
+
+
+def _history_block(history, current_round):
+    """
+    Format the sliding 2-round window (rounds N-1 and N) as a readable block.
+    """
+    if not history:
+        return "(No previous rounds - this is round 1)"
+
+    window = history[-2:]  # at most last 2 rounds
+    parts = []
+    for h in window:
+        parts.append("=== Round {} ===".format(h["round"]))
+        parts.append("LLM #1 status: {}".format(h.get("llm1_status", "(none)")))
+        parts.append(_format_issue_block(
+            "LLM #1 issues:", h.get("llm1_issues", [])))
+        if "llm1_lint_ok" in h:
+            if h.get("lint_result"):
+                parts.append(_format_lint_block(
+                    "Single-file lint report:", h.get("lint_result")))
+            else:
+                parts.append(_format_lint_report(
+                    h.get("llm1_lint_ok"),
+                    h.get("llm1_lint_issues", []),
+                    h.get("llm1_lint_fail_count", 0)
+                ))
+        parts.append("--- LLM #1 output ---\n" + h.get("llm1_code", "(none)"))
+        parts.append("LLM #2 status: {}".format(h.get("llm2_status", "(none)")))
+        parts.append(_format_issue_block(
+            "LLM #2 issues:", h.get("llm2_report", [])))
+        parts.append("--- LLM #2 corrected code ---\n" + h.get("llm2_code", "(none)"))
+        if h.get("merged_status"):
+            parts.append("Merge status: {}".format(h["merged_status"]))
+        if h.get("merged_issues") is not None:
+            parts.append(_format_issue_block(
+                "Merge issues:", h.get("merged_issues", [])))
+        if h.get("merged_code"):
+            parts.append("--- Merged output accepted for this round ---\n" + h["merged_code"])
+    return "\n\n".join(parts)
+
+
+# System prompts — written once, reused every round
+_SYS_GENERATOR = """\
+You are an expert RTL engineer specialising in synthesisable SystemVerilog.
+Your job is to generate correct, spec-locked SystemVerilog from a validated design IR.
+
+Return ONLY valid JSON in this exact shape:
+{
+  "invariants": ["..."],
+  "status": "VALID | INVALID | AMBIGUOUS",
+  "issues": [
+    {
+      "type": "SPEC_VIOLATION | NON_ISSUE | AMBIGUITY",
+      "description": "...",
+      "location": "..."
+    }
+  ],
+  "corrected_rtl": "..."
+}
+
+Rules:
+- Treat STRUCTURED LLM CONTEXT as the ONLY source of truth.
+- Do NOT use prior DDR, DRAM, JEDEC, or tFAW knowledge unless it is explicitly present in STRUCTURED LLM CONTEXT.
+- Do NOT infer unstated behavior.
+- Do NOT introduce alternate architectures.
+- Do NOT introduce implicit aging or decrement logic unless explicitly specified.
+- Any expression involving parameters or constants MUST be explicitly sized to match the destination signal.
+- Do not rely on implicit truncation or width expansion; use explicit casts, sized literals, or width-matched localparams.
+- For request queues, define localparam int REQUEST_WIDTH = 51.
+- For queue indices, define localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).
+- Never cast a packed request struct with logic'(some_request_struct); use direct assignment when widths match or REQUEST_WIDTH'(expr) when an explicit packed request-width cast is needed.
+- Do not hardcode queue index width as 2; use SEL_WIDTH for sel_idx, first_free_idx, insert_idx, and loop-derived index casts.
+- Reset behavior must match STRUCTURED LLM CONTEXT exactly.
+- Preserve the stated implementation constraints and forbidden patterns exactly.
+- Use logic types (not reg/wire) throughout.
+- Declare all signals before use.
+- Use always_ff for sequential logic and always_comb for combinational logic.
+- Do not declare module-scope loop variables for procedural for-loops.
+- Use block-local loop variables: for (int i = 0; i < N; i++) begin.
+- Do not reuse the same loop variable across multiple always_comb/always_ff blocks.
+- Loop variables used only inside procedural blocks are not architectural signals.
+- Every module must end with endmodule.
+- Do not reference Python dataclasses or IR objects in the RTL.
+- "invariants" must echo the authoritative invariants you applied.
+- "status" must be VALID if corrected_rtl fully satisfies context, INVALID if you know it violates context,
+  or AMBIGUOUS if the context itself is insufficient to decide.
+- "issues" should usually be empty for generation unless the spec is ambiguous or conflicting.
+- "corrected_rtl" must contain the full SystemVerilog module only, with no markdown fences.
+- Do not use localparams in ANSI port declarations. Any symbol used in a port width must be a literal, a package-visible type/constant, or a parameter declared in the module parameter list.
+"""
+
+_SYS_REVIEWER = """\
+You are a strict RTL reviewer.
+
+Return ONLY valid compact JSON in this exact format:
+
+{
+  "status": "VALID | INVALID | AMBIGUOUS",
+  "issues": [
+    {
+      "type": "SPEC_VIOLATION | AMBIGUITY",
+      "description": "...",
+      "location": "..."
+    }
+  ]
+}
+
+Rules:
+- STRUCTURED LLM CONTEXT is the ONLY source of truth.
+- Explicitly forbid use of prior DDR, DRAM, JEDEC, or tFAW knowledge.
+- Flag SPEC_VIOLATION for any logic mismatch grounded in STRUCTURED LLM CONTEXT.
+- Treat implicit width truncation/expansion as a SPEC_VIOLATION when constants or parameters are not explicitly resized.
+- Treat logic'(some_request_struct) as a SPEC_VIOLATION because it truncates a 51-bit request payload to 1 bit.
+- Treat hardcoded queue index width such as DEPTH_W = 2 as a SPEC_VIOLATION when DEPTH is parameterized.
+- Treat simultaneous issue_ref and issue_txn assertions as a SPEC_VIOLATION when scheduler context requires refresh priority or mutual exclusion.
+- Treat acquiring a new transaction lock while ref_req is high as a SPEC_VIOLATION when scheduler context requires refresh priority.
+- Treat acquiring a new transaction lock for an immediately issued candidate as a SPEC_VIOLATION.
+- Treat module-scope procedural loop variables reused across always_comb/always_ff blocks as a SPEC_VIOLATION.
+- Do not classify block-local loop variables declared inside procedural for-loops as architectural signals.
+- Classify every finding as SPEC_VIOLATION or AMBIGUITY.
+- Only mark something SPEC_VIOLATION if STRUCTURED LLM CONTEXT explicitly supports it.
+- If STRUCTURED LLM CONTEXT is incomplete or conflicting, classify that as AMBIGUITY.
+- Do not include corrected RTL unless explicitly requested.
+- Do not echo all invariants.
+- List at most 5 issues.
+- Each issue description must be one sentence.
+- If there are no SPEC_VIOLATION issues, return status VALID and issues [].
+- Flag use of localparams in ANSI port widths as a SPEC_VIOLATION unless the symbol is declared as a module parameter before the port list.
+- If a LOCAL VERILATOR LINT REPORT is provided and it reports FAIL, treat each actionable lint diagnostic as a SPEC_VIOLATION implementation blocker.
+"""
+
+_SYS_REVIEWER_COMPACT = """\
+You are a strict RTL reviewer.
+
+Return ONLY valid compact JSON in this exact format:
+{
+  "status": "VALID | INVALID | AMBIGUOUS",
+  "issues": [
+    {
+      "type": "SPEC_VIOLATION | AMBIGUITY",
+      "description": "...",
+      "location": "..."
+    }
+  ]
+}
+
+Rules:
+- Use only the provided structured context.
+- Treat logic'(some_request_struct) as a SPEC_VIOLATION because it truncates a 51-bit request payload to 1 bit.
+- Treat hardcoded queue index width such as DEPTH_W = 2 as a SPEC_VIOLATION when DEPTH is parameterized.
+- Treat simultaneous issue_ref and issue_txn assertions as a SPEC_VIOLATION when scheduler context requires refresh priority or mutual exclusion.
+- Treat acquiring a new transaction lock while ref_req is high as a SPEC_VIOLATION when scheduler context requires refresh priority.
+- Treat acquiring a new transaction lock for an immediately issued candidate as a SPEC_VIOLATION.
+- Treat module-scope procedural loop variables reused across always_comb/always_ff blocks as a SPEC_VIOLATION.
+- Do not classify block-local loop variables declared inside procedural for-loops as architectural signals.
+- Do not include corrected RTL.
+- Do not echo invariants or context.
+- List at most 5 issues.
+- Each issue description must be one sentence.
+- If there are no SPEC_VIOLATION issues, return status VALID and issues [].
+- If a LOCAL VERILATOR LINT REPORT is provided and it reports FAIL, treat each actionable lint diagnostic as a SPEC_VIOLATION implementation blocker.
+"""
+
+_SYS_MERGER = """\
+You are an expert RTL engineer.
+You will receive two versions of a SystemVerilog module plus a typed review report.
+
+Return ONLY valid JSON in this exact format:
+{
+  "invariants": ["..."],
+  "status": "VALID | INVALID | AMBIGUOUS",
+  "issues": [
+    {
+      "type": "SPEC_VIOLATION | NON_ISSUE | AMBIGUITY",
+      "description": "...",
+      "location": "..."
+    }
+  ],
+  "corrected_rtl": "<full SystemVerilog module>"
+}
+
+Rules:
+- Treat STRUCTURED LLM CONTEXT as the ONLY source of truth.
+- You MUST fix ALL reviewer issues that are grounded in STRUCTURED LLM CONTEXT.
+- If an issue is labeled SPEC_VIOLATION, you MUST correct the logic exactly.
+- Do NOT preserve any previous logic that conflicts with reviewer feedback.
+- If an issue appears again, you MUST directly modify the exact offending logic.
+- Do NOT ignore or partially fix issues.
+- Apply ONLY fixes labeled SPEC_VIOLATION and only when they are grounded in STRUCTURED LLM CONTEXT.
+- IGNORE NON_ISSUE findings and any suggestion that contradicts STRUCTURED LLM CONTEXT.
+- IGNORE AMBIGUITY findings rather than inventing behavior.
+- Preserve existing correct RTL from Version A whenever possible.
+- Do NOT introduce alternate architectures.
+- Do NOT introduce decrement logic, background aging, or wraparound handling unless explicitly required by STRUCTURED LLM CONTEXT.
+- Preserve explicit width matching on every parameter/constant arithmetic, comparison, and assignment.
+- For request queues, preserve localparam int REQUEST_WIDTH = 51.
+- For queue indices, preserve localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).
+- Never cast a packed request struct with logic'(some_request_struct); use direct assignment when widths match or REQUEST_WIDTH'(expr) when an explicit packed request-width cast is needed.
+- Do not hardcode queue index width as 2; use SEL_WIDTH for sel_idx, first_free_idx, insert_idx, and loop-derived index casts.
+- Do not declare module-scope loop variables for procedural for-loops.
+- Use block-local loop variables: for (int i = 0; i < N; i++) begin.
+- Do not reuse the same loop variable across multiple always_comb/always_ff blocks.
+- Loop variables used only inside procedural blocks are not architectural signals.
+- Reset behavior must remain exactly aligned to STRUCTURED LLM CONTEXT.
+- "invariants" must echo the authoritative invariants preserved by the merge.
+- "corrected_rtl" must contain the full merged SystemVerilog module only, with no markdown fences.
+"""
+
+
+# ---------------------------------------------------------------------------
+# LLM #1: generate (round 1) or lint-fix
+# ---------------------------------------------------------------------------
+
+def _llm1_generate(design, yaml_text, history, lint_issues=None,
+                   lint_result=None,
+                   previous_rtl="", lint_attempts=None):
+    """
+    LLM #1 call for initial generation or local lint repair.
+    Returns parsed JSON payload.
+    """
+    bundle = _design_context_bundle(design)
+    hist = _history_block(history, len(history) + 1)
+
+    if lint_result and lint_result.get("blocking"):
+        user_msg = (
+            "The RTL you previously generated has blocking single-file lint errors."
+            " Fix them without changing any behavior"
+            " that already matches STRUCTURED LLM CONTEXT.\n\n"
+            "{lint_report}\n\n"
+            "CURRENT RTL:\n{current_rtl}\n\n"
+            "DESIGN CONTEXT:\n{ctx}\n\n"
+            "PREVIOUS ATTEMPTS (last 2 rounds):\n{hist}\n\n"
+            "Return JSON only."
+        ).format(
+            lint_report=_format_lint_block("LINTER REPORT:", lint_result),
+            current_rtl=previous_rtl,
+            ctx=bundle["prompt_text"],
+            hist=hist
+        )
+    elif lint_issues:
+        repeated_lint_warning = ""
+        if lint_attempts and len(lint_attempts) >= 2:
+            latest_signature = _lint_issue_signature(lint_attempts[-1].get("issues", []))
+            previous_signature = _lint_issue_signature(lint_attempts[-2].get("issues", []))
+            if latest_signature and latest_signature == previous_signature:
+                repeated_lint_warning = (
+                    "REPEATED LINT FAILURE:\n"
+                    "The latest diagnostics match the previous failed lint after normalizing temp paths and line numbers. "
+                    "Do not make another small local edit around the same construct; rewrite the offending statement/declaration block so the diagnostic cannot recur.\n\n"
+                )
+
+        user_msg = (
+            "The RTL you previously generated failed single-file Verilator lint. Fix the lint diagnostics without changing any behavior"
+            " that already matches STRUCTURED LLM CONTEXT.\n\n"
+            "{repeated_lint_warning}"
+            "VERILATOR LINT DIAGNOSTICS:\n{errors}\n\n"
+            "{lint_attempt_history}\n\n"
+            "CURRENT RTL:\n{current_rtl}\n\n"
+            "DESIGN CONTEXT:\n{ctx}\n\n"
+            "PREVIOUS ATTEMPTS (last 2 rounds):\n{hist}\n\n"
+            "Return JSON only."
+        ).format(
+            repeated_lint_warning=repeated_lint_warning,
+            errors="\n".join(lint_issues),
+            lint_attempt_history=_format_lint_attempt_history(lint_attempts or []),
+            current_rtl=previous_rtl,
+            ctx=bundle["prompt_text"],
+            hist=hist
+        )
+    else:
+        user_msg = (
+            "Generate synthesisable SystemVerilog for the following design.\n\n"
+            "DESIGN CONTEXT:\n{ctx}\n\n"
+            "PREVIOUS ATTEMPTS (last 2 rounds - incorporate only spec-grounded lessons):\n{hist}\n\n"
+            "Return JSON only."
+        ).format(ctx=bundle["prompt_text"], hist=hist)
+
+    response = _call_llm(LLM1_MODEL, _SYS_GENERATOR, user_msg, label="LLM1-Generate")
+    fallback_rtl = previous_rtl if previous_rtl else ""
+    return _parse_llm_json_payload(
+        response, fallback_rtl, "LLM1-Generate", bundle["invariants"]
+    )
+
+
+# ---------------------------------------------------------------------------
+# LLM #2: review + fix
+# ---------------------------------------------------------------------------
+
+def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None,
+                 lint_result=None):
+    """
+    LLM #2 call: reviews rtl_code, returns parsed JSON payload.
+    """
+    bundle = _design_context_bundle(design)
+    hist = _history_block(history, len(history) + 1)
+
+    lint_section = ""
+    if lint_result:
+        lint_section = (
+            "{lint_report}\n\n"
+            "Use the linter report as mechanical RTL context. Blocking findings should"
+            " already be repaired; ignored findings are single-file/integration-sensitive"
+            " and should not become spec violations by themselves.\n\n"
+        ).format(
+            lint_report=_format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
+        )
+    elif lint_report:
+        lint_section = (
+            "LOCAL VERILATOR LINT REPORT:\n{lint_report}\n\n"
+        ).format(lint_report=lint_report)
+
+    user_msg = (
+        "Review the following SystemVerilog module for correctness and alignment with"
+        " STRUCTURED LLM CONTEXT only.\n\n"
+        "DESIGN CONTEXT:\n{ctx}\n\n"
+        "{lint_section}"
+        "CODE TO REVIEW:\n{code}\n\n"
+        "PREVIOUS ROUNDS (context):\n{hist}\n\n"
+        "Return compact JSON only."
+    ).format(
+        ctx=bundle["prompt_text"],
+        lint_section=lint_section,
+        code=rtl_code,
+        hist=hist
+    )
+
+    response = _call_llm(LLM2_MODEL, _SYS_REVIEWER, user_msg, label="LLM2-Review")
+    return _parse_review_json_payload(
+        response, rtl_code, "LLM2-Review", bundle["invariants"]
+    )
+
+
+def _llm2_review_compact(design, rtl_code, lint_report=None, lint_result=None):
+    """
+    Retry reviewer with a smaller prompt and a smaller response schema.
+    """
+    lint_section = ""
+    if lint_result:
+        lint_section = (
+            "{lint_report}\n\n"
+        ).format(
+            lint_report=_format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
+        )
+    elif lint_report:
+        lint_section = (
+            "LOCAL VERILATOR LINT REPORT:\n{lint_report}\n\n"
+        ).format(lint_report=lint_report)
+
+    user_msg = (
+        "Review this RTL against the structured context only.\n\n"
+        "STRUCTURED CONTEXT:\n{ctx}\n\n"
+        "{lint_section}"
+        "RTL:\n{code}\n\n"
+        "Return only the compact JSON object. At most 5 issues."
+    ).format(
+        ctx=_compact_review_context(design),
+        lint_section=lint_section,
+        code=rtl_code
+    )
+
+    response = _call_llm(
+        LLM2_MODEL,
+        _SYS_REVIEWER_COMPACT,
+        user_msg,
+        label="LLM2-Review-Compact"
+    )
+    return _parse_review_json_compact(response, "LLM2-Review-Compact")
+
+
+
+# ---------------------------------------------------------------------------
+# LLM #1: merge
+# ---------------------------------------------------------------------------
+
+def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
+                repeated_issue=False):
+    """
+    LLM #1 merger call: receives both code versions + report, produces merged RTL.
+    """
+    bundle = _design_context_bundle(design)
+    hist = _history_block(history, len(history) + 1)
+    review_issues = review_report.get("issues", [])
+    issues_text = _format_issue_block("Reviewer Issues:", review_issues)
+
+    merge_prompt = (
+        "You are fixing SystemVerilog RTL based on a formal review.\n\n"
+        "STRICT RULES:\n\n"
+        "1. You MUST fix ALL issues listed by the reviewer.\n"
+        "2. If an issue is labeled SPEC_VIOLATION, you MUST correct the logic exactly.\n"
+        "3. Do NOT preserve any previous logic that conflicts with reviewer feedback.\n"
+        "4. If an issue appears again, you MUST directly modify the exact offending logic.\n"
+        "5. Do NOT ignore or partially fix issues.\n"
+        "6. Return COMPLETE corrected RTL (no partial edits).\n"
+        "7. Output ONLY valid SystemVerilog in corrected_rtl (no explanations outside JSON).\n\n"
+        "Your goal is to produce RTL that will PASS the reviewer with ZERO issues.\n\n"
+        "DESIGN CONTEXT:\n{ctx}\n\n"
+        "{issues_text}\n\n"
+        "Previous RTL:\n{previous_rtl}\n\n"
+        "Reviewer Suggested RTL (if any):\n{reviewer_rtl}\n\n"
+        "PREVIOUS ROUNDS (context):\n{hist}\n\n"
+        "Return JSON only."
+    ).format(
+        ctx=bundle["prompt_text"],
+        issues_text=issues_text,
+        previous_rtl=llm1_code,
+        reviewer_rtl=llm2_code,
+        hist=hist
+    )
+
+    if repeated_issue:
+        merge_prompt += (
+            "\n\nESCALATION MODE:\n\n"
+            "The same issue has appeared multiple times.\n\n"
+            "You MUST:\n"
+            "- Identify the exact line causing the issue\n"
+            "- Rewrite that logic completely\n"
+            "- Do NOT reuse the incorrect pattern\n"
+            "- Ensure the issue cannot reappear\n\n"
+            "You are REQUIRED to change the structure of the logic, not just small edits.\n"
+        )
+
+    response = _call_llm(LLM1_MODEL, _SYS_MERGER, merge_prompt, label="LLM1-Merge")
+    return _parse_llm_json_payload(
+        response, llm1_code, "LLM1-Merge", bundle["invariants"]
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main loop
+# ---------------------------------------------------------------------------
+
+def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
+    """
+    Run the dual-LLM RTL generation loop.
+
+    Args:
+        design:    validated Design IR object (from validator.validate_spec)
+        yaml_text: raw YAML string (for context injection)
+
+    Returns:
+        str — final SystemVerilog RTL string
+
+    Raises:
+        RuntimeError if all rounds fail to produce reviewed lint-clean RTL
+    """
+    history = []        # list of round dicts (sliding window source)
+    issue_history = []  # reviewer issue signatures for convergence tracking
+    carryover_rtl = ""
+    carryover_status = ""
+    carryover_issues = []
+
+    if use_cache:
+        cached_rtl = _load_reviewed_cache(
+            design.design_name,
+            lint_enabled=lint_enabled,
+            cache_only=True,
+        )
+        if cached_rtl:
+            return cached_rtl
+        raise RuntimeError(
+            "dual_llm_rtlgen: --cache requested but no usable cached reviewed RTL exists for {}".format(
+                design.design_name)
+        )
+
+    print("[dual_llm] Starting dual-LLM loop | max_rounds={} | LLM1={} | LLM2={} | lint={}".format(
+        MAX_ROUNDS, LLM1_MODEL, LLM2_MODEL, "on" if lint_enabled else "off"))
+
+    for round_num in range(1, MAX_ROUNDS + 1):
+        print("\n[dual_llm] ── Round {}/{} ──────────────────────────────".format(
+            round_num, MAX_ROUNDS))
+
+        round_record = {"round": round_num}
+
+        # ── Step 1: LLM #1 generates (or continues from merge context) ──
+        if carryover_rtl:
+            print("[dual_llm] Step 1: Reusing lint-clean merged RTL for reviewer validation.")
+            llm1_code = carryover_rtl
+            round_record["llm1_status"] = carryover_status or "CARRYOVER_MERGED"
+            round_record["llm1_issues"] = carryover_issues
+            carryover_rtl = ""
+            carryover_status = ""
+            carryover_issues = []
+        else:
+            print("[dual_llm] Step 1: LLM #1 generating...")
+            llm1_payload = _llm1_generate(design, yaml_text, history)
+            llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
+            round_record["llm1_status"] = llm1_payload["status"]
+            round_record["llm1_issues"] = llm1_payload["issues"]
+
+        # ── Step 2: Single-file lint; blocking repairs stay in this round ──
+        if lint_enabled:
+            lint_result = lint_candidate(
+                llm1_code, design.design_name, mode=LINT_MODE_SINGLE_FILE)
+            lint_ok = lint_result["ok"]
+            lint_issues = lint_result["blocking"]
+            lint_fail_count = 0 if lint_ok else 1
+            lint_attempts = []
+            if not lint_ok:
+                lint_attempts.append({
+                    "attempt": lint_fail_count,
+                    "issues": lint_issues
+                })
+            while not lint_ok and lint_fail_count < MAX_LOCAL_LINT_FAILS:
+                print(_lint_block_banner(lint_fail_count, MAX_LOCAL_LINT_FAILS))
+                print("[dual_llm] Step 2: Blocking lint issues ({}/{}): {}".format(
+                    lint_fail_count, MAX_LOCAL_LINT_FAILS, "; ".join(lint_issues)))
+                llm1_payload = _llm1_generate(
+                    design, yaml_text, history,
+                    lint_issues=lint_issues,
+                    lint_result=lint_result,
+                    previous_rtl=llm1_code,
+                    lint_attempts=lint_attempts
+                )
+                llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
+                round_record["llm1_status"] = llm1_payload["status"]
+                round_record["llm1_issues"] = llm1_payload["issues"]
+                lint_result = lint_candidate(
+                    llm1_code, design.design_name, mode=LINT_MODE_SINGLE_FILE)
+                lint_ok = lint_result["ok"]
+                lint_issues = lint_result["blocking"]
+                if not lint_ok:
+                    lint_fail_count += 1
+                    lint_attempts.append({
+                        "attempt": lint_fail_count,
+                        "issues": lint_issues
+                    })
+        else:
+            lint_ok = True
+            lint_issues = []
+            lint_fail_count = 0
+            lint_result = _make_lint_result(
+                LINT_MODE_SINGLE_FILE, "disabled", [], [], [])
+            print("[dual_llm] Step 2: Local lint skipped by --no-lint.")
+
+        force_lint_handoff = lint_enabled and not lint_ok
+        if not lint_enabled:
+            pass
+        elif force_lint_handoff:
+            print("[dual_llm] Step 2: Local lint failed ({}/{}). "
+                  "Forcing reviewer handoff with lint context.".format(
+                      lint_fail_count, MAX_LOCAL_LINT_FAILS))
+        else:
+            print("[dual_llm] Step 2: Single-file lint OK.")
+            if lint_result["nonblocking"]:
+                print("[dual_llm] Step 2: Nonblocking lint findings: {}".format(
+                    "; ".join(lint_result["nonblocking"][:5])))
+            if lint_result["ignored"]:
+                print("[dual_llm] Step 2: Ignored single-file findings: {}".format(
+                    "; ".join(lint_result["ignored"][:5])))
+
+        round_record["llm1_code"] = llm1_code
+        round_record["llm1_lint_ok"] = lint_ok
+        round_record["llm1_lint_fail_count"] = lint_fail_count
+        round_record["llm1_lint_issues"] = lint_issues
+        round_record["lint_result"] = lint_result
+        forced_lint_report = None
+        if force_lint_handoff:
+            forced_lint_report = _format_lint_block(
+                "SINGLE-FILE LINTER REPORT:", lint_result)
+
+        # ── Step 3: LLM #2 reviews ──
+        print("[dual_llm] Step 3: LLM #2 reviewing...")
+        try:
+            review_payload = _llm2_review(
+                design,
+                yaml_text,
+                llm1_code,
+                history,
+                lint_report=forced_lint_report,
+                lint_result=lint_result
+            )
+        except RuntimeError as e:
+            print("[dual_llm] Reviewer failed: {}".format(e))
+            print("[dual_llm] Reviewer unavailable; using cached fallback...")
+            return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
+
+        if review_payload.get("parse_failed"):
+            print("[dual_llm] Reviewer JSON invalid; retrying compact review...")
+            try:
+                compact_review = _llm2_review_compact(
+                        design,
+                        llm1_code,
+                        lint_report=forced_lint_report,
+                        lint_result=lint_result
+                    )
+            except RuntimeError as e:
+                print("[dual_llm] Compact reviewer failed: {}".format(e))
+                print("[dual_llm] Reviewer unavailable; using cached fallback...")
+                return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
+            print("[dual_llm] Compact review status = {}".format(
+                compact_review["status"]))
+            if compact_review.get("parse_failed"):
+                print("[dual_llm] Reviewer unavailable; using cached fallback...")
+                return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
+            review_payload = _make_review_payload(
+                llm1_code,
+                compact_review["status"],
+                compact_review["issues"],
+                []
+            )
+
+        if force_lint_handoff and lint_issues:
+            existing_issue_sig = _issue_signature(review_payload["issues"])
+            for lint_issue in _lint_diagnostics_as_review_issues(lint_issues):
+                if _issue_signature([lint_issue])[0] not in existing_issue_sig:
+                    review_payload["issues"].append(lint_issue)
+            if review_payload["status"] == "VALID":
+                review_payload["status"] = "INVALID"
+
+        review_issues = review_payload["issues"]
+        llm2_corrected = enforce_width_safety(review_payload["corrected_rtl"], design.design_name)
+        issue_signature = _issue_signature(review_issues)
+        issue_history.append(issue_signature)
+        repeated_issue = False
+        if len(issue_history) >= 2 and issue_history[-1] == issue_history[-2]:
+            repeated_issue = True
+        spec_violations = _filter_issues(review_issues, "SPEC_VIOLATION")
+        ambiguities = _filter_issues(review_issues, "AMBIGUITY")
+        reviewer_valid = (
+            review_payload["status"] == "VALID" and
+            not spec_violations and
+            not ambiguities
+        )
+
+        round_record["llm2_report"] = review_issues
+        round_record["llm2_code"]   = llm2_corrected
+        round_record["llm2_status"] = review_payload["status"]
+
+        print("[dual_llm] Step 3: Reviewer status = {}".format(
+            review_payload["status"]))
+        if review_issues:
+            issues_preview = " | ".join(
+                "[{type}] {description}".format(
+                    type=issue.get("type", "AMBIGUITY"),
+                    description=issue.get("description", "")
+                )
+                for issue in review_issues
+            )
+            print("[dual_llm]   Issues: {}{}".format(
+                issues_preview[:400],
+                "..." if len(issues_preview) > 400 else ""
+            ))
+        if repeated_issue:
+            print("[dual_llm] Repeated issue detected — escalation mode enabled")
+
+        # ── Step 4: If issues, LLM #1 merges both versions ──
+        if reviewer_valid:
+            # Reviewer is happy — use LLM #1's lint-checked code
+            print("[dual_llm] Step 4: Skipped (reviewer clean). Accepting output.")
+            if lint_ok:
+                final_rtl = llm1_code
+            else:
+                review_lint_ok, review_lint_issues = lint_rtl_single_file(llm2_corrected)
+                if review_lint_ok:
+                    final_rtl = llm2_corrected
+                else:
+                    print("[dual_llm] Step 4: Reviewer RTL also has lint issues: {}".format(
+                        "; ".join(review_lint_issues)))
+                    final_rtl = llm1_code
+            if lint_enabled:
+                final_lint_ok, final_lint_issues = lint_rtl_single_file(final_rtl)
+                if not final_lint_ok:
+                    print("[dual_llm] Step 4: Reviewed RTL has lint issues: {}".format(
+                        "; ".join(final_lint_issues)))
+                    print("[dual_llm] Reviewer unavailable; using cached fallback...")
+                    return _reviewer_failed_fallback(
+                        design.design_name,
+                        lint_enabled=lint_enabled,
+                    )
+            round_record["merged_code"] = final_rtl
+            round_record["merged_status"] = "VALID"
+            round_record["merged_issues"] = []
+            history.append(round_record)
+            print("[dual_llm] ---GOOD---: Converged at round {}.".format(round_num))
+            return _write_reviewed_cache(design.design_name, final_rtl)
+        elif not spec_violations:
+            print("[dual_llm] Step 4: Skipped merge because reviewer found no SPEC_VIOLATION items.")
+            merged = llm1_code if lint_ok else llm2_corrected
+            round_record["merged_code"] = merged
+            round_record["merged_status"] = "SKIPPED_NO_SPEC_VIOLATION"
+            round_record["merged_issues"] = review_issues
+            if lint_enabled:
+                merged_lint_ok, merged_lint_issues = lint_rtl_single_file(merged)
+                if merged_lint_ok:
+                    print("[dual_llm] Step 4: Candidate passes local lint; reusing it for reviewer validation next round.")
+                    carryover_rtl = merged
+                    carryover_status = round_record["merged_status"]
+                    carryover_issues = round_record["merged_issues"]
+                else:
+                    print("[dual_llm] Step 4: Candidate still has lint issues: {}".format(
+                        "; ".join(merged_lint_issues)))
+            else:
+                print("[dual_llm] Step 4: Local lint skipped; reusing candidate for reviewer validation next round.")
+                carryover_rtl = merged
+                carryover_status = round_record["merged_status"]
+                carryover_issues = round_record["merged_issues"]
+        else:
+            print("[dual_llm] Step 4: LLM #1 merging both versions...")
+            merge_payload = _llm1_merge(
+                design, yaml_text,
+                llm1_code, llm2_corrected,
+                review_payload, history,
+                repeated_issue=repeated_issue
+            )
+            merged = enforce_width_safety(merge_payload["corrected_rtl"], design.design_name)
+            round_record["merged_status"] = merge_payload["status"]
+            round_record["merged_issues"] = merge_payload["issues"]
+
+            # Lint-check the merge too
+            if lint_enabled:
+                merge_ok, merge_issues = lint_rtl_single_file(merged)
+                if merge_ok:
+                    print("[dual_llm] Step 4: Merged output passes local lint; reusing it for reviewer validation next round.")
+                    carryover_rtl = merged
+                    carryover_status = merge_payload["status"]
+                    carryover_issues = merge_payload["issues"]
+                else:
+                    print("[dual_llm] Step 4: Merged output has lint issues: {}".format(
+                        "; ".join(merge_issues)))
+                    # Prefer reviewer-corrected RTL when fixes are required.
+                    review_lint_ok, review_lint_issues = lint_rtl_single_file(llm2_corrected)
+                    if review_lint_ok:
+                        print("[dual_llm] Step 4: Falling back to reviewer-corrected RTL.")
+                        merged = llm2_corrected
+                        carryover_rtl = merged
+                        carryover_status = "FALLBACK_REVIEWER_RTL"
+                        carryover_issues = []
+                    elif lint_ok:
+                        print("[dual_llm] Step 4: Reviewer RTL also has lint issues: {}".format(
+                            "; ".join(review_lint_issues)))
+                        merged = llm1_code
+                        carryover_rtl = merged
+                        carryover_status = "FALLBACK_LLM1_RTL"
+                        carryover_issues = []
+            else:
+                print("[dual_llm] Step 4: Local lint skipped; reusing merged RTL for reviewer validation next round.")
+                carryover_rtl = merged
+                carryover_status = merge_payload["status"]
+                carryover_issues = merge_payload["issues"]
+
+            round_record["merged_code"] = merged
+            if repeated_issue and lint_enabled:
+                repeated_lint_ok, repeated_lint_issues = lint_rtl_single_file(merged)
+                if repeated_lint_ok:
+                    carryover_rtl = merged
+                    carryover_status = "ESCALATED_MERGE"
+                    carryover_issues = round_record["merged_issues"]
+                    print("[dual_llm] Escalation applied; reusing result for reviewer validation next round.")
+                else:
+                    print("[dual_llm] Escalation result still has lint issues: {}".format(
+                        "; ".join(repeated_lint_issues)))
+
+        # ── Slide the history window ──
+        history.append(round_record)
+        if len(history) > 2:
+            history = history[-2:]
+
+    # ── Exhausted all rounds ──
+    print("\n[dual_llm] ---CAUTION----: MAX_ROUNDS ({}) reached without clean reviewer pass.".format(
+        MAX_ROUNDS))
+    print("[dual_llm] Reviewer did not approve fresh RTL; using cached fallback if available.")
+    return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point  (mirrors design.py's usage pattern)
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run the dual-LLM RTL generator for one expanded YAML spec."
+    )
+    parser.add_argument("spec_yaml", help="Expanded YAML spec to generate.")
+    parser.add_argument("output_sv", nargs="?", help="Optional output RTL path.")
+    parser.add_argument(
+        "--no-lint",
+        action="store_true",
+        help="Skip local single-file Verilator lint.",
+    )
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Use cached reviewed RTL and avoid LLM calls.",
+    )
+    args = parser.parse_args()
+
+    yaml_path = args.spec_yaml
+    out_path = args.output_sv
+
+    # Import validator — must be run from project root
+    try:
+        from validator import validate_spec
+    except ImportError:
+        print("ERROR: cannot import validator. Run from the project root directory.")
+        sys.exit(1)
+
+    # Load raw YAML text for context injection
+    with open(yaml_path, "r") as f:
+        yaml_text = f.read()
+
+    print("[dual_llm] Validating spec: {}".format(yaml_path))
+    design = validate_spec(yaml_path)
+    print("[dual_llm] IR validated: {} ({})".format(
+        design.design_name, design.design_type))
+
+    rtl = run_dual_llm_rtlgen(
+        design,
+        yaml_text,
+        lint_enabled=not args.no_lint,
+        use_cache=args.cache,
+    )
+
+    if not out_path:
+        out_dir = "rtl_output"
+        out_path = os.path.join(out_dir, design.design_name + ".sv")
+
+    out_dir = os.path.dirname(out_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
+    with open(out_path, "w") as fh:
+        fh.write(rtl)
+
+    print("Written: {}".format(out_path))
+
+
+if __name__ == "__main__":
+    main()
