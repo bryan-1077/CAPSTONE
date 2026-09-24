@@ -1,7 +1,0 @@
-=== Live Transcript ===
-[2026-09-24 10:17:48 CDT] Entering gdsii stage (attempt 1/1)
-[2026-09-24 10:17:49 CDT] gdsii generate attempt 1
-[2026-09-24 10:27:00 CDT] gdsii generate attempt 1 completed
-[2026-09-24 10:27:50 CDT] gdsii review passed
-[2026-09-24 10:45:04 CDT] gdsii failed after 1 attempts
-[2026-09-24 10:45:04 CDT] Flow stopped due to failure

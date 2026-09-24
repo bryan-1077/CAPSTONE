@@ -1,9 +1,0 @@
-SITE unithd
-  SIZE 1 BY 1 ;
-END unithd
-LAYER li1
-  TYPE ROUTING ;
-END li1
-LAYER met1
-  TYPE ROUTING ;
-END met1
