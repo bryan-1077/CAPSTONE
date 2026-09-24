@@ -1,0 +1,71 @@
+{
+  "review_payload_ai": {
+    "api_error": null,
+    "available": true,
+    "enabled": true,
+    "errors": [],
+    "model": "protected.gpt-5.2",
+    "pass": true,
+    "request_metadata": {
+      "api_style": "chat_completions_fallback",
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "builddir": "build_prep_mc",
+      "candidate_path": "build_netlist_mc_lang",
+      "execution_ok": true,
+      "local_error_count": 0,
+      "local_warning_count": 0,
+      "model": "protected.gpt-5.2",
+      "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+    },
+    "suggested_fixes": [
+      "If you want to reduce noisy library warnings: use a SKY130 liberty variant curated for synthesis (or accept that decap/diode-type cells are intentionally unusable for logic mapping).",
+      "Optionally add a quick post-check in the netlist flow to assert the generated results netlist (results/ddr4_controller_top_generic.v) is non-empty and that check_design reports are clean (or at least reviewed)."
+    ],
+    "summary": "Netlist-stage Genus bring-up completed successfully (rc=0) for top ddr4_controller_top using the prepared filelist and SDC. Expected synthesis outputs were generated (generic .v, .sdc, and .db). No evidence of unresolved generic interfaces, unsynthesizable processes, or elaboration failures. Only non-blocking SKY130 liberty warnings and minor review-metadata limitations were observed.",
+    "warnings": [
+      "Genus library-load warnings from SKY130 HD liberty: unsupported construct(s) [LBR-40] and multiple cells with no logical output pins [LBR-9] (e.g., decap/diode/bleeder). These cells will be marked unusable for mapping; typically non-blocking but should be acknowledged.",
+      "Run log snippet indicates 'No DISPLAY' and fallback to shell mode; not an issue for batch runs, but confirms GUI was not available/used.",
+      "Log classification metadata reports saw_elaborate=false even though synthesis progressed and outputs were produced; likely a classifier/trace-collection limitation. Ensure genus.log is preserved and, if needed, confirm elaborate/syn steps in the full log for auditability."
+    ]
+  },
+  "validation_ai_review": {
+    "api_error": null,
+    "available": true,
+    "enabled": true,
+    "errors": [],
+    "model": "protected.gpt-5.2",
+    "pass": true,
+    "request_metadata": {
+      "api_style": "chat_completions_fallback",
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "builddir": "build_prep_mc",
+      "candidate_path": "build_netlist_mc_lang",
+      "execution_ok": true,
+      "local_error_count": 0,
+      "local_warning_count": 0,
+      "model": "protected.gpt-5.2",
+      "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
+    },
+    "suggested_fixes": [
+      "If you want to reduce noisy library warnings: use a SKY130 liberty variant curated for synthesis (or accept that decap/diode-type cells are intentionally unusable for logic mapping).",
+      "Optionally add a quick post-check in the netlist flow to assert the generated results netlist (results/ddr4_controller_top_generic.v) is non-empty and that check_design reports are clean (or at least reviewed)."
+    ],
+    "summary": "Netlist-stage Genus bring-up completed successfully (rc=0) for top ddr4_controller_top using the prepared filelist and SDC. Expected synthesis outputs were generated (generic .v, .sdc, and .db). No evidence of unresolved generic interfaces, unsynthesizable processes, or elaboration failures. Only non-blocking SKY130 liberty warnings and minor review-metadata limitations were observed.",
+    "warnings": [
+      "Genus library-load warnings from SKY130 HD liberty: unsupported construct(s) [LBR-40] and multiple cells with no logical output pins [LBR-9] (e.g., decap/diode/bleeder). These cells will be marked unusable for mapping; typically non-blocking but should be acknowledged.",
+      "Run log snippet indicates 'No DISPLAY' and fallback to shell mode; not an issue for batch runs, but confirms GUI was not available/used.",
+      "Log classification metadata reports saw_elaborate=false even though synthesis progressed and outputs were produced; likely a classifier/trace-collection limitation. Ensure genus.log is preserved and, if needed, confirm elaborate/syn steps in the full log for auditability."
+    ]
+  },
+  "validation_local_review": {
+    "blocking_errors": [],
+    "errors": [],
+    "failure_class": "non_fatal_warning_only_issue",
+    "failure_stage_owner": "netlist",
+    "pass": true,
+    "route_back_to_stage": null,
+    "suggested_fixes": [],
+    "summary": "No blocking Genus log classifier findings were detected. Local netlist review passed with 0 errors and 0 warnings.",
+    "warnings": []
+  }
+}

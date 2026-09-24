@@ -1,0 +1,41 @@
+{
+  "validation_ai_review": {
+    "api_error": null,
+    "available": true,
+    "enabled": true,
+    "errors": [],
+    "false_positive_dependencies": [],
+    "model": "protected.gpt-5.2",
+    "pass": true,
+    "request_metadata": {
+      "api_style": "chat_completions_fallback",
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "candidate_path": "build_prep_mc",
+      "inventory_file_count": 16,
+      "local_error_count": 0,
+      "local_warning_count": 0,
+      "model": "protected.gpt-5.2",
+      "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}",
+      "rtl_sample_count": 11
+    },
+    "suggested_fixes": [
+      "(Optional hardening) In run_genus_mc.tcl, set init_lib_search_path to include all unique directories from GENUS_LIBS rather than only [file dirname [lindex $lib_list 0]].",
+      "(Optional clarity) Add a short note in README_prepared.txt stating that mc_genus.sdc is intentionally minimal and that IO delays are set to 0.0 by default, so users should update for their environment."
+    ],
+    "summary": "Prep bundle looks complete and internally consistent for Genus bring-up: artifacts present (filelist/Tcl/SDC/top_module), selected top ddr4_controller_top is not a harness and does not expose interface ports, and dependency/module closure matches the filelist (no missing modules or duplicates). No prep-stage blockers found.",
+    "warnings": [
+      "Top/module consistency check: top_module.txt, README_prepared.txt, and run_genus_mc.tcl all agree on TOP=ddr4_controller_top (good). No evidence the selected top is a testbench/harness (has real ports; no initial/$finish markers reported).",
+      "SDC is a generic bring-up constraint (0 input/output delay, reset false-pathed). This is acceptable for bring-up, but may over-constrain/under-constrain depending on intended IO timing and any multi-clock/derived-clock behavior (not a prep blocker).",
+      "run_genus_mc.tcl requires GENUS_LIBS and assumes the libs are all co-located for init_lib_search_path (uses dirname of first lib). If GENUS_LIBS contains libs from multiple directories, users may need to adjust init_lib_search_path accordingly (not a prep blocker).",
+      "Several RTL files declare `timescale 1ns/1ps. This is simulation-oriented but generally harmless for Genus; keeping it is fine (not a prep blocker).",
+      "README_prepared.txt mentions stripping SVA and debug system tasks; the provided rtl_samples still show $countones usage and struct packing/casting. These are normal SV constructs; just note that successful parsing depends on Genus SV support/version (not a prep completeness issue)."
+    ]
+  },
+  "validation_local_review": {
+    "errors": [],
+    "pass": true,
+    "suggested_fixes": [],
+    "summary": "Local prep review passed with 0 errors and 0 warnings.",
+    "warnings": []
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "candidate_paths": {
+    "prep_candidate_path": "build_prep_mc",
+    "remote_prepare_dir": "build_prep_mc"
+  },
+  "output_files": {
+    "generated_files": []
+  },
+  "outputs": {
+    "rtl_bundle_remote": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc"
+  },
+  "prep_outputs": {
+    "generated_files": [],
+    "generated_top_file": null,
+    "generated_top_module": null,
+    "selected_top_file": "rtl/ddr4_controller_top.sv",
+    "selected_top_module": "ddr4_controller_top"
+  },
+  "review_context_inventory": {
+    "artifact_status": {
+      "README_prepared.txt": true,
+      "constraints/mc_genus.sdc": true,
+      "filelist_genus.f": true,
+      "run_genus_mc.tcl": true,
+      "top_module.txt": true
+    },
+    "dependency_analysis": {
+      "duplicate_filelist_entries": [],
+      "fpga_only_artifacts": [],
+      "fpga_only_filelist_entries": [],
+      "instantiated_modules": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "interface_definitions_in_bundle": [],
+      "interface_definitions_in_filelist": [],
+      "interface_references": [],
+      "missing_from_bundle": [],
+      "missing_from_filelist": [],
+      "module_definitions_in_bundle": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_controller_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "module_definitions_in_filelist": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_controller_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "resolved_source_entries": [
+        {
+          "entry": "./rtl/ddr4_bank_activate_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_activate_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_bank_sequencer.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_precharge_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_top.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_top.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_tRAS_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_controller_top.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_controller_top.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_refresh_refresh_controller.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_request_queue.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_request_queue.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_scheduler_scheduler.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_scheduler_scheduler.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tFAW_tFAW_tracker.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tRRD_simple_tRRD.sv"
+        }
+      ],
+      "truncated": false,
+      "type_alias_references": [],
+      "type_aliases_in_bundle": [
+        "bank",
+        "shift_reg_t",
+        "state_t"
+      ],
+      "type_aliases_in_filelist": [
+        "bank",
+        "shift_reg_t",
+        "state_t"
+      ]
+    },
+    "inventory": {
+      "files": [
+        "README_prepared.txt",
+        "constraints/mc_genus.sdc",
+        "filelist_genus.f",
+        "rtl/ddr4_bank_activate_fsm.sv",
+        "rtl/ddr4_bank_bank_sequencer.sv",
+        "rtl/ddr4_bank_precharge_fsm.sv",
+        "rtl/ddr4_bank_tRAS_fsm.sv",
+        "rtl/ddr4_bank_top.sv",
+        "rtl/ddr4_controller_top.sv",
+        "rtl/ddr4_refresh_refresh_controller.sv",
+        "rtl/ddr4_request_queue.sv",
+        "rtl/ddr4_scheduler_scheduler.sv",
+        "rtl/ddr4_tFAW_tFAW_tracker.sv",
+        "rtl/ddr4_tRRD_simple_tRRD.sv",
+        "run_genus_mc.tcl",
+        "top_module.txt"
+      ],
+      "total_files": 16,
+      "truncated": false
+    }
+  }
+}

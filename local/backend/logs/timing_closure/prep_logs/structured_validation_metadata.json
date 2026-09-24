@@ -1,0 +1,1319 @@
+{
+  "review_context": {
+    "artifact_status": {
+      "README_prepared.txt": true,
+      "constraints/mc_genus.sdc": true,
+      "filelist_genus.f": true,
+      "run_genus_mc.tcl": true,
+      "top_module.txt": true
+    },
+    "dependency_analysis": {
+      "duplicate_filelist_entries": [],
+      "fpga_only_artifacts": [],
+      "fpga_only_filelist_entries": [],
+      "instantiated_modules": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "interface_definitions_in_bundle": [],
+      "interface_definitions_in_filelist": [],
+      "interface_references": [],
+      "missing_from_bundle": [],
+      "missing_from_filelist": [],
+      "module_definitions_in_bundle": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_controller_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "module_definitions_in_filelist": [
+        "ddr4_bank_activate_fsm",
+        "ddr4_bank_bank_sequencer",
+        "ddr4_bank_precharge_fsm",
+        "ddr4_bank_tRAS_fsm",
+        "ddr4_bank_top",
+        "ddr4_controller_top",
+        "ddr4_refresh_refresh_controller",
+        "ddr4_request_queue",
+        "ddr4_scheduler_scheduler",
+        "ddr4_tFAW_tFAW_tracker",
+        "ddr4_tRRD_simple_tRRD"
+      ],
+      "resolved_source_entries": [
+        {
+          "entry": "./rtl/ddr4_bank_activate_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_activate_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_bank_sequencer.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_precharge_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_top.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_top.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_tRAS_fsm.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_controller_top.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_controller_top.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_refresh_refresh_controller.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_request_queue.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_request_queue.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_scheduler_scheduler.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_scheduler_scheduler.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tFAW_tFAW_tracker.sv"
+        },
+        {
+          "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
+          "exists": true,
+          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tRRD_simple_tRRD.sv"
+        }
+      ],
+      "truncated": false,
+      "type_alias_references": [],
+      "type_aliases_in_bundle": [
+        "bank",
+        "shift_reg_t",
+        "state_t"
+      ],
+      "type_aliases_in_filelist": [
+        "bank",
+        "shift_reg_t",
+        "state_t"
+      ]
+    },
+    "inventory": {
+      "files": [
+        "README_prepared.txt",
+        "constraints/mc_genus.sdc",
+        "filelist_genus.f",
+        "rtl/ddr4_bank_activate_fsm.sv",
+        "rtl/ddr4_bank_bank_sequencer.sv",
+        "rtl/ddr4_bank_precharge_fsm.sv",
+        "rtl/ddr4_bank_tRAS_fsm.sv",
+        "rtl/ddr4_bank_top.sv",
+        "rtl/ddr4_controller_top.sv",
+        "rtl/ddr4_refresh_refresh_controller.sv",
+        "rtl/ddr4_request_queue.sv",
+        "rtl/ddr4_scheduler_scheduler.sv",
+        "rtl/ddr4_tFAW_tFAW_tracker.sv",
+        "rtl/ddr4_tRRD_simple_tRRD.sv",
+        "run_genus_mc.tcl",
+        "top_module.txt"
+      ],
+      "total_files": 16,
+      "truncated": false
+    },
+    "iteration_context": {
+      "current_errors": [],
+      "latest_applied_actions": [
+        "replace_text run_genus_mc.tcl",
+        "append_text README_prepared.txt"
+      ],
+      "new_errors": [],
+      "persistent_errors": [],
+      "previous_errors": [
+        "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
+      ],
+      "prior_fix_history": [
+        "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
+        "Re-run/patch the local prep checker so it only raises the \"macros detected but not applied\" error when the detected-macro set is non-empty, and include the macro list in the error text for traceability.",
+        "Optionally harden run_genus_mc.tcl with an explicit, opt-in define mechanism before read_hdl, e.g.:\n  - if {[info exists ::env(GENUS_DEFINES)] && $::env(GENUS_DEFINES) ne \"\"} { set defs [split $::env(GENUS_DEFINES)] ; read_hdl -sv -define $defs -f $FILELIST } else { read_hdl -sv -f $FILELIST }\n  This preserves the prep rule of not guessing/enabling macros automatically.",
+        "Confirm top consistency (already consistent here): top_module.txt, README_prepared.txt, and run_genus_mc.tcl all point to ddr4_controller_top; keep as-is.",
+        "replace_text run_genus_mc.tcl",
+        "append_text README_prepared.txt"
+      ],
+      "resolved_errors": [
+        "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
+      ]
+    },
+    "key_files": {
+      "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_mc --top ddr4_controller_top\n\nClarification:\n  - This bundle detected no required preprocessor macros (see list above).\n  - run_genus_mc.tcl supports optional, opt-in defines via environment variable:\n      GENUS_DEFINES=\"NAME NAME2=1\"  (space-separated)\n    These are only applied if explicitly set by the user.\n",
+      "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+      "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+      "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\nset TOP \"ddr4_controller_top\"\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Optional, opt-in preprocessor defines (space-separated), e.g.:\n#   export GENUS_DEFINES=\"FOO BAR=1\"\n# Note: prep may report detected macros in README_prepared.txt; this script does not\n# auto-enable them to avoid silently changing behavior.\nset GENUS_DEFINES_LIST {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set GENUS_DEFINES_LIST [split [string trim $::env(GENUS_DEFINES)] \" \"]\n    puts \"GENUS_DEFINES = $GENUS_DEFINES_LIST\"\n}\n\nif {[llength $GENUS_DEFINES_LIST] > 0} {\n    read_hdl -sv -define $GENUS_DEFINES_LIST -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+      "top_module.txt": "ddr4_controller_top\n"
+    },
+    "rtl_samples": [
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_activate_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_activate_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRCD_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [4:0] tRCD_counter;  // 5 bit(s), holds up to 31\n    localparam int TRCD_COUNTER_WIDTH = $bits(tRCD_counter);\n    localparam logic [TRCD_COUNTER_WIDTH-1:0] TRCD_COUNTER_ZERO_L = TRCD_COUNTER_WIDTH'(0);\n    localparam logic [TRCD_COUNTER_WIDTH-1:0] TRCD_COUNTER_ONE_L = TRCD_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRCD_counter <= TRCD_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRCD_counter <= TRCD_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRCD_counter <= tRCD_counter + TRCD_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = C\n...<truncated>...",
+        "path": "rtl/ddr4_bank_activate_fsm.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_bank_sequencer\n// States : IDLE, ACTIVATING, ACTIVE, PRECHARGING\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_bank_sequencer (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        cmd_valid,\n    input  logic [ 1:0] cmd_type,\n    input  logic        tRCD_done,\n    input  logic        tRAS_done,\n    input  logic        tRP_done,\n    output logic        bank_idle,\n    output logic        bank_active,\n    output logic        cmd_ready,\n    output logic        tRCD_start,\n    output logic        tRAS_start,\n    output logic        tRP_start,\n    output logic        tRCD_ack,\n    output logic        tRAS_ack,\n    output logic        tRP_ack\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        ACTIVATING           = 2'd1,\n        ACTIVE               = 2'd2,\n        PRECHARGING          = 2'd3\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n        end else begin\n            current_state <= next_state;\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (cmd_valid == 1'd1 && cmd_ready == 1'd1) next_state = ACTIVATING;\n            ACTIVATING: if (tRCD_done == 1'd1) next_state = ACTIVE;\n            ACTIVE: if (tRAS_done == 1'd1) next_state = PRECHARGING;\n            PRECHARGING: if (tRP_done == 1'd1) next_state = IDLE;\n            default: next_state = IDLE;  // illegal encoding -- recover to reset state\n        endcase\n    end\n\n    // ---------------------------------------------------------\n    // Output logic (Moore)\n    // ----------------------------------------------\n...<truncated>...",
+        "path": "rtl/ddr4_bank_bank_sequencer.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_precharge_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_precharge_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRP_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [4:0] tRP_counter;  // 5 bit(s), holds up to 31\n    localparam int TRP_COUNTER_WIDTH = $bits(tRP_counter);\n    localparam logic [TRP_COUNTER_WIDTH-1:0] TRP_COUNTER_ZERO_L = TRP_COUNTER_WIDTH'(0);\n    localparam logic [TRP_COUNTER_WIDTH-1:0] TRP_COUNTER_ONE_L = TRP_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRP_counter <= TRP_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRP_counter <= TRP_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRP_counter <= tRP_counter + TRP_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = COUNTING;\n      \n...<truncated>...",
+        "path": "rtl/ddr4_bank_precharge_fsm.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_tRAS_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_tRAS_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRAS_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [5:0] tRAS_counter;  // 6 bit(s), holds up to 63\n    localparam int TRAS_COUNTER_WIDTH = $bits(tRAS_counter);\n    localparam logic [TRAS_COUNTER_WIDTH-1:0] TRAS_COUNTER_ZERO_L = TRAS_COUNTER_WIDTH'(0);\n    localparam logic [TRAS_COUNTER_WIDTH-1:0] TRAS_COUNTER_ONE_L = TRAS_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRAS_counter <= TRAS_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRAS_counter <= TRAS_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRAS_counter <= tRAS_counter + TRAS_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = COUNTING;\n...<truncated>...",
+        "path": "rtl/ddr4_bank_tRAS_fsm.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by generate_wrapper.py -- DO NOT EDIT\n// Design : ddr4_bank_top\n// Purpose: Package the per-bank FSM chain behind one reusable module\n// ============================================================\n\nmodule ddr4_bank_top (\n    input  logic       clk,\n    input  logic       rst_n,\n    input  logic       cmd_valid,\n    input  logic [1:0] cmd_type,\n    output logic       bank_idle,\n    output logic       bank_active,\n    output logic       cmd_ready,\n    output logic       activating\n);\n\n    logic tRCD_start;\n    logic tRAS_start;\n    logic tRP_start;\n    logic tRCD_done;\n    logic tRAS_done;\n    logic tRP_done;\n    logic tRCD_ack;\n    logic tRAS_ack;\n    logic tRP_ack;\n\n    assign activating = tRCD_start;\n\n    ddr4_bank_bank_sequencer u_bank_sequencer (\n        .clk(clk),\n        .rst_n(rst_n),\n        .cmd_valid(cmd_valid),\n        .cmd_type(cmd_type),\n        .tRCD_done(tRCD_done),\n        .tRAS_done(tRAS_done),\n        .tRP_done(tRP_done),\n        .bank_idle(bank_idle),\n        .bank_active(bank_active),\n        .cmd_ready(cmd_ready),\n        .tRCD_start(tRCD_start),\n        .tRAS_start(tRAS_start),\n        .tRP_start(tRP_start),\n        .tRCD_ack(tRCD_ack),\n        .tRAS_ack(tRAS_ack),\n        .tRP_ack(tRP_ack)\n    );\n\n    ddr4_bank_activate_fsm u_activate_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRCD_start),\n        .ack(tRCD_ack),\n        .tRCD_done(tRCD_done)\n    );\n\n    ddr4_bank_tRAS_fsm u_tRAS_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRAS_start),\n        .ack(tRAS_ack),\n        .tRAS_done(tRAS_done)\n    );\n\n    ddr4_bank_precharge_fsm u_precharge_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRP_start),\n        .ack(tRP_ack),\n        .tRP_done(tRP_done)\n    );\n\nendmodule  // ddr4_bank_top\n",
+        "path": "rtl/ddr4_bank_top.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by generate_wrapper.py -- DO NOT EDIT\n// Design : ddr4_controller_top\n// Scheduler policy : simple\n// Page policy      : open_page\n// Bank count       : 4\n// ============================================================\n\nmodule ddr4_controller_top (\n    input  logic clk,\n    input  logic rst_n,\n    input  logic txn_valid,\n    input  logic txn_is_write,\n    input  logic [3:0] txn_addr,\n    input  logic [31:0] txn_wdata,\n    input  logic [1:0] txn_bank,\n    output logic cmd_ready,\n    output logic rsp_valid,\n    output logic [31:0] rsp_rdata\n);\n\n    localparam int BANK_COUNT = 4;\n    localparam int ADDR_WIDTH = 4;\n    localparam int DATA_WIDTH = 32;\n    localparam int BANK_SEL_WIDTH = 2;\n    localparam int MEM_DEPTH = 1 << ADDR_WIDTH;\n    localparam int ROW_WIDTH = 2;\n    localparam int COL_WIDTH = 2;\n    localparam int HIT_SERVICE_CYCLES = 1;\n    localparam int SLOW_SERVICE_CYCLES = 3;\n    localparam int SERVICE_COUNTER_WIDTH = 2;\n    localparam int REQ_QUEUE_DEPTH = 4;\n    localparam int REQ_SEL_WIDTH = $clog2(REQ_QUEUE_DEPTH);\n    localparam int SCHED_BANK_COUNT = 4;\n    localparam bit KEEP_ROWS_OPEN = 1'b1;\n    localparam logic [2:0] TFAW_ACT_LIMIT_MINUS_ONE = 3'd3;\n\n    logic issue_ref;\n    logic issue_txn;\n    logic issue_valid;\n    logic act_allowed;\n    logic slow_path_allowed;\n    logic act_pulse;\n    logic accept_txn_fire;\n    logic accept_txn;\n    logic accepted_hit;\n    logic accepted_slow;\n    logic accepted_read;\n    logic accepted_write;\n    logic accept_txn_q;\n    logic accepted_row_closed_q;\n    logic accepted_row_hit_q;\n    logic accepted_row_miss_q;\n    logic [BANK_SEL_WIDTH-1:0] accepted_bank_q;\n    logic [1:0] accepted_txn_cmd_type_q;\n    logic [3:0] accepted_bank_cmd_valid_q;\n    logic accepted_open_row_valid_q;\n    logic [ROW_WIDTH-1:0] accepted_prev_open_row_q;\n    logic [ROW_WIDTH-1:0] accepted_requested_row_q;\n    logic [COL_WIDTH-1:0] accepted_requested_col_q;\n    logic txn_sched_grant;\n    logic controller_ready;\n    logic downstream_cmd_ready;\n    logic scheduler_timing_ok;\n    logic service_done;\n    logic service_pending_q;\n    logic service_is_write_q;\n    logic service_update_open_row_q;\n    logic service_prev_row_valid_q;\n    logic [1:0] txn_cmd_type;\n    logic [BANK_SEL_WIDTH-1:0] service_bank_q;\n    logic [ADDR_WIDTH-1:0] service_addr_q;\n    logic [DATA_WIDTH-1:0] service_wdata_q;\n    logic [ROW_WIDTH-1:0] requested_row;\n   \n...<truncated>...",
+        "path": "rtl/ddr4_controller_top.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_refresh_refresh_controller\n// States : IDLE, REQUEST\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_refresh_refresh_controller (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        ref_ack,\n    output logic        ref_req\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [0:0] {\n        IDLE                 = 1'd0,\n        REQUEST              = 1'd1\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [13:0] counter;  // 14 bit(s), holds up to 16383\n    localparam int COUNTER_WIDTH = $bits(counter);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ZERO_L = COUNTER_WIDTH'(0);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ONE_L = COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            counter <= COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                counter <= COUNTER_ZERO_L;\n            end else begin\n                if (current_state == IDLE) begin\n                    counter <= counter + COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (counter >= 14'd12480) next_state = REQUEST;\n            REQUEST: if (ref_ack == 1'd1) next_state = IDLE;\n            default: next_state = IDLE;  // illegal encodi\n...<truncated>...",
+        "path": "rtl/ddr4_refresh_refresh_controller.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// GENERATED VIA DUAL-LLM FLOW\nmodule ddr4_request_queue #(\n    parameter int DEPTH = 4,\n    parameter int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH)\n) (\n    input  logic              clk,\n    input  logic              rst_n,\n    input  logic              deq_en,\n    input  logic              enq_valid,\n    input  logic [51-1:0]     enq_req,\n    input  logic [SEL_WIDTH-1:0] sel_idx,\n    output logic              enq_ready,\n    output logic [DEPTH*51-1:0] req_array,\n    output logic [DEPTH-1:0]    req_valid\n);\n\n    typedef struct packed {\n        logic [1:0]   bank;\n        logic [9:0]   row;\n        logic [5:0]   col;\n        logic         is_write;\n        logic [31:0]  wdata;\n    } request_t;\n\n    localparam int REQUEST_WIDTH = 51;\n\n    // Internal storage\n    request_t req_mem[DEPTH];\n    logic     req_valid_reg[DEPTH];\n\n    // Internal signals\n    logic [SEL_WIDTH-1:0] insert_idx;\n    logic                 queue_full;\n    logic                 slot_free[DEPTH];\n    logic                 reuse_slot;\n\n    // Output assignment: packed req_array\n    always_comb begin\n        for (int j = 0; j < DEPTH; j++) begin\n            req_array[j*REQUEST_WIDTH +: REQUEST_WIDTH] = REQUEST_WIDTH'(req_mem[j]);\n        end\n    end\n\n    // Output assignment: req_valid\n    always_comb begin\n        for (int k = 0; k < DEPTH; k++) begin\n            req_valid[k] = req_valid_reg[k];\n        end\n    end\n\n    // Find the insert index (lowest free slot, or sel_idx if full & deq)\n    always_comb begin\n        queue_full = 1'b1;\n        insert_idx = '0;\n        for (int m = 0; m < DEPTH; m++) begin\n            slot_free[m] = ~req_valid_reg[m];\n            if (slot_free[m] && queue_full) begin\n                insert_idx = SEL_WIDTH'(m);\n                queue_full = 1'b0;\n            end\n        end\n        if (queue_full && deq_en) begin\n            insert_idx = sel_idx;\n        end\n    end\n\n    // reuse_slot detection\n    always_comb begin\n        reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx);\n    end\n\n    // enq_ready generation\n    always_comb begin\n        logic any_free;\n        any_free = 1'b0;\n        for (int n = 0; n < DEPTH; n++) begin\n            any_free |= ~req_valid_reg[n];\n        end\n        enq_ready = any_free || (queue_full && deq_en);\n    end\n\n    // Queue update logic\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            for (int p = 0; p < DEPTH; p++) begin\n                req_mem[p]      <= '0;\n           \n...<truncated>...",
+        "path": "rtl/ddr4_request_queue.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\n// GENERATED VIA DUAL-LLM FLOW\nmodule ddr4_scheduler_scheduler (\n    input  logic         clk,\n    input  logic         rst_n,\n    input  logic [3:0]   bank_active,\n    input  logic [39:0]  bank_open_row,\n    input  logic         cmd_ready,\n    output logic         issue_ref,\n    output logic         issue_txn,\n    output logic         issue_valid,\n    input  logic         ref_req,\n    input  logic [203:0] req_array,\n    input  logic [3:0]   req_valid,\n    output logic [1:0]   sel_idx,\n    input  logic         timing_ok\n);\n\n    localparam int DEPTH = 4;\n    localparam int REQUEST_WIDTH = 51;\n    localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);\n\n    typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;\n\n    request_t req_array_unpacked [0:DEPTH-1];\n    logic [DEPTH-1:0] row_hit;\n    logic [SEL_WIDTH-1:0] candidate_idx;\n    logic candidate_valid;\n    logic candidate_success;\n    logic candidate_blocked;\n    logic locked_valid;\n    logic [SEL_WIDTH-1:0] locked_idx;\n    logic successful_issue;\n\n    always_comb begin\n        for (int i = 0; i < DEPTH; i++) begin\n            req_array_unpacked[i] = req_array[(i*REQUEST_WIDTH) +: REQUEST_WIDTH];\n        end\n    end\n\n    always_comb begin\n        for (int j = 0; j < DEPTH; j++) begin\n            row_hit[j] = req_valid[j] &&\n                         bank_active[req_array_unpacked[j].bank] &&\n                         (bank_open_row[(req_array_unpacked[j].bank * 10) +: 10] == req_array_unpacked[j].row);\n        end\n    end\n\n    always_comb begin\n        candidate_valid = 1'b0;\n        candidate_idx = SEL_WIDTH'(0);\n\n        for (int k = 0; k < DEPTH; k++) begin\n            if (!candidate_valid && row_hit[k]) begin\n                candidate_valid = 1'b1;\n                candidate_idx = SEL_WIDTH'(k);\n            end\n        end\n\n        if (!candidate_valid) begin\n            for (int m = 0; m < DEPTH; m++) begin\n                if (!candidate_valid && req_valid[m]) begin\n                    candidate_valid = 1'b1;\n                    candidate_idx = SEL_WIDTH'(m);\n                end\n            end\n        end\n    end\n\n    always_comb begin\n        if (locked_valid) begin\n            issue_valid = req_valid[locked_idx];\n            sel_idx = locked_idx;\n        end else begin\n            issue_valid = candidate_valid;\n            sel_idx = candidate_idx;\n        \n...<truncated>...",
+        "path": "rtl/ddr4_scheduler_scheduler.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\nmodule ddr4_tFAW_tFAW_tracker(\n  input logic clk,\n  input logic rst_n,\n  input logic act_pulse,\n  output logic [2:0] act_count,\n  output logic tFAW_block,\n  output logic tFAW_ok\n);\n\n  parameter int TFAW_CYCLES = 40;\n  parameter int TFAW_LIMIT = 4;\n\n  typedef logic [TFAW_CYCLES-1:0] shift_reg_t;\n  localparam int NEXT_COUNT_WIDTH = $clog2(TFAW_CYCLES + 1);\n  logic [NEXT_COUNT_WIDTH-1:0] next_count;\n  shift_reg_t act_window;\n  shift_reg_t next_window;\n\n  localparam int ACT_COUNT_WIDTH = $bits(act_count);\n  localparam logic [NEXT_COUNT_WIDTH-1:0] TFAW_LIMIT_L = NEXT_COUNT_WIDTH'(TFAW_LIMIT);\n  localparam logic [ACT_COUNT_WIDTH-1:0] TFAW_LIMIT_ACT_COUNT_L = ACT_COUNT_WIDTH'(TFAW_LIMIT);\n  localparam logic [ACT_COUNT_WIDTH-1:0] ACT_COUNT_ZERO_L = ACT_COUNT_WIDTH'(0);\n\n  // Combinational logic to calculate next_window and next_count\n  always_comb begin\n    next_window = {act_window[TFAW_CYCLES-2:0], act_pulse};\n    next_count = NEXT_COUNT_WIDTH'($countones(next_window));\n    tFAW_block = (next_count >= TFAW_LIMIT_L);\n    tFAW_ok = !tFAW_block;\n  end\n\n  // Sequential logic for act_window and act_count\n  always_ff @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      act_window <= '0;\n      act_count <= ACT_COUNT_ZERO_L;\n    end else begin\n      act_window <= next_window;\n      act_count <= (next_count > TFAW_LIMIT_L)\n          ? TFAW_LIMIT_ACT_COUNT_L\n          : next_count[ACT_COUNT_WIDTH-1:0];\n    end\n  end\n\nendmodule\n",
+        "path": "rtl/ddr4_tFAW_tFAW_tracker.sv"
+      },
+      {
+        "content": "`timescale 1ns/1ps\nmodule ddr4_tRRD_simple_tRRD (\n    input logic clk,\n    input logic rst_n,\n    input logic act_pulse,\n    output logic tRRD_block\n);\n\n    parameter int TRRD_CYCLES = 6;\n    localparam int COUNTER_WIDTH = $clog2(TRRD_CYCLES + 1);\n\n    logic [COUNTER_WIDTH-1:0] counter;\n\n    localparam logic [COUNTER_WIDTH-1:0] TRRD_CYCLES_L = COUNTER_WIDTH'(TRRD_CYCLES);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ZERO_L = COUNTER_WIDTH'(0);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ONE_L = COUNTER_WIDTH'(1);\n\n    always_ff @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            counter <= COUNTER_ZERO_L;\n        end else if (act_pulse) begin\n            counter <= TRRD_CYCLES_L - COUNTER_ONE_L;\n        end else if (counter > COUNTER_ZERO_L) begin\n            counter <= counter - COUNTER_ONE_L;\n        end else begin\n            counter <= COUNTER_ZERO_L;\n        end\n    end\n\n    always_comb begin\n        tRRD_block = (counter > COUNTER_ZERO_L);\n    end\n\nendmodule\n",
+        "path": "rtl/ddr4_tRRD_simple_tRRD.sv"
+      }
+    ],
+    "synthesis_top_checks": {
+      "adaptation_deterministic": false,
+      "adaptation_hints": {
+        "interface_port_mappings": {
+          "MemoryController": {
+            "DDR4Bus": "DDR4Interface.Controller",
+            "MCRx": "C2MInterface.Mem_tran",
+            "MCTx": "C2MInterface.Mem_data"
+          }
+        },
+        "interface_type_default_modports": {},
+        "interface_type_port_mappings": {},
+        "mapping_hint_schema": {
+          "interface_port_mappings": {
+            "*": {
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            },
+            "<TopModule>": {
+              "*": "<Interface>.<Modport> or <Modport>",
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            }
+          },
+          "interface_type_default_modports": {
+            "<InterfaceType>": "<Interface>.<Modport> or <Modport>"
+          },
+          "interface_type_port_mappings": {
+            "<InterfaceType>": {
+              "*": "<Interface>.<Modport> or <Modport>",
+              "<TopModule>.<port_name>": "<Interface>.<Modport> or <Modport>",
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            }
+          }
+        },
+        "preferred_recipe_by_top": {
+          "MemoryController": "memory_controller_impl_bundle"
+        },
+        "project_recipe_requirements": {
+          "memory_controller_impl_bundle": {
+            "required_files": [
+              "rtl/MemoryController.sv",
+              "rtl/Controller_FSM.sv",
+              "rtl/Receive_command.sv",
+              "rtl/Read_data_comm.sv",
+              "rtl/ReadWrite.sv",
+              "rtl/DDR4Interface.sv",
+              "rtl/C2MInterface.sv"
+            ],
+            "top_modules": [
+              "MemoryController"
+            ]
+          }
+        }
+      },
+      "adaptation_inferable": false,
+      "adaptation_plan": {},
+      "adaptation_reason": "Selected top does not expose raw generic interface ports requiring adaptation.",
+      "ambiguity_reason": "",
+      "ambiguous_interface_ports": [],
+      "applicable_recipe_ids": [],
+      "auto_apply_top_override": false,
+      "chosen_recipe_id": "",
+      "detected_patterns": [],
+      "generated_files": [],
+      "generated_top_file": "",
+      "generated_top_module": "",
+      "generic_interface_port_examples": [],
+      "generic_interface_ports": [],
+      "inferred_modport_map": {},
+      "intended_top_module": "ddr4_controller_top",
+      "mapping_evidence": {},
+      "missing_interface_ports": [],
+      "original_files_preserved": true,
+      "preferred_recipe_top_module": "",
+      "recommended_top_override": "",
+      "selected_top_file": "rtl/ddr4_controller_top.sv",
+      "selected_top_has_any_interface_ports": false,
+      "selected_top_has_generic_interface_ports": false,
+      "selected_top_has_typed_interface_modports": false,
+      "selected_top_likely_testbench_or_harness": false,
+      "selected_top_module": "ddr4_controller_top",
+      "selected_top_path": "rtl/ddr4_controller_top.sv",
+      "selected_top_testbench_marker_examples": [],
+      "selection_source": "top_module.txt",
+      "top_selection_candidates": [
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_controller_top",
+          "path": "rtl/ddr4_controller_top.sv",
+          "reasons": [
+            "not instantiated by another prepared module",
+            "name looks like a synthesis/integration wrapper",
+            "source path looks wrapper/top-oriented"
+          ],
+          "score": 70,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_top",
+          "path": "rtl/ddr4_bank_top.sv",
+          "reasons": [
+            "name looks like a synthesis/integration wrapper",
+            "source path looks wrapper/top-oriented"
+          ],
+          "score": 30,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_activate_fsm",
+          "path": "rtl/ddr4_bank_activate_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_bank_sequencer",
+          "path": "rtl/ddr4_bank_bank_sequencer.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_precharge_fsm",
+          "path": "rtl/ddr4_bank_precharge_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_tRAS_fsm",
+          "path": "rtl/ddr4_bank_tRAS_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_refresh_refresh_controller",
+          "path": "rtl/ddr4_refresh_refresh_controller.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_request_queue",
+          "path": "rtl/ddr4_request_queue.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_scheduler_scheduler",
+          "path": "rtl/ddr4_scheduler_scheduler.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_tFAW_tFAW_tracker",
+          "path": "rtl/ddr4_tFAW_tFAW_tracker.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_tRRD_simple_tRRD",
+          "path": "rtl/ddr4_tRRD_simple_tRRD.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        }
+      ],
+      "typed_interface_port_examples": []
+    }
+  },
+  "routing": {
+    "failure_class": "gdsii_input_contract_problem",
+    "failure_stage_owner": "mapped_netlist",
+    "route_back_to_stage": null,
+    "rtl_failure_category": "timing_violation",
+    "rtl_failure_handoff_owner": "backend"
+  },
+  "top_selection_and_adaptation": {
+    "adaptation_applied": false,
+    "adaptation_deterministic": false,
+    "adaptation_reason": "Selected top does not expose raw generic interface ports requiring adaptation.",
+    "ambiguity_reason": null,
+    "applicable_recipe_ids": [],
+    "chosen_recipe_id": null,
+    "detected_patterns": [],
+    "generated_files": [],
+    "generated_top_file": null,
+    "generated_top_module": null,
+    "generic_interface_ports": [],
+    "inferred_modport_map": {},
+    "original_files_preserved": true,
+    "selected_top_file": "rtl/ddr4_controller_top.sv",
+    "selected_top_module": "ddr4_controller_top",
+    "synthesis_top_checks": {
+      "adaptation_deterministic": false,
+      "adaptation_hints": {
+        "interface_port_mappings": {
+          "MemoryController": {
+            "DDR4Bus": "DDR4Interface.Controller",
+            "MCRx": "C2MInterface.Mem_tran",
+            "MCTx": "C2MInterface.Mem_data"
+          }
+        },
+        "interface_type_default_modports": {},
+        "interface_type_port_mappings": {},
+        "mapping_hint_schema": {
+          "interface_port_mappings": {
+            "*": {
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            },
+            "<TopModule>": {
+              "*": "<Interface>.<Modport> or <Modport>",
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            }
+          },
+          "interface_type_default_modports": {
+            "<InterfaceType>": "<Interface>.<Modport> or <Modport>"
+          },
+          "interface_type_port_mappings": {
+            "<InterfaceType>": {
+              "*": "<Interface>.<Modport> or <Modport>",
+              "<TopModule>.<port_name>": "<Interface>.<Modport> or <Modport>",
+              "<port_name>": "<Interface>.<Modport> or <Modport>"
+            }
+          }
+        },
+        "preferred_recipe_by_top": {
+          "MemoryController": "memory_controller_impl_bundle"
+        },
+        "project_recipe_requirements": {
+          "memory_controller_impl_bundle": {
+            "required_files": [
+              "rtl/MemoryController.sv",
+              "rtl/Controller_FSM.sv",
+              "rtl/Receive_command.sv",
+              "rtl/Read_data_comm.sv",
+              "rtl/ReadWrite.sv",
+              "rtl/DDR4Interface.sv",
+              "rtl/C2MInterface.sv"
+            ],
+            "top_modules": [
+              "MemoryController"
+            ]
+          }
+        }
+      },
+      "adaptation_inferable": false,
+      "adaptation_plan": {},
+      "adaptation_reason": "Selected top does not expose raw generic interface ports requiring adaptation.",
+      "ambiguity_reason": "",
+      "ambiguous_interface_ports": [],
+      "applicable_recipe_ids": [],
+      "auto_apply_top_override": false,
+      "chosen_recipe_id": "",
+      "detected_patterns": [],
+      "generated_files": [],
+      "generated_top_file": "",
+      "generated_top_module": "",
+      "generic_interface_port_examples": [],
+      "generic_interface_ports": [],
+      "inferred_modport_map": {},
+      "intended_top_module": "ddr4_controller_top",
+      "mapping_evidence": {},
+      "missing_interface_ports": [],
+      "original_files_preserved": true,
+      "preferred_recipe_top_module": "",
+      "recommended_top_override": "",
+      "selected_top_file": "rtl/ddr4_controller_top.sv",
+      "selected_top_has_any_interface_ports": false,
+      "selected_top_has_generic_interface_ports": false,
+      "selected_top_has_typed_interface_modports": false,
+      "selected_top_likely_testbench_or_harness": false,
+      "selected_top_module": "ddr4_controller_top",
+      "selected_top_path": "rtl/ddr4_controller_top.sv",
+      "selected_top_testbench_marker_examples": [],
+      "selection_source": "top_module.txt",
+      "top_selection_candidates": [
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_controller_top",
+          "path": "rtl/ddr4_controller_top.sv",
+          "reasons": [
+            "not instantiated by another prepared module",
+            "name looks like a synthesis/integration wrapper",
+            "source path looks wrapper/top-oriented"
+          ],
+          "score": 70,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_top",
+          "path": "rtl/ddr4_bank_top.sv",
+          "reasons": [
+            "name looks like a synthesis/integration wrapper",
+            "source path looks wrapper/top-oriented"
+          ],
+          "score": 30,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_activate_fsm",
+          "path": "rtl/ddr4_bank_activate_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_bank_sequencer",
+          "path": "rtl/ddr4_bank_bank_sequencer.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_precharge_fsm",
+          "path": "rtl/ddr4_bank_precharge_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_bank_tRAS_fsm",
+          "path": "rtl/ddr4_bank_tRAS_fsm.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_refresh_refresh_controller",
+          "path": "rtl/ddr4_refresh_refresh_controller.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_request_queue",
+          "path": "rtl/ddr4_request_queue.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_scheduler_scheduler",
+          "path": "rtl/ddr4_scheduler_scheduler.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_tFAW_tFAW_tracker",
+          "path": "rtl/ddr4_tFAW_tFAW_tracker.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        },
+        {
+          "generic_interface_ports": [],
+          "has_generic_interface_ports": false,
+          "has_no_ports": false,
+          "likely_testbench_or_harness": false,
+          "module": "ddr4_tRRD_simple_tRRD",
+          "path": "rtl/ddr4_tRRD_simple_tRRD.sv",
+          "reasons": [],
+          "score": 0,
+          "testbench_marker_examples": []
+        }
+      ],
+      "typed_interface_port_examples": []
+    },
+    "top_selection_candidates": [
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_controller_top",
+        "path": "rtl/ddr4_controller_top.sv",
+        "reasons": [
+          "not instantiated by another prepared module",
+          "name looks like a synthesis/integration wrapper",
+          "source path looks wrapper/top-oriented"
+        ],
+        "score": 70,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_bank_top",
+        "path": "rtl/ddr4_bank_top.sv",
+        "reasons": [
+          "name looks like a synthesis/integration wrapper",
+          "source path looks wrapper/top-oriented"
+        ],
+        "score": 30,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_bank_activate_fsm",
+        "path": "rtl/ddr4_bank_activate_fsm.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_bank_bank_sequencer",
+        "path": "rtl/ddr4_bank_bank_sequencer.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_bank_precharge_fsm",
+        "path": "rtl/ddr4_bank_precharge_fsm.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_bank_tRAS_fsm",
+        "path": "rtl/ddr4_bank_tRAS_fsm.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_refresh_refresh_controller",
+        "path": "rtl/ddr4_refresh_refresh_controller.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_request_queue",
+        "path": "rtl/ddr4_request_queue.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_scheduler_scheduler",
+        "path": "rtl/ddr4_scheduler_scheduler.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_tFAW_tFAW_tracker",
+        "path": "rtl/ddr4_tFAW_tFAW_tracker.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      },
+      {
+        "generic_interface_ports": [],
+        "has_generic_interface_ports": false,
+        "has_no_ports": false,
+        "likely_testbench_or_harness": false,
+        "module": "ddr4_tRRD_simple_tRRD",
+        "path": "rtl/ddr4_tRRD_simple_tRRD.sv",
+        "reasons": [],
+        "score": 0,
+        "testbench_marker_examples": []
+      }
+    ],
+    "top_selection_reason": "top_module.txt"
+  },
+  "validation_entries": {
+    "rtl_prep_review": {
+      "ai_review": {
+        "api_error": null,
+        "available": true,
+        "enabled": true,
+        "errors": [],
+        "false_positive_dependencies": [],
+        "model": "protected.gpt-5.2",
+        "pass": true,
+        "request_metadata": {
+          "api_style": "chat_completions_fallback",
+          "base_url": "https://chat-api.tamu.ai/openai",
+          "candidate_path": "build_prep_mc",
+          "inventory_file_count": 16,
+          "local_error_count": 0,
+          "local_warning_count": 0,
+          "model": "protected.gpt-5.2",
+          "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}",
+          "rtl_sample_count": 11
+        },
+        "suggested_fixes": [
+          "(Optional hardening) In run_genus_mc.tcl, set init_lib_search_path to include all unique directories from GENUS_LIBS rather than only [file dirname [lindex $lib_list 0]].",
+          "(Optional clarity) Add a short note in README_prepared.txt stating that mc_genus.sdc is intentionally minimal and that IO delays are set to 0.0 by default, so users should update for their environment."
+        ],
+        "summary": "Prep bundle looks complete and internally consistent for Genus bring-up: artifacts present (filelist/Tcl/SDC/top_module), selected top ddr4_controller_top is not a harness and does not expose interface ports, and dependency/module closure matches the filelist (no missing modules or duplicates). No prep-stage blockers found.",
+        "warnings": [
+          "Top/module consistency check: top_module.txt, README_prepared.txt, and run_genus_mc.tcl all agree on TOP=ddr4_controller_top (good). No evidence the selected top is a testbench/harness (has real ports; no initial/$finish markers reported).",
+          "SDC is a generic bring-up constraint (0 input/output delay, reset false-pathed). This is acceptable for bring-up, but may over-constrain/under-constrain depending on intended IO timing and any multi-clock/derived-clock behavior (not a prep blocker).",
+          "run_genus_mc.tcl requires GENUS_LIBS and assumes the libs are all co-located for init_lib_search_path (uses dirname of first lib). If GENUS_LIBS contains libs from multiple directories, users may need to adjust init_lib_search_path accordingly (not a prep blocker).",
+          "Several RTL files declare `timescale 1ns/1ps. This is simulation-oriented but generally harmless for Genus; keeping it is fine (not a prep blocker).",
+          "README_prepared.txt mentions stripping SVA and debug system tasks; the provided rtl_samples still show $countones usage and struct packing/casting. These are normal SV constructs; just note that successful parsing depends on Genus SV support/version (not a prep completeness issue)."
+        ]
+      },
+      "ambiguity_reason": null,
+      "applicable_recipe_ids": [],
+      "attempt": 1,
+      "candidate_path": "build_prep_mc",
+      "chosen_recipe_id": null,
+      "context": {
+        "artifact_status": {
+          "README_prepared.txt": true,
+          "constraints/mc_genus.sdc": true,
+          "filelist_genus.f": true,
+          "run_genus_mc.tcl": true,
+          "top_module.txt": true
+        },
+        "dependency_analysis": {
+          "duplicate_filelist_entries": [],
+          "fpga_only_artifacts": [],
+          "fpga_only_filelist_entries": [],
+          "instantiated_modules": [
+            "ddr4_bank_activate_fsm",
+            "ddr4_bank_bank_sequencer",
+            "ddr4_bank_precharge_fsm",
+            "ddr4_bank_tRAS_fsm",
+            "ddr4_bank_top",
+            "ddr4_refresh_refresh_controller",
+            "ddr4_request_queue",
+            "ddr4_scheduler_scheduler",
+            "ddr4_tFAW_tFAW_tracker",
+            "ddr4_tRRD_simple_tRRD"
+          ],
+          "interface_definitions_in_bundle": [],
+          "interface_definitions_in_filelist": [],
+          "interface_references": [],
+          "missing_from_bundle": [],
+          "missing_from_filelist": [],
+          "module_definitions_in_bundle": [
+            "ddr4_bank_activate_fsm",
+            "ddr4_bank_bank_sequencer",
+            "ddr4_bank_precharge_fsm",
+            "ddr4_bank_tRAS_fsm",
+            "ddr4_bank_top",
+            "ddr4_controller_top",
+            "ddr4_refresh_refresh_controller",
+            "ddr4_request_queue",
+            "ddr4_scheduler_scheduler",
+            "ddr4_tFAW_tFAW_tracker",
+            "ddr4_tRRD_simple_tRRD"
+          ],
+          "module_definitions_in_filelist": [
+            "ddr4_bank_activate_fsm",
+            "ddr4_bank_bank_sequencer",
+            "ddr4_bank_precharge_fsm",
+            "ddr4_bank_tRAS_fsm",
+            "ddr4_bank_top",
+            "ddr4_controller_top",
+            "ddr4_refresh_refresh_controller",
+            "ddr4_request_queue",
+            "ddr4_scheduler_scheduler",
+            "ddr4_tFAW_tFAW_tracker",
+            "ddr4_tRRD_simple_tRRD"
+          ],
+          "resolved_source_entries": [
+            {
+              "entry": "./rtl/ddr4_bank_activate_fsm.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_activate_fsm.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_bank_sequencer.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_precharge_fsm.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_bank_top.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_top.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_bank_tRAS_fsm.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_controller_top.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_controller_top.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_refresh_refresh_controller.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_request_queue.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_request_queue.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_scheduler_scheduler.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_scheduler_scheduler.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tFAW_tFAW_tracker.sv"
+            },
+            {
+              "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
+              "exists": true,
+              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_mc/rtl/ddr4_tRRD_simple_tRRD.sv"
+            }
+          ],
+          "truncated": false,
+          "type_alias_references": [],
+          "type_aliases_in_bundle": [
+            "bank",
+            "shift_reg_t",
+            "state_t"
+          ],
+          "type_aliases_in_filelist": [
+            "bank",
+            "shift_reg_t",
+            "state_t"
+          ]
+        },
+        "inventory": {
+          "files": [
+            "README_prepared.txt",
+            "constraints/mc_genus.sdc",
+            "filelist_genus.f",
+            "rtl/ddr4_bank_activate_fsm.sv",
+            "rtl/ddr4_bank_bank_sequencer.sv",
+            "rtl/ddr4_bank_precharge_fsm.sv",
+            "rtl/ddr4_bank_tRAS_fsm.sv",
+            "rtl/ddr4_bank_top.sv",
+            "rtl/ddr4_controller_top.sv",
+            "rtl/ddr4_refresh_refresh_controller.sv",
+            "rtl/ddr4_request_queue.sv",
+            "rtl/ddr4_scheduler_scheduler.sv",
+            "rtl/ddr4_tFAW_tFAW_tracker.sv",
+            "rtl/ddr4_tRRD_simple_tRRD.sv",
+            "run_genus_mc.tcl",
+            "top_module.txt"
+          ],
+          "total_files": 16,
+          "truncated": false
+        },
+        "iteration_context": {
+          "current_errors": [],
+          "latest_applied_actions": [
+            "replace_text run_genus_mc.tcl",
+            "append_text README_prepared.txt"
+          ],
+          "new_errors": [],
+          "persistent_errors": [],
+          "previous_errors": [
+            "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
+          ],
+          "prior_fix_history": [
+            "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
+            "Re-run/patch the local prep checker so it only raises the \"macros detected but not applied\" error when the detected-macro set is non-empty, and include the macro list in the error text for traceability.",
+            "Optionally harden run_genus_mc.tcl with an explicit, opt-in define mechanism before read_hdl, e.g.:\n  - if {[info exists ::env(GENUS_DEFINES)] && $::env(GENUS_DEFINES) ne \"\"} { set defs [split $::env(GENUS_DEFINES)] ; read_hdl -sv -define $defs -f $FILELIST } else { read_hdl -sv -f $FILELIST }\n  This preserves the prep rule of not guessing/enabling macros automatically.",
+            "Confirm top consistency (already consistent here): top_module.txt, README_prepared.txt, and run_genus_mc.tcl all point to ddr4_controller_top; keep as-is.",
+            "replace_text run_genus_mc.tcl",
+            "append_text README_prepared.txt"
+          ],
+          "resolved_errors": [
+            "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
+          ]
+        },
+        "key_files": {
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_mc --top ddr4_controller_top\n\nClarification:\n  - This bundle detected no required preprocessor macros (see list above).\n  - run_genus_mc.tcl supports optional, opt-in defines via environment variable:\n      GENUS_DEFINES=\"NAME NAME2=1\"  (space-separated)\n    These are only applied if explicitly set by the user.\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\nset TOP \"ddr4_controller_top\"\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\n# Optional, opt-in preprocessor defines (space-separated), e.g.:\n#   export GENUS_DEFINES=\"FOO BAR=1\"\n# Note: prep may report detected macros in README_prepared.txt; this script does not\n# auto-enable them to avoid silently changing behavior.\nset GENUS_DEFINES_LIST {}\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set GENUS_DEFINES_LIST [split [string trim $::env(GENUS_DEFINES)] \" \"]\n    puts \"GENUS_DEFINES = $GENUS_DEFINES_LIST\"\n}\n\nif {[llength $GENUS_DEFINES_LIST] > 0} {\n    read_hdl -sv -define $GENUS_DEFINES_LIST -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+          "top_module.txt": "ddr4_controller_top\n"
+        },
+        "rtl_samples": [
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_activate_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_activate_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRCD_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [4:0] tRCD_counter;  // 5 bit(s), holds up to 31\n    localparam int TRCD_COUNTER_WIDTH = $bits(tRCD_counter);\n    localparam logic [TRCD_COUNTER_WIDTH-1:0] TRCD_COUNTER_ZERO_L = TRCD_COUNTER_WIDTH'(0);\n    localparam logic [TRCD_COUNTER_WIDTH-1:0] TRCD_COUNTER_ONE_L = TRCD_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRCD_counter <= TRCD_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRCD_counter <= TRCD_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRCD_counter <= tRCD_counter + TRCD_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = C\n...<truncated>...",
+            "path": "rtl/ddr4_bank_activate_fsm.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_bank_sequencer\n// States : IDLE, ACTIVATING, ACTIVE, PRECHARGING\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_bank_sequencer (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        cmd_valid,\n    input  logic [ 1:0] cmd_type,\n    input  logic        tRCD_done,\n    input  logic        tRAS_done,\n    input  logic        tRP_done,\n    output logic        bank_idle,\n    output logic        bank_active,\n    output logic        cmd_ready,\n    output logic        tRCD_start,\n    output logic        tRAS_start,\n    output logic        tRP_start,\n    output logic        tRCD_ack,\n    output logic        tRAS_ack,\n    output logic        tRP_ack\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        ACTIVATING           = 2'd1,\n        ACTIVE               = 2'd2,\n        PRECHARGING          = 2'd3\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n        end else begin\n            current_state <= next_state;\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (cmd_valid == 1'd1 && cmd_ready == 1'd1) next_state = ACTIVATING;\n            ACTIVATING: if (tRCD_done == 1'd1) next_state = ACTIVE;\n            ACTIVE: if (tRAS_done == 1'd1) next_state = PRECHARGING;\n            PRECHARGING: if (tRP_done == 1'd1) next_state = IDLE;\n            default: next_state = IDLE;  // illegal encoding -- recover to reset state\n        endcase\n    end\n\n    // ---------------------------------------------------------\n    // Output logic (Moore)\n    // ----------------------------------------------\n...<truncated>...",
+            "path": "rtl/ddr4_bank_bank_sequencer.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_precharge_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_precharge_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRP_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [4:0] tRP_counter;  // 5 bit(s), holds up to 31\n    localparam int TRP_COUNTER_WIDTH = $bits(tRP_counter);\n    localparam logic [TRP_COUNTER_WIDTH-1:0] TRP_COUNTER_ZERO_L = TRP_COUNTER_WIDTH'(0);\n    localparam logic [TRP_COUNTER_WIDTH-1:0] TRP_COUNTER_ONE_L = TRP_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRP_counter <= TRP_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRP_counter <= TRP_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRP_counter <= tRP_counter + TRP_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = COUNTING;\n      \n...<truncated>...",
+            "path": "rtl/ddr4_bank_precharge_fsm.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_bank_tRAS_fsm\n// States : IDLE, COUNTING, DONE\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_bank_tRAS_fsm (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        start,\n    input  logic        ack,\n    output logic        tRAS_done\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [1:0] {\n        IDLE                 = 2'd0,\n        COUNTING             = 2'd1,\n        DONE                 = 2'd2\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [5:0] tRAS_counter;  // 6 bit(s), holds up to 63\n    localparam int TRAS_COUNTER_WIDTH = $bits(tRAS_counter);\n    localparam logic [TRAS_COUNTER_WIDTH-1:0] TRAS_COUNTER_ZERO_L = TRAS_COUNTER_WIDTH'(0);\n    localparam logic [TRAS_COUNTER_WIDTH-1:0] TRAS_COUNTER_ONE_L = TRAS_COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            tRAS_counter <= TRAS_COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                tRAS_counter <= TRAS_COUNTER_ZERO_L;\n            end else begin\n                if (current_state == COUNTING) begin\n                    tRAS_counter <= tRAS_counter + TRAS_COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (start == 1'd1) next_state = COUNTING;\n...<truncated>...",
+            "path": "rtl/ddr4_bank_tRAS_fsm.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by generate_wrapper.py -- DO NOT EDIT\n// Design : ddr4_bank_top\n// Purpose: Package the per-bank FSM chain behind one reusable module\n// ============================================================\n\nmodule ddr4_bank_top (\n    input  logic       clk,\n    input  logic       rst_n,\n    input  logic       cmd_valid,\n    input  logic [1:0] cmd_type,\n    output logic       bank_idle,\n    output logic       bank_active,\n    output logic       cmd_ready,\n    output logic       activating\n);\n\n    logic tRCD_start;\n    logic tRAS_start;\n    logic tRP_start;\n    logic tRCD_done;\n    logic tRAS_done;\n    logic tRP_done;\n    logic tRCD_ack;\n    logic tRAS_ack;\n    logic tRP_ack;\n\n    assign activating = tRCD_start;\n\n    ddr4_bank_bank_sequencer u_bank_sequencer (\n        .clk(clk),\n        .rst_n(rst_n),\n        .cmd_valid(cmd_valid),\n        .cmd_type(cmd_type),\n        .tRCD_done(tRCD_done),\n        .tRAS_done(tRAS_done),\n        .tRP_done(tRP_done),\n        .bank_idle(bank_idle),\n        .bank_active(bank_active),\n        .cmd_ready(cmd_ready),\n        .tRCD_start(tRCD_start),\n        .tRAS_start(tRAS_start),\n        .tRP_start(tRP_start),\n        .tRCD_ack(tRCD_ack),\n        .tRAS_ack(tRAS_ack),\n        .tRP_ack(tRP_ack)\n    );\n\n    ddr4_bank_activate_fsm u_activate_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRCD_start),\n        .ack(tRCD_ack),\n        .tRCD_done(tRCD_done)\n    );\n\n    ddr4_bank_tRAS_fsm u_tRAS_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRAS_start),\n        .ack(tRAS_ack),\n        .tRAS_done(tRAS_done)\n    );\n\n    ddr4_bank_precharge_fsm u_precharge_fsm (\n        .clk(clk),\n        .rst_n(rst_n),\n        .start(tRP_start),\n        .ack(tRP_ack),\n        .tRP_done(tRP_done)\n    );\n\nendmodule  // ddr4_bank_top\n",
+            "path": "rtl/ddr4_bank_top.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by generate_wrapper.py -- DO NOT EDIT\n// Design : ddr4_controller_top\n// Scheduler policy : simple\n// Page policy      : open_page\n// Bank count       : 4\n// ============================================================\n\nmodule ddr4_controller_top (\n    input  logic clk,\n    input  logic rst_n,\n    input  logic txn_valid,\n    input  logic txn_is_write,\n    input  logic [3:0] txn_addr,\n    input  logic [31:0] txn_wdata,\n    input  logic [1:0] txn_bank,\n    output logic cmd_ready,\n    output logic rsp_valid,\n    output logic [31:0] rsp_rdata\n);\n\n    localparam int BANK_COUNT = 4;\n    localparam int ADDR_WIDTH = 4;\n    localparam int DATA_WIDTH = 32;\n    localparam int BANK_SEL_WIDTH = 2;\n    localparam int MEM_DEPTH = 1 << ADDR_WIDTH;\n    localparam int ROW_WIDTH = 2;\n    localparam int COL_WIDTH = 2;\n    localparam int HIT_SERVICE_CYCLES = 1;\n    localparam int SLOW_SERVICE_CYCLES = 3;\n    localparam int SERVICE_COUNTER_WIDTH = 2;\n    localparam int REQ_QUEUE_DEPTH = 4;\n    localparam int REQ_SEL_WIDTH = $clog2(REQ_QUEUE_DEPTH);\n    localparam int SCHED_BANK_COUNT = 4;\n    localparam bit KEEP_ROWS_OPEN = 1'b1;\n    localparam logic [2:0] TFAW_ACT_LIMIT_MINUS_ONE = 3'd3;\n\n    logic issue_ref;\n    logic issue_txn;\n    logic issue_valid;\n    logic act_allowed;\n    logic slow_path_allowed;\n    logic act_pulse;\n    logic accept_txn_fire;\n    logic accept_txn;\n    logic accepted_hit;\n    logic accepted_slow;\n    logic accepted_read;\n    logic accepted_write;\n    logic accept_txn_q;\n    logic accepted_row_closed_q;\n    logic accepted_row_hit_q;\n    logic accepted_row_miss_q;\n    logic [BANK_SEL_WIDTH-1:0] accepted_bank_q;\n    logic [1:0] accepted_txn_cmd_type_q;\n    logic [3:0] accepted_bank_cmd_valid_q;\n    logic accepted_open_row_valid_q;\n    logic [ROW_WIDTH-1:0] accepted_prev_open_row_q;\n    logic [ROW_WIDTH-1:0] accepted_requested_row_q;\n    logic [COL_WIDTH-1:0] accepted_requested_col_q;\n    logic txn_sched_grant;\n    logic controller_ready;\n    logic downstream_cmd_ready;\n    logic scheduler_timing_ok;\n    logic service_done;\n    logic service_pending_q;\n    logic service_is_write_q;\n    logic service_update_open_row_q;\n    logic service_prev_row_valid_q;\n    logic [1:0] txn_cmd_type;\n    logic [BANK_SEL_WIDTH-1:0] service_bank_q;\n    logic [ADDR_WIDTH-1:0] service_addr_q;\n    logic [DATA_WIDTH-1:0] service_wdata_q;\n    logic [ROW_WIDTH-1:0] requested_row;\n   \n...<truncated>...",
+            "path": "rtl/ddr4_controller_top.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// ============================================================\n// Auto-generated by fsm_generator.py -- DO NOT EDIT\n// Design : ddr4_refresh_refresh_controller\n// States : IDLE, REQUEST\n// Reset  : rst_n (sync)\n// Regenerate: python3 fsm_generator.py <spec>.yaml\n// ============================================================\n\nmodule ddr4_refresh_refresh_controller (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        ref_ack,\n    output logic        ref_req\n);\n\n    // ---------------------------------------------------------\n    // State type\n    // ---------------------------------------------------------\n    typedef enum logic [0:0] {\n        IDLE                 = 1'd0,\n        REQUEST              = 1'd1\n    } state_t;\n\n    state_t current_state, next_state;\n\n    // ---------------------------------------------------------\n    // Counters (auto-sized from transition conditions)\n    // ---------------------------------------------------------\n    logic [13:0] counter;  // 14 bit(s), holds up to 16383\n    localparam int COUNTER_WIDTH = $bits(counter);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ZERO_L = COUNTER_WIDTH'(0);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ONE_L = COUNTER_WIDTH'(1);\n\n    // ---------------------------------------------------------\n    // State register  (sync reset)\n    // ---------------------------------------------------------\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            current_state <= IDLE;\n            counter <= COUNTER_ZERO_L;\n        end else begin\n            current_state <= next_state;\n            // Reset counters on any state change;\n            // increment only in the state the counter belongs to.\n            if (current_state != next_state) begin\n                counter <= COUNTER_ZERO_L;\n            end else begin\n                if (current_state == IDLE) begin\n                    counter <= counter + COUNTER_ONE_L;\n                end\n            end\n        end\n    end\n\n    // ---------------------------------------------------------\n    // Next-state logic\n    // ---------------------------------------------------------\n    always_comb begin\n        next_state = current_state;  // default: hold current state\n        case (current_state)\n            IDLE: if (counter >= 14'd12480) next_state = REQUEST;\n            REQUEST: if (ref_ack == 1'd1) next_state = IDLE;\n            default: next_state = IDLE;  // illegal encodi\n...<truncated>...",
+            "path": "rtl/ddr4_refresh_refresh_controller.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// GENERATED VIA DUAL-LLM FLOW\nmodule ddr4_request_queue #(\n    parameter int DEPTH = 4,\n    parameter int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH)\n) (\n    input  logic              clk,\n    input  logic              rst_n,\n    input  logic              deq_en,\n    input  logic              enq_valid,\n    input  logic [51-1:0]     enq_req,\n    input  logic [SEL_WIDTH-1:0] sel_idx,\n    output logic              enq_ready,\n    output logic [DEPTH*51-1:0] req_array,\n    output logic [DEPTH-1:0]    req_valid\n);\n\n    typedef struct packed {\n        logic [1:0]   bank;\n        logic [9:0]   row;\n        logic [5:0]   col;\n        logic         is_write;\n        logic [31:0]  wdata;\n    } request_t;\n\n    localparam int REQUEST_WIDTH = 51;\n\n    // Internal storage\n    request_t req_mem[DEPTH];\n    logic     req_valid_reg[DEPTH];\n\n    // Internal signals\n    logic [SEL_WIDTH-1:0] insert_idx;\n    logic                 queue_full;\n    logic                 slot_free[DEPTH];\n    logic                 reuse_slot;\n\n    // Output assignment: packed req_array\n    always_comb begin\n        for (int j = 0; j < DEPTH; j++) begin\n            req_array[j*REQUEST_WIDTH +: REQUEST_WIDTH] = REQUEST_WIDTH'(req_mem[j]);\n        end\n    end\n\n    // Output assignment: req_valid\n    always_comb begin\n        for (int k = 0; k < DEPTH; k++) begin\n            req_valid[k] = req_valid_reg[k];\n        end\n    end\n\n    // Find the insert index (lowest free slot, or sel_idx if full & deq)\n    always_comb begin\n        queue_full = 1'b1;\n        insert_idx = '0;\n        for (int m = 0; m < DEPTH; m++) begin\n            slot_free[m] = ~req_valid_reg[m];\n            if (slot_free[m] && queue_full) begin\n                insert_idx = SEL_WIDTH'(m);\n                queue_full = 1'b0;\n            end\n        end\n        if (queue_full && deq_en) begin\n            insert_idx = sel_idx;\n        end\n    end\n\n    // reuse_slot detection\n    always_comb begin\n        reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx);\n    end\n\n    // enq_ready generation\n    always_comb begin\n        logic any_free;\n        any_free = 1'b0;\n        for (int n = 0; n < DEPTH; n++) begin\n            any_free |= ~req_valid_reg[n];\n        end\n        enq_ready = any_free || (queue_full && deq_en);\n    end\n\n    // Queue update logic\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            for (int p = 0; p < DEPTH; p++) begin\n                req_mem[p]      <= '0;\n           \n...<truncated>...",
+            "path": "rtl/ddr4_request_queue.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\n// GENERATED VIA DUAL-LLM FLOW\nmodule ddr4_scheduler_scheduler (\n    input  logic         clk,\n    input  logic         rst_n,\n    input  logic [3:0]   bank_active,\n    input  logic [39:0]  bank_open_row,\n    input  logic         cmd_ready,\n    output logic         issue_ref,\n    output logic         issue_txn,\n    output logic         issue_valid,\n    input  logic         ref_req,\n    input  logic [203:0] req_array,\n    input  logic [3:0]   req_valid,\n    output logic [1:0]   sel_idx,\n    input  logic         timing_ok\n);\n\n    localparam int DEPTH = 4;\n    localparam int REQUEST_WIDTH = 51;\n    localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);\n\n    typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;\n\n    request_t req_array_unpacked [0:DEPTH-1];\n    logic [DEPTH-1:0] row_hit;\n    logic [SEL_WIDTH-1:0] candidate_idx;\n    logic candidate_valid;\n    logic candidate_success;\n    logic candidate_blocked;\n    logic locked_valid;\n    logic [SEL_WIDTH-1:0] locked_idx;\n    logic successful_issue;\n\n    always_comb begin\n        for (int i = 0; i < DEPTH; i++) begin\n            req_array_unpacked[i] = req_array[(i*REQUEST_WIDTH) +: REQUEST_WIDTH];\n        end\n    end\n\n    always_comb begin\n        for (int j = 0; j < DEPTH; j++) begin\n            row_hit[j] = req_valid[j] &&\n                         bank_active[req_array_unpacked[j].bank] &&\n                         (bank_open_row[(req_array_unpacked[j].bank * 10) +: 10] == req_array_unpacked[j].row);\n        end\n    end\n\n    always_comb begin\n        candidate_valid = 1'b0;\n        candidate_idx = SEL_WIDTH'(0);\n\n        for (int k = 0; k < DEPTH; k++) begin\n            if (!candidate_valid && row_hit[k]) begin\n                candidate_valid = 1'b1;\n                candidate_idx = SEL_WIDTH'(k);\n            end\n        end\n\n        if (!candidate_valid) begin\n            for (int m = 0; m < DEPTH; m++) begin\n                if (!candidate_valid && req_valid[m]) begin\n                    candidate_valid = 1'b1;\n                    candidate_idx = SEL_WIDTH'(m);\n                end\n            end\n        end\n    end\n\n    always_comb begin\n        if (locked_valid) begin\n            issue_valid = req_valid[locked_idx];\n            sel_idx = locked_idx;\n        end else begin\n            issue_valid = candidate_valid;\n            sel_idx = candidate_idx;\n        \n...<truncated>...",
+            "path": "rtl/ddr4_scheduler_scheduler.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\nmodule ddr4_tFAW_tFAW_tracker(\n  input logic clk,\n  input logic rst_n,\n  input logic act_pulse,\n  output logic [2:0] act_count,\n  output logic tFAW_block,\n  output logic tFAW_ok\n);\n\n  parameter int TFAW_CYCLES = 40;\n  parameter int TFAW_LIMIT = 4;\n\n  typedef logic [TFAW_CYCLES-1:0] shift_reg_t;\n  localparam int NEXT_COUNT_WIDTH = $clog2(TFAW_CYCLES + 1);\n  logic [NEXT_COUNT_WIDTH-1:0] next_count;\n  shift_reg_t act_window;\n  shift_reg_t next_window;\n\n  localparam int ACT_COUNT_WIDTH = $bits(act_count);\n  localparam logic [NEXT_COUNT_WIDTH-1:0] TFAW_LIMIT_L = NEXT_COUNT_WIDTH'(TFAW_LIMIT);\n  localparam logic [ACT_COUNT_WIDTH-1:0] TFAW_LIMIT_ACT_COUNT_L = ACT_COUNT_WIDTH'(TFAW_LIMIT);\n  localparam logic [ACT_COUNT_WIDTH-1:0] ACT_COUNT_ZERO_L = ACT_COUNT_WIDTH'(0);\n\n  // Combinational logic to calculate next_window and next_count\n  always_comb begin\n    next_window = {act_window[TFAW_CYCLES-2:0], act_pulse};\n    next_count = NEXT_COUNT_WIDTH'($countones(next_window));\n    tFAW_block = (next_count >= TFAW_LIMIT_L);\n    tFAW_ok = !tFAW_block;\n  end\n\n  // Sequential logic for act_window and act_count\n  always_ff @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      act_window <= '0;\n      act_count <= ACT_COUNT_ZERO_L;\n    end else begin\n      act_window <= next_window;\n      act_count <= (next_count > TFAW_LIMIT_L)\n          ? TFAW_LIMIT_ACT_COUNT_L\n          : next_count[ACT_COUNT_WIDTH-1:0];\n    end\n  end\n\nendmodule\n",
+            "path": "rtl/ddr4_tFAW_tFAW_tracker.sv"
+          },
+          {
+            "content": "`timescale 1ns/1ps\nmodule ddr4_tRRD_simple_tRRD (\n    input logic clk,\n    input logic rst_n,\n    input logic act_pulse,\n    output logic tRRD_block\n);\n\n    parameter int TRRD_CYCLES = 6;\n    localparam int COUNTER_WIDTH = $clog2(TRRD_CYCLES + 1);\n\n    logic [COUNTER_WIDTH-1:0] counter;\n\n    localparam logic [COUNTER_WIDTH-1:0] TRRD_CYCLES_L = COUNTER_WIDTH'(TRRD_CYCLES);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ZERO_L = COUNTER_WIDTH'(0);\n    localparam logic [COUNTER_WIDTH-1:0] COUNTER_ONE_L = COUNTER_WIDTH'(1);\n\n    always_ff @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            counter <= COUNTER_ZERO_L;\n        end else if (act_pulse) begin\n            counter <= TRRD_CYCLES_L - COUNTER_ONE_L;\n        end else if (counter > COUNTER_ZERO_L) begin\n            counter <= counter - COUNTER_ONE_L;\n        end else begin\n            counter <= COUNTER_ZERO_L;\n        end\n    end\n\n    always_comb begin\n        tRRD_block = (counter > COUNTER_ZERO_L);\n    end\n\nendmodule\n",
+            "path": "rtl/ddr4_tRRD_simple_tRRD.sv"
+          }
+        ],
+        "synthesis_top_checks": {
+          "adaptation_deterministic": false,
+          "adaptation_hints": {
+            "interface_port_mappings": {
+              "MemoryController": {
+                "DDR4Bus": "DDR4Interface.Controller",
+                "MCRx": "C2MInterface.Mem_tran",
+                "MCTx": "C2MInterface.Mem_data"
+              }
+            },
+            "interface_type_default_modports": {},
+            "interface_type_port_mappings": {},
+            "mapping_hint_schema": {
+              "interface_port_mappings": {
+                "*": {
+                  "<port_name>": "<Interface>.<Modport> or <Modport>"
+                },
+                "<TopModule>": {
+                  "*": "<Interface>.<Modport> or <Modport>",
+                  "<port_name>": "<Interface>.<Modport> or <Modport>"
+                }
+              },
+              "interface_type_default_modports": {
+                "<InterfaceType>": "<Interface>.<Modport> or <Modport>"
+              },
+              "interface_type_port_mappings": {
+                "<InterfaceType>": {
+                  "*": "<Interface>.<Modport> or <Modport>",
+                  "<TopModule>.<port_name>": "<Interface>.<Modport> or <Modport>",
+                  "<port_name>": "<Interface>.<Modport> or <Modport>"
+                }
+              }
+            },
+            "preferred_recipe_by_top": {
+              "MemoryController": "memory_controller_impl_bundle"
+            },
+            "project_recipe_requirements": {
+              "memory_controller_impl_bundle": {
+                "required_files": [
+                  "rtl/MemoryController.sv",
+                  "rtl/Controller_FSM.sv",
+                  "rtl/Receive_command.sv",
+                  "rtl/Read_data_comm.sv",
+                  "rtl/ReadWrite.sv",
+                  "rtl/DDR4Interface.sv",
+                  "rtl/C2MInterface.sv"
+                ],
+                "top_modules": [
+                  "MemoryController"
+                ]
+              }
+            }
+          },
+          "adaptation_inferable": false,
+          "adaptation_plan": {},
+          "adaptation_reason": "Selected top does not expose raw generic interface ports requiring adaptation.",
+          "ambiguity_reason": "",
+          "ambiguous_interface_ports": [],
+          "applicable_recipe_ids": [],
+          "auto_apply_top_override": false,
+          "chosen_recipe_id": "",
+          "detected_patterns": [],
+          "generated_files": [],
+          "generated_top_file": "",
+          "generated_top_module": "",
+          "generic_interface_port_examples": [],
+          "generic_interface_ports": [],
+          "inferred_modport_map": {},
+          "intended_top_module": "ddr4_controller_top",
+          "mapping_evidence": {},
+          "missing_interface_ports": [],
+          "original_files_preserved": true,
+          "preferred_recipe_top_module": "",
+          "recommended_top_override": "",
+          "selected_top_file": "rtl/ddr4_controller_top.sv",
+          "selected_top_has_any_interface_ports": false,
+          "selected_top_has_generic_interface_ports": false,
+          "selected_top_has_typed_interface_modports": false,
+          "selected_top_likely_testbench_or_harness": false,
+          "selected_top_module": "ddr4_controller_top",
+          "selected_top_path": "rtl/ddr4_controller_top.sv",
+          "selected_top_testbench_marker_examples": [],
+          "selection_source": "top_module.txt",
+          "top_selection_candidates": [
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_controller_top",
+              "path": "rtl/ddr4_controller_top.sv",
+              "reasons": [
+                "not instantiated by another prepared module",
+                "name looks like a synthesis/integration wrapper",
+                "source path looks wrapper/top-oriented"
+              ],
+              "score": 70,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_bank_top",
+              "path": "rtl/ddr4_bank_top.sv",
+              "reasons": [
+                "name looks like a synthesis/integration wrapper",
+                "source path looks wrapper/top-oriented"
+              ],
+              "score": 30,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_bank_activate_fsm",
+              "path": "rtl/ddr4_bank_activate_fsm.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_bank_bank_sequencer",
+              "path": "rtl/ddr4_bank_bank_sequencer.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_bank_precharge_fsm",
+              "path": "rtl/ddr4_bank_precharge_fsm.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_bank_tRAS_fsm",
+              "path": "rtl/ddr4_bank_tRAS_fsm.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_refresh_refresh_controller",
+              "path": "rtl/ddr4_refresh_refresh_controller.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_request_queue",
+              "path": "rtl/ddr4_request_queue.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_scheduler_scheduler",
+              "path": "rtl/ddr4_scheduler_scheduler.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_tFAW_tFAW_tracker",
+              "path": "rtl/ddr4_tFAW_tFAW_tracker.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            },
+            {
+              "generic_interface_ports": [],
+              "has_generic_interface_ports": false,
+              "has_no_ports": false,
+              "likely_testbench_or_harness": false,
+              "module": "ddr4_tRRD_simple_tRRD",
+              "path": "rtl/ddr4_tRRD_simple_tRRD.sv",
+              "reasons": [],
+              "score": 0,
+              "testbench_marker_examples": []
+            }
+          ],
+          "typed_interface_port_examples": []
+        }
+      },
+      "detected_patterns": [],
+      "errors": [],
+      "failure_class": null,
+      "failure_stage_owner": null,
+      "local_review": {
+        "errors": [],
+        "pass": true,
+        "suggested_fixes": [],
+        "summary": "Local prep review passed with 0 errors and 0 warnings.",
+        "warnings": []
+      },
+      "pass": true,
+      "prep_dependency_errors": [],
+      "route_back_to_stage": null,
+      "rules_path": "/home/antgamez1203/eda_agents/templates/universal genus prep instruction.md",
+      "subclass": null,
+      "suggested_fixes": [
+        "(Optional hardening) In run_genus_mc.tcl, set init_lib_search_path to include all unique directories from GENUS_LIBS rather than only [file dirname [lindex $lib_list 0]].",
+        "(Optional clarity) Add a short note in README_prepared.txt stating that mc_genus.sdc is intentionally minimal and that IO delays are set to 0.0 by default, so users should update for their environment."
+      ],
+      "summary": "Local prep review passed with 0 errors and 0 warnings. Prep bundle looks complete and internally consistent for Genus bring-up: artifacts present (filelist/Tcl/SDC/top_module), selected top ddr4_controller_top is not a harness and does not expose interface ports, and dependency/module closure matches the filelist (no missing modules or duplicates). No prep-stage blockers found.",
+      "warnings": [
+        "Top/module consistency check: top_module.txt, README_prepared.txt, and run_genus_mc.tcl all agree on TOP=ddr4_controller_top (good). No evidence the selected top is a testbench/harness (has real ports; no initial/$finish markers reported).",
+        "SDC is a generic bring-up constraint (0 input/output delay, reset false-pathed). This is acceptable for bring-up, but may over-constrain/under-constrain depending on intended IO timing and any multi-clock/derived-clock behavior (not a prep blocker).",
+        "run_genus_mc.tcl requires GENUS_LIBS and assumes the libs are all co-located for init_lib_search_path (uses dirname of first lib). If GENUS_LIBS contains libs from multiple directories, users may need to adjust init_lib_search_path accordingly (not a prep blocker).",
+        "Several RTL files declare `timescale 1ns/1ps. This is simulation-oriented but generally harmless for Genus; keeping it is fine (not a prep blocker).",
+        "README_prepared.txt mentions stripping SVA and debug system tasks; the provided rtl_samples still show $countones usage and struct packing/casting. These are normal SV constructs; just note that successful parsing depends on Genus SV support/version (not a prep completeness issue)."
+      ]
+    }
+  }
+}
