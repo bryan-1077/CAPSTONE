@@ -2437,6 +2437,24 @@ def resolve_attempt_dir(path_text: str) -> Path:
     return path
 
 
+def git_patch_command(patch_path: Path, *options: str) -> list[str]:
+    """Map frontend-relative patches into the enclosing Git worktree."""
+    probe = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"], cwd=SCRIPT_DIR,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
+    )
+    command = ["git"]
+    directory = []
+    if probe.returncode == 0:
+        root = Path(probe.stdout.strip()).resolve()
+        prefix = SCRIPT_DIR.resolve().relative_to(root).as_posix()
+        command.extend(["-C", str(root)])
+        if prefix != ".":
+            directory = [f"--directory={prefix}"]
+    return command + ["apply", "--verbose", *directory, *options,
+                      "--whitespace=nowarn", str(patch_path.resolve())]
+
+
 def normalize_diff_path(path_text: str) -> str:
     path = path_text.strip()
     if path == "/dev/null":
@@ -2570,6 +2588,8 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
         "rename to ",
         "copy from ",
         "copy to ",
+        "old mode ",
+        "new mode ",
     )
     for line in patch_text.splitlines():
         if line.startswith(forbidden_headers):
@@ -2588,7 +2608,7 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
     git_apply_mode = None
     if not issues:
         strict_proc = subprocess.run(
-            ["git", "apply", "--check", "--whitespace=nowarn", str(patch_path)],
+            git_patch_command(patch_path, "--check"),
             cwd=SCRIPT_DIR,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -2596,6 +2616,8 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
             check=False,
         )
         strict_output = (strict_proc.stdout or "").strip()
+        if "Skipped patch " in strict_output:
+            strict_proc.returncode = 1
         git_apply_check = {
             "mode": "strict",
             "passed": strict_proc.returncode == 0,
@@ -2606,7 +2628,7 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
             git_apply_mode = "strict"
         else:
             fallback_proc = subprocess.run(
-                ["git", "apply", "--check", "-C0", "--whitespace=nowarn", str(patch_path)],
+                git_patch_command(patch_path, "--check", "-C0"),
                 cwd=SCRIPT_DIR,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -2614,6 +2636,8 @@ def validate_patch_text(patch_text: str, patch_path: Path) -> dict[str, object]:
                 check=False,
             )
             fallback_output = (fallback_proc.stdout or "").strip()
+            if "Skipped patch " in fallback_output:
+                fallback_proc.returncode = 1
             git_apply_check = {
                 "mode": "zero_context",
                 "passed": fallback_proc.returncode == 0,
@@ -2897,8 +2921,12 @@ def rollback_applied_patch(
     before_hashes: dict[str, str],
 ) -> dict[str, object]:
     started_at = utc_now()
+    validation = read_optional_json(attempt_dir / "validation.json") or {}
+    options = ["-R"]
+    if validation.get("git_apply_mode") == "zero_context":
+        options.append("-C0")
     proc = subprocess.run(
-        ["git", "apply", "-R", "--whitespace=nowarn", str(patch_path)],
+        git_patch_command(patch_path, *options),
         cwd=SCRIPT_DIR,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -3119,9 +3147,9 @@ def apply_attempt(args: argparse.Namespace) -> int:
     log_debug(failure_dir, "Validated touched files: " + ", ".join(touched_files))
     before_hashes = collect_file_hashes(touched_files)
     apply_started_at = utc_now()
-    apply_command = ["git", "apply", "--whitespace=nowarn", str(patch_path)]
+    apply_command = git_patch_command(patch_path)
     if validation.get("git_apply_mode") == "zero_context":
-        apply_command = ["git", "apply", "-C0", "--whitespace=nowarn", str(patch_path)]
+        apply_command = git_patch_command(patch_path, "-C0")
     log_debug(failure_dir, f"Applying unified diff with {validation.get('git_apply_mode') or 'strict'} context")
     proc = subprocess.run(
         apply_command,
@@ -3161,6 +3189,23 @@ def apply_attempt(args: argparse.Namespace) -> int:
         return 1
 
     after_hashes = collect_file_hashes(touched_files)
+    unchanged = [path for path in touched_files if before_hashes[path] == after_hashes[path]]
+    if unchanged:
+        changed = [path for path in touched_files if path not in unchanged]
+        rollback = (rollback_applied_patch(attempt_dir, patch_path, touched_files, before_hashes)
+                    if changed else {"attempted": False, "passed": True})
+        status = {
+            "status": "apply_failed" if rollback.get("passed") else "apply_failed_rollback_failed",
+            "phase": "apply_patch", "attempt": attempt_dir.name,
+            "reason": "Patch did not change expected RTL files: " + ", ".join(unchanged),
+            "before_hashes": before_hashes, "after_hashes": after_hashes,
+            "rollback": rollback, "rtl_modified": not rollback.get("passed"),
+        }
+        write_json(attempt_dir / "apply.json", status)
+        write_json(attempt_status_path, status)
+        write_json(result_dir(failure_dir) / "status.json", status)
+        log_debug(failure_dir, status["reason"])
+        return 1
     lint_plan = derive_lint_plan(
         failure_dir,
         touched_files,
@@ -3400,138 +3445,193 @@ def repair_failure(args: argparse.Namespace) -> int:
     failure_dir = resolve_failure_dir(args.failure_dir)
     repair_started_at = utc_now()
     keep_failed_patch = should_keep_failed_patch(args)
-    before_attempts = {path.name for path in numbered_attempt_dirs(failure_dir)}
     steps: list[dict[str, object]] = []
     log_debug(failure_dir, f"Starting repair flow: {display_path(failure_dir)}")
     if keep_failed_patch:
         log_debug(failure_dir, "Failed patches will be kept for this repair flow")
 
-    propose_rc = propose_patch(args)
-    steps.append({"name": "propose", "returncode": propose_rc})
-    if propose_rc != 0:
-        result_status = current_result_status(failure_dir)
-        status = result_status.get("status") if isinstance(result_status, dict) else "repair_failed"
-        write_repair_record(
-            failure_dir,
-            None,
-            {
-                "status": status,
-                "phase": "repair",
-                "started_at": repair_started_at,
-                "finished_at": utc_now(),
-                "steps": steps,
-                "keep_failed_patch": keep_failed_patch,
-                "demo_mode": bool(getattr(args, "demo_mode", False)),
-                "result_status": result_status,
-                "rtl_modified": False,
-            },
-        )
-        log_debug(failure_dir, f"Repair flow stopped after propose: returncode={propose_rc}")
-        return propose_rc
-
-    new_attempts = [
-        path for path in numbered_attempt_dirs(failure_dir)
-        if path.name not in before_attempts
-    ]
-    if not new_attempts:
-        failure_status = {
-            "status": "repair_failed",
-            "phase": "repair",
-            "reason": "Proposal step completed but no new attempt directory was found.",
-            "rtl_modified": False,
-        }
-        write_json(
-            result_dir(failure_dir) / "status.json",
-            failure_status,
-        )
-        write_repair_record(
-            failure_dir,
-            None,
-            {
-                **failure_status,
-                "started_at": repair_started_at,
-                "finished_at": utc_now(),
-                "steps": steps,
-                "keep_failed_patch": keep_failed_patch,
-                "demo_mode": bool(getattr(args, "demo_mode", False)),
-                "result_status": failure_status,
-            },
-        )
-        log_debug(failure_dir, "Repair failed: no new attempt directory was found.")
+    if args.max_attempts < 1:
+        log_debug(failure_dir, "ERROR: --max-attempts must be at least 1.")
         return 1
 
-    attempt_dir = new_attempts[-1]
-    steps[-1]["attempt"] = attempt_dir.name
-    validation_rc = validate_attempt(
-        argparse.Namespace(mode="validate", attempt_dir=str(attempt_dir))
-    )
-    steps.append({"name": "validate", "returncode": validation_rc})
-    if validation_rc != 0:
+    last_attempt_dir: Path | None = None
+    final_rc = 1
+    final_status = "repair_failed"
+    while True:
+        if attempt_limit_reached(failure_dir, args.max_attempts):
+            reason = f"Reached {args.max_attempts} numbered repair attempt(s)."
+            record_needs_human(failure_dir, args.max_attempts, reason)
+            result_status = current_result_status(failure_dir)
+            write_repair_record(
+                failure_dir,
+                last_attempt_dir,
+                {
+                    "status": "needs_human",
+                    "phase": "repair",
+                    "attempt": last_attempt_dir.name if last_attempt_dir else None,
+                    "started_at": repair_started_at,
+                    "finished_at": utc_now(),
+                    "steps": steps,
+                    "lint_command": args.lint_command,
+                    "target_command": args.target_command,
+                    "keep_failed_patch": keep_failed_patch,
+                    "demo_mode": bool(getattr(args, "demo_mode", False)),
+                    "result_status": result_status,
+                    "rtl_modified": bool(
+                        isinstance(result_status, dict) and result_status.get("rtl_modified")
+                    ),
+                },
+            )
+            log_debug(failure_dir, f"Repair attempt limit reached: {reason}")
+            return 1
+
+        before_attempts = {path.name for path in numbered_attempt_dirs(failure_dir)}
+        attempt_number = len(before_attempts) + 1
+        log_debug(failure_dir, f"Repair attempt {attempt_number}/{args.max_attempts}")
+        propose_rc = propose_patch(args)
+        steps.append({"name": "propose", "returncode": propose_rc})
+        if propose_rc != 0:
+            result_status = current_result_status(failure_dir)
+            status = result_status.get("status") if isinstance(result_status, dict) else "repair_failed"
+            write_repair_record(
+                failure_dir,
+                last_attempt_dir,
+                {
+                    "status": status,
+                    "phase": "repair",
+                    "attempt": last_attempt_dir.name if last_attempt_dir else None,
+                    "started_at": repair_started_at,
+                    "finished_at": utc_now(),
+                    "steps": steps,
+                    "keep_failed_patch": keep_failed_patch,
+                    "demo_mode": bool(getattr(args, "demo_mode", False)),
+                    "result_status": result_status,
+                    "rtl_modified": False,
+                },
+            )
+            log_debug(failure_dir, f"Repair flow stopped after propose: returncode={propose_rc}")
+            return propose_rc
+
+        new_attempts = [
+            path for path in numbered_attempt_dirs(failure_dir)
+            if path.name not in before_attempts
+        ]
+        if not new_attempts:
+            failure_status = {
+                "status": "repair_failed",
+                "phase": "repair",
+                "reason": "Proposal step completed but no new attempt directory was found.",
+                "rtl_modified": False,
+            }
+            write_json(
+                result_dir(failure_dir) / "status.json",
+                failure_status,
+            )
+            write_repair_record(
+                failure_dir,
+                last_attempt_dir,
+                {
+                    **failure_status,
+                    "started_at": repair_started_at,
+                    "finished_at": utc_now(),
+                    "steps": steps,
+                    "keep_failed_patch": keep_failed_patch,
+                    "demo_mode": bool(getattr(args, "demo_mode", False)),
+                    "result_status": failure_status,
+                },
+            )
+            log_debug(failure_dir, "Repair failed: no new attempt directory was found.")
+            return 1
+
+        attempt_dir = new_attempts[-1]
+        last_attempt_dir = attempt_dir
+        steps[-1]["attempt"] = attempt_dir.name
+        validation_rc = validate_attempt(
+            argparse.Namespace(mode="validate", attempt_dir=str(attempt_dir))
+        )
+        steps.append({"name": "validate", "returncode": validation_rc, "attempt": attempt_dir.name})
+        validation_path = attempt_dir / "validation.json"
+        validation = read_json(validation_path) if validation_path.is_file() else {}
+        validation_status = validation.get("status") if isinstance(validation, dict) else "unknown"
+
+        if validation_rc != 0 or not isinstance(validation, dict) or not validation.get("can_apply"):
+            result_status = current_result_status(failure_dir)
+            terminal_no_patch = validation_status == "no_patch"
+            if terminal_no_patch or attempt_limit_reached(failure_dir, args.max_attempts):
+                if not terminal_no_patch:
+                    record_needs_human(
+                        failure_dir,
+                        args.max_attempts,
+                        f"Reached {args.max_attempts} repair attempt(s) without a valid patch.",
+                    )
+                    result_status = current_result_status(failure_dir)
+                    validation_status = "needs_human"
+                write_repair_record(
+                    failure_dir,
+                    attempt_dir,
+                    {
+                        "status": validation_status,
+                        "phase": "repair",
+                        "attempt": attempt_dir.name,
+                        "started_at": repair_started_at,
+                        "finished_at": utc_now(),
+                        "steps": steps,
+                        "keep_failed_patch": keep_failed_patch,
+                        "demo_mode": bool(getattr(args, "demo_mode", False)),
+                        "result_status": result_status,
+                        "rtl_modified": False,
+                    },
+                )
+                log_debug(failure_dir, f"Repair stopped before apply: validation status is {validation_status}.")
+                return 1
+
+            log_debug(failure_dir, f"Validation failed for {attempt_dir.name}; retrying with attempt feedback")
+            continue
+
+        log_debug(failure_dir, f"Validation passed; applying attempt: {attempt_dir.name}")
+        apply_rc = apply_attempt(
+            argparse.Namespace(
+                mode="apply",
+                attempt_dir=str(attempt_dir),
+                lint_command=args.lint_command,
+                target_command=args.target_command,
+                keep_failed_patch=keep_failed_patch,
+                demo_mode=bool(getattr(args, "demo_mode", False)),
+            )
+        )
+        steps.append({"name": "apply", "returncode": apply_rc, "attempt": attempt_dir.name})
         result_status = current_result_status(failure_dir)
-        status = result_status.get("status") if isinstance(result_status, dict) else "repair_failed"
-        write_repair_record(
-            failure_dir,
-            attempt_dir,
-            {
-                "status": status,
-                "phase": "repair",
-                "attempt": attempt_dir.name,
-                "started_at": repair_started_at,
-                "finished_at": utc_now(),
-                "steps": steps,
-                "keep_failed_patch": keep_failed_patch,
-                "demo_mode": bool(getattr(args, "demo_mode", False)),
-                "result_status": result_status,
-                "rtl_modified": False,
-            },
-        )
-        log_debug(failure_dir, f"Repair flow stopped after validate: returncode={validation_rc}")
-        return validation_rc
+        final_status = result_status.get("status") if isinstance(result_status, dict) else "unknown"
+        final_rc = apply_rc
 
-    validation_path = attempt_dir / "validation.json"
-    validation = read_json(validation_path) if validation_path.is_file() else {}
-    if not isinstance(validation, dict) or not validation.get("can_apply"):
-        status = validation.get("status") if isinstance(validation, dict) else "unknown"
-        write_repair_record(
-            failure_dir,
-            attempt_dir,
-            {
-                "status": status,
-                "phase": "repair",
-                "attempt": attempt_dir.name,
-                "started_at": repair_started_at,
-                "finished_at": utc_now(),
-                "steps": steps,
-                "keep_failed_patch": keep_failed_patch,
-                "demo_mode": bool(getattr(args, "demo_mode", False)),
-                "result_status": current_result_status(failure_dir),
-                "rtl_modified": False,
-            },
-        )
-        log_debug(failure_dir, f"Repair stopped before apply: validation status is {status}.")
-        return 1
+        if final_status in PATCH_SUCCESS_STATUSES:
+            break
+        if keep_failed_patch:
+            log_debug(failure_dir, "Repair stopped after failed checks because the failed patch was kept")
+            break
+        if isinstance(result_status, dict) and str(final_status).endswith("_rollback_failed"):
+            log_debug(failure_dir, "Repair stopped because rollback failed")
+            break
+        if attempt_limit_reached(failure_dir, args.max_attempts):
+            record_needs_human(
+                failure_dir,
+                args.max_attempts,
+                f"Reached {args.max_attempts} repair attempt(s) without passing checks.",
+            )
+            result_status = current_result_status(failure_dir)
+            final_status = "needs_human"
+            break
 
-    log_debug(failure_dir, f"Validation passed; applying attempt: {attempt_dir.name}")
-    apply_rc = apply_attempt(
-        argparse.Namespace(
-            mode="apply",
-            attempt_dir=str(attempt_dir),
-            lint_command=args.lint_command,
-            target_command=args.target_command,
-            keep_failed_patch=keep_failed_patch,
-            demo_mode=bool(getattr(args, "demo_mode", False)),
-        )
-    )
-    steps.append({"name": "apply", "returncode": apply_rc})
+        log_debug(failure_dir, f"Checks failed for {attempt_dir.name}; retrying with check feedback")
+
     result_status = current_result_status(failure_dir)
-    final_status = result_status.get("status") if isinstance(result_status, dict) else "unknown"
     write_repair_record(
         failure_dir,
-        attempt_dir,
+        last_attempt_dir,
         {
             "status": final_status,
             "phase": "repair",
-            "attempt": attempt_dir.name,
+            "attempt": last_attempt_dir.name if last_attempt_dir else None,
             "started_at": repair_started_at,
             "finished_at": utc_now(),
             "steps": steps,
@@ -3545,8 +3645,8 @@ def repair_failure(args: argparse.Namespace) -> int:
             ),
         },
     )
-    log_debug(failure_dir, f"Repair flow complete: status={final_status}, returncode={apply_rc}")
-    return apply_rc
+    log_debug(failure_dir, f"Repair flow complete: status={final_status}, returncode={final_rc}")
+    return 0 if final_status in PATCH_SUCCESS_STATUSES else final_rc or 1
 
 
 def graph_checkpoint_path(failure_dir: Path) -> Path:
@@ -4297,10 +4397,26 @@ def graph_validate_patch_node(state: DebugGraphState) -> DebugGraphState:
     }, "validate_patch")
 
 
-def route_after_validate(state: DebugGraphState) -> Literal["apply_patch", "record_result"]:
+def route_after_validate(state: DebugGraphState) -> Literal["apply_patch", "record_result", "propose_patch"]:
     validation = state.get("validation", {})
     can_apply = isinstance(validation, dict) and bool(validation.get("can_apply"))
-    return "apply_patch" if can_apply and not state.get("stop_reason") else "record_result"
+    if can_apply and not state.get("stop_reason"):
+        return "apply_patch"
+    if validation.get("status") == "patch_rejected":
+        return "propose_patch"
+    return "record_result"
+
+
+def route_after_apply(state: DebugGraphState) -> Literal["propose_patch", "record_result"]:
+    status = state.get("status", {})
+    rollback = status.get("rollback", {})
+    if (state.get("stop_reason") == "checks_failed"
+            and status.get("status") not in PATCH_SUCCESS_STATUSES
+            and not status.get("rtl_modified")
+            and rollback.get("passed")
+            and not state.get("keep_failed_patch") and not state.get("demo_mode")):
+        return "propose_patch"
+    return "record_result"
 
 
 def graph_apply_patch_node(state: DebugGraphState) -> DebugGraphState:
@@ -4403,7 +4519,7 @@ def build_langgraph_runner() -> Callable[[DebugGraphState], DebugGraphState]:
     graph.add_conditional_edges("build_patch_context", route_after_build_patch_context)
     graph.add_conditional_edges("propose_patch", route_after_propose)
     graph.add_conditional_edges("validate_patch", route_after_validate)
-    graph.add_edge("apply_patch", "record_result")
+    graph.add_conditional_edges("apply_patch", route_after_apply)
     graph.add_edge("record_result", END)
     compiled = graph.compile(checkpointer=MemorySaver())
 
@@ -4412,7 +4528,8 @@ def build_langgraph_runner() -> Callable[[DebugGraphState], DebugGraphState]:
         return compiled.invoke(
             state,
             config={"configurable": {"thread_id": str(thread_id)},
-                    "recursion_limit": 30 + 2 * int(state.get("budgets", {}).get("investigation_steps_max", 8))},
+                    "recursion_limit": 30 + 3 * int(state.get("max_attempts", MAX_REPAIR_ATTEMPTS))
+                    + 2 * int(state.get("budgets", {}).get("investigation_steps_max", 8))},
         )
 
     return invoke
@@ -4448,17 +4565,19 @@ def run_fallback_graph(state: DebugGraphState) -> DebugGraphState:
         current.update(graph_record_result_node(current))
         return current
 
-    current.update(graph_propose_patch_node(current))
-    if route_after_propose(current) == "record_result":
-        current.update(graph_record_result_node(current))
-        return current
-
-    current.update(graph_validate_patch_node(current))
-    if route_after_validate(current) == "record_result":
-        current.update(graph_record_result_node(current))
-        return current
-
-    current.update(graph_apply_patch_node(current))
+    while True:
+        current.update(graph_propose_patch_node(current))
+        if route_after_propose(current) == "record_result":
+            break
+        current.update(graph_validate_patch_node(current))
+        route = route_after_validate(current)
+        if route == "record_result":
+            break
+        if route == "propose_patch":
+            continue
+        current.update(graph_apply_patch_node(current))
+        if route_after_apply(current) == "record_result":
+            break
     current.update(graph_record_result_node(current))
     return current
 

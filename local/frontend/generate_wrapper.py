@@ -173,7 +173,7 @@ def build_io_descriptions(bank_count: int) -> list[tuple[str, str, str]]:
     io_descriptions = [
         ("clk", "input", "Controller clock."),
         ("rst_n", "input", "Active-low synchronous reset."),
-        ("txn_valid", "input", "Requests scheduler issue a transaction when timing allows."),
+        ("txn_valid", "input", "Presents a request; acceptance occurs on a rising edge with txn_valid and txn_ready high. Hold payload stable while stalled."),
         ("txn_is_write", "input", "Transaction type selector: 0=READ, 1=WRITE."),
         ("txn_addr", "input", f"Address for the minimal banked storage model ({MEMORY_ADDR_WIDTH} bits)."),
         ("txn_wdata", "input", f"Write data for accepted WRITE transactions ({MEMORY_DATA_WIDTH} bits)."),
@@ -187,14 +187,15 @@ def build_io_descriptions(bank_count: int) -> list[tuple[str, str, str]]:
         io_descriptions.append(
             ("txn_bank", "input", bank_select_desc),
         )
+    io_descriptions.append(("txn_ready", "output", "Queue acceptance readiness; supports a new request every ready/valid cycle, including consecutive cycles."))
     io_descriptions.append(
-        ("cmd_ready", "output", "Indicates whether the currently selected bank can accept a transaction."),
+        ("cmd_ready", "output", "Legacy execution/timing readiness for the incoming address; not the host acceptance handshake."),
     )
     io_descriptions.append(
         (
             "rsp_valid",
             "output",
-            f"One-cycle pulse indicating read response data is valid {READ_RESPONSE_LATENCY_CYCLES} cycle after an accepted READ.",
+            "One-cycle pulse at read service completion; host enqueue and execution dispatch are separate events.",
         ),
     )
     io_descriptions.append(
@@ -207,7 +208,7 @@ def build_known_simplifications(bank_count: int, page_policy: str) -> list[str]:
     """Return the known-simplification notes aligned with the generated wrapper."""
     notes = [
         "READ and WRITE share the same simplified bank sequencing structure; cmd_type preserves direction semantics without changing the bank FSM structure.",
-        f"Accepted READ transactions return data with a fixed {READ_RESPONSE_LATENCY_CYCLES}-cycle response latency.",
+        "Read responses follow service completion; queue wait and row-dependent service add latency after host acceptance.",
         "WRITE transactions update the minimal banked storage model and do not produce a response payload.",
         f"Page policy is modeled at the wrapper level: {page_policy} controls whether a serviced row remains open after completion.",
         "Refresh remains a simplified top-level event source and is not modeled as a detailed per-bank flow.",
@@ -221,7 +222,7 @@ def build_known_simplifications(bank_count: int, page_policy: str) -> list[str]:
     else:
         notes.insert(
             0,
-            "The wrapper exposes one transaction stream with explicit bank selection and does not perform bank reordering or auto-selection.",
+            "The wrapper exposes one transaction stream with explicit bank selection; queue selection can reorder requests, and same-address ordering is not yet guaranteed.",
         )
     return notes
 
@@ -237,7 +238,7 @@ def build_feature_summary(
     """Return a concise feature summary aligned with the assembled wrapper."""
     summary = [
         f"Instantiates {bank_count} reusable {BANK_TOP_MODULE_NAME} integration block(s) to package the per-bank FSM chain.",
-        "Keeps scheduler arbitration focused on refresh-versus-transaction selection; bank choice comes from the external transaction bank select.",
+        "Buffers up to four pending requests and selects queued requests with row-hit priority; bank selection is stored with each request.",
         "Maps txn_is_write into bank-local cmd_type values so READ and WRITE remain visible through the control path.",
         "Implements a small banked storage model in the controller wrapper so accepted WRITEs store data and accepted READs return stored data.",
         (
@@ -248,7 +249,7 @@ def build_feature_summary(
     ]
     if bank_count > 1:
         summary.append(
-            "Routes the single transaction stream only to the selected bank and mirrors cmd_ready from that selected bank."
+            "Accepts host traffic with txn_valid/txn_ready independently of execution; cmd_ready remains execution-readiness visibility."
         )
     else:
         summary.append("Presents the single transaction stream directly to the sole bank integration block.")
@@ -415,6 +416,7 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
         lines.append(f"    input  logic {txn_bank_range}txn_bank,")
     lines.extend(
         [
+            "    output logic txn_ready,",
             "    output logic cmd_ready,",
             "    output logic rsp_valid,",
             f"    output logic [{MEMORY_DATA_WIDTH - 1}:0] rsp_rdata",
@@ -507,7 +509,12 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
             "    logic enq_ready;",
             "    logic enqueue_req_valid;",
             "    logic enqueue_fire;",
-            "    logic txn_enqueued_q;",
+            "    logic [$clog2(REQ_QUEUE_DEPTH+1)-1:0] queue_count;",
+            "    logic queue_full, queue_empty;",
+            "    logic [$clog2(REQ_QUEUE_DEPTH)-1:0] selected_index;",
+            "    logic selected_valid;",
+            "    logic dispatch_fire, completion_fire;",
+            "    logic [31:0] requests_accepted, requests_dispatched, requests_completed;",
             "    logic [17:0] decoded_addr;",
             "    logic [1:0] selected_bank;",
             "    logic [1:0] incoming_bank;",
@@ -623,8 +630,20 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
             f"    assign txn_sched_grant = {txn_sched_grant};",
             "    assign accept_txn_fire = issue_valid && controller_ready && txn_sched_grant;",
             "    assign deq_en = accept_txn_fire;",
-            "    assign enqueue_req_valid = txn_valid && !txn_enqueued_q;",
-            "    assign enqueue_fire = enqueue_req_valid && enq_ready;",
+            "    assign enqueue_req_valid = rst_n && txn_valid;",
+            "    assign txn_ready = rst_n && enq_ready;",
+            "    assign enqueue_fire = txn_valid && txn_ready;",
+            "    assign dispatch_fire = accept_txn_fire;",
+            "    assign completion_fire = service_done;",
+            "    assign selected_index = sel_idx;",
+            "    assign selected_valid = issue_valid;",
+            "    assign queue_empty = ~(|req_valid_packed);",
+            "    assign queue_full = &req_valid_packed;",
+            "    always_comb begin",
+            "        queue_count = '0;",
+            "        for (int q = 0; q < REQ_QUEUE_DEPTH; q++)",
+            "            queue_count = queue_count + $clog2(REQ_QUEUE_DEPTH+1)'(req_valid_packed[q]);",
+            "    end",
             "    assign accept_txn = accept_txn_q;",
             "    assign accepted_hit = accept_txn_fire && is_row_hit;",
             "    assign accepted_slow = accept_txn_fire && ~is_row_hit;",
@@ -752,7 +771,9 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
             "    always_ff @(posedge clk) begin",
             "        if (!rst_n) begin",
             "            accept_txn_q <= 1'b0;",
-            "            txn_enqueued_q <= 1'b0;",
+            "            requests_accepted <= '0;",
+            "            requests_dispatched <= '0;",
+            "            requests_completed <= '0;",
             "            accepted_row_closed_q <= 1'b0;",
             "            accepted_row_hit_q <= 1'b0;",
             "            accepted_row_miss_q <= 1'b0;",
@@ -801,12 +822,10 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
             "            end",
             "        end else begin",
             "            rsp_valid_q <= 1'b0;",
-            "            if (!txn_valid) begin",
-            "                txn_enqueued_q <= 1'b0;",
-            "            end else if (enqueue_fire) begin",
-            "                txn_enqueued_q <= 1'b1;",
-            "            end",
-            "            if (txn_valid && !cmd_ready) begin",
+            "            if (enqueue_fire) requests_accepted <= requests_accepted + 32'd1;",
+            "            if (dispatch_fire) requests_dispatched <= requests_dispatched + 32'd1;",
+            "            if (completion_fire) requests_completed <= requests_completed + 32'd1;",
+            "            if (issue_valid && !dispatch_fire) begin",
             "                cnt_stall <= cnt_stall + 32'd1;",
             "                if (service_pending_q) begin",
             "                    cnt_stall_busy <= cnt_stall_busy + 32'd1;",
