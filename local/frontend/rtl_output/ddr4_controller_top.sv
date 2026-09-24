@@ -15,6 +15,7 @@ module ddr4_controller_top (
     input  logic [3:0] txn_addr,
     input  logic [31:0] txn_wdata,
     input  logic [1:0] txn_bank,
+    output logic txn_ready,
     output logic cmd_ready,
     output logic rsp_valid,
     output logic [31:0] rsp_rdata
@@ -102,7 +103,12 @@ module ddr4_controller_top (
     logic enq_ready;
     logic enqueue_req_valid;
     logic enqueue_fire;
-    logic txn_enqueued_q;
+    logic [$clog2(REQ_QUEUE_DEPTH+1)-1:0] queue_count;
+    logic queue_full, queue_empty;
+    logic [$clog2(REQ_QUEUE_DEPTH)-1:0] selected_index;
+    logic selected_valid;
+    logic dispatch_fire, completion_fire;
+    logic [31:0] requests_accepted, requests_dispatched, requests_completed;
     logic [17:0] decoded_addr;
     logic [1:0] selected_bank;
     logic [1:0] incoming_bank;
@@ -188,8 +194,20 @@ module ddr4_controller_top (
     assign txn_sched_grant = ~ref_req;
     assign accept_txn_fire = issue_valid && controller_ready && txn_sched_grant;
     assign deq_en = accept_txn_fire;
-    assign enqueue_req_valid = txn_valid && !txn_enqueued_q;
-    assign enqueue_fire = enqueue_req_valid && enq_ready;
+    assign enqueue_req_valid = rst_n && txn_valid;
+    assign txn_ready = rst_n && enq_ready;
+    assign enqueue_fire = txn_valid && txn_ready;
+    assign dispatch_fire = accept_txn_fire;
+    assign completion_fire = service_done;
+    assign selected_index = sel_idx;
+    assign selected_valid = issue_valid;
+    assign queue_empty = ~(|req_valid_packed);
+    assign queue_full = &req_valid_packed;
+    always_comb begin
+        queue_count = '0;
+        for (int q = 0; q < REQ_QUEUE_DEPTH; q++)
+            queue_count = queue_count + $clog2(REQ_QUEUE_DEPTH+1)'(req_valid_packed[q]);
+    end
     assign accept_txn = accept_txn_q;
     assign accepted_hit = accept_txn_fire && is_row_hit;
     assign accepted_slow = accept_txn_fire && ~is_row_hit;
@@ -287,7 +305,9 @@ module ddr4_controller_top (
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             accept_txn_q <= 1'b0;
-            txn_enqueued_q <= 1'b0;
+            requests_accepted <= '0;
+            requests_dispatched <= '0;
+            requests_completed <= '0;
             accepted_row_closed_q <= 1'b0;
             accepted_row_hit_q <= 1'b0;
             accepted_row_miss_q <= 1'b0;
@@ -336,12 +356,10 @@ module ddr4_controller_top (
             end
         end else begin
             rsp_valid_q <= 1'b0;
-            if (!txn_valid) begin
-                txn_enqueued_q <= 1'b0;
-            end else if (enqueue_fire) begin
-                txn_enqueued_q <= 1'b1;
-            end
-            if (txn_valid && !cmd_ready) begin
+            if (enqueue_fire) requests_accepted <= requests_accepted + 32'd1;
+            if (dispatch_fire) requests_dispatched <= requests_dispatched + 32'd1;
+            if (completion_fire) requests_completed <= requests_completed + 32'd1;
+            if (issue_valid && !dispatch_fire) begin
                 cnt_stall <= cnt_stall + 32'd1;
                 if (service_pending_q) begin
                     cnt_stall_busy <= cnt_stall_busy + 32'd1;

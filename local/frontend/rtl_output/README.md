@@ -18,22 +18,23 @@ iverilog -g2012 -s ddr4_controller_top -f filelist.f
 ## IO Description
 - `clk` (input): Controller clock.
 - `rst_n` (input): Active-low synchronous reset.
-- `txn_valid` (input): Requests scheduler issue a transaction when timing allows.
+- `txn_valid` (input): Presents a request; acceptance occurs on a rising edge with txn_valid and txn_ready high. Hold payload stable while stalled.
 - `txn_is_write` (input): Transaction type selector: 0=READ, 1=WRITE.
 - `txn_addr` (input): Address for the minimal banked storage model (4 bits).
 - `txn_wdata` (input): Write data for accepted WRITE transactions (32 bits).
 - `txn_bank` (input): Selects one of 4 banks for the single incoming transaction stream.
-- `cmd_ready` (output): Indicates whether the currently selected bank can accept a transaction.
-- `rsp_valid` (output): One-cycle pulse indicating read response data is valid 1 cycle after an accepted READ.
+- `txn_ready` (output): Queue acceptance readiness; supports a new request every ready/valid cycle, including consecutive cycles.
+- `cmd_ready` (output): Legacy execution/timing readiness for the incoming address; not the host acceptance handshake.
+- `rsp_valid` (output): One-cycle pulse at read service completion; host enqueue and execution dispatch are separate events.
 - `rsp_rdata` (output): Read response data returned from the selected banked storage (32 bits).
 
 ## Feature Summary
 - Instantiates 4 reusable ddr4_bank_top integration block(s) to package the per-bank FSM chain.
-- Keeps scheduler arbitration focused on refresh-versus-transaction selection; bank choice comes from the external transaction bank select.
+- Buffers up to four pending requests and selects queued requests with row-hit priority; bank selection is stored with each request.
 - Maps txn_is_write into bank-local cmd_type values so READ and WRITE remain visible through the control path.
 - Implements a small banked storage model in the controller wrapper so accepted WRITEs store data and accepted READs return stored data.
 - Keeps the serviced row open after completion so later accesses can reuse it.
-- Routes the single transaction stream only to the selected bank and mirrors cmd_ready from that selected bank.
+- Accepts host traffic with txn_valid/txn_ready independently of execution; cmd_ready remains execution-readiness visibility.
 - Instantiates the refresh controller and gives refresh requests fixed priority in the scheduler path.
 - Gates transaction issue with shared controller-level tFAW and tRRD activation-spacing checks.
 - Returns read data on rsp_rdata with a fixed 1-cycle rsp_valid pulse and no write response.
@@ -53,9 +54,9 @@ iverilog -g2012 -s ddr4_controller_top -f filelist.f
 - `ddr4_tRRD_simple_tRRD`
 
 ## Known Simplifications
-- The wrapper exposes one transaction stream with explicit bank selection and does not perform bank reordering or auto-selection.
+- The wrapper exposes one transaction stream with explicit bank selection; queue selection can reorder requests, and same-address ordering is not yet guaranteed.
 - READ and WRITE share the same simplified bank sequencing structure; cmd_type preserves direction semantics without changing the bank FSM structure.
-- Accepted READ transactions return data with a fixed 1-cycle response latency.
+- Read responses follow service completion; queue wait and row-dependent service add latency after host acceptance.
 - WRITE transactions update the minimal banked storage model and do not produce a response payload.
 - Page policy is modeled at the wrapper level: open_page controls whether a serviced row remains open after completion.
 - Refresh remains a simplified top-level event source and is not modeled as a detailed per-bank flow.
