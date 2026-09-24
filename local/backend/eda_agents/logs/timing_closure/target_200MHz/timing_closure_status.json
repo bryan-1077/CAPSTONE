@@ -1,0 +1,36 @@
+{
+  "run_name": "target_200MHz",
+  "run_id": "ddf4d4f63b6b45039137d2e5ddf4c8f3",
+  "status": "passed",
+  "message": "Setup timing passed: WNS 0.008 ns at 5.000 ns.",
+  "attempts": [
+    {
+      "attempt": 1,
+      "outdir": "build_GDSII_200MHz_01",
+      "mapped_snapshot": "build_mapped_snapshot_200MHz_01",
+      "target_period_ns": 5.0,
+      "settings": {
+        "innovus_utilization": 0.6,
+        "innovus_ccopt_target_skew": 0.25,
+        "innovus_ccopt_target_max_transition": 0.5
+      },
+      "status": "violated",
+      "wns_ns": -0.002,
+      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/ddf4d4f63b6b45039137d2e5ddf4c8f3/build_GDSII_200MHz_01__reports__timing_postroute.rpt"
+    },
+    {
+      "attempt": 2,
+      "outdir": "build_GDSII_200MHz_02",
+      "mapped_snapshot": "build_mapped_snapshot_200MHz_01",
+      "target_period_ns": 5.0,
+      "settings": {
+        "innovus_utilization": 0.55,
+        "innovus_ccopt_target_skew": 0.18,
+        "innovus_ccopt_target_max_transition": 0.35
+      },
+      "status": "passed",
+      "wns_ns": 0.008,
+      "report": "/home/antgamez1203/eda_agents/.timing_closure_remote/ddf4d4f63b6b45039137d2e5ddf4c8f3/build_GDSII_200MHz_02__reports__timing_postroute.rpt"
+    }
+  ]
+}

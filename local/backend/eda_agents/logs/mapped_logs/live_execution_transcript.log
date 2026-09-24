@@ -1,0 +1,7 @@
+=== Live Transcript ===
+[2026-09-24 10:15:44 CDT] Entering mapped_netlist stage (attempt 1/1)
+[2026-09-24 10:15:44 CDT] mapped generate attempt 1
+[2026-09-24 10:17:40 CDT] mapped generate attempt 1 completed
+[2026-09-24 10:17:48 CDT] mapped review passed
+[2026-09-24 10:17:49 CDT] Timing closure mapped inputs isolated: build_mapped_230MHz_01 -> build_mapped_snapshot_230MHz_01
+[2026-09-24 10:45:04 CDT] Flow stopped due to failure
