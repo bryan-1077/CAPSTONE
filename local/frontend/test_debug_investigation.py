@@ -135,6 +135,27 @@ class InvestigationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             investigation.accept_assessment(self.record, json.dumps(data))
 
+    def test_blocking_warning_requires_cited_diagnostic_but_not_checker(self):
+        diagnostic = "%Warning-WIDTHEXPAND: rtl_output/counter.sv:1:10: Pin not found: 'act_pulse'"
+        (self.failure / "intake" / "raw.log").write_text(diagnostic + "\n")
+        self.gather()
+        parsed = {"verilator_diagnostics": [
+            {"severity": "warning", "file": "rtl_output/counter.sv", "line": 1, "raw": diagnostic}
+        ]}
+        investigation.configure_evidence_policy(self.record, parsed)
+        data = self.assessment()
+        data["hypotheses"][0]["supporting_evidence"] = [
+            item["id"] for item in self.record["evidence"] if item["kind"] != "checker"
+        ]
+        investigation.accept_assessment(self.record, json.dumps(data))
+        self.assertEqual(self.record["decision"], "sufficient_evidence")
+
+        for item in self.record["evidence"]:
+            if item["kind"] == "observation":
+                item["text"] = "Compilation started"
+        with self.assertRaises(ValueError):
+            investigation.accept_assessment(self.record, json.dumps(data))
+
     def test_compiler_warning_or_mixed_behavioral_failure_still_needs_checker(self):
         self.gather()
         data = self.assessment()

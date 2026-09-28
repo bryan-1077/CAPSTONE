@@ -4,7 +4,7 @@
 // Design : ddr4_controller_top
 // Scheduler policy : simple
 // Page policy      : open_page
-// Bank count       : 4
+// Bank count       : 2
 // ============================================================
 
 module ddr4_controller_top (
@@ -14,17 +14,17 @@ module ddr4_controller_top (
     input  logic txn_is_write,
     input  logic [3:0] txn_addr,
     input  logic [31:0] txn_wdata,
-    input  logic [1:0] txn_bank,
+    input  logic txn_bank,
     output logic txn_ready,
     output logic cmd_ready,
     output logic rsp_valid,
     output logic [31:0] rsp_rdata
 );
 
-    localparam int BANK_COUNT = 4;
+    localparam int BANK_COUNT = 2;
     localparam int ADDR_WIDTH = 4;
     localparam int DATA_WIDTH = 32;
-    localparam int BANK_SEL_WIDTH = 2;
+    localparam int BANK_SEL_WIDTH = 1;
     localparam int MEM_DEPTH = 1 << ADDR_WIDTH;
     localparam int ROW_WIDTH = 2;
     localparam int COL_WIDTH = 2;
@@ -55,7 +55,7 @@ module ddr4_controller_top (
     logic accepted_row_miss_q;
     logic [BANK_SEL_WIDTH-1:0] accepted_bank_q;
     logic [1:0] accepted_txn_cmd_type_q;
-    logic [3:0] accepted_bank_cmd_valid_q;
+    logic [1:0] accepted_bank_cmd_valid_q;
     logic accepted_open_row_valid_q;
     logic [ROW_WIDTH-1:0] accepted_prev_open_row_q;
     logic [ROW_WIDTH-1:0] accepted_requested_row_q;
@@ -136,30 +136,27 @@ module ddr4_controller_top (
     logic is_row_hit;
     logic is_row_miss;
     logic row_replacement_event;
-    logic [3:0] row_open_valid;
+    logic [1:0] row_open_valid;
     logic [ROW_WIDTH-1:0] open_row [0:BANK_COUNT-1];
     logic [SCHED_BANK_COUNT-1:0] scheduler_bank_active;
     logic [9:0] scheduler_bank_open_row [0:SCHED_BANK_COUNT-1];
     logic [(SCHED_BANK_COUNT*10)-1:0] scheduler_bank_open_row_packed;
-    logic [3:0] bank_cmd_valid;
-    logic [3:0] bank_cmd_ready;
-    logic [3:0] bank_bank_idle;
-    logic [3:0] bank_bank_active;
-    logic [3:0] bank_activating;
+    logic [1:0] bank_cmd_valid;
+    logic [1:0] bank_cmd_ready;
+    logic [1:0] bank_bank_idle;
+    logic [1:0] bank_bank_active;
+    logic [1:0] bank_activating;
     logic [DATA_WIDTH-1:0] bank_mem [0:BANK_COUNT-1][0:MEM_DEPTH-1];
     integer bank_mem_bank;
     integer bank_mem_addr;
     logic [1:0] bank0_cmd_type;
     logic [1:0] bank1_cmd_type;
-    logic [1:0] bank2_cmd_type;
-    logic [1:0] bank3_cmd_type;
     logic ref_req;
     logic ref_ack;
     logic [2:0] tFAW_act_count;
     logic tFAW_block;
     logic tFAW_ok;
     logic tfaw_can_accept_act;
-    logic tRRD_block;
 
     assign decoded_addr = 18'(txn_addr);
     assign decoded_req.bank = 2'(txn_bank);
@@ -180,7 +177,7 @@ module ddr4_controller_top (
     assign requested_col = selected_req.col[COL_WIDTH-1:0];
     assign txn_cmd_type = selected_req.is_write ? 2'b10 : 2'b01;
     assign tfaw_can_accept_act = (tFAW_act_count < TFAW_ACT_LIMIT_MINUS_ONE);
-    assign slow_path_allowed = tfaw_can_accept_act & ~tRRD_block;
+    assign slow_path_allowed = tfaw_can_accept_act;
     assign act_allowed = slow_path_allowed;
     assign is_row_closed = ~selected_row_open_valid;
     assign is_row_hit = selected_row_open_valid && (requested_row == selected_open_row);
@@ -230,14 +227,6 @@ module ddr4_controller_top (
                 selected_row_open_valid = row_open_valid[1];
                 selected_open_row = open_row[1];
             end
-            2'd2: begin
-                selected_row_open_valid = row_open_valid[2];
-                selected_open_row = open_row[2];
-            end
-            2'd3: begin
-                selected_row_open_valid = row_open_valid[3];
-                selected_open_row = open_row[3];
-            end
             default: begin
                 selected_row_open_valid = 1'b0;
                 selected_open_row = '0;
@@ -257,14 +246,6 @@ module ddr4_controller_top (
                 incoming_row_open_valid = row_open_valid[1];
                 incoming_open_row = open_row[1];
             end
-            2'd2: begin
-                incoming_row_open_valid = row_open_valid[2];
-                incoming_open_row = open_row[2];
-            end
-            2'd3: begin
-                incoming_row_open_valid = row_open_valid[3];
-                incoming_open_row = open_row[3];
-            end
             default: begin
                 incoming_row_open_valid = 1'b0;
                 incoming_open_row = '0;
@@ -281,24 +262,20 @@ module ddr4_controller_top (
     assign scheduler_bank_open_row_packed[1*10 +: 10] = scheduler_bank_open_row[1];
     assign req_array[1] = request_t'(req_array_packed[1*51 +: 51]);
     assign req_valid[1] = req_valid_packed[1];
-    assign scheduler_bank_active[2] = row_open_valid[2];
-    assign scheduler_bank_open_row[2] = 10'(open_row[2]);
+    assign scheduler_bank_active[2] = 1'b0;
+    assign scheduler_bank_open_row[2] = '0;
     assign scheduler_bank_open_row_packed[2*10 +: 10] = scheduler_bank_open_row[2];
     assign req_array[2] = request_t'(req_array_packed[2*51 +: 51]);
     assign req_valid[2] = req_valid_packed[2];
-    assign scheduler_bank_active[3] = row_open_valid[3];
-    assign scheduler_bank_open_row[3] = 10'(open_row[3]);
+    assign scheduler_bank_active[3] = 1'b0;
+    assign scheduler_bank_open_row[3] = '0;
     assign scheduler_bank_open_row_packed[3*10 +: 10] = scheduler_bank_open_row[3];
     assign req_array[3] = request_t'(req_array_packed[3*51 +: 51]);
     assign req_valid[3] = req_valid_packed[3];
-    assign bank_cmd_valid[0] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 2'd0);
+    assign bank_cmd_valid[0] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 1'd0);
     assign bank0_cmd_type = bank_cmd_valid[0] ? txn_cmd_type : 2'b00;
-    assign bank_cmd_valid[1] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 2'd1);
+    assign bank_cmd_valid[1] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 1'd1);
     assign bank1_cmd_type = bank_cmd_valid[1] ? txn_cmd_type : 2'b00;
-    assign bank_cmd_valid[2] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 2'd2);
-    assign bank2_cmd_type = bank_cmd_valid[2] ? txn_cmd_type : 2'b00;
-    assign bank_cmd_valid[3] = accepted_slow && (selected_bank[BANK_SEL_WIDTH-1:0] == 2'd3);
-    assign bank3_cmd_type = bank_cmd_valid[3] ? txn_cmd_type : 2'b00;
     assign act_pulse = |bank_cmd_valid;
     assign ref_ack = issue_ref;
 
@@ -363,7 +340,7 @@ module ddr4_controller_top (
                 cnt_stall <= cnt_stall + 32'd1;
                 if (service_pending_q) begin
                     cnt_stall_busy <= cnt_stall_busy + 32'd1;
-                end else if (tRRD_block && !is_row_hit) begin
+                end else if (1'b0) begin
                     cnt_stall_trrd <= cnt_stall_trrd + 32'd1;
                 end else if (!txn_sched_grant) begin
                     cnt_stall_refresh <= cnt_stall_refresh + 32'd1;
@@ -494,28 +471,6 @@ module ddr4_controller_top (
         .activating(bank_activating[1])
     );
 
-    ddr4_bank_top u_bank2 (
-        .clk(clk),
-        .rst_n(rst_n),
-        .cmd_valid(bank_cmd_valid[2]),
-        .cmd_type(bank2_cmd_type),
-        .bank_idle(bank_bank_idle[2]),
-        .bank_active(bank_bank_active[2]),
-        .cmd_ready(bank_cmd_ready[2]),
-        .activating(bank_activating[2])
-    );
-
-    ddr4_bank_top u_bank3 (
-        .clk(clk),
-        .rst_n(rst_n),
-        .cmd_valid(bank_cmd_valid[3]),
-        .cmd_type(bank3_cmd_type),
-        .bank_idle(bank_bank_idle[3]),
-        .bank_active(bank_bank_active[3]),
-        .cmd_ready(bank_cmd_ready[3]),
-        .activating(bank_activating[3])
-    );
-
     ddr4_refresh_refresh_controller u_refresh_controller (
         .clk(clk),
         .rst_n(rst_n),
@@ -530,13 +485,6 @@ module ddr4_controller_top (
         .act_count(tFAW_act_count),
         .tFAW_block(tFAW_block),
         .tFAW_ok(tFAW_ok)
-    );
-
-    ddr4_tRRD_simple_tRRD u_tRRD (
-        .clk(clk),
-        .rst_n(rst_n),
-        .act_pulse(act_pulse),
-        .tRRD_block(tRRD_block)
     );
 
 endmodule  // ddr4_controller_top

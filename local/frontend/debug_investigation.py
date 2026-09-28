@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+from lint_policy import BLOCKING_WARNING_CODES
+
 
 def source_catalog(root: Path, failure_dir: Path) -> dict[str, str]:
     catalog = {}
@@ -101,7 +103,11 @@ def configure_evidence_policy(record: dict, parsed: dict) -> None:
                           or markers.get("test_fail") or markers.get("errors_reported"))
     record["compiler_errors"] = [] if behavioral_failure else [
         item["raw"] for item in parsed.get("verilator_diagnostics", [])
-        if item.get("severity") == "error" and item.get("file")
+        if (item.get("severity") == "error" or
+            (item.get("severity") == "warning" and
+             re.match(r"%Warning-([A-Z0-9_]+):", item.get("raw", "")) and
+             re.match(r"%Warning-([A-Z0-9_]+):", item["raw"]).group(1) in BLOCKING_WARNING_CODES))
+        and item.get("file")
         and item.get("line") and isinstance(item.get("raw"), str) and item["raw"].strip()
     ]
 
@@ -392,7 +398,7 @@ def accept_assessment(record: dict, response: str) -> None:
         )
         if not {"rtl", "observation"}.issubset(kinds) or ("checker" not in kinds and not compiler_cited):
             raise ValueError("Sufficient evidence requires current RTL and observation citations, plus "
-                             "checker source or a cited parsed compiler error for a structural failure")
+                             "checker source or a cited parsed compiler error or policy-blocking warning for a structural failure")
     questions = data.get("unresolved_questions", [])
     actions = data.get("next_actions", [])
     if not isinstance(questions, list) or any(not isinstance(q, str) for q in questions):

@@ -5,6 +5,6 @@ controller_config:
   jedec_profile: DDR4-3200
   page_policy: open_page
   topology:
-    banks: 4
+    banks: 2
   features:
   - refresh_controller
