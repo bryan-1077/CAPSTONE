@@ -669,7 +669,7 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
         for bank_index in range(bank_count):
             lines.extend(
                 [
-                    f"            {bank_select_literal(bank_count, bank_index)}: begin",
+                    f"            2'd{bank_index}: begin",
                     f"                selected_row_open_valid = row_open_valid[{bank_index}];",
                     f"                selected_open_row = open_row[{bank_index}];",
                     "            end",
@@ -693,7 +693,7 @@ def build_phase1_row_buffer_wrapper_rtl(available_modules: set[str], bank_count:
         for bank_index in range(bank_count):
             lines.extend(
                 [
-                    f"            {bank_select_literal(bank_count, bank_index)}: begin",
+                    f"            2'd{bank_index}: begin",
                     f"                incoming_row_open_valid = row_open_valid[{bank_index}];",
                     f"                incoming_open_row = open_row[{bank_index}];",
                     "            end",

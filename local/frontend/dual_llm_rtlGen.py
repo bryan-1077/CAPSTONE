@@ -133,17 +133,7 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
 LINT_MODE_SINGLE_FILE = "single_file"
 LINT_MODE_INTEGRATION = "integration"
 
-_LINT_BLOCKING_WARNING_CODES = {
-    "WIDTH",
-    "WIDTHTRUNC",
-    "WIDTHEXPAND",
-    "WIDTHCONCAT",
-    "WIDTHXZEXPAND",
-    "LATCH",
-    "MULTIDRIVEN",
-    "BLKANDNBLK",
-    "PROCASSWIRE",
-}
+from lint_policy import BLOCKING_WARNING_CODES as _LINT_BLOCKING_WARNING_CODES
 
 _LINT_NONBLOCKING_WARNING_CODES = {
     "UNUSEDSIGNAL",

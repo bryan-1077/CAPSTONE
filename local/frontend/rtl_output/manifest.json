@@ -11,8 +11,7 @@
     "ddr4_refresh_refresh_controller",
     "ddr4_request_queue",
     "ddr4_scheduler_scheduler",
-    "ddr4_tFAW_tFAW_tracker",
-    "ddr4_tRRD_simple_tRRD"
+    "ddr4_tFAW_tFAW_tracker"
   ],
   "filelist": "filelist.f"
 }

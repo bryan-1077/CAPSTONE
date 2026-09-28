@@ -508,8 +508,8 @@ def enforce_timescale(rtl_root: str = "rtl_output") -> None:
 def write_system_lint_log(lint_result: dict) -> None:
     """Write detailed system-lint diagnostics, overwriting the previous log."""
     sections = [
-        ("Errors", lint_result.get("blocking", [])),
-        ("Warnings", lint_result.get("nonblocking", [])),
+        ("Blocking findings", lint_result.get("blocking", [])),
+        ("Nonblocking warnings", lint_result.get("nonblocking", [])),
         ("Ignored", lint_result.get("ignored", [])),
     ]
     lines = [
@@ -542,9 +542,10 @@ def run_full_system_lint(rtl_root: str = "rtl_output") -> None:
     print("[FLOW] Running full-system RTL lint...")
     lint_result = lint_full_system(rtl_dir=str(SCRIPT_DIR / rtl_root))
     write_system_lint_log(lint_result)
-    print("[FLOW] Full-system RTL lint: {} error(s), {} warning(s).".format(
+    print("[FLOW] Full-system RTL lint: {} error(s), {} warning(s), {} blocking finding(s).".format(
         lint_result.get("error_count", len(lint_result.get("blocking", []))),
         lint_result.get("warning_count", len(lint_result.get("nonblocking", []))),
+        len(lint_result.get("blocking", [])),
     ))
     if lint_result["ok"]:
         print("[FLOW] Full-system RTL lint OK.")
