@@ -1,7 +1,7 @@
 {
   "candidate_paths": {
-    "gdsii_candidate_path": "build_GDSII_250MHz_ai_176c225b_03",
-    "remote_gdsii_dir": "build_GDSII_250MHz_ai_176c225b_03"
+    "gdsii_candidate_path": "build_GDSII_250MHz_02",
+    "remote_gdsii_dir": "build_GDSII_250MHz_02"
   },
   "directory_resolution": {
     "gdsii_directory_resolution": {
@@ -9,7 +9,7 @@
       "mappeddir_source": "state.remote_mapped_dir",
       "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_250MHz_ai_176c225b_03",
+      "outdir": "build_GDSII_250MHz_02",
       "outdir_source": "state.remote_gdsii_dir",
       "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
@@ -21,7 +21,7 @@
       "mappeddir_source": "state.remote_mapped_dir",
       "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_250MHz_ai_176c225b_03",
+      "outdir": "build_GDSII_250MHz_02",
       "outdir_source": "state.remote_gdsii_dir",
       "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
@@ -31,7 +31,7 @@
       "mappeddir_source": "state.remote_mapped_dir",
       "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_250MHz_ai_176c225b_03",
+      "outdir": "build_GDSII_250MHz_02",
       "outdir_source": "state.remote_gdsii_dir",
       "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
@@ -41,7 +41,7 @@
     "exit_code": 0,
     "mappeddir": "build_mapped_snapshot_250MHz_01",
     "ok": true,
-    "outdir": "build_GDSII_250MHz_ai_176c225b_03"
+    "outdir": "build_GDSII_250MHz_02"
   },
   "output_files": {
     "gdsii_output_files": [
@@ -49,7 +49,7 @@
     ]
   },
   "outputs": {
-    "gdsii_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_03"
+    "gdsii_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02"
   },
   "review_context_inventory": {
     "detected_outputs": [

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import inspect
 import shlex
 import re
 from pathlib import Path
@@ -13,6 +14,7 @@ from services.path_naming import (
     resolve_prepare_dir,
 )
 from services.synthesis_recipe_library import build_synthesis_recipe_library_payload
+from services.prep_top import tcl_selects_top
 
 DEFAULT_INNER_HOST = "n01-zeus"
 DEFAULT_PROJECT_ROOT = "/home/ugrads/a/antgamez1203/capstone"
@@ -154,6 +156,7 @@ rules_path = {rules_path!r}
 rules_text = {rules_text!r}
 preflight_errors = {preflight_errors!r}
 recipe_library = json.loads({json.dumps(recipe_library_payload)!r})
+{inspect.getsource(tcl_selects_top)}
 MAX_CONTEXT_FILES = 400
 MAX_CONTEXT_CHARS = 6000
 MAX_RTL_SAMPLES = 12
@@ -1820,12 +1823,12 @@ else:
         if "filelist_genus.f" not in run_tcl_text:
             errors.append("run_genus_mc.tcl does not reference filelist_genus.f.")
             suggested_fixes.append("Update run_genus_mc.tcl to read filelist_genus.f.")
-        if top_module and top_module not in run_tcl_text:
+        if top_module and not tcl_selects_top(run_tcl_text, top_module):
             errors.append(
                 f"run_genus_mc.tcl does not reference the inferred top module '{{top_module}}'."
             )
             suggested_fixes.append(
-                f"Update run_genus_mc.tcl so it references the inferred top module '{{top_module}}'."
+                f"Update run_genus_mc.tcl to read TOP from top_module.txt and call elaborate $TOP, or directly elaborate the inferred top module '{{top_module}}'."
             )
         if "Preprocessor macros detected in source:" in readme_text and "set_db hdl_define" not in run_tcl_text:
             errors.append(

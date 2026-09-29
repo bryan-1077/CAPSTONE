@@ -1,8 +1,8 @@
 {
   "run_name": "target_250MHz",
-  "run_id": "176c225b91e84796b248a775e7322574",
-  "status": "failed",
-  "message": "Timing/area/power closure failed after 3 backend attempts and 3 AI recovery attempts. Best eligible attempt: build_GDSII_250MHz_02. See logs/timing_closure/timing_closure_report.md.",
+  "run_id": "78cf1b23e8de405c89000a9a913b3268",
+  "status": "passed",
+  "message": "Setup timing passed: WNS 0.034 ns at 4.000 ns.",
   "attempts": [
     {
       "attempt": 1,
@@ -17,25 +17,25 @@
       "status": "violated",
       "kind": "preset",
       "source_outdir": null,
-      "wns_ns": -0.802,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_01__reports__timing_postroute.rpt",
+      "wns_ns": -0.101,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__timing_postroute.rpt",
       "metrics_fetch": [
         {
           "ok": true,
           "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_01/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_01__reports__die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__die_area.rpt",
           "error": null
         },
         {
           "ok": true,
           "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_01/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_01__reports__power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__power_postroute.rpt",
           "error": null
         }
       ],
       "limits": {
         "die_area_mm2": 0.153512856,
-        "total_power_w": 0.04219701,
+        "total_power_w": 0.04225733,
         "max_die_area_mm2": 8.0,
         "max_power_w": 2.0,
         "within_limits": true,
@@ -52,232 +52,38 @@
         "innovus_ccopt_target_skew": 0.18,
         "innovus_ccopt_target_max_transition": 0.35
       },
-      "status": "violated",
+      "status": "passed",
       "kind": "preset",
       "source_outdir": null,
-      "wns_ns": -0.254,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
+      "wns_ns": 0.034,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
       "metrics_fetch": [
         {
           "ok": true,
           "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__die_area.rpt",
           "error": null
         },
         {
           "ok": true,
           "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__power_postroute.rpt",
           "error": null
         }
       ],
       "limits": {
         "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.04221258,
+        "total_power_w": 0.04223104,
         "max_die_area_mm2": 8.0,
         "max_power_w": 2.0,
         "within_limits": true,
         "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
       }
-    },
-    {
-      "attempt": 3,
-      "outdir": "build_GDSII_250MHz_03",
-      "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
-      "target_period_ns": 4.0,
-      "settings": {
-        "innovus_utilization": 0.5,
-        "innovus_ccopt_target_skew": 0.12,
-        "innovus_ccopt_target_max_transition": 0.25
-      },
-      "status": "violated",
-      "kind": "preset",
-      "source_outdir": null,
-      "wns_ns": -0.323,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_03__reports__timing_postroute.rpt",
-      "metrics_fetch": [
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_03/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_03__reports__die_area.rpt",
-          "error": null
-        },
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_03/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_03__reports__power_postroute.rpt",
-          "error": null
-        }
-      ],
-      "limits": {
-        "die_area_mm2": 0.1824975296,
-        "total_power_w": 0.04285022,
-        "max_die_area_mm2": 8.0,
-        "max_power_w": 2.0,
-        "within_limits": true,
-        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      }
-    },
-    {
-      "attempt": 4,
-      "outdir": "build_GDSII_250MHz_ai_176c225b_01",
-      "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
-      "target_period_ns": 4.0,
-      "settings": {
-        "innovus_utilization": 0.55,
-        "innovus_ccopt_target_skew": 0.18,
-        "innovus_ccopt_target_max_transition": 0.35
-      },
-      "status": "hold_violated",
-      "kind": "ai_resize",
-      "source_outdir": "build_GDSII_250MHz_02",
-      "ai_plan": {
-        "summary": "Best measured checkpoint is build_GDSII_250MHz_02: setup WNS=-0.254ns, hold has small violations down to -0.041ns on fast input-to-flop paths. Limits are very safe (area 0.1669mm^2 << 4mm^2, power 0.042W << 2W). The dominant setup critical paths share a large late-stage a22oi cell delay (~0.998\u20131.147ns) (e.g., g183318__7098, g183325__9315, g183314__2802, g183329__1666). A single targeted upsize of the worst of these (g183325__9315 at 1.147ns) is a low-risk, evidence-based experiment. Avoid upsizing earlier common driver g189594/FE_OFC218_n_38 as they feed many endpoints and may worsen holds/clock power. Hold fixes should be left to the tool during hold optimization; upsizing a late data-path gate typically does not worsen hold and may slightly help by increasing min delay upstream loading effects handled by the optimizer.",
-        "actions": [
-          {
-            "instance": "g183325__9315",
-            "from_cell": "sky130_fd_sc_hd__a22oi_1",
-            "to_cell": "sky130_fd_sc_hd__a22oi_4",
-            "reason": "Largest single-cell delay on a top violated setup path (Path 2 shows 1.147ns on g183325__9315). Upsizing the endpoint-near a22oi is the most direct way to recover ~0.25ns WNS with minimal fanout risk, while leaving early shared logic untouched to avoid broad hold/power regressions."
-          }
-        ]
-      },
-      "wns_ns": -0.26,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_01__reports__timing_postroute.rpt",
-      "metrics_fetch": [
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_01/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_01__reports__die_area.rpt",
-          "error": null
-        },
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_01/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_01__reports__power_postroute.rpt",
-          "error": null
-        }
-      ],
-      "limits": {
-        "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.04222306,
-        "max_die_area_mm2": 8.0,
-        "max_power_w": 2.0,
-        "within_limits": true,
-        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      },
-      "hold_wns_ns": -0.042
-    },
-    {
-      "attempt": 5,
-      "outdir": "build_GDSII_250MHz_ai_176c225b_02",
-      "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
-      "target_period_ns": 4.0,
-      "settings": {
-        "innovus_utilization": 0.55,
-        "innovus_ccopt_target_skew": 0.18,
-        "innovus_ccopt_target_max_transition": 0.35
-      },
-      "status": "hold_violated",
-      "kind": "ai_resize",
-      "source_outdir": "build_GDSII_250MHz_02",
-      "ai_plan": {
-        "summary": "Best eligible checkpoint is build_GDSII_250MHz_02 (setup WNS=-0.254ns; hold WNS=-0.041ns; area=0.1669mm^2, power=0.0422W well within limits). Prior experiment (attempt 4) upsizing g183325__9315 to a22oi_4 slightly worsened setup (WNS -0.260) and did not improve hold, so we avoid repeating it. Current worst setup paths (1/2/3/8/9/10 shown) consistently have very large delay concentrated in late-stage a22oi cells near the endpoints: g183318__7098 (0.998ns, already a22oi_2), g183305__2398 (0.859ns), g183314__2802 (1.053ns), g183329__1666 (1.131ns). A small, targeted next experiment is to upsize the highest-delay a22oi_1 instances that appear on multiple violated paths (g183314__2802 and g183329__1666) by one step to a22oi_2 to reduce delay without the more aggressive a22oi_4 jump that previously failed on a similar cell. Hold violations are on separate fast input->flop paths (a22o_1) not in resize_choices, so we must not worsen hold by touching shared early logic; these endpoint-near resizes are least likely to impact those holds and Innovus hold optimization can still insert delay cells if needed.",
-        "actions": [
-          {
-            "instance": "g183329__1666",
-            "from_cell": "sky130_fd_sc_hd__a22oi_1",
-            "to_cell": "sky130_fd_sc_hd__a22oi_2",
-            "reason": "Large single-cell contributor (1.131ns) on a violated setup path (Path 9) and very close to the endpoint; incremental upsize (x2) is a lower-risk alternative to the previously-failed jump-to-x4 on a similar a22oi_1."
-          },
-          {
-            "instance": "g183314__2802",
-            "from_cell": "sky130_fd_sc_hd__a22oi_1",
-            "to_cell": "sky130_fd_sc_hd__a22oi_2",
-            "reason": "Largest delay element (1.053ns) on another violated setup path (Path 8). Upsizing endpoint-near logic targets setup WNS directly while avoiding early shared stages (e.g., g189594/FE_OFC218_n_38) that could broadly impact hold and power."
-          }
-        ]
-      },
-      "wns_ns": -0.255,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_02__reports__timing_postroute.rpt",
-      "metrics_fetch": [
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_02/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_02__reports__die_area.rpt",
-          "error": null
-        },
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_02/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_02__reports__power_postroute.rpt",
-          "error": null
-        }
-      ],
-      "limits": {
-        "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.0422219,
-        "max_die_area_mm2": 8.0,
-        "max_power_w": 2.0,
-        "within_limits": true,
-        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      },
-      "hold_wns_ns": -0.042
-    },
-    {
-      "attempt": 6,
-      "outdir": "build_GDSII_250MHz_ai_176c225b_03",
-      "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
-      "target_period_ns": 4.0,
-      "settings": {
-        "innovus_utilization": 0.55,
-        "innovus_ccopt_target_skew": 0.18,
-        "innovus_ccopt_target_max_transition": 0.35
-      },
-      "status": "hold_violated",
-      "kind": "ai_resize",
-      "source_outdir": "build_GDSII_250MHz_02",
-      "ai_plan": {
-        "summary": "Using best measured eligible checkpoint build_GDSII_250MHz_02 (setup WNS=-0.254ns; hold WNS=-0.041ns; area=0.1669mm^2 and power=0.0422W well within 4mm^2/2W limits). Previous resizes were counterproductive: (attempt 4) g183325__9315->a22oi_4 worsened setup to -0.260ns; (attempt 5) g183329__1666 and g183314__2802 ->a22oi_2 did not improve setup (WNS -0.255ns). Avoid repeating those. The dominant setup slack is still driven by very large late-stage a22oi delays near endpoints (e.g., g183318__7098 at ~0.998ns is already a22oi_2). Next lowest-risk lever is to upsize g183318__7098 itself to a22oi_4, since it is the last big contributor on the worst setup path (Path 1) and not previously tried. Avoid touching early shared drivers (g189594/FE_OFC218_n_38/clock buffers) due to broad fanout and potential hold/power impact; hold violations are on separate fast input->flop paths not in resize_choices, so we should not make them harder by global speeding.",
-        "actions": [
-          {
-            "instance": "g183318__7098",
-            "from_cell": "sky130_fd_sc_hd__a22oi_2",
-            "to_cell": "sky130_fd_sc_hd__a22oi_4",
-            "reason": "On the current worst setup path (Path 1), g183318__7098 contributes ~0.998ns and is the dominant late-stage delay near the endpoint; it is already a22oi_2 so incremental upsizing to a22oi_4 is the remaining direct setup lever on that path not yet attempted. Prior upsizes of other endpoint-near a22oi_1 instances did not help, so target the specific large a22oi_2 still limiting WNS. Area/power headroom is ample, and this avoids early high-fanout logic that could worsen hold."
-          }
-        ]
-      },
-      "wns_ns": -0.228,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_03__reports__timing_postroute.rpt",
-      "metrics_fetch": [
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_03/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_03__reports__die_area.rpt",
-          "error": null
-        },
-        {
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_ai_176c225b_03/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_ai_176c225b_03__reports__power_postroute.rpt",
-          "error": null
-        }
-      ],
-      "limits": {
-        "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.04222205,
-        "max_die_area_mm2": 8.0,
-        "max_power_w": 2.0,
-        "within_limits": true,
-        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      },
-      "hold_wns_ns": -0.042
     }
   ],
   "limits": {
     "die_area_mm2": 0.1668525248,
-    "total_power_w": 0.04222205,
+    "total_power_w": 0.04223104,
     "max_die_area_mm2": 8.0,
     "max_power_w": 2.0,
     "within_limits": true,
@@ -293,28 +99,28 @@
       "innovus_ccopt_target_skew": 0.18,
       "innovus_ccopt_target_max_transition": 0.35
     },
-    "status": "violated",
+    "status": "passed",
     "kind": "preset",
     "source_outdir": null,
-    "wns_ns": -0.254,
-    "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
+    "wns_ns": 0.034,
+    "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
     "metrics_fetch": [
       {
         "ok": true,
         "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/die_area.rpt",
-        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__die_area.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__die_area.rpt",
         "error": null
       },
       {
         "ok": true,
         "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/power_postroute.rpt",
-        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/176c225b91e84796b248a775e7322574/build_GDSII_250MHz_02__reports__power_postroute.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__power_postroute.rpt",
         "error": null
       }
     ],
     "limits": {
       "die_area_mm2": 0.1668525248,
-      "total_power_w": 0.04221258,
+      "total_power_w": 0.04223104,
       "max_die_area_mm2": 8.0,
       "max_power_w": 2.0,
       "within_limits": true,

@@ -1,108 +1,89 @@
 {
-  "run_name": "target_250MHz_recovery_e7aad22b",
-  "run_id": "e7aad22b81a54ac6aeacd1b6b9967865",
+  "run_name": "target_250MHz",
+  "run_id": "78cf1b23e8de405c89000a9a913b3268",
   "status": "passed",
-  "message": "Setup timing passed: WNS 0.021 ns at 4.000 ns.",
+  "message": "Setup timing passed: WNS 0.034 ns at 4.000 ns.",
   "attempts": [
     {
       "attempt": 1,
-      "outdir": "build_GDSII_recovery_e7aad22b_250MHz_01",
+      "outdir": "build_GDSII_250MHz_01",
       "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
       "target_period_ns": 4.0,
       "settings": {
-        "innovus_ccopt_target_max_transition": 0.35,
-        "innovus_ccopt_target_skew": 0.18,
-        "innovus_utilization": 0.55
+        "innovus_utilization": 0.6,
+        "innovus_ccopt_target_skew": 0.25,
+        "innovus_ccopt_target_max_transition": 0.5
       },
       "status": "violated",
-      "kind": "restore_best",
-      "source_outdir": "build_GDSII_250MHz_02",
-      "wns_ns": -0.006,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_01__reports__timing_postroute.rpt",
+      "kind": "preset",
+      "source_outdir": null,
+      "wns_ns": -0.101,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__timing_postroute.rpt",
       "metrics_fetch": [
         {
           "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_01/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_01__reports__die_area.rpt",
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_01/reports/die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__die_area.rpt",
           "error": null
         },
         {
           "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_01/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_01__reports__power_postroute.rpt",
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_01/reports/power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_01__reports__power_postroute.rpt",
           "error": null
         }
       ],
       "limits": {
-        "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.04232254,
+        "die_area_mm2": 0.153512856,
+        "total_power_w": 0.04225733,
         "max_die_area_mm2": 8.0,
         "max_power_w": 2.0,
         "within_limits": true,
         "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      },
-      "hold_wns_ns": 0.061
+      }
     },
     {
       "attempt": 2,
-      "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
+      "outdir": "build_GDSII_250MHz_02",
       "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
       "target_period_ns": 4.0,
       "settings": {
-        "innovus_ccopt_target_max_transition": 0.35,
+        "innovus_utilization": 0.55,
         "innovus_ccopt_target_skew": 0.18,
-        "innovus_utilization": 0.55
+        "innovus_ccopt_target_max_transition": 0.35
       },
       "status": "passed",
-      "kind": "ai_resize",
-      "source_outdir": "build_GDSII_recovery_e7aad22b_250MHz_01",
-      "ai_plan": {
-        "summary": "Best routed checkpoint has very small setup violations (WNS=-0.006ns, next=-0.001ns) on two rsp_rdata_q_reg endpoints, while hold is healthy (hold WNS=+0.061ns) and power/area are far below limits (0.042W, 0.167mm^2). Apply a minimal, targeted upsize on the dominant late-stage high-delay cells common to the violating paths to recover ~6ps without broadly increasing load. Focus on the two largest single-cell delays near the end of each failing path: g183319__6131 (1.087ns) and g183329__1666 (1.137ns), both a22oi_1 with legal stronger options.",
-        "actions": [
-          {
-            "instance": "g183319__6131",
-            "from_cell": "sky130_fd_sc_hd__a22oi_1",
-            "to_cell": "sky130_fd_sc_hd__a22oi_2",
-            "reason": "Path 1 (WNS -0.006ns) includes g183319__6131 as a very large contributor (1.087ns) late in the datapath; modest upsize to a22oi_2 should reduce delay enough to recover a few ps with limited upstream loading impact and low risk to hold given +0.061ns margin."
-          },
-          {
-            "instance": "g183329__1666",
-            "from_cell": "sky130_fd_sc_hd__a22oi_1",
-            "to_cell": "sky130_fd_sc_hd__a22oi_2",
-            "reason": "Path 2 (WNS -0.001ns) includes g183329__1666 as the dominant cell delay (1.137ns) late in the datapath; upsize to a22oi_2 is a minimal strengthening likely to close remaining ~1ps while keeping power/area well within hard limits."
-          }
-        ]
-      },
-      "wns_ns": 0.021,
-      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__timing_postroute.rpt",
+      "kind": "preset",
+      "source_outdir": null,
+      "wns_ns": 0.034,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
       "metrics_fetch": [
         {
           "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01/reports/die_area.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__die_area.rpt",
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__die_area.rpt",
           "error": null
         },
         {
           "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01/reports/power_postroute.rpt",
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__power_postroute.rpt",
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__power_postroute.rpt",
           "error": null
         }
       ],
       "limits": {
         "die_area_mm2": 0.1668525248,
-        "total_power_w": 0.03679479,
+        "total_power_w": 0.04223104,
         "max_die_area_mm2": 8.0,
         "max_power_w": 2.0,
         "within_limits": true,
         "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-      },
-      "hold_wns_ns": 0.062
+      }
     }
   ],
   "limits": {
     "die_area_mm2": 0.1668525248,
-    "total_power_w": 0.03679479,
+    "total_power_w": 0.04223104,
     "max_die_area_mm2": 8.0,
     "max_power_w": 2.0,
     "within_limits": true,
@@ -110,58 +91,40 @@
   },
   "best_attempt": {
     "attempt": 2,
-    "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
+    "outdir": "build_GDSII_250MHz_02",
     "mapped_snapshot": "build_mapped_snapshot_250MHz_01",
     "target_period_ns": 4.0,
     "settings": {
-      "innovus_ccopt_target_max_transition": 0.35,
+      "innovus_utilization": 0.55,
       "innovus_ccopt_target_skew": 0.18,
-      "innovus_utilization": 0.55
+      "innovus_ccopt_target_max_transition": 0.35
     },
     "status": "passed",
-    "kind": "ai_resize",
-    "source_outdir": "build_GDSII_recovery_e7aad22b_250MHz_01",
-    "ai_plan": {
-      "summary": "Best routed checkpoint has very small setup violations (WNS=-0.006ns, next=-0.001ns) on two rsp_rdata_q_reg endpoints, while hold is healthy (hold WNS=+0.061ns) and power/area are far below limits (0.042W, 0.167mm^2). Apply a minimal, targeted upsize on the dominant late-stage high-delay cells common to the violating paths to recover ~6ps without broadly increasing load. Focus on the two largest single-cell delays near the end of each failing path: g183319__6131 (1.087ns) and g183329__1666 (1.137ns), both a22oi_1 with legal stronger options.",
-      "actions": [
-        {
-          "instance": "g183319__6131",
-          "from_cell": "sky130_fd_sc_hd__a22oi_1",
-          "to_cell": "sky130_fd_sc_hd__a22oi_2",
-          "reason": "Path 1 (WNS -0.006ns) includes g183319__6131 as a very large contributor (1.087ns) late in the datapath; modest upsize to a22oi_2 should reduce delay enough to recover a few ps with limited upstream loading impact and low risk to hold given +0.061ns margin."
-        },
-        {
-          "instance": "g183329__1666",
-          "from_cell": "sky130_fd_sc_hd__a22oi_1",
-          "to_cell": "sky130_fd_sc_hd__a22oi_2",
-          "reason": "Path 2 (WNS -0.001ns) includes g183329__1666 as the dominant cell delay (1.137ns) late in the datapath; upsize to a22oi_2 is a minimal strengthening likely to close remaining ~1ps while keeping power/area well within hard limits."
-        }
-      ]
-    },
-    "wns_ns": 0.021,
-    "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__timing_postroute.rpt",
+    "kind": "preset",
+    "source_outdir": null,
+    "wns_ns": 0.034,
+    "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__timing_postroute.rpt",
     "metrics_fetch": [
       {
         "ok": true,
-        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01/reports/die_area.rpt",
-        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__die_area.rpt",
+        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/die_area.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__die_area.rpt",
         "error": null
       },
       {
         "ok": true,
-        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01/reports/power_postroute.rpt",
-        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/e7aad22b81a54ac6aeacd1b6b9967865/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01__reports__power_postroute.rpt",
+        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_250MHz_02/reports/power_postroute.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/78cf1b23e8de405c89000a9a913b3268/build_GDSII_250MHz_02__reports__power_postroute.rpt",
         "error": null
       }
     ],
     "limits": {
       "die_area_mm2": 0.1668525248,
-      "total_power_w": 0.03679479,
+      "total_power_w": 0.04223104,
       "max_die_area_mm2": 8.0,
       "max_power_w": 2.0,
       "within_limits": true,
       "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
-    },
-    "hold_wns_ns": 0.062
+    }
   }
 }

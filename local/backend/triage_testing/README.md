@@ -40,7 +40,7 @@ To include actual tool evidence:
 python3 triage_testing/run_triage.py --log /path/to/actual/tool_report.log
 ```
 
-Results go into this folder as `triage_result.json` and `legacy_triage_result.json`. The runner excludes this README, the diff, and the fault manifest from the AI input. It returns nonzero when AI review is unavailable; a successful exit means review ran, not that a particular classification was obtained.
+Results go into this folder as `triage_result.json` and `legacy_triage_result.json`, with matching `.md` ownership reports. Frontend reports include the suspected RTL issue and supporting evidence. The runner excludes this README, the diff, and the fault manifest from the AI input. It returns nonzero when AI review is unavailable; a successful exit means review ran, not that a particular classification was obtained.
 
 The desired design-quality finding is `frontend` / `poor_logic_design`, supported by source or tool evidence. Classification is not guaranteed: the local fallback only pattern-matches diagnostics and cannot discover these faults from RTL alone. The AI also is not a substitute for simulation or timing analysis.
 
