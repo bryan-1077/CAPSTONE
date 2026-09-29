@@ -1,7 +1,7 @@
 # Top-level orchestrator skeleton
 
-Run from the repository root using Python 3.10+. The orchestrator itself uses
-only the standard library; frontend execution needs its existing dependencies.
+Run from the repository root using Python 3.10+. Frequency selection uses PyYAML;
+frontend execution and optional frequency advice need the existing frontend dependencies.
 
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
@@ -13,6 +13,9 @@ python -m shared.top_orchestrator generate --input local/frontend/configs/user_i
 
 # Execute generation, then stop at the validation placeholder.
 python -m shared.top_orchestrator generate --input local/frontend/configs/user_input.yaml --cache
+
+# Bypass the frequency prompt with an explicit backend target.
+python -m shared.top_orchestrator --input local/frontend/configs/user_input.yaml --target-mhz 230
 
 # Inspect an existing frontend failure workspace without model calls.
 python -m shared.top_orchestrator debug --failure-dir /absolute/path/to/failure_workspace --offline
@@ -26,7 +29,7 @@ python -m shared.top_orchestrator backend
 ```
 
 By default, generation opens the existing natural-language spec selection and
-confirmation flow, then automatically runs generation. Use `--input` to skip spec
+confirmation flow, asks for a backend target in MHz, then runs generation. Use `--input` to skip spec
 selection and reuse a YAML configuration. `--cache` caches RTL generation only;
 spec selection can still call a model. Use `--input ... --cache` to bypass both. Debug currently accepts an existing
 failure workspace created by `debug_agent.py`; new report intake is future work.
@@ -39,10 +42,13 @@ Debug retains its existing attempt limit and patch checks.
 | `contracts.py` | Configuration, stage results, and run state |
 | `nodes.py` | Frontend subprocess adapters and empty validation/backend adapters |
 | `orchestrator.py` | Explicit routing and atomic state-file updates |
+| `frequency.py` | Spec handoff, deterministic frequency checks, and opt-in advice |
 | `__main__.py` | CLI and plan-only inspection |
 
-Generation wraps `local/frontend/configure_from_text.py --run-flow` by default,
-or `local/frontend/run_flow.py` when `--input` is supplied. Debug wraps
+Spec selection wraps `local/frontend/configure_from_text.py --output <run-dir>/approved_specs.yaml`
+without `--run-flow`. Supplied `--input` specs are copied to that same run-local snapshot.
+After frequency selection, generation wraps `local/frontend/run_flow.py` with the snapshot.
+Debug wraps
 `local/frontend/debug_agent.py graph`. These workflows keep their internal steps.
 After generation, the adapter runs `run_sim.sh --no-wave-prompt` automatically.
 BIST output streams to the terminal and is saved as `bist.log` in the run directory.
@@ -102,6 +108,42 @@ errors should have bounded retries; ambiguous requirements should stop for input
 
 Suggested implementation order: design bundle, validation adapter, revision gate,
 backend adapter, then resume.
+
+## Target frequency selection
+
+After approving specs, enter a positive MHz value, press Enter for the displayed
+default, or type `discuss`. Only `discuss` calls the frequency advisor; numeric,
+default, and `--target-mhz` selection do not. Existing spec selection and RTL
+generation still have their own model calls. During discussion, enter follow-up
+questions, a final numeric target, or Enter to accept the original displayed default.
+Advice never automatically changes the target or approved specs. An unavailable
+advisor leaves manual selection available. EOF or interruption stops before generation;
+unattended runs should supply `--input` and `--target-mhz`.
+
+The deterministic clock fields supported in the input YAML are
+`controller_clock.frequency_mhz`, `controller_clock.period_ns`, and
+`controller_clock_mhz`. These are optional explicit controller-clock annotations.
+If multiple fields disagree, the highest frequency supplies the suggestion and
+the other values appear as mismatch warnings. With none present, the configured
+fallback is **200 MHz**, independent of backend environment defaults. `memory.speed`
+is a DDR transfer-rate setting and never supplies a controller-clock target.
+Mismatches with an explicit operating clock are reported and saved as warnings;
+the chosen backend target does not rewrite operating requirements.
+
+`state.json` stores the resolved `target_mhz`, selection source, and approved spec
+snapshot path. `frequency_selection.json` stores the suggestion, warnings, and
+discussion transcript. Repair cycles preserve the target without prompting again.
+Checks-only and direct debug/validation/backend entries do not run spec or frequency
+selection. `--plan` never prompts or calls a model.
+
+The advisor reuses `configure_from_text.call_llm` and its default model, with
+`TAMUS_AI_CHAT_API_KEY`. It receives the approved YAML and discussion history;
+past-run evidence is not connected yet. It is explicitly told not to invent
+measurements or guarantee timing closure.
+
+The future backend adapter can use `backend_command(config, mailbox_revision)` to pass the saved
+value as `app.py --mailbox <revision> --target-mhz <value>`. That command builder rejects absent targets;
+backend execution and its validation gate remain unconnected.
 
 ## Checks
 

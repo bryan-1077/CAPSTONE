@@ -7,7 +7,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contracts import RunConfig
-from .nodes import frontend_command
+from .nodes import frontend_command, spec_command
+from .frequency import DEFAULT_TARGET_MHZ, positive_mhz
 from .orchestrator import run
 
 
@@ -18,6 +19,8 @@ def main() -> int:
     parser.add_argument("--input", type=Path, help="Use existing YAML instead of interactive spec selection.")
     parser.add_argument("--failure-dir", type=Path, help="Existing frontend debug workspace.")
     parser.add_argument("--cache", action="store_true")
+    parser.add_argument("--target-mhz", type=positive_mhz,
+                        help="Backend clock target; bypass the frequency prompt.")
     parser.add_argument("--checks-only", action="store_true",
                         help="Skip spec selection and generation; check existing RTL with system lint and BIST.")
     parser.add_argument("--repair", action="store_true", help="Allow debug to propose and apply repairs.")
@@ -46,11 +49,20 @@ def main() -> int:
                        args.input.expanduser().resolve() if args.input else None,
                        args.failure_dir.expanduser().resolve() if args.failure_dir else None,
                        args.cache, args.repair, args.offline, args.max_attempts, args.max_repair_cycles,
-                       recheck_only=args.checks_only)
+                       recheck_only=args.checks_only, target_mhz=args.target_mhz,
+                       target_mhz_source="command line" if args.target_mhz is not None else None)
     if args.plan:
         if args.checks_only:
             print("Check existing RTL: system lint -> BIST; no spec selection or regeneration")
-        elif args.entry in {"generate", "debug"}:
+        elif args.entry == "generate":
+            if config.input_yaml is None:
+                print(shlex.join(spec_command(Path("<run-dir>/approved_specs.yaml"))))
+            print(f"Select backend target: {args.target_mhz:g} MHz" if args.target_mhz is not None
+                  else f"Prompt for target MHz: approved controller clock or {DEFAULT_TARGET_MHZ:g} MHz fallback; optional discuss")
+            from dataclasses import replace
+            print(shlex.join(frontend_command("generate", replace(config,
+                input_yaml=config.input_yaml or Path("<run-dir>/approved_specs.yaml")))))
+        elif args.entry == "debug":
             print(shlex.join(frontend_command(args.entry, config)))
         if args.entry == "generate":
             print("Then: bash local/frontend/run_sim.sh --no-wave-prompt (BIST)")

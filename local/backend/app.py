@@ -10,6 +10,7 @@ from workers.orchestrator import run_flow
 from schemas.state import FlowState
 from session_log_utils import run_with_session_logging
 from timing_closure.max_clocking import run_max_clocking
+from services.mailbox_input import stage_mailbox
 
 
 DEFAULT_PREPARE_SCRIPT = "prepare_rtl_for_genus_universal.py"
@@ -91,6 +92,8 @@ def _parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Run the EDA flow with a clock target in MHz.")
     parser.add_argument("command", nargs="*", metavar="COMMAND", help="max clocking: sweep from 230 MHz in 10 MHz steps until failure")
     parser.add_argument("--max-clocking", action="store_true", help="same as the 'max clocking' command")
+    parser.add_argument("--mailbox", type=Path,
+                        help="Local mailbox revision containing rtl/; upload it for remote prep instead of MemoryController.zip.")
     parser.add_argument(
         "--target-mhz", type=_positive_mhz, metavar="MHZ",
         help="target frequency, e.g. 230; overrides the environment period and disables inherited overconstraint",
@@ -115,12 +118,16 @@ def _parse_args(argv=None):
 
 def main(args=None):
     args = args if args is not None else _parse_args([])
+    # A sweep reuses one uploaded revision, even if the working tree changes.
+    args._mailbox_staged = None
     if args.max_clocking:
         def run_target(mhz):
             target_args = argparse.Namespace(**vars(args))
             target_args.target_mhz = mhz
             target_args.no_overconstraint = True
-            return _run_single_target(target_args, require_timing_closure=True)
+            result = _run_single_target(target_args, require_timing_closure=True)
+            args._mailbox_staged = target_args._mailbox_staged
+            return result
 
         return run_max_clocking(run_target)
     return _run_single_target(args)
@@ -300,6 +307,13 @@ def _run_single_target(args, *, require_timing_closure=False):
     }
 
     initial_state.update(full_flow_names(target_period))
+
+    if getattr(args, "mailbox", None) is not None:
+        staged = getattr(args, "_mailbox_staged", None)
+        if staged is None:
+            staged = stage_mailbox(args.mailbox, initial_state["remote_project_root"], ssh_config)
+            args._mailbox_staged = staged
+        initial_state.update(staged)
 
     result = run_flow(
         initial_state=initial_state,

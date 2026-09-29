@@ -5,15 +5,24 @@ import io
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
 from shared.top_orchestrator.contracts import FailureReport, RunConfig, StageResult
-from shared.top_orchestrator.nodes import debug_node, frontend_command, stream_command, generate_node
+from shared.top_orchestrator.nodes import debug_node, frontend_command, stream_command, generate_node, spec_command
 from shared.top_orchestrator.orchestrator import run
 
 
 class OrchestratorTests(unittest.TestCase):
+    def setUp(self):
+        # Stage tests start after selection; its real boundary is tested separately.
+        preparation = patch("shared.top_orchestrator.orchestrator.prepare_generation",
+            side_effect=lambda config, directory: replace(config,
+                input_yaml=config.input_yaml or Path("/approved.yaml"), target_mhz=200))
+        preparation.start()
+        self.addCleanup(preparation.stop)
+
     def test_lint_handoff_copies_diagnostic_for_both_entry_paths(self):
         for checks_only in (True, False):
             with self.subTest(checks_only=checks_only), tempfile.TemporaryDirectory() as temporary:
@@ -27,7 +36,8 @@ class OrchestratorTests(unittest.TestCase):
                     return 1
                 with patch("shared.top_orchestrator.nodes.FRONTEND", root), patch(
                         "shared.top_orchestrator.nodes.stream_command", side_effect=command):
-                    result = generate_node(RunConfig("generate", recheck_only=checks_only), output)
+                    result = generate_node(RunConfig("generate", input_yaml=Path("/approved.yaml"),
+                                                     recheck_only=checks_only), output)
                 self.assertEqual(result.failure.log, output / "flow_lint.log")
                 self.assertEqual(result.failure.log.read_text(), diagnostic)
                 (root / "flow_lint.log").write_text("later run")
@@ -107,9 +117,10 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(len(state.results), 3)
 
     def test_default_generation_selects_specs(self):
-        command = frontend_command("generate", RunConfig("generate"))
+        command = spec_command(Path("/approved.yaml"))
         self.assertTrue(any(part.endswith("configure_from_text.py") for part in command))
-        self.assertIn("--run-flow", command)
+        self.assertNotIn("--run-flow", command)
+        self.assertEqual(command[-2:], ["--output", "/approved.yaml"])
         command = frontend_command("generate", RunConfig("generate", Path("/input.yaml")))
         self.assertTrue(any(part.endswith("run_flow.py") for part in command))
 

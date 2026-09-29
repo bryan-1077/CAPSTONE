@@ -4,6 +4,33 @@ This folder contains the stage orchestrator and command builders used by the EDA
 
 ## Real Loop
 
+### Mailbox input
+
+From the repository root, use an explicitly selected local revision:
+
+```bash
+python local/backend/app.py --mailbox shared/mailbox/<run-id>/revision_001 --target-mhz 200
+```
+
+The revision must contain `rtl/` with the complete source tree, including headers
+and dependencies. Preserve the frontend's `rtl/manifest.json` to supply its
+`top_module`; without it the existing configured top remains in use. Other mailbox
+folders, such as `specs/` and verification reports, are not uploaded by backend.
+
+Backend freezes a temporary local copy, records SHA-256 hashes, uploads through
+its existing SSH credentials to a unique `mailbox_inputs/` directory under the
+remote project root, then passes that directory to prep using `--input` and the
+selected top using `--top`. Upload failure stops before the flow starts. Input
+paths and hashes are retained in the normal backend state log. Frequency sweeps
+reuse the same uploaded revision. No ZIP is required for this mode. Without
+`--mailbox`, standalone invocation retains the legacy `MemoryController.zip` input.
+
+This option transports an existing revision; it does not create the frontend
+mailbox or prove that validation passed. Automatic publication, remote validation,
+and the top-level gate for the exact validated revision still need integration.
+Directory input and `--top` follow the documented remote prep interface; they must
+also be available in the deployed `prepare_rtl_for_genus_universal.py`.
+
 At a high level, the flow is:
 
 1. `app.py` or one of the stage-specific runner scripts loads service exports and calls `run_flow(...)`.

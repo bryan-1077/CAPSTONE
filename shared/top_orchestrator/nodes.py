@@ -18,7 +18,7 @@ FRONTEND = REPO_ROOT / "local" / "frontend"
 def frontend_command(stage: Stage, config: RunConfig) -> list[str]:
     if stage == "generate":
         if config.input_yaml is None:
-            command = [sys.executable, "-u", str(FRONTEND / "configure_from_text.py"), "--run-flow"]
+            raise ValueError("Select specs before starting generation.")
         else:
             command = [sys.executable, "-u", str(FRONTEND / "run_flow.py"), str(config.input_yaml)]
         if config.cache:
@@ -45,6 +45,21 @@ def frontend_command(stage: Stage, config: RunConfig) -> list[str]:
             command.append("--offline")
         return command
     raise ValueError(f"No frontend command for {stage}")
+
+
+def spec_command(output: Path) -> list[str]:
+    return [sys.executable, "-u", str(FRONTEND / "configure_from_text.py"),
+            "--output", str(output)]
+
+
+def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
+    """Command for the future validated backend handoff; never resolve defaults late."""
+    from .frequency import positive_mhz
+    if config.target_mhz is None:
+        raise ValueError("Choose a target frequency before starting backend.")
+    target = positive_mhz(str(config.target_mhz))
+    return [sys.executable, "-u", str(REPO_ROOT / "local/backend/app.py"),
+            "--mailbox", str(mailbox.expanduser().resolve()), "--target-mhz", str(target)]
 
 
 def stream_command(command: list[str], log: Path) -> int:

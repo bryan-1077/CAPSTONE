@@ -135,6 +135,7 @@ def _build_prepare_command(state: FlowState) -> str:
         f"{remote_python} {shlex.quote(prepare_script)} "
         f"--input {shlex.quote(input_name)} "
         f"--outdir {shlex.quote(outdir)}"
+        + (f" --top {shlex.quote(state['top_module'])}" if state.get("mailbox_source") and state.get("top_module") else "")
     )
 
 

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .contracts import RunConfig, RunState, Stage, StageResult
 from .nodes import NODES
+from .frequency import prepare_generation
 
 
 def next_stage(result: StageResult) -> Stage | None:
@@ -28,6 +29,20 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
     # Never overwrite an earlier run's evidence.
     run_dir.mkdir(parents=True, exist_ok=False)
     state = RunState(config, current_stage=config.entry, status="running")
+    save_state(state, run_dir)
+    if config.entry == "generate" and not config.recheck_only:
+        try:
+            config = prepare_generation(config, run_dir)
+        except (Exception, KeyboardInterrupt) as exc:
+            state.status = "needs_attention"
+            state.current_stage = None
+            state.results.append(StageResult("generate", "needs_attention",
+                f"Pre-generation selection stopped: {type(exc).__name__}: {exc}"))
+            save_state(state, run_dir)
+            print(state.results[-1].message, flush=True)
+            return state
+        state.config = config
+        save_state(state, run_dir)
     active_config = config
     while state.current_stage is not None:
         save_state(state, run_dir)

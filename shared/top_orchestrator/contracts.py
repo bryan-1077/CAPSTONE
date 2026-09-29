@@ -28,6 +28,8 @@ class RunConfig:
     max_repair_cycles: int = 2
     failure: FailureReport | None = None
     recheck_only: bool = False
+    target_mhz: float | None = None
+    target_mhz_source: str | None = None
 
 
 @dataclass
