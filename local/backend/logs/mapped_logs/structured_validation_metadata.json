@@ -1,21 +1,21 @@
 {
   "directory_resolution": {
     "mapped_directory_resolution": {
-      "builddir": "build_netlist_200MHz_01",
+      "builddir": "build_netlist_250MHz_01",
       "builddir_source": "state.remote_netlist_dir",
-      "outdir": "build_mapped_200MHz_01",
+      "outdir": "build_mapped_250MHz_01",
       "outdir_source": "state.remote_mapped_dir",
-      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     }
   },
   "log_entries": {
     "mapped_directory_resolution": {
-      "builddir": "build_netlist_200MHz_01",
+      "builddir": "build_netlist_250MHz_01",
       "builddir_source": "state.remote_netlist_dir",
-      "outdir": "build_mapped_200MHz_01",
+      "outdir": "build_mapped_250MHz_01",
       "outdir_source": "state.remote_mapped_dir",
-      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "mapped_generate_1_completed": {
@@ -25,23 +25,23 @@
       "timeout_sec": 14400
     },
     "mapped_generate_1_directory_resolution": {
-      "builddir": "build_netlist_200MHz_01",
+      "builddir": "build_netlist_250MHz_01",
       "builddir_source": "state.remote_netlist_dir",
-      "outdir": "build_mapped_200MHz_01",
+      "outdir": "build_mapped_250MHz_01",
       "outdir_source": "state.remote_mapped_dir",
-      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "mapped_review_1_local_result": {
       "blocking_errors": [],
-      "candidate_path": "build_mapped_200MHz_01",
+      "candidate_path": "build_mapped_250MHz_01",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top_mapped.db",
           "results/ddr4_controller_top_mapped.sdc",
           "results/ddr4_controller_top_mapped.v"
         ],
-        "input_builddir": "build_netlist_200MHz_01",
+        "input_builddir": "build_netlist_250MHz_01",
         "input_inventory": {
           "files": [
             ".rs_antgamez1203.tstamp",
@@ -70,9 +70,9 @@
         },
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_progress.log": "[2026-09-28T18:19:40-05:00] mapped launcher started\n[2026-09-28T18:19:40-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T18:19:40-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T18:19:40-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T18:19:40-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T18:19:40-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T18:19:40-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T18:19:40-05:00] mapped still running\n[2026-09-28T18:20:40-05:00] mapped still running\n[2026-09-28T18:21:33-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
           "output:agent_mapped_stderr.log": "",
-          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_830522_42e11aa8-ae7c-4fae-8637-5efb7f13bc95_n01-zeus.olympus.ece.tamu.edu_antgamez1203_58dno0\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[18:19:40.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 18:19:40 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     830522\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[18:19:40.005498] Periodic Lic check successful\n[18:19:40.529803] Feature usage summary:\n[18:19:40.529803] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n*****************************************************************************************************\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -168,8 +168,8 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "builddir": "build_netlist_200MHz_01",
-          "candidate_path": "build_mapped_200MHz_01",
+          "builddir": "build_netlist_250MHz_01",
+          "candidate_path": "build_mapped_250MHz_01",
           "execution_ok": true,
           "local_error_count": 0,
           "local_warning_count": 11,
@@ -177,24 +177,24 @@
           "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
         },
         "suggested_fixes": [
-          "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
-          "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+          "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+          "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
         ],
-        "summary": "Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+        "summary": "Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
         "warnings": [
-          "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
-          "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+          "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+          "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
         ]
       },
       "blocking_errors": [],
-      "candidate_path": "build_mapped_200MHz_01",
+      "candidate_path": "build_mapped_250MHz_01",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top_mapped.db",
           "results/ddr4_controller_top_mapped.sdc",
           "results/ddr4_controller_top_mapped.v"
         ],
-        "input_builddir": "build_netlist_200MHz_01",
+        "input_builddir": "build_netlist_250MHz_01",
         "input_inventory": {
           "files": [
             ".rs_antgamez1203.tstamp",
@@ -223,9 +223,9 @@
         },
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_progress.log": "[2026-09-28T18:19:40-05:00] mapped launcher started\n[2026-09-28T18:19:40-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T18:19:40-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T18:19:40-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T18:19:40-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T18:19:40-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T18:19:40-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T18:19:40-05:00] mapped still running\n[2026-09-28T18:20:40-05:00] mapped still running\n[2026-09-28T18:21:33-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
           "output:agent_mapped_stderr.log": "",
-          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_830522_42e11aa8-ae7c-4fae-8637-5efb7f13bc95_n01-zeus.olympus.ece.tamu.edu_antgamez1203_58dno0\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[18:19:40.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 18:19:40 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     830522\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[18:19:40.005498] Periodic Lic check successful\n[18:19:40.529803] Feature usage summary:\n[18:19:40.529803] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n*****************************************************************************************************\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -319,10 +319,10 @@
       "route_back_to_stage": null,
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
       "suggested_fixes": [
-        "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
-        "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+        "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+        "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
       ],
-      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
       "warnings": [
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
@@ -335,8 +335,8 @@
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
-        "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
-        "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+        "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+        "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
       ]
     },
     "mapped_review_1_routing": {
@@ -368,7 +368,7 @@
       "results/ddr4_controller_top_mapped.sdc",
       "results/ddr4_controller_top_mapped.v"
     ],
-    "input_builddir": "build_netlist_200MHz_01",
+    "input_builddir": "build_netlist_250MHz_01",
     "input_inventory": {
       "files": [
         ".rs_antgamez1203.tstamp",
@@ -397,9 +397,9 @@
     },
     "key_files": {
       "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-      "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+      "output:agent_mapped_progress.log": "[2026-09-28T18:19:40-05:00] mapped launcher started\n[2026-09-28T18:19:40-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T18:19:40-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T18:19:40-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T18:19:40-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T18:19:40-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T18:19:40-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T18:19:40-05:00] mapped still running\n[2026-09-28T18:20:40-05:00] mapped still running\n[2026-09-28T18:21:33-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
       "output:agent_mapped_stderr.log": "",
-      "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+      "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_830522_42e11aa8-ae7c-4fae-8637-5efb7f13bc95_n01-zeus.olympus.ece.tamu.edu_antgamez1203_58dno0\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[18:19:40.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 18:19:40 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     830522\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[18:19:40.005498] Periodic Lic check successful\n[18:19:40.529803] Feature usage summary:\n[18:19:40.529803] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n*****************************************************************************************************\n...<truncated>..."
     },
     "log_classification": {
       "blocking_diagnostics": [],
@@ -466,16 +466,16 @@
     "failure_class": "non_fatal_warning_only_issue",
     "failure_stage_owner": "gdsii",
     "route_back_to_stage": null,
-    "rtl_failure_category": "routing_error",
-    "rtl_failure_handoff_owner": "backend"
+    "rtl_failure_category": null,
+    "rtl_failure_handoff_owner": null
   },
   "validation_entries": {
     "mapped_directory_resolution": {
-      "builddir": "build_netlist_200MHz_01",
+      "builddir": "build_netlist_250MHz_01",
       "builddir_source": "state.remote_netlist_dir",
-      "outdir": "build_mapped_200MHz_01",
+      "outdir": "build_mapped_250MHz_01",
       "outdir_source": "state.remote_mapped_dir",
-      "prep_dir": "build_prep_200MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "mapped_review": {
@@ -489,8 +489,8 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "builddir": "build_netlist_200MHz_01",
-          "candidate_path": "build_mapped_200MHz_01",
+          "builddir": "build_netlist_250MHz_01",
+          "candidate_path": "build_mapped_250MHz_01",
           "execution_ok": true,
           "local_error_count": 0,
           "local_warning_count": 11,
@@ -498,25 +498,25 @@
           "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
         },
         "suggested_fixes": [
-          "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
-          "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+          "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+          "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
         ],
-        "summary": "Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+        "summary": "Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
         "warnings": [
-          "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
-          "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+          "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+          "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
         ]
       },
       "attempt": 1,
       "blocking_errors": [],
-      "candidate_path": "build_mapped_200MHz_01",
+      "candidate_path": "build_mapped_250MHz_01",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top_mapped.db",
           "results/ddr4_controller_top_mapped.sdc",
           "results/ddr4_controller_top_mapped.v"
         ],
-        "input_builddir": "build_netlist_200MHz_01",
+        "input_builddir": "build_netlist_250MHz_01",
         "input_inventory": {
           "files": [
             ".rs_antgamez1203.tstamp",
@@ -545,9 +545,9 @@
         },
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-          "output:agent_mapped_progress.log": "[2026-09-24T13:26:14-05:00] mapped launcher started\n[2026-09-24T13:26:14-05:00] builddir=build_netlist_200MHz_01\n[2026-09-24T13:26:14-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-24T13:26:14-05:00] outdir=build_mapped_200MHz_01\n[2026-09-24T13:26:14-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-24T13:26:14-05:00] mapped_script=scripts_200MHz_01/run_genus_mapped_200MHz_01.py\n[2026-09-24T13:26:14-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-24T13:26:14-05:00] mapped still running\n[2026-09-24T13:27:14-05:00] mapped still running\n[2026-09-24T13:28:09-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+          "output:agent_mapped_progress.log": "[2026-09-28T18:19:40-05:00] mapped launcher started\n[2026-09-28T18:19:40-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T18:19:40-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T18:19:40-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T18:19:40-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T18:19:40-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T18:19:40-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T18:19:40-05:00] mapped still running\n[2026-09-28T18:20:40-05:00] mapped still running\n[2026-09-28T18:21:33-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
           "output:agent_mapped_stderr.log": "",
-          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_200MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_2721092_ed5f4cb7-bf8e-432f-b78a-3fda8112a36b_n01-zeus.olympus.ece.tamu.edu_antgamez1203_LzmV7H\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:26:15.501649] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_200MHz_01/run_genus_mapped.tcl \nDate:    Thu Sep 24 13:26:15 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     2721092\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:26:15.005979] Periodic Lic check successful\n[13:26:15.530280] Feature usage summary:\n[13:26:15.530280] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+          "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_830522_42e11aa8-ae7c-4fae-8637-5efb7f13bc95_n01-zeus.olympus.ece.tamu.edu_antgamez1203_58dno0\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[18:19:40.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 18:19:40 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     830522\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[18:19:40.005498] Periodic Lic check successful\n[18:19:40.529803] Feature usage summary:\n[18:19:40.529803] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n*****************************************************************************************************\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -613,10 +613,10 @@
       "detected_patterns": [],
       "errors": [],
       "execution_context": {
-        "builddir": "build_netlist_200MHz_01",
+        "builddir": "build_netlist_250MHz_01",
         "exit_code": 0,
         "ok": true,
-        "outdir": "build_mapped_200MHz_01"
+        "outdir": "build_mapped_250MHz_01"
       },
       "failure_class": "non_fatal_warning_only_issue",
       "failure_stage_owner": "mapped_netlist",
@@ -647,10 +647,10 @@
       "route_back_to_stage": null,
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
       "suggested_fixes": [
-        "No mapped-stage fix required. If you want to reduce noise, use a Liberty variant/tool option that strips unsupported attributes, or filter these message IDs in reporting.",
-        "If later stages require explicit decap insertion, ensure the physical-flow decap strategy uses appropriate LEF/physical decap cells rather than relying on logical timing models that Genus marks unusable. Otherwise, ignore [LBR-9] for decap_* cells."
+        "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+        "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
       ],
-      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage ran to completion (rc=0), produced expected mapped artifacts (.db/.v/.sdc), and reached mapping/reporting. No evidence of broken netlist-stage input contract. Only non-blocking Liberty parser/info warnings were observed; ownership remains mapped_netlist but stage passes.",
+      "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
       "warnings": [
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
@@ -663,8 +663,8 @@
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
         "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
-        "Genus emitted Liberty compatibility infos [LBR-40] for unsupported attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored them, so they are non-blocking.",
-        "Genus also reported [LBR-9] warnings for SKY130 decap cells lacking output pins; these cells are marked unusable for mapping but are typically non-functional filler/decap cells, so this is usually benign unless your flow expects decaps to be available for later physical stages."
+        "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+        "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
       ]
     }
   }

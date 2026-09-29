@@ -10,6 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from timing_closure.remote_analyze import fetch_remote_reports
+from timing_closure.recovery_context import build_recovery_evidence, excerpt
 from timing_closure.timing_analyzer import analyze_reports, parse_timing_report, render_markdown
 from services.path_naming import resolve_prepare_dir, resolve_netlist_dir_choice, resolve_mapped_dir_choice
 from services import mapped_snapshot
@@ -193,11 +194,15 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 context = {
                     "target_period_ns": target, "source_attempt": source_entry,
                     "limits": {"max_die_area_mm2": MAX_DIE_AREA_MM2, "max_power_w": MAX_POWER_W},
-                    "timing_report": timing_text, "resize_choices": choices,
+                    "timing_report": excerpt(timing_text, 16000), "resize_choices": choices,
+                    "report_evidence": build_recovery_evidence(ssh, project_root, staging, source_entry, attempts),
                     "attempt_history": deepcopy(attempts),
                 }
                 record("planning", f"AI recovery {attempt - limit}/{ai_limit}: inspect best attempt {source_entry['attempt']} with WNS {source_entry['wns_ns']:.3f} ns.")
-                plan = validate_plan(plan_timing_recovery(context), choices)
+                (run_log_dir / f"ai_context_{run_id}_{attempt}.json").write_text(json.dumps(context, indent=2) + "\n")
+                plan = validate_plan(plan_timing_recovery(
+                    context, diagnostics_path=run_log_dir / f"ai_response_{run_id}_{attempt}.json",
+                ), choices)
                 (run_log_dir / f"ai_plan_{attempt}.json").write_text(json.dumps({"context": context, "plan": plan}, indent=2) + "\n")
                 if not plan["actions"]:
                     return fail(f"AI timing recovery stopped: {plan['summary']}")
@@ -287,22 +292,22 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             if not entry["limits"]["within_limits"]:
                 status = "limits_exceeded"
                 message = f"Candidate rejected: die {entry['limits']['die_area_mm2']:.6f} mm², power {entry['limits']['total_power_w']:.6f} W; limits 4 mm² / 2 W."
-            if is_ai:
+            if is_ai or recovery_source:
                 hold_paths, _ = fetch_remote_reports(
                     ssh=ssh, remote_project_root=project_root,
                     report_paths=[f"{outdir}/reports/hold_postroute.rpt"], local_staging_dir=staging,
                 )
                 if len(hold_paths) != 1:
                     entry["status"] = "hold_missing"
-                    return fail("AI candidate has no fresh hold-timing report.")
+                    return fail("Recovery candidate has no fresh hold-timing report.")
                 hold = parse_timing_report(hold_paths[0])
                 if hold.wns is None or not math.isfinite(hold.wns) or not hold.paths:
                     entry["status"] = "hold_missing"
-                    return fail("AI candidate hold timing cannot be verified.")
+                    return fail("Recovery candidate hold timing cannot be verified.")
                 entry["hold_wns_ns"] = hold.wns
                 if hold.wns < 0 or (hold.tns is not None and hold.tns < 0) or hold.violating_path_count:
                     status = "hold_violated"
-                    message = f"AI resize candidate rejected: hold slack {hold.wns:.3f} ns."
+                    message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
             entry["status"] = status
             if status in {"passed", "violated"} and entry["limits"]["within_limits"]:
                 candidates.append({"entry": dict(entry), "state": dict(working)})

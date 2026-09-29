@@ -1,8 +1,8 @@
 {
   "run_name": "target_200MHz",
-  "run_id": "d885ff0431b94d899138ca130f36b108",
-  "status": "failed",
-  "message": "GDSII review failed after 1 iterations: GDSII output directory does not contain an expected layout artifact (*.gds or *.gdsii).; GDSII generation command failed with exit code 1: srun: job 644297 queued and waiting for resources\nsrun: job 644297 has been allocated resources\nTraceback (most recent call last):\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 1673, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 1657, in main\n    run_bash(bash_cmd, logfile=wrapper_log, cwd=outdir)\n  File \"/home/ugrads/a/antgamez1203/capstone/.timing_closure_runner_200MHz_01.py\", line 35, in run_bash\n    raise RuntimeError(\nRuntimeError: Command failed with exit code 7. See log: /home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_01/logs/run_wrapper.log\nsrun: error: n01-zeus: task 0: Exited with exit code 1; GDSII stage did not complete successfully: wrapper raised RuntimeError after underlying Innovus run returned non-zero (wrapper exit code 7; stage rc=1). No *.gds/*.gdsii was produced.; Failure is GDSII-owned (post-launch tool execution): Innovus was found, licensed, and began importing LEF/lib/netlist/MMMC/SDC; the mapped handoff contract appears present (mapped .v/.sdc/.db).",
+  "run_id": "1b42ddc3a7c74a22be369633fd5adbf3",
+  "status": "passed",
+  "message": "Setup timing passed: WNS 0.008 ns at 5.000 ns.",
   "attempts": [
     {
       "attempt": 1,
@@ -14,14 +14,117 @@
         "innovus_ccopt_target_skew": 0.25,
         "innovus_ccopt_target_max_transition": 0.5
       },
-      "status": "implementation_failed",
+      "status": "violated",
       "kind": "preset",
-      "source_outdir": null
+      "source_outdir": null,
+      "wns_ns": -0.206,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_01__reports__timing_postroute.rpt",
+      "metrics_fetch": [
+        {
+          "ok": true,
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_01/reports/die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_01__reports__die_area.rpt",
+          "error": null
+        },
+        {
+          "ok": true,
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_01/reports/power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_01__reports__power_postroute.rpt",
+          "error": null
+        }
+      ],
+      "limits": {
+        "die_area_mm2": 0.153512856,
+        "total_power_w": 0.03343694,
+        "max_die_area_mm2": 8.0,
+        "max_power_w": 2.0,
+        "within_limits": true,
+        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
+      }
+    },
+    {
+      "attempt": 2,
+      "outdir": "build_GDSII_200MHz_02",
+      "mapped_snapshot": "build_mapped_snapshot_200MHz_01",
+      "target_period_ns": 5.0,
+      "settings": {
+        "innovus_utilization": 0.55,
+        "innovus_ccopt_target_skew": 0.18,
+        "innovus_ccopt_target_max_transition": 0.35
+      },
+      "status": "passed",
+      "kind": "preset",
+      "source_outdir": null,
+      "wns_ns": 0.008,
+      "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__timing_postroute.rpt",
+      "metrics_fetch": [
+        {
+          "ok": true,
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_02/reports/die_area.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__die_area.rpt",
+          "error": null
+        },
+        {
+          "ok": true,
+          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_02/reports/power_postroute.rpt",
+          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__power_postroute.rpt",
+          "error": null
+        }
+      ],
+      "limits": {
+        "die_area_mm2": 0.1668525248,
+        "total_power_w": 0.03349462,
+        "max_die_area_mm2": 8.0,
+        "max_power_w": 2.0,
+        "within_limits": true,
+        "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
+      }
     }
   ],
   "limits": {
+    "die_area_mm2": 0.1668525248,
+    "total_power_w": 0.03349462,
     "max_die_area_mm2": 8.0,
-    "max_power_w": 2.0
+    "max_power_w": 2.0,
+    "within_limits": true,
+    "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
   },
-  "best_attempt": null
+  "best_attempt": {
+    "attempt": 2,
+    "outdir": "build_GDSII_200MHz_02",
+    "mapped_snapshot": "build_mapped_snapshot_200MHz_01",
+    "target_period_ns": 5.0,
+    "settings": {
+      "innovus_utilization": 0.55,
+      "innovus_ccopt_target_skew": 0.18,
+      "innovus_ccopt_target_max_transition": 0.35
+    },
+    "status": "passed",
+    "kind": "preset",
+    "source_outdir": null,
+    "wns_ns": 0.008,
+    "report": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__timing_postroute.rpt",
+    "metrics_fetch": [
+      {
+        "ok": true,
+        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_02/reports/die_area.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__die_area.rpt",
+        "error": null
+      },
+      {
+        "ok": true,
+        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_200MHz_02/reports/power_postroute.rpt",
+        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/1b42ddc3a7c74a22be369633fd5adbf3/build_GDSII_200MHz_02__reports__power_postroute.rpt",
+        "error": null
+      }
+    ],
+    "limits": {
+      "die_area_mm2": 0.1668525248,
+      "total_power_w": 0.03349462,
+      "max_die_area_mm2": 8.0,
+      "max_power_w": 2.0,
+      "within_limits": true,
+      "power_basis": "Innovus report_power; activity and analysis conditions inherited from the design"
+    }
+  }
 }
