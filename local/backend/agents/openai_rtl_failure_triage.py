@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import re
+from pathlib import Path
+from uuid import uuid4
 from typing import Any, Iterable, Mapping
 
 from agents.openai_prep_review import (
@@ -393,7 +395,69 @@ def _call_chat_completions_plain_json_api(
     return _normalize_ai_result(parsed, model=model), raw_response
 
 
+def write_rtl_failure_report(result: Mapping[str, Any], path: Path) -> Path:
+    """Persist the final ownership decision and evidence as a readable report."""
+    owner, category = _normalize_owner_category(
+        result.get("handoff_owner"), result.get("failure_category")
+    )
+    owner_label = {
+        FRONTEND_OWNER: "Frontend", BACKEND_OWNER: "Backend",
+        UNKNOWN_OWNER: "Unknown (more evidence needed)",
+    }[owner]
+    lines = [
+        "# RTL Failure Triage", "",
+        f"**Failure belongs to:** {owner_label}", "",
+        f"**Category:** `{category}`", "",
+        "## Suspected RTL issue" if owner == FRONTEND_OWNER else "## Assessment", "",
+        str(result.get("summary") or "No detailed diagnosis was provided."), "",
+    ]
+    if owner == FRONTEND_OWNER:
+        lines.extend([
+            "This is a suspected cause based on the available evidence; it requires verification.", "",
+        ])
+    for heading, key in (
+        ("Supporting evidence", "evidence"),
+        ("Recommended next steps", "suggested_next_steps"), ("Warnings", "warnings"),
+    ):
+        items = result.get(key) or []
+        if items:
+            lines.extend([f"## {heading}", ""])
+            lines.extend("- " + str(item).replace("\n", "\n  ") for item in items)
+            lines.append("")
+    path = path.resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
 def run_openai_rtl_failure_triage(
+    *,
+    local_review: Mapping[str, Any] | None = None,
+    execution_context: Mapping[str, Any] | None = None,
+    logs: Mapping[str, Any] | None = None,
+    rtl_sources: Mapping[str, str] | None = None,
+    report_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Classify a failure and save its final decision, including local fallbacks."""
+    result = _run_openai_rtl_failure_triage(
+        local_review=local_review, execution_context=execution_context,
+        logs=logs, rtl_sources=rtl_sources,
+    )
+    path = Path(report_path) if report_path is not None else (
+        Path(__file__).resolve().parents[1] / "logs" / "rtl_failure_triage"
+        / f"triage_{uuid4().hex}.md"
+    )
+    try:
+        result["report_path"] = str(write_rtl_failure_report(result, path))
+    except OSError as exc:
+        result["report_path"] = None
+        result["warnings"] = [
+            *result.get("warnings", []), f"Could not write RTL failure report: {exc}",
+        ]
+    return result
+
+
+def _run_openai_rtl_failure_triage(
     *,
     local_review: Mapping[str, Any] | None = None,
     execution_context: Mapping[str, Any] | None = None,
@@ -478,6 +542,8 @@ def run_openai_rtl_failure_triage(
         "Use backend when implementation flow, timing closure, physical design, routing, or constraints should change: "
         "timing_violation, congestion, routing_error, or sdc_constraint. "
         "Frontend means send the RTL back to designers to improve logic quality, without finer frontend error categories. "
+        "For frontend failures, explain the suspected RTL issue in the summary and cite specific modules, "
+        "signals, or structures in the evidence when available. Do not invent source locations or causes. "
         "Timing or congestion alone does not establish poor RTL design; keep it in backend unless evidence "
         "identifies an RTL design weakness as the root cause. "
         "Backend means keep the issue in synthesis/place-route/signoff implementation for tool, constraint, timing, or physical changes. "

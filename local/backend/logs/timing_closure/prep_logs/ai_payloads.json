@@ -10,7 +10,7 @@
     "request_metadata": {
       "api_style": "chat_completions_fallback",
       "base_url": "https://chat-api.tamu.ai/openai",
-      "candidate_path": "build_prep_mc",
+      "candidate_path": "build_prep_250MHz_01",
       "inventory_file_count": 16,
       "local_error_count": 0,
       "local_warning_count": 0,
@@ -19,16 +19,15 @@
       "rtl_sample_count": 11
     },
     "suggested_fixes": [
-      "(Optional hardening) In run_genus_mc.tcl, set init_lib_search_path to include all unique directories from GENUS_LIBS rather than only [file dirname [lindex $lib_list 0]].",
-      "(Optional clarity) Add a short note in README_prepared.txt stating that mc_genus.sdc is intentionally minimal and that IO delays are set to 0.0 by default, so users should update for their environment."
+      "Make run_genus_mc.tcl derive TOP from top_module.txt when present (fallback to the current hardcoded value). Example pattern: set TOP [string trim [read [open \"./top_module.txt\" r]]] with existence checks; keep env override if you use one.",
+      "Optionally add a short comment in constraints/mc_genus.sdc documenting that txn_* ports are treated as synchronous single-cycle IO with 0 delay only for bring-up, and must be replaced with realistic interface constraints for signoff."
     ],
-    "summary": "Prep bundle looks complete and internally consistent for Genus bring-up: artifacts present (filelist/Tcl/SDC/top_module), selected top ddr4_controller_top is not a harness and does not expose interface ports, and dependency/module closure matches the filelist (no missing modules or duplicates). No prep-stage blockers found.",
+    "summary": "Prep-contract looks complete and internally consistent: required artifacts exist (filelist, Tcl, SDC, README, top_module.txt), filelist resolves to existing RTL sources, selected top (ddr4_controller_top) is not a testbench/harness and has normal scalar/vector ports (no interface ports at the boundary), and dependency analysis shows no missing modules/files. Remaining items are non-blocking robustness/clarity improvements (TOP sourcing, generic SDC assumptions).",
     "warnings": [
-      "Top/module consistency check: top_module.txt, README_prepared.txt, and run_genus_mc.tcl all agree on TOP=ddr4_controller_top (good). No evidence the selected top is a testbench/harness (has real ports; no initial/$finish markers reported).",
-      "SDC is a generic bring-up constraint (0 input/output delay, reset false-pathed). This is acceptable for bring-up, but may over-constrain/under-constrain depending on intended IO timing and any multi-clock/derived-clock behavior (not a prep blocker).",
-      "run_genus_mc.tcl requires GENUS_LIBS and assumes the libs are all co-located for init_lib_search_path (uses dirname of first lib). If GENUS_LIBS contains libs from multiple directories, users may need to adjust init_lib_search_path accordingly (not a prep blocker).",
-      "Several RTL files declare `timescale 1ns/1ps. This is simulation-oriented but generally harmless for Genus; keeping it is fine (not a prep blocker).",
-      "README_prepared.txt mentions stripping SVA and debug system tasks; the provided rtl_samples still show $countones usage and struct packing/casting. These are normal SV constructs; just note that successful parsing depends on Genus SV support/version (not a prep completeness issue)."
+      "SDC is intentionally generic: it applies 0.0 input/output delays to all non-clock/non-reset ports. This is fine for bring-up but can mask real IO timing needs; treat mc_genus.sdc as a starter only (especially if any ports are meant to model an external DDR PHY/DRAM boundary).",
+      "run_genus_mc.tcl hardcodes set TOP \"ddr4_controller_top\" instead of reading top_module.txt. This is internally consistent with the current bundle (top_module.txt matches), but it is fragile if the top is overridden/regenerated later; prefer sourcing top_module.txt to keep artifacts coupled.",
+      "README_prepared.txt claims the flow 'preserves packages, interfaces' but this particular bundle contains no interface definitions/references. Not a problem—just note that interface-preservation is unexercised here.",
+      "Some modules include `timescale directives. Typically harmless for synthesis, but if your environment flags them, you may need to strip them in the generic sanitizer (non-blocking prep note)."
     ]
   },
   "validation_local_review": {

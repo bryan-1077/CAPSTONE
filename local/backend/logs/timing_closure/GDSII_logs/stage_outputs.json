@@ -1,55 +1,59 @@
 {
   "candidate_paths": {
-    "gdsii_candidate_path": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02",
-    "remote_gdsii_dir": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02"
+    "gdsii_candidate_path": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
+    "remote_gdsii_dir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01"
   },
   "directory_resolution": {
     "gdsii_directory_resolution": {
-      "mappeddir": "build_mapped_tc_612a8442fce0438da306294573cbf2dd",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_mc_lang",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02",
+      "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_mc",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     }
   },
   "directory_resolution_logs": {
     "gdsii_directory_resolution": {
-      "mappeddir": "build_mapped_tc_612a8442fce0438da306294573cbf2dd",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_mc_lang",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02",
+      "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_mc",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "gdsii_generate_1_directory_resolution": {
-      "mappeddir": "build_mapped_tc_612a8442fce0438da306294573cbf2dd",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_mc_lang",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02",
+      "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_mc",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     }
   },
   "execution_context": {
-    "exit_code": 1,
-    "mappeddir": "build_mapped_tc_612a8442fce0438da306294573cbf2dd",
-    "ok": false,
-    "outdir": "build_GDSII_tc_612a8442fce0438da306294573cbf2dd_02"
+    "exit_code": 0,
+    "mappeddir": "build_mapped_snapshot_250MHz_01",
+    "ok": true,
+    "outdir": "build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01"
   },
   "output_files": {
-    "gdsii_output_files": []
+    "gdsii_output_files": [
+      "results/ddr4_controller_top.gds"
+    ]
   },
   "outputs": {
-    "gdsii_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_tc_612a8442fce0438da306294573cbf2dd_01"
+    "gdsii_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_recovery_e7aad22b_250MHz_ai_e7aad22b_01"
   },
   "review_context_inventory": {
-    "detected_outputs": []
+    "detected_outputs": [
+      "results/ddr4_controller_top.gds"
+    ]
   }
 }

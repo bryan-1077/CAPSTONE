@@ -9,23 +9,22 @@
     "request_metadata": {
       "api_style": "chat_completions_fallback",
       "base_url": "https://chat-api.tamu.ai/openai",
-      "builddir": "build_netlist_mc_lang",
-      "candidate_path": "build_mapped_mc_lang",
+      "builddir": "build_netlist_250MHz_01",
+      "candidate_path": "build_mapped_250MHz_01",
       "execution_ok": true,
       "local_error_count": 0,
-      "local_warning_count": 0,
+      "local_warning_count": 11,
       "model": "protected.gpt-5.2",
       "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
     },
     "suggested_fixes": [
-      "Update mapped-stage log selection to prefer agent_mapped_stdout.log (or genus.log if present) over agent_mapped_progress.log so mapping/reporting progress can be reliably detected.",
-      "Ensure the mapped wrapper copies/saves the full Genus session log (genus.log) into the output directory to avoid fallback classification and improve debuggability.",
-      "If the Liberty warnings become problematic, filter out/ignore decap cells from the synthesis library set or use a Genus-compatible Liberty variant for SKY130; otherwise treat as informational since mapping completed and outputs were produced."
+      "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+      "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
     ],
-    "summary": "Mapped stage appears successful: command exited rc=0 and expected mapped outputs (mapped .db/.sdc/.v) and reports are present; input generic bundle contract is satisfied. Only non-blocking issues found: incomplete log capture/selection and informational Liberty/library warnings.",
+    "summary": "Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
     "warnings": [
-      "Local classifier used a fallback primary log because build_mapped_mc_lang/genus.log was missing; ensure full Genus log capture is retained for deterministic triage.",
-      "Genus reported Liberty parsing limitations and cell usability warnings (e.g., [LBR-40] unknown attributes like 'define'/'library_features' ignored; [LBR-9] decap cells have no output pins and will be marked unusable). These are typically non-fatal but should be tracked if mapping coverage/QoR issues arise."
+      "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+      "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
     ]
   },
   "validation_ai_review": {
@@ -38,23 +37,22 @@
     "request_metadata": {
       "api_style": "chat_completions_fallback",
       "base_url": "https://chat-api.tamu.ai/openai",
-      "builddir": "build_netlist_mc_lang",
-      "candidate_path": "build_mapped_mc_lang",
+      "builddir": "build_netlist_250MHz_01",
+      "candidate_path": "build_mapped_250MHz_01",
       "execution_ok": true,
       "local_error_count": 0,
-      "local_warning_count": 0,
+      "local_warning_count": 11,
       "model": "protected.gpt-5.2",
       "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
     },
     "suggested_fixes": [
-      "Update mapped-stage log selection to prefer agent_mapped_stdout.log (or genus.log if present) over agent_mapped_progress.log so mapping/reporting progress can be reliably detected.",
-      "Ensure the mapped wrapper copies/saves the full Genus session log (genus.log) into the output directory to avoid fallback classification and improve debuggability.",
-      "If the Liberty warnings become problematic, filter out/ignore decap cells from the synthesis library set or use a Genus-compatible Liberty variant for SKY130; otherwise treat as informational since mapping completed and outputs were produced."
+      "If you want cleaner logs, filter/waive Genus message IDs LBR-40 (and optionally LBR-9 for known decap cells) in your message/report configuration, or use a Liberty variant/tool version that doesn’t emit these infos.",
+      "If LBR-9 becomes problematic (e.g., flow expects decap usage), ensure you are using the intended SKY130 library views for synthesis and that decap cells are treated as physical-only cells downstream rather than mappable timing/function cells."
     ],
-    "summary": "Mapped stage appears successful: command exited rc=0 and expected mapped outputs (mapped .db/.sdc/.v) and reports are present; input generic bundle contract is satisfied. Only non-blocking issues found: incomplete log capture/selection and informational Liberty/library warnings.",
+    "summary": "Mapped-stage run completed successfully (rc=0) and produced expected mapped artifacts (mapped .v/.sdc/.db plus reports/FV collateral). No blocking diagnostics found; only non-fatal Liberty parser/quality warnings. Ownership remains in mapped_netlist, but nothing blocks the mapped stage.",
     "warnings": [
-      "Local classifier used a fallback primary log because build_mapped_mc_lang/genus.log was missing; ensure full Genus log capture is retained for deterministic triage.",
-      "Genus reported Liberty parsing limitations and cell usability warnings (e.g., [LBR-40] unknown attributes like 'define'/'library_features' ignored; [LBR-9] decap cells have no output pins and will be marked unusable). These are typically non-fatal but should be tracked if mapping coverage/QoR issues arise."
+      "Genus reported Liberty compatibility infos [LBR-40] for unsupported/unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and are non-blocking.",
+      "Genus also emitted Liberty warnings [LBR-9] that some decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) have no output pins and will be marked unusable for mapping; typically benign since these are decap/filler-type cells, but worth confirming your flow doesn’t expect them to be mappable logic cells."
     ]
   },
   "validation_local_review": {
@@ -65,7 +63,19 @@
     "pass": true,
     "route_back_to_stage": null,
     "suggested_fixes": [],
-    "summary": "No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 0 warnings.",
-    "warnings": []
+    "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings.",
+    "warnings": [
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 4)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 5)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 6)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 7)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 8)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 9)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
+      "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)"
+    ]
   }
 }

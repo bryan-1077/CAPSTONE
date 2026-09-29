@@ -1,6 +1,8 @@
 import os
 import sys
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -8,6 +10,39 @@ from agents import openai_rtl_failure_triage as triage
 
 
 class RTLFailureTriageTests(unittest.TestCase):
+    def setUp(self):
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.report_path = Path(directory.name) / "reports" / "triage.md"
+
+    def test_fallback_reports_identify_owner_and_suspected_issue(self):
+        for diagnostic, owner in (
+            ("Excessive combinational depth in the request selector.", "Frontend"),
+            ("WNS -0.119 ns", "Backend"),
+            ("Unrecognized failure", "Unknown (more evidence needed)"),
+        ):
+            with self.subTest(owner=owner), patch.dict(os.environ, {}, clear=True):
+                result = triage.run_openai_rtl_failure_triage(
+                    logs={"stderr": diagnostic}, report_path=self.report_path,
+                )
+                report = Path(result["report_path"]).read_text()
+                self.assertIn(f"**Failure belongs to:** {owner}", report)
+                if owner == "Frontend":
+                    self.assertIn("## Suspected RTL issue", report)
+                    self.assertIn(diagnostic, report)
+                else:
+                    self.assertNotIn("## Suspected RTL issue", report)
+
+    def test_report_write_failure_preserves_classification(self):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch.object(triage, "write_rtl_failure_report", side_effect=OSError("disk full")),
+        ):
+            result = triage.run_openai_rtl_failure_triage(logs={"stderr": "WNS -0.119"})
+        self.assertEqual(result["handoff_owner"], "backend")
+        self.assertIsNone(result["report_path"])
+        self.assertTrue(any("disk full" in warning for warning in result["warnings"]))
+
     def classify(self, diagnostic):
         return triage.run_local_rtl_failure_triage(logs={"stderr": diagnostic})
 
@@ -70,7 +105,7 @@ class RTLFailureTriageTests(unittest.TestCase):
     def test_missing_api_key_keeps_local_design_diagnosis(self):
         with patch.dict(os.environ, {}, clear=True):
             result = triage.run_openai_rtl_failure_triage(
-                logs={"stderr": "Poor logic design in the datapath."}
+                logs={"stderr": "Poor logic design in the datapath."}, report_path=self.report_path,
             )
         self.assertEqual(result["handoff_owner"], "frontend")
         self.assertFalse(result["available"])
@@ -87,7 +122,12 @@ class RTLFailureTriageTests(unittest.TestCase):
             patch.object(triage, "_build_client", return_value=object()),
             patch.object(triage, "_call_responses_api", return_value=(ai_result, "{}")) as call,
         ):
-            result = triage.run_openai_rtl_failure_triage(logs={"stderr": "WNS -0.119"})
+            result = triage.run_openai_rtl_failure_triage(
+                logs={"stderr": "WNS -0.119"}, report_path=self.report_path,
+            )
+        report = self.report_path.read_text()
+        self.assertIn("**Failure belongs to:** Frontend", report)
+        self.assertIn("Serial mux chain requires RTL redesign.", report)
         self.assertEqual(result["handoff_owner"], "frontend")
         self.assertEqual(result["failure_category"], "poor_logic_design")
         self.assertIn("poor_logic_design", call.call_args.kwargs["system_prompt"])
