@@ -650,12 +650,18 @@ def build_timing_eco_tcl(plan, top):
     lines = [
         "# Restore the best checkpoint into a fresh output directory.",
         "if {[catch {",
-        "restoreDesign %s %s" % (word(plan["checkpoint"]), word(top)),
+        # saveDesign writes an .enc Tcl loader plus an .enc.dat database.
+        # The generated loader chooses read_db or restoreDesign for the UI mode.
+        "set eco_checkpoint %s" % word(plan["checkpoint"]),
+        'if {![file isfile $eco_checkpoint] || ![file readable $eco_checkpoint]} {error "Checkpoint restore script is missing or unreadable: $eco_checkpoint"}',
+        'if {![file isdirectory ${eco_checkpoint}.dat] || ![file readable ${eco_checkpoint}.dat]} {error "Checkpoint database is missing or unreadable: ${eco_checkpoint}.dat"}',
+        'source $eco_checkpoint',
         'if {[eda_die_area_mm2] > 4.0} {error "Die footprint exceeds 4 mm^2; resizing stopped"}',
     ]
     seen = set()
-    if plan["actions"]:
-        lines.append("deleteFiller -prefix FILL")
+    # Restored checkpoints include this flow's FILL instances even when the
+    # recovery only remeasures a checkpoint without explicit resize actions.
+    lines.append("deleteFiller -prefix FILL")
     for action in plan["actions"]:
         if not isinstance(action, dict) or set(action) != {"instance", "from_cell", "to_cell", "reason"}:
             raise ValueError("Only gate/buffer resizing is supported")
@@ -920,7 +926,7 @@ def build_innovus_tcl(
     lines.append("init_design")
     lines.append("saveDesign $DBS_DIR/01_init.enc")
     lines.append("")
-    lines.append("if {[catch {collectGenusLibrary > $OUTDIR/collectGenusLibrary.log} cgl_err]} {")
+    lines.append("if {[catch {collectGenusLibrary > $OUTDIR/logs/collectGenusLibrary.log} cgl_err]} {")
     lines.append('    puts "WARN: collectGenusLibrary failed: $cgl_err"')
     lines.append("} else {")
     lines.append('    puts "INFO: wrote collectGenusLibrary.log"')
@@ -1061,6 +1067,30 @@ def build_innovus_tcl(
     lines.append("")
     if timing_eco_plan is not None:
         lines[implementation_start:] = build_timing_eco_tcl(timing_eco_plan, top)
+    # Timing repair needs placement space. Reinsert fillers and perform PG,
+    # routing, connectivity, DRC and timing checks only after optimization.
+    if final_postroute_setup_opt:
+        lines.append('puts "INFO: configuring OCV analysis for post-route setup optimization"')
+        lines.append('if {[catch {setAnalysisMode -analysisType onChipVariation} postroute_analysis_err]} {')
+        lines.append('    puts "ERROR: cannot configure post-route OCV analysis: $postroute_analysis_err"')
+        lines.append("    exit 4")
+        lines.append("}")
+        lines.append('puts "INFO: running final post-route setup optimization"')
+        lines.append('if {[catch {optDesign -postRoute -setup} postroute_setup_opt_err]} {')
+        lines.append('    puts "ERROR: final optDesign -postRoute -setup failed: $postroute_setup_opt_err"')
+        lines.append("    exit 4")
+        lines.append("} else {")
+        lines.append('    puts "INFO: final optDesign -postRoute -setup complete"')
+        lines.append("}")
+        lines.append("catch {saveDesign $DBS_DIR/05e_postroute_setup_opt.enc}")
+        lines.append("")
+    if timing_eco_plan is not None:
+        lines.extend([
+            'if {[catch {optDesign -postRoute -hold} eco_hold_err]} {',
+            '    puts "ERROR: timing ECO hold optimization failed: $eco_hold_err"',
+            '    exit 6',
+            '}',
+        ])
     if filler_cells:
         lines.append("catch {setFillerMode -add_fillers_with_drc false}")
         lines.append(
@@ -1209,28 +1239,6 @@ def build_innovus_tcl(
     lines.append('    puts "INFO: verify_drc command finished; review violation count in the log"')
     lines.append("}")
     lines.append("")
-    if final_postroute_setup_opt:
-        lines.append('puts "INFO: configuring OCV analysis for post-route setup optimization"')
-        lines.append('if {[catch {setAnalysisMode -analysisType onChipVariation} postroute_analysis_err]} {')
-        lines.append('    puts "ERROR: cannot configure post-route OCV analysis: $postroute_analysis_err"')
-        lines.append("    exit 4")
-        lines.append("}")
-        lines.append('puts "INFO: running final post-route setup optimization"')
-        lines.append('if {[catch {optDesign -postRoute -setup} postroute_setup_opt_err]} {')
-        lines.append('    puts "ERROR: final optDesign -postRoute -setup failed: $postroute_setup_opt_err"')
-        lines.append("    exit 4")
-        lines.append("} else {")
-        lines.append('    puts "INFO: final optDesign -postRoute -setup complete"')
-        lines.append("}")
-        lines.append("catch {saveDesign $DBS_DIR/05e_postroute_setup_opt.enc}")
-        lines.append("")
-    if timing_eco_plan is not None and timing_eco_plan["actions"]:
-        lines.extend([
-            'if {[catch {optDesign -postRoute -hold; verify_drc} eco_hold_err]} {',
-            '    puts "ERROR: timing ECO hold/DRC check failed: $eco_hold_err"',
-            '    exit 6',
-            '}',
-        ])
     lines.append('if {[catch {report_timing -max_paths 10 > $REPORTS_DIR/timing_postroute.rpt} timing_report_err]} {')
     lines.append('    puts "ERROR: post-route timing report failed: $timing_report_err"')
     lines.append("    exit 5")
@@ -1238,7 +1246,7 @@ def build_innovus_tcl(
     lines.append("catch {report_area > $REPORTS_DIR/area_postroute.rpt}")
     lines.extend([
         'if {[catch {',
-        '    report_power -unit W > $REPORTS_DIR/power_postroute.rpt',
+        '    report_power -power_unit W > $REPORTS_DIR/power_postroute.rpt',
         '    set power_units [open $REPORTS_DIR/power_postroute.rpt a]',
         '    puts $power_units "Power Units: W"',
         '    close $power_units',
@@ -1498,7 +1506,7 @@ def main():
     )
     mmmc_file = tcldir / "mmmc.tcl"
     tcl_path = tcldir / "run_innovus.tcl"
-    wrapper_log = outdir / "run_wrapper.log"
+    wrapper_log = logsdir / "run_wrapper.log"
     innovus_log = logsdir / "innovus.log"
     native_log = logsdir / "innovus_native.log"
 
@@ -1522,7 +1530,7 @@ def main():
     write_text(reportsdir / "netlist_constant_usage.rpt", constant_usage_txt)
     write_text(reportsdir / "{0}.conn.rpt".format(top), format_connectivity_note(top))
     write_text(reportsdir / "power.rpt", format_power_note())
-    write_text(outdir / "collectGenusLibrary.log", format_collect_genus_library_log(timing_libs))
+    write_text(logsdir / "collectGenusLibrary.log", format_collect_genus_library_log(timing_libs))
 
     write_tcl(
         tcl_path=tcl_path,

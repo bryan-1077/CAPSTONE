@@ -15,6 +15,8 @@ This directory holds the OpenAI-backed review and edit agents used by the EDA fl
 
 Notes:
 
+- RTL failure triage writes a Markdown ownership report for every completed review, including local fallbacks. Reports default to `local/backend/logs/rtl_failure_triage/triage_<unique-id>.md`; callers can supply `report_path`. The returned `report_path` identifies the file. Frontend reports include the suspected RTL issue and available evidence; unknown ownership is stated explicitly. Report write failures are returned as warnings without discarding the classification.
+
 - Reviewers judge pass/fail and classify issues. Deterministic review always runs first.
 - Editors only propose or apply bounded changes; they do not decide ownership.
 - General AI review and edit are optional and additive. If their backend is unavailable, over budget, or returns non-JSON output, the flow falls back to deterministic behavior. Timing recovery is different: if its AI planner is unavailable or invalid, closure stops with an explicit error and preserves the best measured checkpoint.

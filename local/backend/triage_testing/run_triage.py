@@ -22,12 +22,13 @@ def main():
     with zipfile.ZipFile(archive) as bundle:
         sources = {name: bundle.read(name).decode() for name in bundle.namelist() if name.endswith(".sv")}
     # Exclude the mutation manifest and answer key from the review evidence.
+    output = ROOT / ("legacy_triage_result.json" if args.legacy else "triage_result.json")
     result = run_openai_rtl_failure_triage(
         execution_context={"top_module": "ddr4_controller_top"},
         rtl_sources=sources,
         logs={"log_text": args.log.read_text()} if args.log else {},
+        report_path=output.with_suffix(".md"),
     )
-    output = ROOT / ("legacy_triage_result.json" if args.legacy else "triage_result.json")
     output.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({
         "handoff_owner": result.get("handoff_owner"),
@@ -36,6 +37,7 @@ def main():
         "ai_available": result.get("available"),
         "api_error": result.get("api_error"),
         "output": str(output),
+        "report_path": result.get("report_path"),
     }, indent=2))
     return 0 if result.get("available") else 1
 

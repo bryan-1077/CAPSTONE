@@ -1,21 +1,22 @@
 {
   "candidate_paths": {
-    "netlist_candidate_path": "build_netlist_mc_lang",
-    "netlist_resolved_top": "ddr4_controller_top"
+    "netlist_candidate_path": "build_netlist_250MHz_01",
+    "netlist_resolved_top": "ddr4_controller_top",
+    "remote_netlist_dir": "build_netlist_250MHz_01"
   },
   "directory_resolution": {
     "netlist_directory_resolution": {
-      "builddir": "build_prep_mc",
+      "builddir": "build_prep_250MHz_01",
       "builddir_source": "state.prep_candidate_path",
-      "outdir": "build_netlist_mc_lang",
-      "outdir_source": "derived_from_prepare_dir:build_prep_mc"
+      "outdir": "build_netlist_250MHz_01",
+      "outdir_source": "state.remote_netlist_dir"
     }
   },
   "execution_context": {
-    "builddir": "build_prep_mc",
+    "builddir": "build_prep_250MHz_01",
     "exit_code": 0,
     "ok": true,
-    "outdir": "build_netlist_mc_lang"
+    "outdir": "build_netlist_250MHz_01"
   },
   "output_files": {
     "netlist_output_files": [
@@ -25,7 +26,7 @@
     ]
   },
   "outputs": {
-    "netlist_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_netlist_mc_lang"
+    "netlist_remote_dir": "/home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01"
   },
   "review_context_inventory": {
     "detected_outputs": [

@@ -29,6 +29,10 @@ class EvidenceSSH(fixtures.FakeSSH):
         self.missing_metric = missing_metric
 
     def fetch_file(self, remote, local):
+        if remote.endswith("run_wrapper.log"):
+            return {"ok": False, "error": "No optimization log in fixture", "remote_path": remote}
+        if remote.endswith("timing_postroute.rpt") and Path(local).exists():
+            return {"ok": True, "remote_path": remote}
         if self.missing_metric and remote.endswith(self.missing_metric):
             return {"ok": False, "error": "missing", "remote_path": remote}
         result = super().fetch_file(remote, local)
@@ -68,9 +72,22 @@ class AIClosureTests(unittest.TestCase):
         self.assertIn("--timing-eco-json", command)
         self.assertIn("--clock-period 4.762", command)
 
+    def test_recovery_request_includes_best_build_reports(self):
+        with patch.object(closure, "plan_timing_recovery", return_value=plan()) as ai:
+            self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2, 0.01]))
+        context = ai.call_args.args[0]
+        evidence = context["report_evidence"]["best_build"]
+        self.assertEqual(evidence["source_build"], context["source_attempt"]["outdir"])
+        self.assertEqual(set(evidence["reports"]), {"setup", "hold", "power", "area", "optimization_log"})
+        self.assertEqual(evidence["reports"]["hold"]["status"], "included")
+        self.assertIn("content", evidence["reports"]["hold"])
+        diagnostics = Path(ai.call_args.kwargs["diagnostics_path"])
+        context_path = diagnostics.with_name(diagnostics.name.replace("ai_response_", "ai_context_"))
+        self.assertEqual(json.loads(context_path.read_text())["report_evidence"], context["report_evidence"])
+
     def test_regression_restarts_from_best_and_feedback_reaches_ai(self):
         seen = []
-        def decide(context):
+        def decide(context, **kwargs):
             seen.append(json.loads(json.dumps(context)))
             return plan(4 if len(seen) == 1 else 8)
         with patch.object(closure, "plan_timing_recovery", side_effect=decide):
@@ -133,6 +150,21 @@ class AIClosureTests(unittest.TestCase):
             result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2]))
         self.assertEqual(len(self.states), 3)
         self.assertIn("No useful legal change", result["last_error"])
+
+    def test_restore_with_passing_setup_but_failing_hold_is_rejected(self):
+        self.state.update(timing_closure_recover_best=True, timing_closure_attempts=[{
+            "attempt": 1, "status": "violated", "wns_ns": -0.1, "target_period_ns": 4.762,
+            "settings": closure.backend_settings({}, 1), "outdir": "old_1", "mapped_snapshot": "old_snapshot",
+        }])
+        class FailingHoldSSH(EvidenceSSH):
+            def fetch_file(self, remote, local):
+                result = super().fetch_file(remote, local)
+                if remote.endswith("hold_postroute.rpt"):
+                    Path(local).write_text(Path(local).read_text().replace("0.020", "-0.042"))
+                return result
+        result = self.run_closure(FailingHoldSSH([0.01]))
+        self.assertEqual(result["timing_closure_status"], "failed")
+        self.assertEqual(result["timing_closure_attempts"][0]["status"], "hold_violated")
 
     def test_recover_existing_best_remeasures_without_reserving_old_builds(self):
         self.state.update(timing_closure_recover_best=True, timing_closure_attempts=[{
@@ -213,7 +245,12 @@ class PlanTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("tclsh"), "Tcl interpreter required")
     def test_eco_tcl_applies_verified_resize_and_rejects_stale_master(self):
-        script = "\n".join(build_timing_eco_tcl({"checkpoint": "/project/best/db/06_final.enc", "actions": plan()["actions"]}, "top"))
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        checkpoint = Path(directory.name) / "06_final.enc"
+        checkpoint.write_text('restoreDesign [file dirname [info script]]/06_final.enc.dat top\n')
+        Path(str(checkpoint) + ".dat").mkdir()
+        script = "\n".join(build_timing_eco_tcl({"checkpoint": str(checkpoint), "actions": plan()["actions"]}, "top"))
         stub = '''
 proc restoreDesign {args} {puts RESTORED}
 proc eda_die_area_mm2 {} {return 3.5}
@@ -258,8 +295,10 @@ proc ecoRoute {} {puts ROUTED}
             ]
             completed = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertTrue((Path(directory) / "logs" / "collectGenusLibrary.log").exists())
+            self.assertEqual(list(Path(directory).glob("*.log")), [])
             scripts = list((Path(directory) / "tcl").glob("*.tcl"))
-            script = next(p.read_text() for p in scripts if "restoreDesign" in p.read_text())
+            script = next(p.read_text() for p in scripts if "source $eco_checkpoint" in p.read_text())
             self.assertNotIn("\ninit_design\n", script)
             self.assertNotIn("\nfloorPlan ", script)
             self.assertIn("ecoChangeCell -inst {g189616}", script)

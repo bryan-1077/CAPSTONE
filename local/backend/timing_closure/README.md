@@ -8,7 +8,7 @@ This directory holds the tools that run backend setup timing closure, analyze ti
 - `timing_analyzer.py`: Extracts timing measurements, classifies critical paths using pattern-matching rules, and generates recommendations in Markdown or JSON.
 - `remote_analyze.py`: Downloads timing reports from the SSH server and analyzes local copies.
 - `resume.py`: Loads a saved flow state and starts closure at the GDSII stage using an already successful mapped design.
-- `timing_closure_report.md`: Generated summary of the latest closure status, timing results, and recommendations.
+- `../logs/timing_closure/timing_closure_report.md`: Generated summary of the latest closure status, timing results, and recommendations.
 - `tests/`: Checks report parsing, closure decisions, retries, build naming, and backend setup.
 - `fixtures/`: Sample timing reports, a minimal mapped design, and technology files used for testing.
 
@@ -19,7 +19,7 @@ Notes:
 - Success requires fresh reports confirming setup timing at the requested period, die footprint <= **4 mm²**, and total reported power <= **2 W**. Missing, non-finite, zero/placeholder, or unrecognized power/area measurements cannot pass. AI resize candidates must also pass a fresh hold-timing check.
 - Area means the die bounding-box footprint, not the sum of standard-cell areas. Power means Innovus's total-power estimate under the design's existing activity and analysis conditions; it is not a measured-silicon or worst-workload guarantee. This flow does not provide full multi-corner signoff.
 - RTL recommendations remain advisory. AI recovery changes only drive strengths of observed SKY130 HD combinational gates and buffers within the same Boolean-function family; it does not edit RTL or timing/power constraints.
-- Logs, status, and attempt details are saved under `logs/timing_closure/`. Existing backend build directories are preserved; a naming collision stops the run.
+- Logs, reports, status, and attempt details are saved under `logs/timing_closure/`. Downloaded reports default to `logs/timing_closure/remote/`; explicit staging-directory overrides are still honored. Existing backend build directories are preserved; a naming collision stops the run.
 
 To run the full flow at a chosen frequency, run from the project root:
 

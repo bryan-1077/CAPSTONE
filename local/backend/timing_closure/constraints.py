@@ -13,6 +13,9 @@ def parse_total_power(text):
     default_unit = re.search(r"Power\s+Units?\s*[:=]\s*(?:1\s*)?([munp]?W)\b", text, re.I)
     values = []
     for line in text.splitlines():
+        # Innovus prints this section heading before the numeric total.
+        if re.fullmatch(r"\s*Total\s+Power\s*", line, re.I):
+            continue
         match = re.fullmatch(
             rf"\s*Total\s+Power\s*(?:\(([munp]?W)\))?\s*(?:[:=]\s*|\s+)({NUMBER})\s*([munp]?W)?\s*(?:\([^)]*\))?\s*;?\s*",
             line, re.I,

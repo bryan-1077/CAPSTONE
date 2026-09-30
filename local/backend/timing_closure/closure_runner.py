@@ -10,6 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from timing_closure.remote_analyze import fetch_remote_reports
+from timing_closure.recovery_context import build_recovery_evidence, excerpt
 from timing_closure.timing_analyzer import analyze_reports, parse_timing_report, render_markdown
 from services.path_naming import resolve_prepare_dir, resolve_netlist_dir_choice, resolve_mapped_dir_choice
 from services import mapped_snapshot
@@ -62,15 +63,13 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
     repo = Path(__file__).resolve().parents[1]
     log_dir = repo / "logs" / "timing_closure"
     log_dir.mkdir(parents=True, exist_ok=True)
-    report_dir = repo / "timing_closure"
-    report_dir.mkdir(parents=True, exist_ok=True)
     run_id = run_id or uuid4().hex
     run_name = f"target_{frequency_label(state.get('timing_target_clock_period_ns') or 4.762)}"
     if state.get("timing_closure_recover_best"):
         run_name += f"_recovery_{run_id[:8]}"
     run_log_dir = log_dir / run_name
     run_log_dir.mkdir(parents=True, exist_ok=True)
-    staging = Path(state.get("timing_closure_local_staging_dir") or repo / ".timing_closure_remote") / run_id
+    staging = Path(state.get("timing_closure_local_staging_dir") or log_dir / "remote") / run_id
     staging.mkdir(parents=True, exist_ok=False)
     attempts = []
     candidates = []
@@ -108,7 +107,8 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             report_text += f"\nAttempt {entry['attempt']} ({entry.get('kind', 'preset')}): {entry['status']}; WNS {entry.get('wns_ns')}; measurements {entry.get('limits', {})}\n"
             if entry.get("ai_plan"):
                 report_text += f"AI rationale: {entry['ai_plan']['summary']}\n"
-        (report_dir / "timing_closure_report.md").write_text(report_text)
+        (log_dir / "timing_closure_report.md").write_text(report_text)
+        (run_log_dir / "timing_closure_report.md").write_text(report_text)
 
     def fail(message):
         record("failed", message, working.get("timing_closure_analysis") or None)
@@ -194,11 +194,15 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 context = {
                     "target_period_ns": target, "source_attempt": source_entry,
                     "limits": {"max_die_area_mm2": MAX_DIE_AREA_MM2, "max_power_w": MAX_POWER_W},
-                    "timing_report": timing_text, "resize_choices": choices,
+                    "timing_report": excerpt(timing_text, 16000), "resize_choices": choices,
+                    "report_evidence": build_recovery_evidence(ssh, project_root, staging, source_entry, attempts),
                     "attempt_history": deepcopy(attempts),
                 }
                 record("planning", f"AI recovery {attempt - limit}/{ai_limit}: inspect best attempt {source_entry['attempt']} with WNS {source_entry['wns_ns']:.3f} ns.")
-                plan = validate_plan(plan_timing_recovery(context), choices)
+                (run_log_dir / f"ai_context_{run_id}_{attempt}.json").write_text(json.dumps(context, indent=2) + "\n")
+                plan = validate_plan(plan_timing_recovery(
+                    context, diagnostics_path=run_log_dir / f"ai_response_{run_id}_{attempt}.json",
+                ), choices)
                 (run_log_dir / f"ai_plan_{attempt}.json").write_text(json.dumps({"context": context, "plan": plan}, indent=2) + "\n")
                 if not plan["actions"]:
                     return fail(f"AI timing recovery stopped: {plan['summary']}")
@@ -288,22 +292,22 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             if not entry["limits"]["within_limits"]:
                 status = "limits_exceeded"
                 message = f"Candidate rejected: die {entry['limits']['die_area_mm2']:.6f} mm², power {entry['limits']['total_power_w']:.6f} W; limits 4 mm² / 2 W."
-            if is_ai:
+            if is_ai or recovery_source:
                 hold_paths, _ = fetch_remote_reports(
                     ssh=ssh, remote_project_root=project_root,
                     report_paths=[f"{outdir}/reports/hold_postroute.rpt"], local_staging_dir=staging,
                 )
                 if len(hold_paths) != 1:
                     entry["status"] = "hold_missing"
-                    return fail("AI candidate has no fresh hold-timing report.")
+                    return fail("Recovery candidate has no fresh hold-timing report.")
                 hold = parse_timing_report(hold_paths[0])
                 if hold.wns is None or not math.isfinite(hold.wns) or not hold.paths:
                     entry["status"] = "hold_missing"
-                    return fail("AI candidate hold timing cannot be verified.")
+                    return fail("Recovery candidate hold timing cannot be verified.")
                 entry["hold_wns_ns"] = hold.wns
                 if hold.wns < 0 or (hold.tns is not None and hold.tns < 0) or hold.violating_path_count:
                     status = "hold_violated"
-                    message = f"AI resize candidate rejected: hold slack {hold.wns:.3f} ns."
+                    message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
             entry["status"] = status
             if status in {"passed", "violated"} and entry["limits"]["within_limits"]:
                 candidates.append({"entry": dict(entry), "state": dict(working)})
@@ -315,6 +319,6 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                     "stage_status": {**working["stage_status"], "gdsii": "success"},
                     "last_error": None,
                 })
-        return fail(f"Timing/area/power closure failed after {limit} backend attempts and {ai_limit} AI recovery attempts. Best eligible attempt: {working.get('timing_closure_best_attempt', {}).get('outdir') if working.get('timing_closure_best_attempt') else 'none'}. See timing_closure/timing_closure_report.md.")
+        return fail(f"Timing/area/power closure failed after {limit} backend attempts and {ai_limit} AI recovery attempts. Best eligible attempt: {working.get('timing_closure_best_attempt', {}).get('outdir') if working.get('timing_closure_best_attempt') else 'none'}. See logs/timing_closure/timing_closure_report.md.")
     except Exception as exc:
         return fail(f"Timing closure failed: {exc}")
