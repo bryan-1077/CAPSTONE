@@ -1,4 +1,4 @@
-# Top-level orchestrator skeleton
+# Top-level orchestrator
 
 Run from the repository root using Python 3.10+. Frequency selection uses PyYAML;
 frontend execution and optional frequency advice need the existing frontend dependencies.
@@ -23,7 +23,7 @@ python -m shared.top_orchestrator debug --failure-dir /absolute/path/to/failure_
 # Run the existing debug repair graph, then require validation.
 python -m shared.top_orchestrator debug --failure-dir /absolute/path/to/failure_workspace --repair
 
-# Exercise either placeholder without running frontend tools.
+# Inspect the validation placeholder or the blocked backend entry.
 python -m shared.top_orchestrator validation
 python -m shared.top_orchestrator backend
 ```
@@ -40,7 +40,9 @@ Debug retains its existing attempt limit and patch checks.
 | File | Responsibility |
 | --- | --- |
 | `contracts.py` | Configuration, stage results, and run state |
-| `nodes.py` | Frontend subprocess adapters and empty validation/backend adapters |
+| `nodes.py` | Frontend and backend subprocess adapters; validation placeholder |
+| `mailbox.py` | Atomic RTL/spec snapshots and content verification |
+| `remote.py` | SSH/Slurm configuration, job command builder, and remote preflight |
 | `orchestrator.py` | Explicit routing and atomic state-file updates |
 | `frequency.py` | Spec handoff, deterministic frequency checks, and opt-in advice |
 | `__main__.py` | CLI and plan-only inspection |
@@ -60,16 +62,18 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-Validation and backend return `not_implemented`; neither performs checks nor
-claims success. The future success route is validation -> backend -> complete.
-The direct backend entry currently only exposes the placeholder; connecting it
-requires enforcing the validation gate described below first.
+Validation returns `not_implemented`, so normal generation still stops there.
+Backend execution is connected for explicit unvalidated testing as described below.
+The validation evidence gate remains deferred; direct backend entry without
+`--allow-unvalidated` stops with `needs_attention`.
 
 Each execution creates `runs/<id>/state.json` plus frontend subprocess logs. Later stages and retries get numbered
 subdirectories so earlier evidence is preserved.
 Use `--run-dir` to select a new output directory. Existing directories are rejected.
 Exit codes: 0 = complete (or plan printed), 2 = incomplete/stopped or CLI misuse,
-1 = run-artifact filesystem error. No real end-to-end run can complete yet.
+1 = run-artifact filesystem error. Normal end-to-end generation cannot complete
+until validation is connected. A direct unvalidated backend test can complete;
+its result explicitly records `validation: not_run`.
 
 State files are diagnostic records, not resumable checkpoints. The frontend still
 writes into its existing shared output directories; run one workflow at a time.
@@ -78,11 +82,11 @@ the stage log. Terminal input is passed directly to the frontend.
 
 ## Planned integration contracts
 
-Before connecting the remaining stages, extend the shared contracts with a design
-bundle: RTL filelist/manifest, top module, configuration/specification paths,
-testbench inputs, and a revision hash covering the relevant file contents. Stage
-results should identify the input revision, report paths, failure category,
-changed artifacts, and the original check command needed to reproduce a failure.
+Run configuration now carries an explicit mailbox path. Snapshots contain the
+RTL tree, matching expanded YAMLs, the approved configuration when available,
+and content hashes. Future validation evidence must bind its reports to these
+exact inputs and identify all required checks. Testbench transfer and repair
+intake normalization remain future work.
 
 **Validation node:** consume the design bundle and validation configuration;
 run the required structural and behavioral checks; return a structured report
@@ -99,15 +103,16 @@ targets. Only supported RTL defects should feed frontend debug (`pd` intake).
 
 **Routing and lifecycle:** validation/backend -> debug edges are implemented for
 failed results carrying a `FailureReport`. The adapters still need to produce those
-reports from real tools. After any RTL repair, invalidate earlier
+repair-intake reports from real tools; backend currently retains native triage
+in its JSON result and stops on failure. After any RTL repair, invalidate earlier
 validation/backend results and run validation again before backend. Reject stale
 or absent validation evidence, including for direct backend entry. Keep debug's
 internal attempt budget separate from a bounded top-level repair-cycle budget.
 Persist revision fingerprints before adding resume or caching. Tool/environment
 errors should have bounded retries; ambiguous requirements should stop for input.
 
-Suggested implementation order: design bundle, validation adapter, revision gate,
-backend adapter, then resume.
+Remaining integration: validation adapter, validation evidence gate, failure
+normalization, server verification, then resume.
 
 ## Target frequency selection
 
@@ -141,9 +146,9 @@ The advisor reuses `configure_from_text.call_llm` and its default model, with
 past-run evidence is not connected yet. It is explicitly told not to invent
 measurements or guarantee timing closure.
 
-The future backend adapter can use `backend_command(config, mailbox_revision)` to pass the saved
-value as `app.py --mailbox <revision> --target-mhz <value>`. That command builder rejects absent targets;
-backend execution and its validation gate remain unconnected.
+The backend adapter uses `backend_command(config, mailbox_revision)` to pass the
+saved value as `app.py --mailbox <revision> --target-mhz <value>`. It rejects absent
+targets. Direct testing requires an explicit target; validation integration is deferred.
 
 ## Checks
 
@@ -177,11 +182,146 @@ the orchestrator still reruns frontend checks and validation after repair.
 
 For validation/PD integration we still need the executable entry point, working
 directory, required inputs, report format, and pass/fail criteria. Return a failed
-result with this report to enter debug. Placeholders remain `not_implemented` and
-never trigger debug. Failures without a report stop with their recorded evidence.
+result with this report to enter debug. The validation placeholder remains `not_implemented` and
+never triggers debug. Backend failures currently stop without automatic PD repair. Failures without a report stop with their recorded evidence.
 
 `--max-repair-cycles` defaults to 2 across the whole run; set it to 0 to stop at
 failures. Each debug call separately retains its internal repair-attempt budget.
 Unsuccessful debug stops the run; exhausted top-level cycles report
 `needs_attention`. After successful debug the generation node runs in checks-only
 mode: it does not rerun spec selection or regenerate RTL.
+
+## Mailbox snapshots and backend testing
+
+After successful generation/checks and BIST, the orchestrator publishes
+`shared/mailbox/<run-directory-name>/revision_001/`. Repair cycles publish a new
+numbered revision after rechecks. Existing destinations are rejected. Publication
+uses a temporary directory and a final rename so incomplete snapshots are not
+exposed as revisions. Run-directory names must be unique across mailbox runs.
+
+Each snapshot contains:
+
+- `rtl/`: the entire frontend RTL output tree, including manifest, filelist, and headers.
+- `specs/`: expanded YAMLs whose `design_name` matches a module in the RTL manifest,
+  preserving their relative directories. Aggregate `master.yaml` files are excluded.
+- `approved_specs.yaml`: the approved input configuration, when available.
+- `snapshot.json`: file hashes, the backend-compatible RTL digest, and modules
+  without matching expanded specs (for example generated wrappers).
+
+Snapshots do not claim verification coverage. They are never updated by the
+orchestrator; input hash verification detects later edits before backend launch.
+The frontend remains a shared workspace, so run one workflow at a time.
+
+Normal generation stops at validation. To test only backend execution on a
+published snapshot while validation is deferred:
+
+```bash
+python -m shared.top_orchestrator backend \
+  --mailbox shared/mailbox/<run-id>/revision_001 \
+  --target-mhz 200 --allow-unvalidated
+```
+
+Add `--plan` to inspect without execution. Use `--backend-python /path/to/venv/bin/python`
+if the backend dependencies (including Paramiko) are in a separate environment.
+The adapter starts `local/backend/app.py` from `local/backend`, streams output,
+and saves `backend.log`, `backend_result.json`, and `backend_reports/` beneath
+this invocation's run directory. Backend retains its existing SSH configuration,
+remote build handling, internal retries, and timing-closure logic.
+
+A backend pass requires exit zero, a JSON state reporting `done`, success for all
+four implementation stages, the expected RTL digest and target period, and
+successful timing closure when enabled. Early stage stops, missing results, and
+mismatched evidence fail. This is backend completion, not functional validation.
+Native failure triage is retained in the JSON result; PD debug intake translation
+is not yet connected. Remote output paths remain in backend state; this adapter
+does not download every physical-design artifact.
+
+The backend CLI also supports `--result-json <new-file>` and `--log-dir <new-directory>`
+for standalone invocations. The latter redirects session, parsed-stage, and timing
+closure logs. Existing result files and explicit log directories are rejected to
+preserve earlier evidence. Other legacy helpers can still use their existing
+shared output locations. Omitting these options preserves standalone logging behavior.
+
+## SSH and Slurm preflight
+
+The `remote-check` entry connects over SSH, checks the remote directory and `srun`,
+then allocates a short Slurm job. Inside that job it sources the remote environment,
+checks Python, and records the compute hostname, working directory, and Slurm job ID.
+This tests access and environment setup only; it does not run validation or backend.
+
+Install the transport dependency into the Python environment used by the orchestrator:
+
+```bash
+python -m pip install -r shared/remote/requirements.txt
+```
+
+Set these exports in your **local** `.bashrc`, replacing the account and directory:
+
+```bash
+export CAPSTONE_SSH_HOST=olympus.ece.tamu.edu
+export CAPSTONE_SSH_USER=YOUR_USERNAME
+export CAPSTONE_REMOTE_PROJECT_DIR=/absolute/server/path/to/your/project
+export CAPSTONE_SLURM_PARTITION=adademic
+export CAPSTONE_SLURM_QOS=olympus-academic
+# Optional: omit to use SSH-agent/default-key discovery.
+export CAPSTONE_SSH_KEY="$HOME/.ssh/id_ed25519"
+export CAPSTONE_REMOTE_PYTHON=python3.11
+```
+
+The partition spelling above is copied literally from backend; use the actual
+partition on your server. The remote project path is independent of backend's
+hardcoded directory. The SSH key setting is a local file path, not key contents.
+Open a new terminal or source your local `.bashrc` before starting the orchestrator;
+an already-running IDE may need its environment refreshed. Python reads exported
+variables from its environment and does not parse or execute your local `.bashrc`.
+
+```bash
+python -m shared.top_orchestrator remote-check --plan
+python -m shared.top_orchestrator remote-check
+```
+
+If your SSH account also requires a password, run:
+
+```bash
+python -m shared.top_orchestrator remote-check --ask-password
+```
+
+The hidden terminal prompt passes the password to the SSH connection alongside
+key/agent authentication. It is held in memory for this check (including any
+reconnection) and is not saved in configuration or run artifacts. `--plan` never
+prompts. This option handles an account password; it does not implement custom
+Duo/MFA challenge handling. A terminal capable of disabling echo is required.
+
+By default the compute job runs `source ~/.bashrc` in its remote login Bash shell.
+`load-ecen-454` is an alias for allocating an interactive `srun` session; do not
+include it in setup because the orchestrator already allocates the job. Its
+`--pty` and `--x11=first` options are unnecessary for this command-line probe.
+Both setup and the probe run in the same shell, and setup
+errors stop execution. Override setup with the trusted shell snippet
+`CAPSTONE_REMOTE_SETUP` when the server requires a different environment.
+The job enables Bash alias expansion so setup aliases defined by `.bashrc` work
+in this noninteractive shell. If `.bashrc` defines tools only for interactive
+sessions, configure the underlying environment setup script explicitly instead.
+
+Additional exported settings are `CAPSTONE_SSH_PORT` (22), `CAPSTONE_SLURM_CPUS` (1),
+`CAPSTONE_SLURM_WAIT_SECONDS` (30), `CAPSTONE_SLURM_JOB_SECONDS` (120), and
+`CAPSTONE_REMOTE_TIMEOUT_SECONDS` (210). The local timeout must allow the allocation
+wait, job time, and at least 30 seconds for connection/setup overhead.
+
+For optional per-run overrides, copy `remote.example.json` to `remote.local.json`,
+edit it, and pass `--remote-config shared/top_orchestrator/remote.local.json`.
+Explicit JSON values override exported values; remaining settings use defaults.
+The JSON `required_tools` list can check executables such as `vcs` inside the job;
+it is empty by default, so the base preflight does not claim simulator readiness.
+
+Each check preserves `state.json`, `remote.log`, and `remote_result.json` in a new
+run directory. Output streams locally while both SSH streams are drained.
+Failed/interrupted compute checks attempt `scancel` using their unique job name
+and save the cancellation result. Slurm also receives a job time limit. A failed
+cancellation is recorded; closing SSH alone is not proof that the job stopped.
+
+Transport lives in `shared/remote/ssh_executor.py`; the backend import forwards to
+it. Backend retains its existing connection configuration. The shared transport
+retains backend's host-key behavior (load known hosts, automatically accept unknown
+keys), SFTP helpers, and structured command results. Remote validation, revision
+transfer for validation, and its evidence gate remain deferred.

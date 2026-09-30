@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-Stage = Literal["generate", "debug", "validation", "backend"]
+Stage = Literal["generate", "debug", "validation", "backend", "remote-check"]
 Status = Literal["passed", "failed", "needs_attention", "not_implemented"]
 
 
@@ -30,6 +30,11 @@ class RunConfig:
     recheck_only: bool = False
     target_mhz: float | None = None
     target_mhz_source: str | None = None
+    mailbox: Path | None = None
+    allow_unvalidated: bool = False
+    backend_python: str | None = None
+    remote_config: Path | None = None
+    ask_password: bool = False
 
 
 @dataclass

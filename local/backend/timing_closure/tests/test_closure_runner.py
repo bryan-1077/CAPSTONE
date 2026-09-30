@@ -51,6 +51,15 @@ class FakeSSH:
 
 
 class ClosureTests(unittest.TestCase):
+    def test_explicit_log_directory_preserves_run_evidence(self):
+        logs = self.repo / "invocation" / "reports"
+        self.state["backend_log_dir"] = str(logs)
+        result = self.run_closure(FakeSSH([0.012]))
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertTrue((logs / "timing_closure/timing_closure_status.json").is_file())
+        self.assertTrue((logs / "timing_closure/timing_closure.log").is_file())
+        self.assertFalse((self.repo / "logs/timing_closure").exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

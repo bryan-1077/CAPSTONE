@@ -4,6 +4,7 @@ __pycache__/
 
 # Flow/runtime logs
 *.log
+shared/mailbox/
 
 # Simulator and waveform artifacts
 obj_dir/

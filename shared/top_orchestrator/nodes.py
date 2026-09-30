@@ -10,6 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contracts import FailureReport, RunConfig, Stage, StageResult
+from .remote import remote_check_node
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = REPO_ROOT / "local" / "frontend"
@@ -58,16 +59,16 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
     if config.target_mhz is None:
         raise ValueError("Choose a target frequency before starting backend.")
     target = positive_mhz(str(config.target_mhz))
-    return [sys.executable, "-u", str(REPO_ROOT / "local/backend/app.py"),
+    return [config.backend_python or sys.executable, "-u", str(REPO_ROOT / "local/backend/app.py"),
             "--mailbox", str(mailbox.expanduser().resolve()), "--target-mhz", str(target)]
 
 
-def stream_command(command: list[str], log: Path) -> int:
+def stream_command(command: list[str], log: Path, *, cwd: Path | None = None) -> int:
     """Inherit terminal input and tee output, including prompts without newlines."""
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     with log.open("w", encoding="utf-8") as handle:
-        with subprocess.Popen(command, cwd=FRONTEND, env=env,
+        with subprocess.Popen(command, cwd=cwd or FRONTEND, env=env,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8", errors="replace") as process:
             assert process.stdout is not None
@@ -160,8 +161,51 @@ def validation_node(config: RunConfig, run_dir: Path) -> StageResult:
 
 
 def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
-    """TODO: consume the validated revision and constraints; emit reports and outputs."""
-    return StageResult("backend", "not_implemented", "Backend adapter is not connected.")
+    """Run the existing backend; validation integration remains deferred."""
+    from .mailbox import verify
+
+    if not config.allow_unvalidated:
+        return StageResult("backend", "needs_attention",
+            "Validation gate is not connected. Explicit backend testing requires --allow-unvalidated.")
+    if config.mailbox is None:
+        return StageResult("backend", "needs_attention", "Backend requires an explicit mailbox snapshot.")
+    mailbox = config.mailbox.resolve()
+    metadata = verify(mailbox)
+    result_path = run_dir / "backend_result.json"
+    if result_path.exists():
+        raise FileExistsError(result_path)
+    log = run_dir / "backend.log"
+    reports = run_dir / "backend_reports"
+    command = backend_command(config, mailbox) + ["--result-json", str(result_path), "--log-dir", str(reports)]
+    artifacts = {"log": str(log), "reports": str(reports), "mailbox": str(mailbox),
+                 "validation": "not_run"}
+    try:
+        code = stream_command(command, log, cwd=REPO_ROOT / "local/backend")
+    except OSError as exc:
+        artifacts["failure_category"] = "tool_environment"
+        return StageResult("backend", "failed", f"Could not start backend: {exc}", artifacts)
+    try:
+        payload = json.loads(result_path.read_text())
+        if not isinstance(payload, dict):
+            raise ValueError("Backend result must be a JSON object")
+    except (OSError, ValueError) as exc:
+        artifacts["failure_category"] = "missing_result"
+        return StageResult("backend", "failed", f"Backend produced no usable result: {exc}", artifacts, code)
+    artifacts["result"] = str(result_path)
+    stages = payload.get("stage_status", {})
+    same_input = payload.get("mailbox_revision") == metadata["rtl_revision"]
+    same_target = payload.get("timing_target_clock_period_ns") == 1000 / config.target_mhz
+    passed = (code == 0 and payload.get("current_stage") == "done" and same_input and same_target
+              and isinstance(stages, dict)
+              and all(stages.get(stage) == "success" for stage in ("rtl_prep", "netlist", "mapped_netlist", "gdsii"))
+              and payload.get("timing_closure_status") in (None, "passed")
+              and (not payload.get("timing_closure_enabled") or payload.get("timing_closure_status") == "passed"))
+    message = "Backend completed on an unvalidated snapshot." if passed else str(
+        payload.get("last_error") or "Backend incomplete, failed, or returned mismatched input/target evidence.")
+    if not passed:
+        artifacts["failure_category"] = str(payload.get("rtl_failure_category") or "unknown")
+    # Preserve native triage in result JSON. PD intake normalization is separate work.
+    return StageResult("backend", "passed" if passed else "failed", message, artifacts, code)
 
 
 def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
@@ -211,4 +255,4 @@ def debug_node(config: RunConfig, run_dir: Path) -> StageResult:
 
 
 NODES = {"generate": generate_node, "debug": debug_node,
-         "validation": validation_node, "backend": backend_node}
+         "validation": validation_node, "backend": backend_node, "remote-check": remote_check_node}

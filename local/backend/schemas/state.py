@@ -26,6 +26,7 @@ class FlowState(TypedDict, total=False):
     reserve_named_builds: bool
     remote_prepare_input: str
     mailbox_source: str
+    backend_log_dir: str
     mailbox_revision: str
     mailbox_file_hashes: Dict[str, str]
     remote_python_cmd: str

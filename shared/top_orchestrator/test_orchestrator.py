@@ -22,6 +22,10 @@ class OrchestratorTests(unittest.TestCase):
                 input_yaml=config.input_yaml or Path("/approved.yaml"), target_mhz=200))
         preparation.start()
         self.addCleanup(preparation.stop)
+        publication = patch("shared.top_orchestrator.orchestrator.publish",
+                            side_effect=lambda frontend, destination, specs: destination)
+        publication.start()
+        self.addCleanup(publication.stop)
 
     def test_lint_handoff_copies_diagnostic_for_both_entry_paths(self):
         for checks_only in (True, False):

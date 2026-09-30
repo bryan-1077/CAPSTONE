@@ -14,6 +14,12 @@ from shared.top_orchestrator.orchestrator import run
 
 
 class FrequencyTests(unittest.TestCase):
+    def setUp(self):
+        publication = patch("shared.top_orchestrator.orchestrator.publish",
+                            side_effect=lambda frontend, destination, specs: destination)
+        publication.start()
+        self.addCleanup(publication.stop)
+
     def test_invalid_numbers(self):
         for value in ("0", "-1", "nan", "inf", "1e-320", "word"):
             with self.subTest(value=value), self.assertRaises(ValueError):

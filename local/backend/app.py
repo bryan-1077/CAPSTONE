@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 import os
 import re
@@ -92,6 +93,8 @@ def _parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Run the EDA flow with a clock target in MHz.")
     parser.add_argument("command", nargs="*", metavar="COMMAND", help="max clocking: sweep from 230 MHz in 10 MHz steps until failure")
     parser.add_argument("--max-clocking", action="store_true", help="same as the 'max clocking' command")
+    parser.add_argument("--result-json", type=Path, help="Write final backend state as JSON to this path.")
+    parser.add_argument("--log-dir", type=Path, help="Directory for this invocation's session and parsed logs.")
     parser.add_argument("--mailbox", type=Path,
                         help="Local mailbox revision containing rtl/; upload it for remote prep instead of MemoryController.zip.")
     parser.add_argument(
@@ -307,6 +310,8 @@ def _run_single_target(args, *, require_timing_closure=False):
     }
 
     initial_state.update(full_flow_names(target_period))
+    if getattr(args, "log_dir", None):
+        initial_state["backend_log_dir"] = str(args.log_dir.expanduser().resolve())
 
     if getattr(args, "mailbox", None) is not None:
         staged = getattr(args, "_mailbox_staged", None)
@@ -323,15 +328,39 @@ def _run_single_target(args, *, require_timing_closure=False):
     return result
 
 
+def run_cli(args) -> int:
+    """Keep machine-readable results separate from the live terminal transcript."""
+    result_path = args.result_json.expanduser().resolve() if args.result_json else None
+    if result_path is not None:
+        if result_path.exists():
+            raise FileExistsError(f"Refusing to overwrite backend result: {result_path}")
+    repo_root = Path(__file__).resolve().parent
+    log_dir = args.log_dir.expanduser().resolve() if args.log_dir else repo_root / "logs"
+    if args.log_dir:
+        log_dir.mkdir(parents=True, exist_ok=False)
+    if result_path is not None:
+        result_path.parent.mkdir(parents=True, exist_ok=True)
+    result = None
+    try:
+        result = run_with_session_logging(
+            lambda: main(args),
+            log_path=log_dir / "full_session.log",
+            parser_script_path=repo_root / "parse_full_session_log.py",
+            parser_outdir=log_dir,
+            result_printer=pprint,
+        )
+    except (Exception, KeyboardInterrupt, SystemExit) as exc:
+        result = {"current_stage": "failed", "last_error": f"{type(exc).__name__}: {exc}"}
+        raise
+    finally:
+        if result_path is not None:
+            temporary = result_path.with_suffix(result_path.suffix + ".tmp")
+            temporary.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            temporary.replace(result_path)
+    return 0 if result and result.get("current_stage") == "done" else 1
+
+
 if __name__ == "__main__":
     # Parse before opening session logs so --help and invalid arguments preserve them.
     args = _parse_args()
-    repo_root = Path(__file__).resolve().parent
-    result = run_with_session_logging(
-        lambda: main(args),
-        log_path=repo_root / "logs" / "full_session.log",
-        parser_script_path=repo_root / "parse_full_session_log.py",
-        parser_outdir=repo_root / "logs",
-        result_printer=pprint,
-    )
-    raise SystemExit(0 if result and result.get("current_stage") == "done" else 1)
+    raise SystemExit(run_cli(args))

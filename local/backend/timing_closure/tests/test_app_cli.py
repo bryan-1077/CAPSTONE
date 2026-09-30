@@ -1,7 +1,9 @@
 import contextlib
 import io
+import json
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import app
@@ -9,6 +11,33 @@ from timing_closure.max_clocking import run_max_clocking
 
 
 class AppCLITests(unittest.TestCase):
+    def test_cli_writes_result_and_uses_run_local_logs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            logs = root / "reports"
+            output = logs / "result.json"
+            args = app._parse_args(["--result-json", str(output), "--log-dir", str(logs)])
+            with patch.object(app, "run_with_session_logging", return_value={"current_stage": "done"}) as logging:
+                self.assertEqual(app.run_cli(args), 0)
+            self.assertEqual(json.loads(output.read_text()), {"current_stage": "done"})
+            self.assertEqual(logging.call_args.kwargs["parser_outdir"], logs)
+            with self.assertRaises(FileExistsError):
+                app.run_cli(args)
+
+    def test_cli_writes_failure_result_on_exception(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "result.json"
+            args = app._parse_args(["--result-json", str(output)])
+            with patch.object(app, "run_with_session_logging", side_effect=SystemExit(1)):
+                with self.assertRaises(SystemExit):
+                    app.run_cli(args)
+            self.assertEqual(json.loads(output.read_text())["current_stage"], "failed")
+
+    def test_log_directory_reaches_backend_state(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = self.run_app(["--log-dir", temporary])
+            self.assertEqual(state["backend_log_dir"], str(Path(temporary).resolve()))
+
     def run_app(self, argv, env=None):
         with (
             patch.dict("os.environ", env or {}, clear=True),

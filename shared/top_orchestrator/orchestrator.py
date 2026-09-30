@@ -5,8 +5,9 @@ from dataclasses import asdict, replace
 from pathlib import Path
 
 from .contracts import RunConfig, RunState, Stage, StageResult
-from .nodes import NODES
+from .nodes import FRONTEND, NODES, REPO_ROOT
 from .frequency import prepare_generation
+from .mailbox import publish
 
 
 def next_stage(result: StageResult) -> Stage | None:
@@ -15,7 +16,7 @@ def next_stage(result: StageResult) -> Stage | None:
     if result.status != "passed":
         return None
     return {"generate": "validation", "debug": "generate",
-            "validation": "backend", "backend": None}[result.stage]
+            "validation": "backend", "backend": None, "remote-check": None}[result.stage]
 
 
 def save_state(state: RunState, run_dir: Path) -> None:
@@ -54,6 +55,18 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
             result = NODES[stage](active_config, step_dir)
         except Exception as exc:
             result = StageResult(stage, "failed", f"{type(exc).__name__}: {exc}")
+        if stage == "generate" and result.status == "passed":
+            try:
+                number = 1 + sum(r.stage == "generate" and "mailbox" in r.artifacts for r in state.results)
+                revision = REPO_ROOT / "shared/mailbox" / run_dir.name / f"revision_{number:03d}"
+                mailbox = publish(FRONTEND, revision, config.input_yaml)
+                result.artifacts["mailbox"] = str(mailbox)
+                active_config = replace(active_config, mailbox=mailbox)
+                state.config = active_config
+            except Exception as exc:
+                result.status = "failed"
+                result.message = f"Mailbox publication failed: {type(exc).__name__}: {exc}"
+                result.failure = None
         state.results.append(result)
         state.current_stage = next_stage(result)
         if state.current_stage == "debug":

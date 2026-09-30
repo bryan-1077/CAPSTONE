@@ -1,0 +1,14 @@
+{
+  "host": "olympus.ece.tamu.edu",
+  "username": "YOUR_USERNAME",
+  "key_filename": "~/.ssh/id_ed25519",
+  "project_dir": "/absolute/server/path/to/your/project",
+  "partition": "adademic",
+  "qos": "olympus-academic",
+  "python": "python3.11",
+  "setup_commands": ["source ~/.bashrc"],
+  "required_tools": [],
+  "allocation_wait_seconds": 30,
+  "job_seconds": 120,
+  "timeout_seconds": 210
+}

@@ -7,17 +7,23 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contracts import RunConfig
-from .nodes import frontend_command, spec_command
+from .nodes import backend_command, frontend_command, spec_command
 from .frequency import DEFAULT_TARGET_MHZ, positive_mhz
 from .orchestrator import run
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("entry", choices=("generate", "debug", "validation", "backend"),
+    parser.add_argument("entry", choices=("generate", "debug", "validation", "backend", "remote-check"),
                         nargs="?", default="generate")
     parser.add_argument("--input", type=Path, help="Use existing YAML instead of interactive spec selection.")
     parser.add_argument("--failure-dir", type=Path, help="Existing frontend debug workspace.")
+    parser.add_argument("--mailbox", type=Path, help="Explicit published snapshot for backend entry.")
+    parser.add_argument("--allow-unvalidated", action="store_true",
+                        help="Allow direct backend testing without validation; does not bypass normal generation routing.")
+    parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
+    parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
+    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for the SSH account password (remote-check only).")
     parser.add_argument("--cache", action="store_true")
     parser.add_argument("--target-mhz", type=positive_mhz,
                         help="Backend clock target; bypass the frequency prompt.")
@@ -31,6 +37,19 @@ def main() -> int:
     parser.add_argument("--plan", action="store_true", help="Print routing and commands without executing or writing files.")
     parser.add_argument("--run-dir", type=Path, help="New directory for logs and state.json.")
     args = parser.parse_args()
+    if args.entry == "remote-check":
+        from .remote import RemoteConfig, probe_command
+        try:
+            remote = RemoteConfig.load(args.remote_config)
+        except (OSError, ValueError, TypeError) as exc:
+            parser.error(str(exc))
+    elif args.remote_config is not None or args.ask_password:
+        parser.error("--remote-config and --ask-password currently apply only to remote-check")
+    if (args.mailbox or args.allow_unvalidated or args.backend_python) and args.entry != "backend":
+        parser.error("--mailbox, --allow-unvalidated, and --backend-python apply only to backend entry")
+    if args.entry == "backend" and args.allow_unvalidated:
+        if args.mailbox is None or args.target_mhz is None:
+            parser.error("Unvalidated backend testing requires --mailbox and --target-mhz")
     if args.checks_only and (args.entry != "generate" or args.input or args.cache):
         parser.error("--checks-only requires generate mode without --input or --cache")
     if args.input is not None and not args.input.expanduser().is_file():
@@ -50,8 +69,17 @@ def main() -> int:
                        args.failure_dir.expanduser().resolve() if args.failure_dir else None,
                        args.cache, args.repair, args.offline, args.max_attempts, args.max_repair_cycles,
                        recheck_only=args.checks_only, target_mhz=args.target_mhz,
-                       target_mhz_source="command line" if args.target_mhz is not None else None)
+                       target_mhz_source="command line" if args.target_mhz is not None else None,
+                       mailbox=args.mailbox.expanduser().resolve() if args.mailbox else None,
+                       allow_unvalidated=args.allow_unvalidated, backend_python=args.backend_python,
+                       remote_config=args.remote_config.expanduser().resolve() if args.remote_config else None,
+                       ask_password=args.ask_password)
     if args.plan:
+        if args.entry == "remote-check":
+            print(f"SSH {remote.username}@{remote.host}:{remote.port}; remote directory: {remote.project_dir}")
+            print(probe_command(remote, "PLAN"))
+            print("Connection/environment preflight only; no validation or backend execution.")
+            return 0
         if args.checks_only:
             print("Check existing RTL: system lint -> BIST; no spec selection or regeneration")
         elif args.entry == "generate":
@@ -64,12 +92,17 @@ def main() -> int:
                 input_yaml=config.input_yaml or Path("<run-dir>/approved_specs.yaml")))))
         elif args.entry == "debug":
             print(shlex.join(frontend_command(args.entry, config)))
+        elif args.entry == "backend" and args.allow_unvalidated:
+            print(shlex.join(backend_command(config, config.mailbox) + [
+                "--result-json", "<run-dir>/backend_result.json", "--log-dir", "<run-dir>/backend_reports"]))
         if args.entry == "generate":
             print("Then: bash local/frontend/run_sim.sh --no-wave-prompt (BIST)")
+            print("After checks pass: publish RTL and matching YAMLs to a new mailbox revision")
         routes = {"generate": "generate -> validation (not implemented; stop)",
                   "debug": "debug -> system lint + BIST -> validation after repair",
                   "validation": "validation (not implemented; stop)",
-                  "backend": "backend (not implemented; stop)"}
+                  "backend": ("backend on explicit UNVALIDATED snapshot -> inspect result" if args.allow_unvalidated
+                              else "backend blocked: validation gate is not connected")}
         print(routes[args.entry])
         print("Failures with evidence -> debug -> system lint + BIST -> validation (bounded retries)")
         print("Planned continuation: validation passes -> backend -> complete")

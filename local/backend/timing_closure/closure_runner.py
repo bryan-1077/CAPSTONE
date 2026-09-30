@@ -49,7 +49,7 @@ def backend_settings(state: dict, attempt: int) -> dict:
 
 
 def run_setup_closure(state, ssh, implementation_runner, merge):
-    log_path = Path(__file__).resolve().parents[1] / "logs" / "timing_closure" / "timing_closure.log"
+    log_path = Path(state.get("backend_log_dir") or Path(__file__).resolve().parents[1] / "logs") / "timing_closure" / "timing_closure.log"
     run_id = uuid4().hex
     run_name = f"target_{frequency_label(state.get('timing_target_clock_period_ns') or 4.762)}"
     if state.get("timing_closure_recover_best"):
@@ -61,7 +61,7 @@ def run_setup_closure(state, ssh, implementation_runner, merge):
 
 def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None):
     repo = Path(__file__).resolve().parents[1]
-    log_dir = repo / "logs" / "timing_closure"
+    log_dir = Path(state.get("backend_log_dir") or repo / "logs") / "timing_closure"
     log_dir.mkdir(parents=True, exist_ok=True)
     run_id = run_id or uuid4().hex
     run_name = f"target_{frequency_label(state.get('timing_target_clock_period_ns') or 4.762)}"
