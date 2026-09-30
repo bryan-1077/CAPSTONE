@@ -15,7 +15,6 @@ module ddr4_scheduler_scheduler (
     output logic [1:0]   sel_idx,
     input  logic         timing_ok
 );
-
     localparam int DEPTH = 4;
     localparam int REQUEST_WIDTH = 51;
     localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
@@ -28,7 +27,7 @@ module ddr4_scheduler_scheduler (
         logic [31:0] wdata;
     } request_t;
 
-    request_t req_entries [0:DEPTH-1];
+    request_t req_unpacked [0:DEPTH-1];
     logic [DEPTH-1:0] row_hit;
     logic             candidate_valid;
     logic [SEL_WIDTH-1:0] candidate_idx;
@@ -39,16 +38,14 @@ module ddr4_scheduler_scheduler (
     logic             successful_issue;
 
     always_comb begin
-        req_entries[0] = req_array[(0*REQUEST_WIDTH) +: REQUEST_WIDTH];
-        req_entries[1] = req_array[(1*REQUEST_WIDTH) +: REQUEST_WIDTH];
-        req_entries[2] = req_array[(2*REQUEST_WIDTH) +: REQUEST_WIDTH];
-        req_entries[3] = req_array[(3*REQUEST_WIDTH) +: REQUEST_WIDTH];
+        for (int i = 0; i < DEPTH; i++) begin
+            req_unpacked[i] = req_array[(i*REQUEST_WIDTH) +: REQUEST_WIDTH];
+        end
     end
 
     always_comb begin
-        row_hit = '0;
-        for (int i = 0; i < DEPTH; i++) begin
-            row_hit[i] = req_valid[i] && bank_active[req_entries[i].bank] && (bank_open_row[(req_entries[i].bank * 10) +: 10] == req_entries[i].row);
+        for (int j = 0; j < DEPTH; j++) begin
+            row_hit[j] = req_valid[j] && bank_active[req_unpacked[j].bank] && (bank_open_row[(req_unpacked[j].bank * 10) +: 10] == req_unpacked[j].row);
         end
     end
 
@@ -56,37 +53,32 @@ module ddr4_scheduler_scheduler (
         candidate_valid = 1'b0;
         candidate_idx = SEL_WIDTH'(0);
 
-        for (int j = 0; j < DEPTH; j++) begin
-            if (!candidate_valid && row_hit[j]) begin
+        for (int k = 0; k < DEPTH; k++) begin
+            if (!candidate_valid && row_hit[k]) begin
                 candidate_valid = 1'b1;
-                candidate_idx = SEL_WIDTH'(j);
+                candidate_idx = SEL_WIDTH'(k);
             end
         end
 
         if (!candidate_valid) begin
-            for (int k = 0; k < DEPTH; k++) begin
-                if (!candidate_valid && req_valid[k]) begin
+            for (int m = 0; m < DEPTH; m++) begin
+                if (!candidate_valid && req_valid[m]) begin
                     candidate_valid = 1'b1;
-                    candidate_idx = SEL_WIDTH'(k);
+                    candidate_idx = SEL_WIDTH'(m);
                 end
             end
         end
     end
 
     always_comb begin
-        issue_valid = 1'b0;
-        sel_idx = locked_idx;
-
         if (locked_valid) begin
-            issue_valid = req_valid[locked_idx];
             sel_idx = locked_idx;
+            issue_valid = req_valid[locked_idx];
         end else begin
-            issue_valid = candidate_valid;
             sel_idx = candidate_idx;
+            issue_valid = candidate_valid;
         end
-    end
 
-    always_comb begin
         issue_ref = ref_req && cmd_ready && timing_ok;
         issue_txn = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
         successful_issue = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
@@ -118,5 +110,4 @@ module ddr4_scheduler_scheduler (
             end
         end
     end
-
 endmodule

@@ -18,12 +18,12 @@ def main() -> int:
                         nargs="?", default="generate")
     parser.add_argument("--input", type=Path, help="Use existing YAML instead of interactive spec selection.")
     parser.add_argument("--failure-dir", type=Path, help="Existing frontend debug workspace.")
-    parser.add_argument("--mailbox", type=Path, help="Explicit published snapshot for backend entry.")
+    parser.add_argument("--mailbox", type=Path, help="Explicit published snapshot for validation or backend entry.")
     parser.add_argument("--allow-unvalidated", action="store_true",
                         help="Allow direct backend testing without validation; does not bypass normal generation routing.")
     parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
     parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
-    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for the SSH account password (remote-check only).")
+    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for remote preflight or validation SSH authentication.")
     parser.add_argument("--cache", action="store_true")
     parser.add_argument("--target-mhz", type=positive_mhz,
                         help="Backend clock target; bypass the frequency prompt.")
@@ -37,16 +37,21 @@ def main() -> int:
     parser.add_argument("--plan", action="store_true", help="Print routing and commands without executing or writing files.")
     parser.add_argument("--run-dir", type=Path, help="New directory for logs and state.json.")
     args = parser.parse_args()
-    if args.entry == "remote-check":
+    needs_remote = args.entry in ("generate", "validation", "remote-check") or (args.entry == "debug" and args.repair)
+    if args.entry != "backend" and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
         from .remote import RemoteConfig, probe_command
         try:
             remote = RemoteConfig.load(args.remote_config)
         except (OSError, ValueError, TypeError) as exc:
             parser.error(str(exc))
-    elif args.remote_config is not None or args.ask_password:
-        parser.error("--remote-config and --ask-password currently apply only to remote-check")
-    if (args.mailbox or args.allow_unvalidated or args.backend_python) and args.entry != "backend":
-        parser.error("--mailbox, --allow-unvalidated, and --backend-python apply only to backend entry")
+    if args.entry == "backend" and (args.remote_config is not None or args.ask_password):
+        parser.error("Backend entry uses its own SSH configuration")
+    if (args.allow_unvalidated or args.backend_python) and args.entry != "backend":
+        parser.error("--allow-unvalidated and --backend-python apply only to backend entry")
+    if args.mailbox and args.entry not in ("validation", "backend"):
+        parser.error("--mailbox applies to validation or backend entry")
+    if args.entry == "validation" and args.mailbox is None:
+        parser.error("validation requires --mailbox pointing to a published snapshot")
     if args.entry == "backend" and args.allow_unvalidated:
         if args.mailbox is None or args.target_mhz is None:
             parser.error("Unvalidated backend testing requires --mailbox and --target-mhz")
@@ -98,14 +103,14 @@ def main() -> int:
         if args.entry == "generate":
             print("Then: bash local/frontend/run_sim.sh --no-wave-prompt (BIST)")
             print("After checks pass: publish RTL and matching YAMLs to a new mailbox revision")
-        routes = {"generate": "generate -> validation (not implemented; stop)",
-                  "debug": "debug -> system lint + BIST -> validation after repair",
-                  "validation": "validation (not implemented; stop)",
+        routes = {"generate": "generate -> publish snapshot -> remote validation -> stop (no backend)",
+                  "debug": "debug -> system lint + BIST -> publish snapshot -> remote validation -> stop",
+                  "validation": "upload selected snapshot -> SSH/srun validation -> retrieve reports -> stop (no backend)",
                   "backend": ("backend on explicit UNVALIDATED snapshot -> inspect result" if args.allow_unvalidated
                               else "backend blocked: validation gate is not connected")}
         print(routes[args.entry])
-        print("Failures with evidence -> debug -> system lint + BIST -> validation (bounded retries)")
-        print("Planned continuation: validation passes -> backend -> complete")
+        print("Frontend failures with supported evidence -> debug -> recheck -> publish -> validation")
+        print("Remote validation failures stop with reports; backend execution is deferred.")
         return 0
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
     run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()

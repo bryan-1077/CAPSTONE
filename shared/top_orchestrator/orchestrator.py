@@ -8,6 +8,7 @@ from .contracts import RunConfig, RunState, Stage, StageResult
 from .nodes import FRONTEND, NODES, REPO_ROOT
 from .frequency import prepare_generation
 from .mailbox import publish
+from .display import print_node_header
 
 
 def next_stage(result: StageResult) -> Stage | None:
@@ -16,7 +17,7 @@ def next_stage(result: StageResult) -> Stage | None:
     if result.status != "passed":
         return None
     return {"generate": "validation", "debug": "generate",
-            "validation": "backend", "backend": None, "remote-check": None}[result.stage]
+            "validation": None, "backend": None, "remote-check": None}[result.stage]
 
 
 def save_state(state: RunState, run_dir: Path) -> None:
@@ -32,6 +33,7 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
     state = RunState(config, current_stage=config.entry, status="running")
     save_state(state, run_dir)
     if config.entry == "generate" and not config.recheck_only:
+        print_node_header("specs")
         try:
             config = prepare_generation(config, run_dir)
         except (Exception, KeyboardInterrupt) as exc:
@@ -48,6 +50,7 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
     while state.current_stage is not None:
         save_state(state, run_dir)
         stage = state.current_stage
+        print_node_header(stage)
         print(f"Running {stage}; artifacts: {run_dir}", flush=True)
         try:
             step_dir = run_dir if not state.results else run_dir / f"{len(state.results):03d}_{stage}"

@@ -7,10 +7,10 @@
    the complete RTL tree and matching expanded YAMLs to
    `shared/mailbox/<run-id>/<revision>/`, with file hashes and the existing RTL
    manifest/top. Selected MHz remains in run state. Repairs publish a new revision.
-3. **Connect the validation node.** Transfer the selected revision to the server,
-   initialize the required tool environment, run `server/validation/run_pipeline.py`
-   over SSH, and retrieve reports. Require complete verification evidence;
-   process exit zero alone is insufficient.
+3. **Validation adapter implemented in shared/.** It uploads a frozen revision,
+   runs the existing deployed pipeline through SSH/Slurm, retrieves reports, and
+   requires complete per-design/per-stage evidence. Local fake-tool integration
+   tests pass; real simulator/model execution on the server still needs testing.
 4. **Enforce the validation gate.** Backend must consume the exact revision that
    passed validation. Reject absent/stale evidence, including direct backend entry.
 5. **Backend execution adapter implemented for explicit testing.** It passes the
@@ -24,6 +24,6 @@
    deployed prep support for directory input and `--top`, successful completion,
    and failure/repair routing.
 
-Remote validation is intentionally deferred. The validation evidence gate,
-normalized failure handoffs, and live server verification remain open. Backend
-execution tests do not establish functional validation.
+Specs-to-verification now stops after validation; backend continuation is deferred.
+The backend validation gate, normalized failure handoffs, live server verification,
+and independent YAML coverage for generated wrappers remain open.

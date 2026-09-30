@@ -10,5 +10,11 @@
   "required_tools": [],
   "allocation_wait_seconds": 30,
   "job_seconds": 120,
-  "timeout_seconds": 210
+  "timeout_seconds": 210,
+  "validation_script": "server/validation/run_pipeline.py",
+  "validation_jobs": 1,
+  "validation_workspace": "shared/validation_runs/run_001",
+  "allow_validation_output_dirs": false,
+  "validation_job_seconds": 14400,
+  "validation_timeout_seconds": 14490
 }

@@ -155,7 +155,7 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(terminal.getvalue(), "Choose specs: ")
             self.assertEqual((root / "log").read_text(), terminal.getvalue())
 
-    def test_generation_stops_at_placeholder_and_persists_state(self):
+    def test_generation_hands_off_to_validation_and_persists_state(self):
         with tempfile.TemporaryDirectory() as temporary:
             run_dir = Path(temporary) / "run"
             def successful_command(command, log):
@@ -167,9 +167,9 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(command.call_count, 2)
             self.assertTrue(command.call_args.args[0][1].endswith("run_sim.sh"))
             self.assertEqual([r.stage for r in state.results], ["generate", "validation"])
-            self.assertEqual(state.status, "not_implemented")
+            self.assertEqual(state.status, "needs_attention")
             saved = json.loads((run_dir / "state.json").read_text())
-            self.assertEqual(saved["status"], "not_implemented")
+            self.assertEqual(saved["status"], "needs_attention")
 
     def test_bist_failure_stops_before_validation(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -213,7 +213,7 @@ class OrchestratorTests(unittest.TestCase):
                     expected = "passed" if record == {"status": "patch_applied"} else "needs_attention"
                     self.assertEqual(outcome.status, expected)
 
-    def test_future_success_route_and_existing_run_protection(self):
+    def test_validation_success_stops_without_backend_and_protects_existing_run(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "run"
             nodes = {stage: (lambda config, directory, stage=stage:
@@ -222,7 +222,7 @@ class OrchestratorTests(unittest.TestCase):
             with patch.dict("shared.top_orchestrator.orchestrator.NODES", nodes):
                 state = run(RunConfig("validation"), root)
                 self.assertEqual(state.status, "complete")
-                self.assertEqual([r.stage for r in state.results], ["validation", "backend"])
+                self.assertEqual([r.stage for r in state.results], ["validation"])
                 with self.assertRaises(FileExistsError):
                     run(RunConfig("validation"), root)
 

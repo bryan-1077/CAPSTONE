@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from .contracts import FailureReport, RunConfig, Stage, StageResult
 from .remote import remote_check_node
+from .validation import validation_node
+from .display import print_node_header
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = REPO_ROOT / "local" / "frontend"
@@ -155,11 +157,6 @@ def attach_lint_report(result: StageResult, run_dir: Path, command: list[str], p
     result.failure = FailureReport("lint", snapshot, shlex.join(command))
 
 
-def validation_node(config: RunConfig, run_dir: Path) -> StageResult:
-    """TODO: consume a versioned design bundle and emit checks plus failure evidence."""
-    return StageResult("validation", "not_implemented", "Validation adapter is not connected.")
-
-
 def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     """Run the existing backend; validation integration remains deferred."""
     from .mailbox import verify
@@ -227,7 +224,7 @@ def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
             attach_lint_report(result, run_dir, lint_command, previous_report)
     if result.status != "passed":
         return result
-    print("[ORCHESTRATOR] Generation finished; running BIST...", flush=True)
+    print_node_header("bist")
     log = run_dir / "bist.log"
     result.artifacts["bist_log"] = str(log)
     try:

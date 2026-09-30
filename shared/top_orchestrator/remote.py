@@ -31,6 +31,12 @@ class RemoteConfig:
     allocation_wait_seconds: int = 30
     job_seconds: int = 120
     timeout_seconds: int = 210
+    validation_script: str = "server/validation/run_pipeline.py"
+    validation_job_seconds: int = 14400
+    validation_timeout_seconds: int = 14490
+    validation_jobs: int = 1
+    validation_workspace: str = "shared/validation_runs/run_001"
+    allow_validation_output_dirs: bool = False
 
     @classmethod
     def load(cls, path: Path | None = None):
@@ -47,8 +53,14 @@ class RemoteConfig:
             "partition": "CAPSTONE_SLURM_PARTITION", "qos": "CAPSTONE_SLURM_QOS",
             "cpus": "CAPSTONE_SLURM_CPUS", "allocation_wait_seconds": "CAPSTONE_SLURM_WAIT_SECONDS",
             "job_seconds": "CAPSTONE_SLURM_JOB_SECONDS", "timeout_seconds": "CAPSTONE_REMOTE_TIMEOUT_SECONDS",
+            "validation_script": "CAPSTONE_VALIDATION_SCRIPT",
+            "validation_job_seconds": "CAPSTONE_VALIDATION_JOB_SECONDS",
+            "validation_timeout_seconds": "CAPSTONE_VALIDATION_TIMEOUT_SECONDS",
+            "validation_jobs": "CAPSTONE_VALIDATION_JOBS",
+            "validation_workspace": "CAPSTONE_VALIDATION_WORKSPACE",
         }
-        integer_fields = {"port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds"}
+        integer_fields = {"port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds",
+                          "validation_job_seconds", "validation_timeout_seconds", "validation_jobs"}
         for name, variable in environment.items():
             value = os.environ.get(variable)
             if name not in data and value:
@@ -67,13 +79,15 @@ class RemoteConfig:
                     raise ValueError(f"{name} must be a list of nonempty strings")
                 data[name] = tuple(data[name])
         config = cls(**data)
-        for name in ("host", "username", "project_dir", "partition", "qos", "python"):
+        if not isinstance(config.allow_validation_output_dirs, bool):
+            raise ValueError("allow_validation_output_dirs must be a boolean")
+        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script", "validation_workspace"):
             value = getattr(config, name)
             if not isinstance(value, str) or not value.strip() or "\x00" in value:
                 raise ValueError(f"{name} must be a nonempty string")
         if not PurePosixPath(config.project_dir).is_absolute():
             raise ValueError("project_dir must be an absolute path on the SSH server")
-        for name in ("port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds"):
+        for name in integer_fields:
             value = getattr(config, name)
             if type(value) is not int or value <= 0:
                 raise ValueError(f"{name} must be a positive integer")
@@ -81,6 +95,8 @@ class RemoteConfig:
             raise ValueError("port must be at most 65535")
         if config.timeout_seconds < config.allocation_wait_seconds + config.job_seconds + 30:
             raise ValueError("timeout_seconds must allow allocation wait + job time + 30 seconds")
+        if config.validation_timeout_seconds < config.allocation_wait_seconds + config.validation_job_seconds + 30:
+            raise ValueError("validation_timeout_seconds must allow allocation wait + validation job time + 30 seconds")
         if config.key_filename is not None and not isinstance(config.key_filename, str):
             raise ValueError("key_filename must be a local path string")
         return config

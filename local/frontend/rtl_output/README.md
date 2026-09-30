@@ -1,7 +1,7 @@
 # DDR4 Controller RTL Handoff
 
 ## Design Description
-`ddr4_controller_top` is a generated top-level DDR4 controller wrapper that combines the selected scheduler policy, 2 bank integration path(s), and any enabled optional timing modules into one integration point.
+`ddr4_controller_top` is a generated top-level DDR4 controller wrapper that combines the selected scheduler policy, 4 bank integration path(s), and any enabled optional timing modules into one integration point.
 
 Generated page policy: `open_page`.
 
@@ -22,25 +22,25 @@ iverilog -g2012 -s ddr4_controller_top -f filelist.f
 - `txn_is_write` (input): Transaction type selector: 0=READ, 1=WRITE.
 - `txn_addr` (input): Address for the minimal banked storage model (4 bits).
 - `txn_wdata` (input): Write data for accepted WRITE transactions (32 bits).
-- `txn_bank` (input): Selects the target bank for the single incoming transaction stream.
+- `txn_bank` (input): Selects one of 4 banks for the single incoming transaction stream.
 - `txn_ready` (output): Queue acceptance readiness; supports a new request every ready/valid cycle, including consecutive cycles.
 - `cmd_ready` (output): Legacy execution/timing readiness for the incoming address; not the host acceptance handshake.
 - `rsp_valid` (output): One-cycle pulse at read service completion; host enqueue and execution dispatch are separate events.
 - `rsp_rdata` (output): Read response data returned from the selected banked storage (32 bits).
 
 ## Feature Summary
-- Instantiates 2 reusable ddr4_bank_top integration block(s) to package the per-bank FSM chain.
+- Instantiates 4 reusable ddr4_bank_top integration block(s) to package the per-bank FSM chain.
 - Buffers up to four pending requests and selects queued requests with row-hit priority; bank selection is stored with each request.
 - Maps txn_is_write into bank-local cmd_type values so READ and WRITE remain visible through the control path.
 - Implements a small banked storage model in the controller wrapper so accepted WRITEs store data and accepted READs return stored data.
 - Keeps the serviced row open after completion so later accesses can reuse it.
 - Accepts host traffic with txn_valid/txn_ready independently of execution; cmd_ready remains execution-readiness visibility.
 - Instantiates the refresh controller and gives refresh requests fixed priority in the scheduler path.
-- Gates transaction issue with shared controller-level tFAW activation-spacing checks.
+- Gates transaction issue with shared controller-level tFAW and tRRD activation-spacing checks.
 - Returns read data on rsp_rdata with a fixed 1-cycle rsp_valid pulse and no write response.
 
 ## Generated Modules
-- 10 modules across 10 SystemVerilog files
+- 11 modules across 11 SystemVerilog files
 - `ddr4_bank_activate_fsm`
 - `ddr4_bank_bank_sequencer`
 - `ddr4_bank_precharge_fsm`
@@ -51,6 +51,7 @@ iverilog -g2012 -s ddr4_controller_top -f filelist.f
 - `ddr4_request_queue`
 - `ddr4_scheduler_scheduler`
 - `ddr4_tFAW_tFAW_tracker`
+- `ddr4_tRRD_simple_tRRD`
 
 ## Known Simplifications
 - The wrapper exposes one transaction stream with explicit bank selection; queue selection can reorder requests, and same-address ordering is not yet guaranteed.

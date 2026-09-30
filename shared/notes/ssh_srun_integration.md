@@ -11,8 +11,9 @@ An optional `--remote-config` JSON file overrides those values. See the
 Transport is extracted to [shared/remote](../remote/ssh_executor.py), with a backend
 compatibility import. It drains both output streams, supports live output, and
 enforces a command timeout. The preflight sets a Slurm time limit and attempts
-cancellation by unique job name on failure/interruption. Validation execution and
-RTL/YAML transfer for validation are not yet connected.
+cancellation by unique job name on failure/interruption. Validation execution,
+RTL/YAML transfer, and report retrieval are now connected in shared/top_orchestrator/validation.py.
+The deployed validation scripts remain unchanged; backend continuation is deferred.
 
 ## Execution model
 
@@ -78,7 +79,7 @@ behavioral simulation uses VCS, so Cadence tool availability is insufficient.
 1. Extract the transport into a shared module, keeping a compatibility import for
    backend. Keep Slurm/environment wrapping separate from generic SSH transport.
    Paramiko must be installed in the local Python environment running the adapter.
-2. Upload the selected RTL/YAML snapshot into a unique remote invocation directory.
+2. Upload the selected RTL/YAML snapshot into a pre-existing single-use workspace under `shared/`, selected by `validation_workspace` / `CAPSTONE_VALIDATION_WORKSPACE`. The orchestrator only checks directories; it never creates them. The validator still creates its own report/scratch directories, so execution is blocked unless `allow_validation_output_dirs` is explicitly true.
    Ensure the compute job can access that directory and the deployed validation
    code through the server filesystem.
 3. Build a quoted job command that initializes the environment, checks required

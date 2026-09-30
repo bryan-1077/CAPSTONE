@@ -14,8 +14,8 @@ module tb_ddr4_controller_top;
     localparam int MAX_CYCLES = 20000;
     localparam time SIM_END_TIME = 200000ns;
     localparam int REFRESH_WAIT_CYCLES = 12512;
-    localparam int BANK_COUNT = 2;
-    localparam int TXN_BANK_WIDTH = 1;
+    localparam int BANK_COUNT = 4;
+    localparam int TXN_BANK_WIDTH = 2;
     localparam int ADDR_WIDTH = 4;
     localparam int DATA_WIDTH = 32;
     localparam int ROW_WIDTH = 2;
@@ -65,7 +65,7 @@ module tb_ddr4_controller_top;
     logic txn_is_write;
     logic [ADDR_WIDTH-1:0] txn_addr;
     logic [DATA_WIDTH-1:0] txn_wdata;
-    logic [0:0] txn_bank;
+    logic [1:0] txn_bank;
     logic cmd_ready;
     logic txn_ready;
     logic rsp_valid;
@@ -140,6 +140,8 @@ module tb_ddr4_controller_top;
             `CHECK(saw_row_closed, "Row-closed access was never observed")
             `CHECK(saw_row_hit, "Row-hit access was never observed")
             `CHECK(saw_row_miss, "Row-miss access was never observed")
+            `CHECK(saw_backpressure, "Controller backpressure was never observed")
+            `CHECK(saw_tRRD_block, "tRRD block never occurred")
         end
     endtask
 
@@ -412,6 +414,8 @@ module tb_ddr4_controller_top;
         int stall_refresh_delta;
         int stall_other_delta;
         int total_stall_delta;
+        int tfaw_admission_delta;
+        int tfaw_hard_block_delta;
         real stall_cycles_per_txn;
         begin
             accepted_delta = dut.cnt_accept - accept_start;
@@ -420,14 +424,16 @@ module tb_ddr4_controller_top;
             stall_refresh_delta = dut.cnt_stall_refresh - stall_refresh_start;
             stall_other_delta = dut.cnt_stall_other - stall_other_start;
             total_stall_delta = stall_busy_delta + stall_trrd_delta + stall_refresh_delta + stall_other_delta;
+            tfaw_admission_delta = observed_tfaw_admission_stall_cycles - tfaw_admission_start;
+            tfaw_hard_block_delta = observed_tfaw_hard_block_cycles - tfaw_hard_block_start;
             stall_cycles_per_txn = 0.0;
 
             if (accepted_delta != 0) begin
                 stall_cycles_per_txn = $itor(total_stall_delta) / $itor(accepted_delta);
             end
 
-            `CHECK(stall_trrd_delta == 0,
-                   "tRRD stalls should remain zero when tRRD is disabled")
+            `CHECK(stall_trrd_delta != 0,
+                   "Timing stress pattern should exercise tRRD throttling")
 
             $display("----- TIMING STRESS SUMMARY -----");
             $display("Accepted Transactions   : %0d", accepted_delta);
@@ -436,8 +442,11 @@ module tb_ddr4_controller_top;
             $display("Refresh Stall Cycles     : %0d", stall_refresh_delta);
             $display("Other Stall Cycles       : %0d", stall_other_delta);
             $display("Stall / Accepted Txn     : %0.2f cycles", stall_cycles_per_txn);
-            $display("Timing Observation      : tRRD/tFAW throttling is disabled; timing stress still exercises repeated non-hit service.");
-            $display("Pattern Explanation     : consecutive non-hit accesses keep the slow path active without expecting feature-disabled timing stalls.");
+            $display("tFAW Admission Stalls    : %0d", tfaw_admission_delta);
+            $display("tFAW Hard-Block Cycles   : %0d", tfaw_hard_block_delta);
+            $display("Timing Observation      : tRRD throttled requests; additional ACT pressure also showed up as tFAW admission stalls inside the 'other' bucket.");
+            $display("tFAW Status             : enabled, but the hard block threshold is not realistically reachable in this config (window=40, limit=4).");
+            $display("Pattern Explanation     : consecutive non-hit accesses across banks increased ACT pressure and exposed timing throttling.");
         end
     endtask
 
@@ -961,6 +970,12 @@ module tb_ddr4_controller_top;
     end
 
     always @(posedge clk) begin
+        if (rst_n && dut.u_tRRD.tRRD_block && dut.act_pulse) begin
+            `CHECK(0, "tRRD violation: act during block")
+        end
+    end
+
+    always @(posedge clk) begin
         if (!rst_n) begin
             saw_backpressure <= 1'b0;
             saw_tRRD_block <= 1'b0;
@@ -976,11 +991,15 @@ module tb_ddr4_controller_top;
                 saw_backpressure <= 1'b1;
             end
 
+            if (!saw_tRRD_block && dut.tRRD_block) begin
+                saw_tRRD_block <= 1'b1;
+            end
+
             if (!saw_tFAW_block && dut.tFAW_block) begin
                 saw_tFAW_block <= 1'b1;
             end
             if (dut.issue_valid && !dut.dispatch_fire && !dut.service_pending_q &&
-                (1'b1) && !dut.tfaw_can_accept_act) begin
+                (!dut.tRRD_block) && !dut.tfaw_can_accept_act) begin
                 observed_tfaw_admission_stall_cycles <= observed_tfaw_admission_stall_cycles + 1;
             end
             if (dut.issue_valid && !dut.dispatch_fire && !dut.service_pending_q && dut.tFAW_block) begin
@@ -1008,6 +1027,14 @@ module tb_ddr4_controller_top;
     always @(posedge clk) begin
         if (rst_n && dut.issue_valid && !dut.dispatch_fire && detail_logging_enabled()) begin
             $display("[STALL][id=%0d][cycle=%0d] queued request awaiting dispatch",
+                     active_txn_id, cycle);
+        end
+    end
+
+    always @(posedge clk) begin
+        if (rst_n && dut.issue_valid && dut.tRRD_block && !dut.is_row_hit && !dut.accept_txn &&
+            detail_logging_enabled()) begin
+            $display("[tRRD ][id=%0d][cycle=%0d] BLOCKED activation",
                      active_txn_id, cycle);
         end
     end
@@ -1124,6 +1151,12 @@ module tb_ddr4_controller_top;
                                       ROW_CLASS_CLOSED, SLOW_SERVICE_CYCLES, closed_latency,
                                       "First access to bank 0 opens row 1 on the slow path");
         check_row_state(0, 1'b1, 1, "Bank 0 keeps row 1 open after the first access");
+
+        wait(dut.tRRD_block === 1'b1);
+        expect_access_ready(0, 1, 2, 1'b1,
+                            "Row hit remains ready while shared tRRD blocking is active");
+        expect_access_ready(0, 2, 0, 1'b0,
+                            "Row miss stalls while shared tRRD blocking is active");
         issue_read_and_wait_response(0, 1, 1, DATA_WIDTH'(32'h11110001),
                                      ROW_CLASS_HIT, HIT_SERVICE_CYCLES, hit_latency,
                                      "Second access to bank 0 row 1 is a row hit on the fast path");
@@ -1273,8 +1306,8 @@ module tb_ddr4_controller_top;
             pattern_col = timing_stress_col(pattern_iteration);
             pattern_data = timing_stress_data(pattern_bank, pattern_iteration, pattern_row, pattern_col);
             issue_write_and_wait_complete(pattern_bank, pattern_row, pattern_col, pattern_data,
-                                          ROW_CLASS_MISS, SLOW_SERVICE_CYCLES, pattern_latency,
-                                          "Timing stress: alternating rows keeps forcing new ACTs under open-page");
+                                          (((pattern_bank >= 2) && ((pattern_iteration / BANK_COUNT) == 0)) ? ROW_CLASS_CLOSED : ROW_CLASS_MISS), SLOW_SERVICE_CYCLES, pattern_latency,
+                                          "Timing stress: alternating banks and rows keeps ACT pressure high under open-page");
         end
         clear_pattern_detail_logging();
         report_pattern_summary("TIMING STRESS",
@@ -1300,7 +1333,8 @@ module tb_ddr4_controller_top;
 
         log_phase("CORNER CASES");
         `INFO("Corner cases")
-        `INFO("No timing backpressure expected for this feature set")
+        wait(cmd_ready === 1'b0);
+        `INFO("Observed backpressure while controller was busy")
 
         refresh_start_cycle = cycle;
         while ((dut.ref_req !== 1'b1) &&

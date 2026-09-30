@@ -8,3 +8,4 @@ ddr4_refresh_refresh_controller.sv
 ddr4_request_queue.sv
 ddr4_scheduler_scheduler.sv
 ddr4_tFAW_tFAW_tracker.sv
+ddr4_tRRD_simple_tRRD.sv
