@@ -198,6 +198,30 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(result.status, 'needs_attention')
         self.assertFalse(any(c.startswith('srun ') for c in LocalSSH.instances[-1].commands))
 
+    def test_workspace_alias_and_parent_segments_use_canonical_identity(self):
+        for mode in ('symlink', 'parent'):
+            with self.subTest(mode=mode):
+                workspace = self.prepare_workspace('canonical_' + mode)
+                if mode == 'symlink':
+                    alias = self.server / 'workspace_alias'
+                    alias.symlink_to(workspace, target_is_directory=True)
+                else:
+                    alias = workspace / '..' / workspace.name
+                data = json.loads(self.remote_config.read_text())
+                data['validation_workspace'] = str(alias)
+                self.remote_config.write_text(json.dumps(data))
+                output = self.root / ('alias_' + mode)
+                output.mkdir()
+                with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+                    result = validation_node(self.config, output)
+                self.assertEqual(result.status, 'passed', result.message)
+                record = json.loads((output / 'validation_result.json').read_text())
+                self.assertEqual(record['configured_remote_directory'], str(alias))
+                self.assertEqual(record['remote_directory'], str(workspace.resolve()))
+                self.assertEqual(record['remote_result']['input_directory'], str(workspace.resolve() / 'input'))
+                self.assertTrue(all(path.startswith(str(workspace.resolve()) + '/')
+                                    for path in LocalSSH.instances[-1].uploads))
+
     def test_missing_remote_pipeline_preserves_diagnostic(self):
         (self.server / 'pipeline.py').unlink()
         output = self.root / 'missing_pipeline'

@@ -158,6 +158,20 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 result = ssh.run(command, timeout=60, on_output=output)
                 if not result["ok"]:
                     raise RuntimeError(result.get("stderr") or f"Remote preparation failed ({result['exit_code']})")
+                return result
+            # Resolve on the server, where symlinks and physical paths are known.
+            # The runner uses Path.resolve(); all transfers and evidence checks
+            # must refer to that same workspace identity.
+            marker = "CAPSTONE_WORKSPACE_" + token + ":"
+            resolved = checked(f"cd -P -- {shlex.quote(str(invocation))} && "
+                               f"printf '%s%s\\n' {shlex.quote(marker)} \"$PWD\"")
+            paths = [line[len(marker):] for line in resolved["stdout"].splitlines()
+                     if line.startswith(marker)]
+            if len(paths) != 1 or not PurePosixPath(paths[0]).is_absolute():
+                raise ValueError("Could not determine the canonical remote workspace path")
+            record["configured_remote_directory"] = str(invocation)
+            invocation = PurePosixPath(paths[0])
+            record["remote_directory"] = str(invocation)
             directories = {str(invocation), str(invocation / "input"), str(invocation / "work")}
             files = sorted(p for p in snapshot.rglob("*") if p.is_file())
             for path in files:
