@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import zipfile
+from collections import deque
 from pathlib import Path
 
 
@@ -41,6 +42,7 @@ def execute(invocation):
     inputs = invocation / "input"
     result = {"schema_version": 1, "invocation_id": request["invocation_id"],
               "snapshot_digest": request["snapshot_digest"], "input_directory": str(inputs),
+              "python_executable": sys.executable,
               "pipeline_returncode": None, "summary": None, "input_unchanged": False}
     try:
         check_inputs(inputs, request["snapshot_digest"])
@@ -62,12 +64,26 @@ def execute(invocation):
         # Do not inherit another verification invocation's report destinations.
         environment.pop("RTL_VERIFICATION_REPORT_RUN", None)
         environment.pop("RTL_VALIDATION_RESULT_FILE", None)
-        result["pipeline_returncode"] = subprocess.call(command, cwd=work, env=environment)
+        # Preserve startup tracebacks in the result while still streaming them live.
+        stderr_tail = deque(maxlen=40)
+        with subprocess.Popen(command, cwd=work, env=environment, stderr=subprocess.PIPE,
+                              text=True, errors="replace") as process:
+            for line in process.stderr:
+                stderr_tail.append(line[-8000:])
+                print(line, end="", file=sys.stderr, flush=True)
+            result["pipeline_returncode"] = process.wait()
+        result["pipeline_stderr_tail"] = "".join(stderr_tail)[-8000:]
         check_inputs(inputs, request["snapshot_digest"])
         result["input_unchanged"] = True
         # A fresh input directory has exactly one top-level run; never use global latest.
         summaries = list(reports.glob("*/summary.json"))
         if len(summaries) != 1:
+            if result["pipeline_returncode"] != 0:
+                raise RuntimeError(
+                    f"Validation pipeline exited with code {result['pipeline_returncode']} "
+                    f"using {sys.executable}; expected one invocation summary, found {len(summaries)}. "
+                    + result["pipeline_stderr_tail"].strip()
+                )
             raise ValueError(f"Expected one invocation summary, found {len(summaries)}")
         result["summary"] = json.loads(summaries[0].read_text())
         result["summary_file"] = str(summaries[0].relative_to(inputs))

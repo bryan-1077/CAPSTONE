@@ -236,7 +236,7 @@ def parse_args():
     parser.add_argument(
         "yaml_path",
         nargs="?",
-        default="inputs/input_test_1-0.yaml",
+        default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "microarch", "gen_exp", "ddr4_bank_activate_fsm.yaml"),
         help="Expanded YAML spec to generate.",
     )
     parser.add_argument(
@@ -289,13 +289,14 @@ def main():
         print("Validation failed. Aborting RTL generation.")
         sys.exit(2)
     # Ensure IR output directory exists
-    os.makedirs("ir", exist_ok=True)
+    ir_dir = os.path.join(root_dir, "microarch", "ir")
+    os.makedirs(ir_dir, exist_ok=True)
 
     # Convert dataclass IR → dictionary
     ir_dict = asdict(spec)
 
     # Save as JSON
-    ir_path = os.path.join("ir", f"{spec.design_name}_ir.json")
+    ir_path = os.path.join(ir_dir, f"{spec.design_name}_ir.json")
     with open(ir_path, "w") as f:
         json.dump(ir_dict, f, indent=2)
 

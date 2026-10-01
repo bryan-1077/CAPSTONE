@@ -58,6 +58,31 @@ class MailboxBackendTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "No expanded YAML"):
             publish(self.frontend, destination)
 
+    def test_microarch_specs_take_precedence_and_exclude_masters(self):
+        specs = self.frontend / "microarch/gen_exp"
+        specs.mkdir(parents=True)
+        (specs / "top.yaml").write_text("design_name: top\nsource: microarch\n")
+        (specs / "top_master.yaml").write_text("design_name: top\n")
+        (specs / "unused.yaml").write_text("design_name: unused\n")
+        destination = publish(self.frontend, self.root / "migrated")
+        verify(destination)
+        self.assertEqual(list((destination / "specs").iterdir()), [destination / "specs/top.yaml"])
+        self.assertEqual((destination / "specs/top.yaml").read_bytes(), (specs / "top.yaml").read_bytes())
+
+    def test_incomplete_microarch_does_not_fall_back_to_legacy(self):
+        (self.frontend / "microarch").mkdir()
+        destination = self.root / "incomplete"
+        with self.assertRaisesRegex(ValueError, "directory is missing"):
+            publish(self.frontend, destination)
+        self.assertFalse(destination.exists())
+
+    def test_microarch_spec_symlinks_are_rejected(self):
+        microarch = self.frontend / "microarch"
+        microarch.mkdir()
+        (microarch / "gen_exp").symlink_to(self.frontend / "expanded", target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "symlink"):
+            publish(self.frontend, self.root / "linked")
+
     def config(self):
         return RunConfig("backend", mailbox=self.mailbox, target_mhz=200, allow_unvalidated=True)
 

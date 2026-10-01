@@ -41,8 +41,8 @@ parse_args() {
 }
 
 detect_scheduler_mode() {
-    local expanded_yaml="$SCRIPT_DIR/expanded/ddr4_scheduler/ddr4_scheduler_scheduler.yaml"
-    local generated_yaml="$SCRIPT_DIR/inputs/generated/ddr4_scheduler.yaml"
+    local expanded_yaml="$SCRIPT_DIR/microarch/gen_exp/ddr4_scheduler_scheduler.yaml"
+    local generated_yaml="$SCRIPT_DIR/microarch/gen_basic/ddr4_scheduler.yaml"
     local config_yaml="$SCRIPT_DIR/configs/user_input.yaml"
     local fallback_config="$SCRIPT_DIR/configs/simple.yaml"
     local mode=""

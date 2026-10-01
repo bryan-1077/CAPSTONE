@@ -82,11 +82,11 @@ Current high-level flow:
 configs/user_input.yaml
   -> run_flow.py
   -> validate user config (fail fast)
-  -> generate internal inputs/generated/*.yaml
+  -> generate internal microarch/gen_basic/*.yaml
   -> expand_spec.py
-  -> expanded/<design>/*.yaml + master.yaml
+  -> microarch/gen_exp/*.yaml + <design>_master.yaml
   -> design.py
-  -> validator.py -> ir/*.json
+  -> validator.py -> microarch/ir/*.json
   -> fsm_generator.py, deterministic timing seed, or dual_llm_rtlGen.py
   -> width_safety.py post-processing
   -> rtl_output/<module>.sv
@@ -127,10 +127,10 @@ More specifically:
 
    `run_flow.py` treats any YAML containing a `profile` block as the user-facing config schema. It validates it before generation side effects occur. If valid, it expands that single config into internal generated inputs:
 
-   - `inputs/generated/ddr4_bank.yaml`
-   - `inputs/generated/ddr4_scheduler.yaml`
-   - `inputs/generated/ddr4_request_queue.yaml`
-   - `inputs/generated/ddr4_refresh.yaml`
+   - `microarch/gen_basic/ddr4_bank.yaml`
+   - `microarch/gen_basic/ddr4_scheduler.yaml`
+   - `microarch/gen_basic/ddr4_request_queue.yaml`
+   - `microarch/gen_basic/ddr4_refresh.yaml`
 
    Enabled optional timing features also add `ddr4_tFAW.yaml` and `ddr4_tRRD.yaml`. This is important because the rest of the older flow is still organized around per-feature input YAMLs rather than a single monolithic user config.
 
@@ -138,15 +138,15 @@ More specifically:
 
    For each generated input YAML, `expand_spec.py`:
 
-   - reads `jedec/jedec_dictionary.yaml`,
-   - reads `jedec/feature_templates.yaml`,
+   - reads `microarch/jedec/jedec_dictionary.yaml`,
+   - reads `microarch/jedec/feature_templates.yaml`,
    - substitutes symbolic timing placeholders with integer cycle counts,
-   - emits concrete submodule YAMLs in `expanded/<design>/`,
+   - emits concrete submodule YAMLs in `microarch/gen_exp/`,
    - emits `master.yaml` manifests for those expanded designs.
 
 4. IR generation and RTL generation
 
-   `design.py` validates each concrete YAML through `validator.py`, writes JSON IR into `ir/`, then routes generation by `design_type`:
+   `design.py` validates each concrete YAML through `validator.py`, writes JSON IR into `microarch/ir/`, then routes generation by `design_type`:
 
    - `fsm` -> `fsm_generator.py`
    - hardened timing datapaths such as tFAW/tRRD -> deterministic seed plus `width_safety.py`
@@ -209,16 +209,16 @@ Practical map of the current directory:
 - `configs/`
   User-facing configuration. `user_input.yaml` is the main current entry point.
 
-- `inputs/generated/`
+- `microarch/gen_basic/`
   Internal per-feature YAMLs created by `run_flow.py` from the user config. These are not hand-authored in normal use.
 
-- `jedec/`
+- `microarch/jedec/`
   Timing dictionary and feature templates. This is the declarative source of supported timing profiles and feature skeletons.
 
-- `expanded/`
+- `microarch/gen_exp/`
   Concrete submodule YAMLs created by `expand_spec.py`. Each directory corresponds to one generated design family such as `ddr4_bank`, `ddr4_scheduler`, `ddr4_request_queue`, `ddr4_refresh`, and optional timing families.
 
-- `ir/`
+- `microarch/ir/`
   JSON IR emitted by `design.py` after validation. These files are the best machine-readable snapshot of what the validators and templates actually resolved to.
 
 - `rtl_output/`
@@ -304,7 +304,7 @@ How config drives architecture:
 
 ## 5. JEDEC and Timing Expansion
 
-JEDEC timing data enters through `jedec/jedec_dictionary.yaml`.
+JEDEC timing data enters through `microarch/jedec/jedec_dictionary.yaml`.
 
 What the dictionary contains:
 
@@ -384,7 +384,7 @@ Kinds of metadata carried today:
 - `inferred_signal_widths`
 - validator warnings
 
-In practice, the IR JSON files in `ir/` are one of the most useful artifacts for understanding what the system currently thinks a module is supposed to do.
+In practice, the IR JSON files in `microarch/ir/` are one of the most useful artifacts for understanding what the system currently thinks a module is supposed to do.
 
 ## 7. File-by-File Python Breakdown
 
@@ -400,7 +400,7 @@ Inputs:
 
 Outputs:
 
-- generated `inputs/generated/*.yaml`,
+- generated `microarch/gen_basic/*.yaml`,
 - expanded YAMLs,
 - IR JSON,
 - generated RTL,
@@ -441,13 +441,13 @@ Purpose:
 Inputs:
 
 - internal design input YAML,
-- `jedec/jedec_dictionary.yaml`,
-- `jedec/feature_templates.yaml`.
+- `microarch/jedec/jedec_dictionary.yaml`,
+- `microarch/jedec/feature_templates.yaml`.
 
 Outputs:
 
-- `expanded/<design>/*.yaml`,
-- `expanded/<design>/master.yaml`.
+- `microarch/gen_exp/*.yaml`,
+- `microarch/gen_exp/<design>_master.yaml`.
 
 Key responsibilities:
 
@@ -512,7 +512,7 @@ Inputs:
 
 Outputs:
 
-- one IR JSON file in `ir/`,
+- one IR JSON file in `microarch/ir/`,
 - one SystemVerilog module at `rtl_output/<module>.sv`.
 
 Key responsibilities:

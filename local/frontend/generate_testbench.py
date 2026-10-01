@@ -13,10 +13,10 @@ import yaml
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 RTL_OUTPUT_DIR = SCRIPT_DIR / "rtl_output"
-IR_DIR = SCRIPT_DIR / "ir"
+IR_DIR = SCRIPT_DIR / "microarch" / "ir"
 MANIFEST_PATH = RTL_OUTPUT_DIR / "manifest.json"
 TOP_RTL_TEMPLATE = RTL_OUTPUT_DIR / "{top_module}.sv"
-GENERATED_BANK_INPUT_PATH = SCRIPT_DIR / "inputs" / "generated" / "ddr4_bank.yaml"
+GENERATED_BANK_INPUT_PATH = SCRIPT_DIR / "microarch" / "gen_basic" / "ddr4_bank.yaml"
 USER_CONFIG_PATH = SCRIPT_DIR / "configs" / "user_input.yaml"
 SUPPORTED_BANK_COUNTS = {1, 2, 4}
 SUPPORTED_PAGE_POLICIES = {"open_page", "close_page"}

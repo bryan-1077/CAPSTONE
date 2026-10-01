@@ -215,8 +215,11 @@ exposed as revisions. Run-directory names must be unique across mailbox runs.
 Each snapshot contains:
 
 - `rtl/`: the entire frontend RTL output tree, including manifest, filelist, and headers.
-- `specs/`: expanded YAMLs whose `design_name` matches a module in the RTL manifest,
-  preserving their relative directories. Aggregate `master.yaml` files are excluded.
+- `specs/`: expanded YAMLs from `local/frontend/microarch/gen_exp/` whose
+  `design_name` matches a module in the RTL manifest,
+  preserving their relative directories. Aggregate `master.yaml` and `*_master.yaml`
+  files are excluded. Older workspaces without `microarch/` use `expanded/`;
+  migrated workspaces never fall back to that legacy directory.
 - `approved_specs.yaml`: the approved input configuration, when available.
 - `snapshot.json`: file hashes, the backend-compatible RTL digest, and modules
   without matching expanded specs (for example generated wrappers).
@@ -300,7 +303,9 @@ python -m shared.top_orchestrator remote-check --ask-password
 ```
 
 The hidden terminal prompt passes the password to the SSH connection alongside
-key/agent authentication. It is held in memory for this check (including any
+key/agent authentication. If the initial login rejects authentication, validation
+and remote-check re-prompt up to three times (four attempts total). Other failures
+are not retried, and retries require `--ask-password`. It is held in memory for this check (including any
 reconnection) and is not saved in configuration or run artifacts. `--plan` never
 prompts. This option handles an account password; it does not implement custom
 Duo/MFA challenge handling. A terminal capable of disabling echo is required.
@@ -349,6 +354,23 @@ as `remote-check`. The default deployed pipeline path is
 already have the validation scripts, Python dependencies, simulator, and model
 configuration installed. This adapter does not deploy or edit that source folder.
 
+Install the validation Python dependencies **on the server**, from the remote
+project directory, using the interpreter selected by `CAPSTONE_REMOTE_PYTHON`
+(or the JSON `python` setting; the default is `python3.11`):
+
+```bash
+python3.11 -m pip install --user -r server/validation/requirements.txt
+python3.11 -c 'import sys, yaml, requests, dotenv; print(sys.executable)'
+```
+
+For a virtual environment, omit `--user` and set the remote `python` setting to
+the absolute path of its `bin/python`. Installing into your local frontend Python
+does not install packages into the remote Slurm interpreter. `yaml` is provided
+by **PyYAML**; `dotenv` is provided by **python-dotenv**. A missing import can stop
+the pipeline before any summary exists. The wrapper records the interpreter and
+the end of pipeline stderr in `remote_validation_result.json` and reports that
+startup error when a failed pipeline has no summary.
+
 ```bash
 # Interactive spec selection -> RTL -> lint/BIST -> snapshot -> verification.
 python -m shared.top_orchestrator --ask-password
@@ -379,23 +401,25 @@ the allocation wait plus validation job time by at least 30 seconds. Preflight
 keeps its separate short time limits. Remote setup must provide validation tools
 (for example VCS), rather than only backend tools.
 
-The orchestrator never creates remote directories. `validation_workspace` (or
-`CAPSTONE_VALIDATION_WORKSPACE`) selects an existing, single-use workspace, defaulting
-to `<remote-project>/shared/validation_runs/run_001`. Prepare it before execution,
-including empty `input/rtl/`, `input/specs/`, and `work/` directories, plus any nested
-directories present in the snapshot. These directories must be writable by your SSH
-account. Missing directories stop the transfer; they are never created automatically.
-Use a fresh prepared workspace for each invocation to preserve previous evidence.
+The orchestrator automatically creates a unique workspace under
+`<remote-project>/shared/validation_runs/run_<invocation-id>/`, including
+`input/rtl/`, `input/specs/`, `work/`, and nested snapshot directories. Previous
+workspaces and results are preserved; no manual directory preparation is required.
+The SSH account must be able to create and write these directories.
 
-The deployed validation pipeline itself creates report and scratch directories.
-Consequently, validation stops before SSH by default. Only if those validator-created
-outputs are permitted, set `allow_validation_output_dirs: true` in the remote JSON.
-This does not enable directory creation by the orchestrator or its uploaded wrapper.
-Supporting a pipeline that creates no directories requires separate validation changes.
-Local run artifacts still use directories under `shared/` as before.
+`validation_workspace` (or `CAPSTONE_VALIDATION_WORKSPACE`) optionally selects an
+explicit absolute path or a path relative to the remote project. Missing paths
+are created automatically. Existing prepared workspaces are accepted only when
+input/work contain no files and no previous runner, request, or reports exist.
+Use a fresh path for each invocation, or leave this setting unset/null for automatic
+unique paths.
+
+`allow_validation_output_dirs` defaults to `true`, allowing the deployed pipeline
+to create report and scratch directories. Setting it to `false` stops validation
+before SSH. The deployed validation source folder is not modified.
 
 The adapter freezes and verifies the local snapshot, uploads it and a small shared
-wrapper into the prepared workspace,
+wrapper into the run workspace,
 then launches the deployed pipeline under SSH/Slurm. RTL and module-spec directories
 are passed separately: the approved user configuration is preserved as provenance
 but is not incorrectly treated as a module-level verification spec. Pipeline scratch

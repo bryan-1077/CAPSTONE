@@ -24,8 +24,8 @@ except AttributeError:
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-EXPANDED_DIR = SCRIPT_DIR / "expanded"
-GENERATED_INPUT_DIR = SCRIPT_DIR / "inputs" / "generated"
+EXPANDED_DIR = SCRIPT_DIR / "microarch" / "gen_exp"
+GENERATED_INPUT_DIR = SCRIPT_DIR / "microarch" / "gen_basic"
 FLOW_LINT_LOG = SCRIPT_DIR / "flow_lint.log"
 GENERATED_INPUT_SPECS = [
     ("ddr4_bank", None, ["basic_commands"]),
@@ -47,7 +47,6 @@ SUPPORTED_PAGE_POLICIES = {"open_page", "close_page"}
 DEFAULT_PAGE_POLICY = "open_page"
 MANAGED_DESIGN_ARTIFACTS = {
     "ddr4_bank": {
-        "expanded_dir": "ddr4_bank",
         "ir_modules": [
             "ddr4_bank_activate_fsm",
             "ddr4_bank_bank_sequencer",
@@ -62,27 +61,22 @@ MANAGED_DESIGN_ARTIFACTS = {
         ],
     },
     "ddr4_tFAW": {
-        "expanded_dir": "ddr4_tFAW",
         "ir_modules": ["ddr4_tFAW_tFAW_tracker"],
         "rtl_modules": ["ddr4_tFAW_tFAW_tracker"],
     },
     "ddr4_request_queue": {
-        "expanded_dir": "ddr4_request_queue",
         "ir_modules": ["ddr4_request_queue"],
         "rtl_modules": ["ddr4_request_queue"],
     },
     "ddr4_tRRD": {
-        "expanded_dir": "ddr4_tRRD",
         "ir_modules": ["ddr4_tRRD_simple_tRRD"],
         "rtl_modules": ["ddr4_tRRD_simple_tRRD"],
     },
     "ddr4_scheduler": {
-        "expanded_dir": "ddr4_scheduler",
         "ir_modules": ["ddr4_scheduler_scheduler"],
         "rtl_modules": ["ddr4_scheduler_scheduler"],
     },
     "ddr4_refresh": {
-        "expanded_dir": "ddr4_refresh",
         "ir_modules": ["ddr4_refresh_refresh_controller"],
         "rtl_modules": ["ddr4_refresh_refresh_controller"],
     },
@@ -346,11 +340,12 @@ def cleanup_disabled_artifacts(selected_design_names: set[str]) -> None:
         if design_name in selected_design_names:
             continue
 
-        expanded_dir = EXPANDED_DIR / artifacts["expanded_dir"]
-        remove_path(expanded_dir)
+        remove_path(EXPANDED_DIR / f"{design_name}_master.yaml")
+        for expanded_path in EXPANDED_DIR.glob(f"{design_name}_*.yaml"):
+            remove_path(expanded_path)
 
         for module_name in artifacts["ir_modules"]:
-            remove_path(SCRIPT_DIR / "ir" / f"{module_name}_ir.json")
+            remove_path(SCRIPT_DIR / "microarch" / "ir" / f"{module_name}_ir.json")
 
         for module_name in artifacts["rtl_modules"]:
             remove_path(SCRIPT_DIR / "rtl_output" / f"{module_name}.sv")
@@ -462,21 +457,13 @@ def discover_targets(input_path: Path) -> tuple[list[Path], list[str]]:
 
 
 def discover_expanded_yamls(expanded_dir: Path, design_names: list[str]) -> list[Path]:
-    """Collect all non-master YAML files under selected expanded/ design directories."""
-    yaml_paths: list[Path] = []
-    for design_name in sorted(set(design_names)):
-        design_dir = expanded_dir / design_name
-        if not design_dir.is_dir():
+    """Collect selected designs' module YAMLs without requiring manifests."""
+    yaml_paths: set[Path] = set()
+    for path in expanded_dir.glob("*.yaml"):
+        if path.name.endswith("_master.yaml"):
             continue
-
-        for root, _, files in os.walk(design_dir):
-            for filename in files:
-                if not filename.endswith(".yaml"):
-                    continue
-                if filename == "master.yaml":
-                    continue
-                yaml_paths.append((Path(root) / filename).resolve())
-
+        if any(path.name.startswith(f"{name}_") for name in design_names):
+            yaml_paths.add(path.resolve())
     return sorted(yaml_paths)
 
 

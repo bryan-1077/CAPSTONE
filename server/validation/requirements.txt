@@ -1,0 +1,4 @@
+# Install with the same Python interpreter used by CAPSTONE_REMOTE_PYTHON.
+PyYAML
+requests
+python-dotenv

@@ -32,12 +32,17 @@ def publish(frontend: Path, destination: Path, approved_specs: Path | None = Non
     if not manifest.get("top_module") or manifest["top_module"] not in modules:
         raise ValueError("RTL manifest must identify its top module")
     specs = []
-    expanded = frontend / "expanded"
-    if expanded.is_symlink():
+    microarch = frontend / "microarch"
+    # A migrated workspace must never silently publish stale legacy specs.
+    expanded = microarch / "gen_exp" if microarch.exists() or microarch.is_symlink() else frontend / "expanded"
+    if microarch.is_symlink() or expanded.is_symlink():
         raise ValueError("Expanded specs must not be a symlink")
+    if not expanded.is_dir():
+        raise ValueError(f"Expanded specs directory is missing: {expanded}")
     for name in file_hashes(expanded):
         path = expanded / name
-        if path.suffix.lower() not in {".yaml", ".yml"} or path.name == "master.yaml":
+        if (path.suffix.lower() not in {".yaml", ".yml"}
+                or path.name == "master.yaml" or path.stem.endswith("_master")):
             continue
         spec = yaml.safe_load(path.read_text())
         if isinstance(spec, dict) and spec.get("design_name") in modules:

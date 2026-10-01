@@ -57,6 +57,7 @@ class LocalSSH:
     """Uses local temp paths; strips only the Slurm/environment layer for tests."""
     instances = []
     def __init__(self, *args):
+        self.host, self.username = args[:2]
         self.password = None
         self.uploads = []
         self.commands = []
@@ -126,9 +127,28 @@ class ValidationTests(unittest.TestCase):
         self.remote_config.write_text(json.dumps(data))
         return workspace
 
+    def test_validation_recovers_from_rejected_password(self):
+        original = LocalSSH.run
+        attempts = []
+        def login(ssh, command, **kwargs):
+            attempts.append(ssh.password)
+            if len(attempts) == 1:
+                return dict(ok=False, exit_code=-1, stdout="", stderr="Authentication failed",
+                            error_type="AuthenticationException")
+            return original(ssh, command, **kwargs)
+        run_dir = self.root / "retry_run"
+        run_dir.mkdir()
+        with patch("shared.top_orchestrator.validation.SSHExecutor", LocalSSH), patch.object(
+                LocalSSH, "run", login), patch("getpass.getpass", side_effect=["wrong", "correct"]) as prompt:
+            result = validation_node(replace(self.config, ask_password=True), run_dir)
+        self.assertEqual(result.status, "passed", result.message)
+        self.assertEqual(prompt.call_count, 2)
+        self.assertEqual(attempts[:2], ["wrong", "correct"])
+        self.assertIsNone(LocalSSH.instances[-1].password)
+
     def test_default_blocks_pipeline_directory_creation_without_ssh(self):
         data = json.loads(self.remote_config.read_text())
-        data.pop('allow_validation_output_dirs')
+        data['allow_validation_output_dirs'] = False
         self.remote_config.write_text(json.dumps(data))
         output = self.root / 'blocked'
         output.mkdir()
@@ -138,7 +158,7 @@ class ValidationTests(unittest.TestCase):
         self.assertIn('creates report and scratch directories', result.message)
         ssh.assert_not_called()
 
-    def test_missing_workspace_is_not_created(self):
+    def test_missing_workspace_is_created(self):
         data = json.loads(self.remote_config.read_text())
         missing = self.server / 'shared/missing'
         data['validation_workspace'] = str(missing)
@@ -147,10 +167,46 @@ class ValidationTests(unittest.TestCase):
         output.mkdir()
         with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
             result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        for directory in ('input/rtl', 'input/specs', 'work'):
+            self.assertTrue((missing / directory).is_dir())
+
+    def test_automatic_workspaces_are_unique_and_preserve_previous_results(self):
+        data = json.loads(self.remote_config.read_text())
+        data.pop('validation_workspace')
+        data.pop('allow_validation_output_dirs')
+        self.remote_config.write_text(json.dumps(data))
+        nested = self.frontend / 'rtl_output/include/nested'
+        nested.mkdir(parents=True)
+        (nested / 'defs.svh').write_text('// definitions')
+        mailbox = publish(self.frontend, self.root / 'mailbox/nested')
+        workspaces = []
+        for index in range(2):
+            output = self.root / f'auto_{index}'
+            output.mkdir()
+            with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+                result = validation_node(replace(self.config, mailbox=mailbox), output)
+            self.assertEqual(result.status, 'passed', result.message)
+            record = json.loads((output / 'validation_result.json').read_text())
+            workspace = Path(record['remote_directory'])
+            self.assertEqual(workspace.parent, self.server / 'shared/validation_runs')
+            self.assertTrue((workspace / 'input/rtl/include/nested/defs.svh').is_file())
+            workspaces.append(workspace)
+        self.assertNotEqual(*workspaces)
+        self.assertTrue(all((workspace / 'reports.zip').is_file() for workspace in workspaces))
+
+    def test_used_explicit_workspace_is_rejected_without_overwriting(self):
+        workspace = self.prepare_workspace('used')
+        previous = workspace / 'request.json'
+        previous.write_text('previous invocation')
+        output = self.root / 'used'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
         self.assertEqual(result.status, 'needs_attention')
-        self.assertFalse(missing.exists())
+        self.assertEqual(previous.read_text(), 'previous invocation')
         self.assertEqual(LocalSSH.instances[-1].uploads, [])
-        self.assertFalse(any('mkdir' in command or command.startswith('srun ') for command in LocalSSH.instances[-1].commands))
+        self.assertFalse(any(c.startswith('srun ') for c in LocalSSH.instances[-1].commands))
 
     def test_remote_roundtrip_and_evidence_gates(self):
         for mode, status in [('pass','passed'), ('gaps','needs_attention'), ('missing_stage','needs_attention'),
@@ -230,6 +286,40 @@ class ValidationTests(unittest.TestCase):
             result = validation_node(self.config, output)
         self.assertEqual(result.status, 'needs_attention')
         self.assertIn('entry point does not exist', result.message)
+
+    def test_missing_dependency_preserves_traceback_and_result(self):
+        (self.server / 'pipeline.py').write_text(
+            "raise ModuleNotFoundError(\"No module named 'yaml'\")\n"
+        )
+        output = self.root / 'missing_dependency'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'needs_attention')
+        self.assertIn("No module named 'yaml'", result.message)
+        payload = json.loads((output / 'remote_validation_result.json').read_text())
+        self.assertEqual(payload['pipeline_returncode'], 1)
+        self.assertEqual(payload['python_executable'], sys.executable)
+        self.assertIn('ModuleNotFoundError', payload['pipeline_stderr_tail'])
+        self.assertTrue(payload['input_unchanged'])
+        self.assertTrue((output / 'reports.zip').is_file())
+
+    def test_missing_result_preserves_remote_execution_diagnostic(self):
+        class MissingResultSSH(LocalSSH):
+            def run(self, command, **kwargs):
+                if command.startswith('srun '):
+                    self.commands.append(command)
+                    return dict(ok=False, exit_code=1, stdout='',
+                                stderr="ModuleNotFoundError: No module named 'yaml'")
+                return super().run(command, **kwargs)
+
+        output = self.root / 'missing_result'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', MissingResultSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'needs_attention')
+        self.assertIn('Could not retrieve result.json', result.message)
+        self.assertIn("No module named 'yaml'", result.message)
 
     def test_unusable_downloads_cannot_pass(self):
         for mode in ('missing', 'stale', 'corrupt'):

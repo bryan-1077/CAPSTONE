@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 from shared.remote.ssh_executor import SSHExecutor
+from .auth import run_with_password_retries
 from .contracts import StageResult
 from .mailbox import verify
 from .remote import RemoteConfig, slurm_command
@@ -125,7 +126,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 raise ValueError(
                     "Validation is disabled because the deployed pipeline creates report and scratch directories. "
                     "No remote changes were made. Set allow_validation_output_dirs=true only if those "
-                    "validator-created directories are allowed; the orchestrator never creates remote directories."
+                    "validator-created directories are allowed."
                 )
             record["phase"] = "snapshot"
             verify(config.mailbox)
@@ -136,7 +137,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             snapshot_digest = hashlib.sha256((snapshot / "snapshot.json").read_bytes()).hexdigest()
             token = uuid4().hex
             job_name = "capstone-verif-" + token
-            invocation = PurePosixPath(remote.validation_workspace)
+            invocation = PurePosixPath(remote.validation_workspace or f"shared/validation_runs/run_{token}")
             if not invocation.is_absolute():
                 invocation = PurePosixPath(remote.project_dir) / invocation
             pipeline = PurePosixPath(remote.validation_script)
@@ -154,11 +155,27 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 with warnings.catch_warnings():
                     warnings.simplefilter("error", getpass.GetPassWarning)
                     ssh.password = getpass.getpass(f"SSH password for {remote.username}@{remote.host}: ")
+            initial_login = True
             def checked(command):
-                result = ssh.run(command, timeout=60, on_output=output)
+                nonlocal initial_login
+                if initial_login:
+                    result = run_with_password_retries(ssh, command, ask_password=config.ask_password,
+                                                       timeout=60, on_output=output)
+                    initial_login = False
+                else:
+                    result = ssh.run(command, timeout=60, on_output=output)
                 if not result["ok"]:
                     raise RuntimeError(result.get("stderr") or f"Remote preparation failed ({result['exit_code']})")
                 return result
+            # Create a unique default workspace exclusively. Explicit paths retain
+            # support for prepared workspaces, but missing paths are created too.
+            record["phase"] = "workspace_setup"
+            quoted = shlex.quote(str(invocation))
+            checked("mkdir -p -- " + shlex.quote(str(invocation.parent)))
+            if remote.validation_workspace is None:
+                checked(f"mkdir -- {quoted}")
+            else:
+                checked(f"if test ! -e {quoted} && test ! -L {quoted}; then mkdir -- {quoted}; fi")
             # Resolve on the server, where symlinks and physical paths are known.
             # The runner uses Path.resolve(); all transfers and evidence checks
             # must refer to that same workspace identity.
@@ -172,13 +189,15 @@ def validation_node(config, run_dir: Path) -> StageResult:
             record["configured_remote_directory"] = str(invocation)
             invocation = PurePosixPath(paths[0])
             record["remote_directory"] = str(invocation)
-            directories = {str(invocation), str(invocation / "input"), str(invocation / "work")}
+            directories = {str(invocation), str(invocation / "input/rtl"),
+                           str(invocation / "input/specs"), str(invocation / "work")}
             files = sorted(p for p in snapshot.rglob("*") if p.is_file())
             for path in files:
                 directories.add(str(invocation / "input" / path.relative_to(snapshot).parent.as_posix()))
             for directory in sorted(directories):
                 quoted = shlex.quote(directory)
-                message = shlex.quote(f"Required remote directory must already exist and be writable: {directory}")
+                checked(f"mkdir -p -- {quoted}")
+                message = shlex.quote(f"Required remote directory must be writable: {directory}")
                 checked(f"test -d {quoted} && test -w {quoted} && test -x {quoted} || "
                         f"{{ echo {message} >&2; exit 1; }}")
             # A workspace is single-use: never mix a new snapshot with old evidence.
@@ -188,7 +207,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             for name in ("runner.py", "request.json", "result.json", "reports.zip", "input/verification_reports"):
                 quoted = shlex.quote(str(invocation / name))
                 checked(f"test ! -e {quoted} && test ! -L {quoted} || "
-                        "{ echo 'Remote workspace already used; select a fresh prepared workspace' >&2; exit 1; }")
+                        "{ echo 'Remote workspace already used; select a fresh workspace' >&2; exit 1; }")
             for path in files:
                 ssh.upload_file(path, str(invocation / "input" / path.relative_to(snapshot).as_posix()), exclusive=True)
             ssh.upload_file(request_path, str(invocation / "request.json"), exclusive=True)
@@ -206,7 +225,11 @@ def validation_node(config, run_dir: Path) -> StageResult:
             for remote_name, local_name in (("result.json", "remote_validation_result.json"), ("reports.zip", "reports.zip")):
                 fetched = ssh.fetch_file(str(invocation / remote_name), run_dir / local_name)
                 if not fetched["ok"]:
-                    raise RuntimeError(f"Could not retrieve {remote_name}: {fetched.get('error')}")
+                    detail = (execution.get("stderr") or "").strip()[-8000:]
+                    raise RuntimeError(
+                        f"Could not retrieve {remote_name}: {fetched.get('error')}"
+                        + (f"\nRemote execution stderr:\n{detail}" if detail else "")
+                    )
             payload = json.loads((run_dir / "remote_validation_result.json").read_text())
             record["remote_result"] = payload
             if payload.get("invocation_id") != token or payload.get("snapshot_digest") != snapshot_digest:

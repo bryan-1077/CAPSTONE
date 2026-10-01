@@ -54,11 +54,27 @@ class RemoteTests(unittest.TestCase):
                         "error_type": "AuthenticationException"}
             ssh.run.side_effect = login
             result = remote_check_node(RunConfig("remote-check", ask_password=True), Path(temporary))
-            prompt.assert_called_once()
+            self.assertEqual(prompt.call_count, 4)
+            self.assertEqual(ssh.run.call_count, 4)
             self.assertEqual(result.status, "failed")
             self.assertIsNone(ssh.password)
             for path in Path(temporary).iterdir():
                 self.assertNotIn("test-password-only", path.read_text())
+
+    def test_password_retry_recovers_and_other_failures_do_not_prompt(self):
+        from shared.top_orchestrator.auth import run_with_password_retries
+        rejected = dict(ok=False, error_type="AuthenticationException")
+        accepted = dict(ok=True)
+        for results, interactive, prompts in (([rejected, accepted], True, 1),
+                                              ([rejected], False, 0),
+                                              ([dict(ok=False, error_type="TimeoutError")], True, 0)):
+            ssh = MagicMock(host="host", username="user")
+            ssh.run.side_effect = results
+            with patch("shared.top_orchestrator.auth.getpass.getpass", return_value="replacement") as prompt:
+                result = run_with_password_retries(ssh, "pwd", ask_password=interactive)
+            self.assertEqual(result, results[-1])
+            self.assertEqual(prompt.call_count, prompts)
+            self.assertEqual(ssh.run.call_count, len(results))
 
     def test_cancelled_password_prompt_does_not_connect(self):
         with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", ENV, clear=True), patch(

@@ -5,10 +5,10 @@ memory:
   protocol: DDR4
   speed: '3200'
 topology:
-  banks: 2
+  banks: 4
 features:
   scheduler: simple
   page_policy: open_page
   refresh: true
   tFAW: true
-  tRRD: false
+  tRRD: true

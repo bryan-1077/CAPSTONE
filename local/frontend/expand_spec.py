@@ -11,8 +11,8 @@ Reads:
                                   symbolic placeholders
 
 Writes:
-    expanded/<design_name>/<submodule_name>.yaml  -- one per submodule
-    expanded/<design_name>/master.yaml            -- submodule list + interfaces
+    microarch/gen_exp/<design_name>_<submodule_name>.yaml  -- one per submodule
+    microarch/gen_exp/<design_name>_master.yaml            -- multi-module/interface designs only
 
 Supports two submodule types:
     FSM      (design_type: "fsm" or absent in template)
@@ -24,12 +24,12 @@ Supports two submodule types:
              -> no state_machine block; validator.py FSM field will be None
 
 Usage:
-    python3 expand_spec.py inputs/simple_ddr.yaml
-    python3 expand_spec.py inputs/simple_ddr.yaml --output-dir my_output/
+    python3 expand_spec.py microarch/gen_basic/ddr4_bank.yaml
+    python3 expand_spec.py microarch/gen_basic/ddr4_bank.yaml --output-dir my_output/
 
 Then run each submodule through the pipeline:
-    python3 design.py expanded/ddr4_bank/ddr4_bank_activate_fsm.yaml
-    python3 design.py expanded/ddr4_bank/ddr4_bank_tFAW_tracker.yaml
+    python3 design.py microarch/gen_exp/ddr4_bank_activate_fsm.yaml
+    python3 design.py microarch/gen_exp/ddr4_bank_tFAW_tracker.yaml
     ...
 
 Python 3.6 compatible — no f-strings, no text=True in subprocess.
@@ -48,7 +48,7 @@ import yaml
 # can be called from any working directory.
 # ---------------------------------------------------------------------------
 SCRIPT_DIR          = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_OUTPUT_DIR  = os.path.join(SCRIPT_DIR, "expanded")
+DEFAULT_OUTPUT_DIR  = os.path.join(SCRIPT_DIR, "microarch", "gen_exp")
 
 
 def first_existing_path(*relative_paths):
@@ -61,12 +61,10 @@ def first_existing_path(*relative_paths):
 
 
 JEDEC_DICT_PATH     = first_existing_path(
-    "jedec/jedec_dictionary.yaml",
-    "ir/jedec/jedec_dictionary.yaml",
+    "microarch/jedec/jedec_dictionary.yaml",
 )
 TEMPLATES_PATH      = first_existing_path(
-    "jedec/feature_templates.yaml",
-    "ir/jedec/feature_templates.yaml",
+    "microarch/jedec/feature_templates.yaml",
 )
 
 
@@ -369,8 +367,8 @@ def build_master_yaml(design_name, feature_name, jedec_profile_name,
                       submodule_paths, feature_template):
     """
     Build the master YAML that lists all submodules and their interface
-    connections. This is consumed by a future check_interfaces.py and
-    serves as the source of truth for the hand-written top-level wrapper.
+    connections for check_interfaces.py and inspection. Wrapper generation
+    uses module metadata directly.
 
     submodule_paths: {submodule_name: path_to_generated_yaml}
     """
@@ -378,7 +376,7 @@ def build_master_yaml(design_name, feature_name, jedec_profile_name,
     for name, path in submodule_paths.items():
         submodule_entries.append({
             "name":        name,
-            "spec":        path,
+            "spec":        os.path.basename(path),
             "design_name": "{}_{}".format(design_name, name)
         })
 
@@ -420,7 +418,7 @@ def verify_cycle_counts(sub_map, jedec_profile_name):
 
 def expand_spec(input_path, output_dir=None):
     """
-    Full expansion pipeline. Returns the path to the master YAML.
+    Full expansion pipeline. Returns module YAML paths in expansion order.
 
     Steps:
         1. Load + validate high-level YAML
@@ -428,7 +426,7 @@ def expand_spec(input_path, output_dir=None):
         3. Load feature templates, look up requested feature
         4. Build substitution map (placeholder -> integer)
         5. For each submodule: substitute -> write validator-compatible YAML
-        6. Write master YAML
+        6. Write master YAML only for multi-module/interface designs
         7. Print summary
     """
 
@@ -503,7 +501,7 @@ def expand_spec(input_path, output_dir=None):
     # Step 4: Set up output directory
     # -----------------------------------------------------------------------
     if output_dir is None:
-        output_dir = os.path.join(DEFAULT_OUTPUT_DIR, design_name)
+        output_dir = DEFAULT_OUTPUT_DIR
 
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
@@ -560,17 +558,24 @@ def expand_spec(input_path, output_dir=None):
     # -----------------------------------------------------------------------
     # Step 6: Write master YAML
     # -----------------------------------------------------------------------
-    master_yaml = build_master_yaml(
-        design_name          = design_name,
-        feature_name         = feature_names[0],    # single feature for now
-        jedec_profile_name   = profile_name,
-        submodule_paths      = all_submodule_paths,
-        feature_template     = last_feature_template
+    master_path = os.path.join(output_dir, "{}_master.yaml".format(design_name))
+    needs_master = (
+        len(all_submodule_paths) > 1
+        or bool(last_feature_template.get("interfaces", []))
     )
-
-    master_path = os.path.join(output_dir, "master.yaml")
-    write_yaml(master_yaml, master_path)
-    print("[expand_spec] Master YAML written: {}".format(master_path))
+    if needs_master:
+        master_yaml = build_master_yaml(
+            design_name=design_name,
+            feature_name=feature_names[0],
+            jedec_profile_name=profile_name,
+            submodule_paths=all_submodule_paths,
+            feature_template=last_feature_template,
+        )
+        write_yaml(master_yaml, master_path)
+        print("[expand_spec] Master YAML written: {}".format(master_path))
+    elif os.path.isfile(master_path):
+        # Remove manifests left by an earlier expansion of this design.
+        os.remove(master_path)
 
     # -----------------------------------------------------------------------
     # Step 7: Print summary
@@ -586,10 +591,11 @@ def expand_spec(input_path, output_dir=None):
     print("Generated files:")
     for name, path in all_submodule_paths.items():
         print("  {}".format(path))
-    print("  {}".format(master_path))
+    if needs_master:
+        print("  {}".format(master_path))
     print("=" * 60)
 
-    return master_path
+    return list(all_submodule_paths.values())
 
 
 # ===========================================================================
@@ -605,8 +611,8 @@ def parse_args(argv):
         print("Usage: python3 expand_spec.py <input.yaml> [--output-dir <dir>]")
         print("")
         print("Example:")
-        print("  python3 expand_spec.py inputs/simple_ddr.yaml")
-        print("  python3 expand_spec.py inputs/simple_ddr.yaml --output-dir expanded/")
+        print("  python3 expand_spec.py microarch/gen_basic/ddr4_bank.yaml")
+        print("  python3 expand_spec.py microarch/gen_basic/ddr4_bank.yaml --output-dir microarch/gen_exp/")
         sys.exit(1)
 
     input_path = argv[1]
@@ -628,7 +634,7 @@ def main():
     input_path, output_dir = parse_args(sys.argv)
 
     try:
-        master_path = expand_spec(input_path, output_dir)
+        expand_spec(input_path, output_dir)
         sys.exit(0)
 
     except (IOError, KeyError, ValueError, TypeError) as e:

@@ -18,8 +18,8 @@ Exit codes:
     1 on any errors, or on warnings when --strict is used
 
 Usage:
-    python3 check_interfaces.py expanded/ddr4_bank/master.yaml
-    python3 check_interfaces.py expanded/ddr4_bank/master.yaml --strict
+    python3 check_interfaces.py microarch/gen_exp/ddr4_bank_master.yaml
+    python3 check_interfaces.py microarch/gen_exp/ddr4_bank_master.yaml --strict
 
 Python 3.6 compatible - no f-strings, no argparse dependency.
 """
@@ -308,7 +308,7 @@ def add_global_ports(port_map, spec_data):
 
 def load_module_metadata(module_name, root_dir):
     """Load module metadata from IR JSON or expanded YAML."""
-    ir_path = os.path.join(root_dir, "ir", "{}_ir.json".format(module_name))
+    ir_path = os.path.join(root_dir, "microarch", "ir", "{}_ir.json".format(module_name))
     if os.path.isfile(ir_path):
         with open(ir_path, "r") as fh:
             ir_data = json.load(fh)
@@ -320,7 +320,7 @@ def load_module_metadata(module_name, root_dir):
             "source": ir_path,
         }
 
-    expanded_root = os.path.join(root_dir, "expanded")
+    expanded_root = os.path.join(root_dir, "microarch", "gen_exp")
     for current_root, _, files in os.walk(expanded_root):
         yaml_name = "{}.yaml".format(module_name)
         if yaml_name in files:
@@ -425,7 +425,7 @@ def check_interfaces(modules, root_dir=None):
 
     Args:
         modules: list of module names or metadata dicts
-        root_dir: repo-local directory containing ir/ and expanded/
+        root_dir: repo-local directory containing microarch/ir/ and microarch/gen_exp/
 
     Returns:
         Normalized module metadata list.
@@ -641,8 +641,8 @@ def parse_args(argv):
         print("                Optional flag; default is warnings-only.")
         print("")
         print("Examples:")
-        print("  python3 check_interfaces.py expanded/ddr4_bank/master.yaml")
-        print("  python3 check_interfaces.py expanded/ddr4_bank/master.yaml --strict")
+        print("  python3 check_interfaces.py microarch/gen_exp/ddr4_bank_master.yaml")
+        print("  python3 check_interfaces.py microarch/gen_exp/ddr4_bank_master.yaml --strict")
         sys.exit(1)
 
     master_path = argv[1]

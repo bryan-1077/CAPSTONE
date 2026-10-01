@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 from shared.remote.ssh_executor import SSHExecutor
+from .auth import run_with_password_retries
 from .contracts import StageResult
 
 
@@ -35,8 +36,8 @@ class RemoteConfig:
     validation_job_seconds: int = 14400
     validation_timeout_seconds: int = 14490
     validation_jobs: int = 1
-    validation_workspace: str = "shared/validation_runs/run_001"
-    allow_validation_output_dirs: bool = False
+    validation_workspace: str | None = None
+    allow_validation_output_dirs: bool = True
 
     @classmethod
     def load(cls, path: Path | None = None):
@@ -81,10 +82,14 @@ class RemoteConfig:
         config = cls(**data)
         if not isinstance(config.allow_validation_output_dirs, bool):
             raise ValueError("allow_validation_output_dirs must be a boolean")
-        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script", "validation_workspace"):
+        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script"):
             value = getattr(config, name)
             if not isinstance(value, str) or not value.strip() or "\x00" in value:
                 raise ValueError(f"{name} must be a nonempty string")
+        if config.validation_workspace is not None and (
+                not isinstance(config.validation_workspace, str) or
+                not config.validation_workspace.strip() or "\x00" in config.validation_workspace):
+            raise ValueError("validation_workspace must be a nonempty string or null")
         if not PurePosixPath(config.project_dir).is_absolute():
             raise ValueError("project_dir must be an absolute path on the SSH server")
         for name in integer_fields:
@@ -159,7 +164,8 @@ def remote_check_node(config, run_dir: Path) -> StageResult:
                     warnings.simplefilter("error", getpass.GetPassWarning)
                     ssh.password = getpass.getpass(f"SSH password for {remote.username}@{remote.host}: ")
             # run() includes connection failures in its structured result.
-            results["login"] = ssh.run("command -v srun && pwd", cwd=remote.project_dir,
+            results["login"] = run_with_password_retries(ssh, "command -v srun && pwd",
+                                       ask_password=config.ask_password, cwd=remote.project_dir,
                                        timeout=30, on_output=output)
             if results["login"]["ok"]:
                 launched = True

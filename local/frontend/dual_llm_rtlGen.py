@@ -15,7 +15,7 @@ Usage:
   from dual_llm_rtlgen import run_dual_llm_rtlgen
   rtl_code = run_dual_llm_rtlgen(design, yaml_text)
 
-  python3 dual_llm_rtlgen.py inputs/some_spec.yaml
+  python3 dual_llm_rtlgen.py microarch/gen_exp/some_spec.yaml
 """
 
 import os
