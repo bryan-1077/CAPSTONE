@@ -1,0 +1,7 @@
+{
+  "stage": "generated_testbench",
+  "issues": [
+    "dut_pkg.sv:543: condition depends only on constant, input, model, uninitialized through local assignments; compare a monitored DUT output/state with its independent YAML prediction in argument 2 (condition); requirement=REQ-004; condition=insert_idx == int'(tr.sel_idx_pre); call=check_requirement(\"REQ-004\", (insert_idx == int'(tr.sel_idx_pre)), scenario, expected_str, observed_str)",
+    "dut_pkg.sv:544: condition depends only on constant, input, model, uninitialized through local assignments; compare a monitored DUT output/state with its independent YAML prediction in argument 2 (condition); requirement=REQ-013; condition=insert_idx == int'(tr.sel_idx_pre); call=check_requirement(\"REQ-013\", (insert_idx == int'(tr.sel_idx_pre)), scenario, expected_str, observed_str)"
+  ]
+}

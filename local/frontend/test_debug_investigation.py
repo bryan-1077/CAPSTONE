@@ -359,6 +359,31 @@ class InvestigationTests(unittest.TestCase):
     def persist(self):
         (self.failure / "analysis" / "investigation.json").write_text(json.dumps(self.record))
 
+    def test_rejected_assessment_is_corrected_with_feedback(self):
+        self.gather()
+        self.persist()
+        state = self.node_environment()
+        valid = self.assessment()
+        invalid = self.assessment()
+        invalid["hypotheses"][0]["supporting_evidence"] = ["E1"]
+        with patch.object(agent, "call_patch_llm", side_effect=[json.dumps(invalid), json.dumps(valid)]) as call:
+            state.update(agent.graph_assess_evidence_node(state))
+        self.assertEqual(call.call_count, 2)
+        self.assertIn("Sufficient evidence requires", call.call_args_list[1].args[0])
+        self.assertEqual(agent.route_after_assessment(state), "build_patch_context")
+        self.assertTrue((self.failure / "analysis/assessment_001.response.md").is_file())
+        self.assertTrue((self.failure / "analysis/assessment_002.response.md").is_file())
+
+    def test_invalid_assessment_retries_are_bounded(self):
+        self.gather()
+        self.record["max_actions"] = 1
+        self.persist()
+        state = self.node_environment()
+        with patch.object(agent, "call_patch_llm", return_value="not json") as call:
+            state.update(agent.graph_assess_evidence_node(state))
+        self.assertEqual(call.call_count, 2)
+        self.assertEqual(state["stop_reason"], "assessment_budget_exhausted")
+
     def test_assessment_routes_and_api_failure(self):
         self.gather()
         self.persist()

@@ -1,0 +1,340 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "request_t does not contain a valid field",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-002",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "req_valid is the only validity source",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-003",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-004",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-005",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-006",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-007",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-008",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-009",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "entries never shift",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-010",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "entries persist until explicitly dequeued",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-011",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "req_valid is the sole validity source",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-012",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-013",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-014",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-015",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-016",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "one enqueue per cycle maximum",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-017",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "one dequeue per cycle maximum",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-018",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "DEPTH parameter defaults to 4",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-019",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "use request_t for enq_req and req_array entries",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-020",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not include a valid field inside request_t",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-021",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not implement FIFO shifting",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-022",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not drop a request unless deq_en clears its selected slot",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-023",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-024",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-025",
+      "category": "structure",
+      "source": "behavior.depth_default",
+      "text": "Default depth is 4",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-026",
+      "category": "structure",
+      "source": "behavior.request_struct.typedef_name",
+      "text": "Request structure typedef name is request_t",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-027",
+      "category": "structure",
+      "source": "behavior.request_struct.packed",
+      "text": "Request structure packed is True",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-028",
+      "category": "structure",
+      "source": "behavior.request_struct.fields",
+      "text": "Request structure fields are bank:2, row:10, col:6, is_write:1, wdata:32",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "run_id": "2026-09-30_13-00-20",
+  "created_at": "2026-09-30T18:00:20.647385+00:00",
+  "created_at_local": "2026-09-30T13:00:20.647385-05:00",
+  "input_directory": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue",
+  "inputs": [
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue"
+  ],
+  "requested_stages": [
+    "agent1",
+    "agent2",
+    "agent3"
+  ]
+}

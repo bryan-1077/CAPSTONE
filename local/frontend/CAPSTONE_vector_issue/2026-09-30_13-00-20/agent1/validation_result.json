@@ -1,0 +1,784 @@
+{
+  "is_valid": true,
+  "severity": "none",
+  "error_code": null,
+  "failure_stage": null,
+  "summary": "YAML is valid, RTL passes static/compile checks, and RTL is structurally consistent with the YAML. Ready for Agent 2/3 runtime verification.",
+  "issues": [],
+  "warnings": [
+    "Port 'req_array' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=204. VCS compilation still checks type legality.",
+    "Port 'req_valid' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=4. VCS compilation still checks type legality.",
+    "Port 'sel_idx' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=2. VCS compilation still checks type legality."
+  ],
+  "rtl_files": [
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue.sv"
+  ],
+  "top_module_name": "ddr4_request_queue",
+  "top_module_file": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue.sv",
+  "compile_tool": "vcs",
+  "compile_passed": true,
+  "compile_output_snippet": "Chronologic VCS (TM)\n      Version W-2024.09-SP2-4_Full64 -- Wed Sep 30 13:00:21 2026\n\n                    Copyright (c) 1991 - 2025 Synopsys, Inc.\n   This software and the associated documentation are proprietary to Synopsys,\n Inc. This software may only be used in accordance with the terms and conditions\n of a written license agreement with Synopsys, Inc. All other use, reproduction,\n   or distribution of this software is strictly prohibited.  Licensed Products\n     communicate with Synopsys servers for the purpose of providing software\n    updates, detecting software piracy and verifying that customers are using\n    Licensed Products in conformity with the applicable License Key for such\n  Licensed Products. Synopsys will use information gathered in connection with\n    this process to deliver software updates and pursue software pirates and\n                                   infringers.\n\n Inclusivity & Diversity - Visit SolvNetPlus to read the \"Synopsys Statement on\n            Inclusivity and Diversity\" (Refer to article 000036315 at\n                        https://solvnetplus.synopsys.com)\n\nParsing design file '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue.sv'\nTop Level Modules:\n       ddr4_request_queue\nTimeScale is 1 ns / 1 ps\nStarting vcs inline pass...\n1 module and 0 UDP read.\nrecompiling module ddr4_request_queue\nrm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so\nif [ -x ../.agent1_compile/simv ]; then chmod a-x ../.agent1_compile/simv; fi\ng++  -o ../.agent1_compile/simv      -rdynamic  -Wl,-rpath='$ORIGIN'/simv.daidir -Wl,-rpath=./simv.daidir -Wl,-rpath=/opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib -L/opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _64275_archive_1.so   SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o            -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -ldistsimclient -lsimprofile -luclinative /opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive          /opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib/vcs_save_restore_new.o -ldl  -lc -lm -lpthread -ldl \n../.agent1_compile/simv up to date\nCPU time: .209 seconds to compile + .233 seconds to elab + .125 seconds to link",
+  "spec_file": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue_request_queue.yaml",
+  "yaml_sane": true,
+  "yaml_issues": [],
+  "spec_consistent": true,
+  "spec_issues": [],
+  "rtl_sane": true,
+  "rtl_issues": [],
+  "dut_spec": {
+    "module_name": "ddr4_request_queue",
+    "ports": [
+      {
+        "name": "clk",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "rst_n",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "deq_en",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "sel_idx",
+        "dir": "input",
+        "direction": "input",
+        "range": "[((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1:0]",
+        "width": 2
+      },
+      {
+        "name": "enq_req",
+        "dir": "input",
+        "direction": "input",
+        "range": "[50:0]",
+        "width": 51
+      },
+      {
+        "name": "enq_valid",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "enq_ready",
+        "dir": "output",
+        "direction": "output",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "req_array",
+        "dir": "output",
+        "direction": "output",
+        "range": "[DEPTH*51-1:0]",
+        "width": 204
+      },
+      {
+        "name": "req_valid",
+        "dir": "output",
+        "direction": "output",
+        "range": "[DEPTH-1:0]",
+        "width": 4
+      }
+    ],
+    "input_ports": [
+      {
+        "name": "deq_en",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "sel_idx",
+        "dir": "input",
+        "direction": "input",
+        "range": "[((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1:0]",
+        "width": 2
+      },
+      {
+        "name": "enq_req",
+        "dir": "input",
+        "direction": "input",
+        "range": "[50:0]",
+        "width": 51
+      },
+      {
+        "name": "enq_valid",
+        "dir": "input",
+        "direction": "input",
+        "range": null,
+        "width": 1
+      }
+    ],
+    "output_ports": [
+      {
+        "name": "enq_ready",
+        "dir": "output",
+        "direction": "output",
+        "range": null,
+        "width": 1
+      },
+      {
+        "name": "req_array",
+        "dir": "output",
+        "direction": "output",
+        "range": "[DEPTH*51-1:0]",
+        "width": 204
+      },
+      {
+        "name": "req_valid",
+        "dir": "output",
+        "direction": "output",
+        "range": "[DEPTH-1:0]",
+        "width": 4
+      }
+    ],
+    "clock_ports": [
+      "clk"
+    ],
+    "reset_ports": [
+      {
+        "name": "rst_n",
+        "active_low": true,
+        "synchronous": true,
+        "active": "low",
+        "style": "sync"
+      }
+    ]
+  },
+  "design_intent": {
+    "design_name": "ddr4_request_queue",
+    "design_type": "datapath",
+    "purpose": "Behavior is defined by the YAML rules.",
+    "clock": {
+      "name": "clk"
+    },
+    "reset": {
+      "name": "rst_n",
+      "active_low": true,
+      "synchronous": true
+    },
+    "yaml_ports": [
+      {
+        "name": "clk",
+        "direction": "input",
+        "width": 1,
+        "description": "Controller clock"
+      },
+      {
+        "name": "rst_n",
+        "direction": "input",
+        "width": 1,
+        "description": "Active-low synchronous reset"
+      },
+      {
+        "name": "enq_valid",
+        "direction": "input",
+        "width": 1,
+        "description": "Valid enqueue request"
+      },
+      {
+        "name": "enq_req",
+        "direction": "input",
+        "width": 51,
+        "description": "Packed request_t enqueue payload; validity is carried only by req_valid"
+      },
+      {
+        "name": "enq_ready",
+        "direction": "output",
+        "width": 1,
+        "description": "High when any queue slot is free"
+      },
+      {
+        "name": "req_array",
+        "direction": "output",
+        "width": 204,
+        "description": "DEPTH-entry request_t array, DEPTH defaults to 4"
+      },
+      {
+        "name": "req_valid",
+        "direction": "output",
+        "width": 4,
+        "description": "Per-entry valid bits"
+      },
+      {
+        "name": "sel_idx",
+        "direction": "input",
+        "width": 2,
+        "description": "Scheduler-selected entry index"
+      },
+      {
+        "name": "deq_en",
+        "direction": "input",
+        "width": 1,
+        "description": "Clear selected entry when asserted"
+      }
+    ],
+    "behavior": {
+      "depth_default": 4,
+      "request_struct": {
+        "fields": [
+          {
+            "name": "bank",
+            "width": 2
+          },
+          {
+            "name": "row",
+            "width": 10
+          },
+          {
+            "name": "col",
+            "width": 6
+          },
+          {
+            "name": "is_write",
+            "width": 1
+          },
+          {
+            "name": "wdata",
+            "width": 32
+          }
+        ],
+        "packed": true,
+        "typedef_name": "request_t"
+      },
+      "rules": [
+        "request_t does not contain a valid field; req_valid is the only validity source",
+        "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+        "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+        "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+        "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+        "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+        "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+        "entries never shift",
+        "entries persist until explicitly dequeued"
+      ]
+    },
+    "rules": [
+      "request_t does not contain a valid field; req_valid is the only validity source",
+      "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "entries never shift",
+      "entries persist until explicitly dequeued"
+    ],
+    "request_struct_width": 51,
+    "invariants": [
+      "req_valid is the sole validity source",
+      "enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "one enqueue per cycle maximum",
+      "one dequeue per cycle maximum"
+    ],
+    "implementation_required": [
+      "DEPTH parameter defaults to 4",
+      "use request_t for enq_req and req_array entries",
+      "do not include a valid field inside request_t",
+      "do not implement FIFO shifting",
+      "do not drop a request unless deq_en clears its selected slot",
+      "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes"
+    ],
+    "implementation_forbidden": [],
+    "forbidden_patterns": [],
+    "verification_targets": {}
+  },
+  "what_agent1_tested": {
+    "yaml": [
+      "YAML syntax/root structure",
+      "design_name and design_type",
+      "clock definition",
+      "reset definition",
+      "YAML port names/directions/widths",
+      "duplicate YAML ports",
+      "clock/reset signal validity",
+      "behavior field types and numeric ranges",
+      "request_struct definition when present",
+      "correctness criteria and behavior rules",
+      "invariants",
+      "implementation constraints",
+      "forbidden patterns",
+      "verification section"
+    ],
+    "rtl": [
+      "top module exists",
+      "ANSI-style top-level port parsing",
+      "obvious non-SystemVerilog/AST junk patterns",
+      "basic RTL structure"
+    ],
+    "compile": [
+      "HDL compile/elaboration"
+    ],
+    "yaml_vs_rtl": [
+      "top module name vs YAML design_name",
+      "YAML clock exists in RTL",
+      "YAML reset exists in RTL",
+      "reset synchronous/asynchronous style",
+      "reset active-high/active-low polarity",
+      "YAML ports exist in RTL",
+      "YAML port directions",
+      "YAML port widths when statically resolvable",
+      "YAML-declared internal signal presence",
+      "outputs named in combinational_behavior are combinationally driven"
+    ]
+  },
+  "verification_readiness": {
+    "status": "READY_FOR_AGENT_2_AND_AGENT_3",
+    "message": "Agent 1 confirmed the YAML is internally valid and the RTL is statically consistent with it. Agent 2 and Agent 3 must still prove runtime behavior.",
+    "statically_checked": [
+      "YAML design_name matches the detected RTL top module.",
+      "YAML clock/reset are checked against the RTL interface and reset style/polarity.",
+      "YAML ports are checked against RTL names, directions, and resolvable widths."
+    ],
+    "still_requires_dynamic_verification": [
+      "Behavior rule: request_t does not contain a valid field; req_valid is the only validity source",
+      "Behavior rule: enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "Behavior rule: enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "Behavior rule: if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "Behavior rule: define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "Behavior rule: suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "Behavior rule: deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "Behavior rule: entries never shift",
+      "Behavior rule: entries persist until explicitly dequeued",
+      "Invariant: req_valid is the sole validity source",
+      "Invariant: enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "Invariant: first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "Invariant: same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "Invariant: reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "Invariant: one enqueue per cycle maximum",
+      "Invariant: one dequeue per cycle maximum",
+      "Implementation constraint to confirm: DEPTH parameter defaults to 4",
+      "Implementation constraint to confirm: use request_t for enq_req and req_array entries",
+      "Implementation constraint to confirm: do not include a valid field inside request_t",
+      "Implementation constraint to confirm: do not implement FIFO shifting",
+      "Implementation constraint to confirm: do not drop a request unless deq_en clears its selected slot",
+      "Implementation constraint to confirm: update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "Implementation constraint to confirm: generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes"
+    ]
+  },
+  "validation_stages": {
+    "yaml": {
+      "status": "PASS",
+      "checks_performed": [
+        "YAML syntax/root structure",
+        "design_name and design_type",
+        "clock definition",
+        "reset definition",
+        "YAML port names/directions/widths",
+        "duplicate YAML ports",
+        "clock/reset signal validity",
+        "behavior field types and numeric ranges",
+        "request_struct definition when present",
+        "correctness criteria and behavior rules",
+        "invariants",
+        "implementation constraints",
+        "forbidden patterns",
+        "verification section"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    "rtl": {
+      "status": "PASS",
+      "checks_performed": [
+        "top module exists",
+        "ANSI-style top-level port parsing",
+        "obvious non-SystemVerilog/AST junk patterns",
+        "basic RTL structure"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    "compile": {
+      "status": "PASS",
+      "checks_performed": [
+        "HDL compile/elaboration"
+      ],
+      "errors": [],
+      "warnings": [],
+      "tool": "vcs"
+    },
+    "yaml_vs_rtl": {
+      "status": "PASS",
+      "checks_performed": [
+        "top module name vs YAML design_name",
+        "YAML clock exists in RTL",
+        "YAML reset exists in RTL",
+        "reset synchronous/asynchronous style",
+        "reset active-high/active-low polarity",
+        "YAML ports exist in RTL",
+        "YAML port directions",
+        "YAML port widths when statically resolvable",
+        "YAML-declared internal signal presence",
+        "outputs named in combinational_behavior are combinationally driven"
+      ],
+      "errors": [],
+      "warnings": [
+        "Port 'req_array' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=204. VCS compilation still checks type legality.",
+        "Port 'req_valid' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=4. VCS compilation still checks type legality.",
+        "Port 'sel_idx' RTL width is parameterized or typedef-based, so Agent 1 could not statically compare its numeric width to YAML=2. VCS compilation still checks type legality."
+      ]
+    }
+  },
+  "requirement_catalog": [
+    {
+      "id": "REQ-001",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "request_t does not contain a valid field",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-002",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "req_valid is the only validity source",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-003",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-004",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-005",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-006",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-007",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-008",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-009",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "entries never shift",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-010",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "text": "entries persist until explicitly dequeued",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-011",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "req_valid is the sole validity source",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-012",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-013",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-014",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-015",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-016",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "one enqueue per cycle maximum",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-017",
+      "category": "invariant",
+      "source": "invariants",
+      "text": "one dequeue per cycle maximum",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-018",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "DEPTH parameter defaults to 4",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-019",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "use request_t for enq_req and req_array entries",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-020",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not include a valid field inside request_t",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-021",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not implement FIFO shifting",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-022",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "do not drop a request unless deq_en clears its selected slot",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-023",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-024",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "text": "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes",
+      "verification_method": "static",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-025",
+      "category": "structure",
+      "source": "behavior.depth_default",
+      "text": "Default depth is 4",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-026",
+      "category": "structure",
+      "source": "behavior.request_struct.typedef_name",
+      "text": "Request structure typedef name is request_t",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-027",
+      "category": "structure",
+      "source": "behavior.request_struct.packed",
+      "text": "Request structure packed is True",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-028",
+      "category": "structure",
+      "source": "behavior.request_struct.fields",
+      "text": "Request structure fields are bank:2, row:10, col:6, is_write:1, wdata:32",
+      "verification_method": "static",
+      "static_result": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      }
+    }
+  ],
+  "static_requirement_coverage": {
+    "passed": 7,
+    "failed": 0,
+    "unverified_static": 3,
+    "policy": "Unverified source constraints are coverage gaps, not behavioral failures."
+  }
+}

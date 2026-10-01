@@ -191,6 +191,7 @@ def parse_args() -> argparse.Namespace:
             parser.add_argument("mode", choices=("auto",))
             parser.add_argument("source", choices=SUPPORTED_SOURCES)
             intake = parser.add_mutually_exclusive_group(required=True)
+            intake.add_argument("--verif-run", dest="log", help="Verification run directory containing summary.json and agent reports.")
             intake.add_argument("--command", help="Failure command to run and capture.")
             intake.add_argument("--log", help="Existing failure log to ingest.")
             parser.add_argument("--name", help="Optional short name for the failure workspace.")
@@ -226,6 +227,7 @@ def parse_args() -> argparse.Namespace:
                 help="Existing debug/failures/<id> directory to continue through the graph.",
             )
             intake = parser.add_mutually_exclusive_group()
+            intake.add_argument("--verif-run", dest="log", help="Verification run directory containing summary.json and agent reports.")
             intake.add_argument(
                 "--command",
                 help="Failing command to run and capture for a new graph-run intake.",
@@ -424,6 +426,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     intake = parser.add_mutually_exclusive_group(required=True)
+    intake.add_argument("--verif-run", dest="log", help="Verification run directory containing summary.json and agent reports.")
     intake.add_argument(
         "--command",
         help="Failing command to run and capture, for example './run_sim.sh'.",
@@ -691,6 +694,18 @@ def capture_intake(args: argparse.Namespace, failure_dir: Path) -> IntakeResult:
             finished_at=finished_at,
             raw_log_bytes=len(raw_log.encode("utf-8")),
         )
+
+    if Path(args.log).expanduser().is_dir():
+        if args.source != "verif":
+            raise ValueError("Verification run directories require source 'verif'.")
+        from verif_debug_intake import capture_verif_run
+        started_at = utc_now()
+        raw_log = capture_verif_run(Path(args.log), intake_path)
+        write_text(intake_path / "command.txt", f"# ingested verification run\n{args.log}\n")
+        write_text(intake_path / "raw.log", raw_log)
+        return IntakeResult(source=args.source, mode="verif_run", command=None,
+                            log_path=args.log, returncode=None, started_at=started_at,
+                            finished_at=utc_now(), raw_log_bytes=len(raw_log.encode("utf-8")))
 
     raw_log, started_at, finished_at = ingest_log(args.log)
     write_text(intake_path / "command.txt", f"# ingested log\n{args.log}\n")
@@ -4243,20 +4258,34 @@ def graph_assess_evidence_node(state: DebugGraphState) -> DebugGraphState:
             return save_investigation(state, record, "assess_evidence")
         failure_dir = graph_failure_dir(state)
         summary = compact_parsed_failure(read_json(analysis_dir(failure_dir) / "parsed_failure.json"))
-        prompt = investigation.assessment_prompt(record, summary)
-        record["assessments"] += 1
-        prefix = analysis_dir(failure_dir) / f"assessment_{record['assessments']:03d}"
-        prefix.with_suffix(".prompt.md").write_text(prompt, encoding="utf-8")
-        try:
-            response = call_patch_llm(prompt, str(state.get("model", DEFAULT_PATCH_MODEL)),
-                                      system_prompt="You are an RTL investigator. Return only the requested JSON evidence assessment.",
-                                      diagnostic_path=prefix.with_suffix(".api.json"))
-            prefix.with_suffix(".response.md").write_text(response, encoding="utf-8")
-            investigation.accept_assessment(record, response)
-        except Exception as exc:
-            write_json(prefix.with_suffix(".error.json"), {"error_type": type(exc).__name__, "message": str(exc)})
-            record.update(decision="evidence_unavailable", stop_reason="assessment_failed")
-            record["unresolved_questions"] = [f"Evidence assessment failed: {exc}"]
+        while record["assessments"] < record["max_actions"] + 1:
+            prompt = investigation.assessment_prompt(record, summary)
+            record["assessments"] += 1
+            prefix = analysis_dir(failure_dir) / f"assessment_{record['assessments']:03d}"
+            prefix.with_suffix(".prompt.md").write_text(prompt, encoding="utf-8")
+            try:
+                response = call_patch_llm(prompt, str(state.get("model", DEFAULT_PATCH_MODEL)),
+                                          system_prompt="You are an RTL investigator. Return only the requested JSON evidence assessment.",
+                                          diagnostic_path=prefix.with_suffix(".api.json"))
+                prefix.with_suffix(".response.md").write_text(response, encoding="utf-8")
+                try:
+                    investigation.accept_assessment(record, response)
+                except ValueError as exc:
+                    write_json(prefix.with_suffix(".error.json"), {"error_type": type(exc).__name__, "message": str(exc)})
+                    record["assessment_feedback"] = str(exc)
+                    record["decision"] = "insufficient_evidence"
+                    log_debug(failure_dir, f"Assessment rejected; requesting correction within budget: {exc}")
+                    continue
+                record.pop("assessment_feedback", None)
+                break
+            except Exception as exc:
+                write_json(prefix.with_suffix(".error.json"), {"error_type": type(exc).__name__, "message": str(exc)})
+                record.update(decision="evidence_unavailable", stop_reason="assessment_failed")
+                record["unresolved_questions"] = [f"Evidence assessment failed: {exc}"]
+                break
+        else:
+            record.update(decision="evidence_unavailable", stop_reason="assessment_budget_exhausted")
+            record["unresolved_questions"] = [f"Assessment correction budget exhausted: {record.get('assessment_feedback', '')}"]
     elif state.get("offline"):
         record["unresolved_questions"] = ["Offline inspection cannot establish a causal explanation; online evidence assessment is required."]
     if record["decision"] != "sufficient_evidence" and not record.get("stop_reason"):

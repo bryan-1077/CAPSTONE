@@ -1,0 +1,2383 @@
+{
+  "schema_version": 1,
+  "run_id": "2026-09-30_13-00-20",
+  "agent": "agent2",
+  "status": "FAIL",
+  "reason": "Agent stopped during simulation. See its saved logs.",
+  "exit_code": 1,
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "request_t does not contain a valid field",
+      "status": "PASS",
+      "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: request_t has no valid field (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-002",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "req_valid is the only validity source",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-003",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 3,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 3,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=1"
+          },
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+            "cycle_or_time": "time=235000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=1"
+        },
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+          "cycle_or_time": "time=235000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-004",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 18,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 18,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=45000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=1"
+          },
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=45000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=1"
+        },
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-005",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-006",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-007",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-008",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-009",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "entries never shift",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-010",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "entries persist until explicitly dequeued",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-011",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "req_valid is the sole validity source",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-012",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 3,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 3,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=1"
+          },
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+            "cycle_or_time": "time=235000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=1"
+        },
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+          "cycle_or_time": "time=235000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-013",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 18,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 18,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=45000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=1"
+          },
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=45000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=1"
+        },
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-014",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-015",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-016",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "one enqueue per cycle maximum",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-017",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "one dequeue per cycle maximum",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-018",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "DEPTH parameter defaults to 4",
+      "status": "PASS",
+      "evidence": "parameter DEPTH = 4",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: DEPTH parameter default (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-019",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "use request_t for enq_req and req_array entries",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: request_t typedef usage (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-020",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "do not include a valid field inside request_t",
+      "status": "PASS",
+      "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: no valid field in typedef (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-021",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "do not implement FIFO shifting",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-022",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "do not drop a request unless deq_en clears its selected slot",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-023",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: sequential ordering (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-024",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: reuse_slot signal (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-025",
+      "category": "structure",
+      "source": "behavior.depth_default",
+      "requirement": "Default depth is 4",
+      "status": "PASS",
+      "evidence": "parameter DEPTH = 4",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "parameter DEPTH = 4",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: depth_default value (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-026",
+      "category": "structure",
+      "source": "behavior.request_struct.typedef_name",
+      "requirement": "Request structure typedef name is request_t",
+      "status": "PASS",
+      "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: typedef name (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-027",
+      "category": "structure",
+      "source": "behavior.request_struct.packed",
+      "requirement": "Request structure packed is True",
+      "status": "PASS",
+      "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: packed structure (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-028",
+      "category": "structure",
+      "source": "behavior.request_struct.fields",
+      "requirement": "Request structure fields are bank:2, row:10, col:6, is_write:1, wdata:32",
+      "status": "PASS",
+      "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "PASS",
+        "evidence": "typedef struct packed {\n        logic [1:0]  bank;\n        logic [9:0]  row;\n        logic [5:0]  col;\n        logic        is_write;\n        logic [31:0] wdata;\n    } request_t;",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: field widths (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    }
+  ],
+  "failed_requirements": [
+    {
+      "id": "REQ-002",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "req_valid is the only validity source",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-003",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 3,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 3,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=1"
+          },
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+            "cycle_or_time": "time=235000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=1"
+        },
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+          "cycle_or_time": "time=235000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-004",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 18,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 18,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=45000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=1"
+          },
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=45000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=1"
+        },
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-005",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-006",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-007",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-008",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-009",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "entries never shift",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-010",
+      "category": "behavior_rule",
+      "source": "behavior.rules",
+      "requirement": "entries persist until explicitly dequeued",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-011",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "req_valid is the sole validity source",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-012",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "enq_ready == OR of free slots, plus same-cycle deq slot reuse",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 3,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 3 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 3,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=1"
+          },
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+            "cycle_or_time": "time=235000",
+            "expected": "expected=enq_ready_pre=1",
+            "observed": "observed=enq_ready_pre=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0000",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=1"
+        },
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0 pre_valid=0111",
+          "cycle_or_time": "time=235000",
+          "expected": "expected=enq_ready_pre=1",
+          "observed": "observed=enq_ready_pre=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-013",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 18,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 18 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 18,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=45000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=1"
+          },
+          {
+            "scenario": "enqueue to first_free=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=insert_idx=0",
+            "observed": "observed=insert_idx=0 valid[0]=0"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=45000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=1"
+        },
+        {
+          "scenario": "enqueue to first_free=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=insert_idx=0",
+          "observed": "observed=insert_idx=0 valid[0]=0"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-014",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-015",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 3,
+      "failures": 1,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 1 of 3 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 3,
+        "failures": 1,
+        "comparison_evidence": [
+          {
+            "scenario": "same-index enq+deq idx=2",
+            "cycle_or_time": "time=115000",
+            "expected": "expected=valid[2]=1 data=0707100000007",
+            "observed": "observed=valid[2]=1 data=0707100000007"
+          },
+          {
+            "scenario": "same-index enq+deq idx=0",
+            "cycle_or_time": "time=315000",
+            "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+            "observed": "observed=valid[0]=0 data=08ba07562f12b"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "same-index enq+deq idx=2",
+          "cycle_or_time": "time=115000",
+          "expected": "expected=valid[2]=1 data=0707100000007",
+          "observed": "observed=valid[2]=1 data=0707100000007"
+        },
+        {
+          "scenario": "same-index enq+deq idx=0",
+          "cycle_or_time": "time=315000",
+          "expected": "expected=valid[0]=1 data=28e8ae23cb9cd",
+          "observed": "observed=valid[0]=0 data=08ba07562f12b"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-016",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "one enqueue per cycle maximum",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-017",
+      "category": "invariant",
+      "source": "invariants",
+      "requirement": "one dequeue per cycle maximum",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 45,
+      "failures": 32,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 32 of 45 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 45,
+        "failures": 32,
+        "comparison_evidence": [
+          {
+            "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+            "cycle_or_time": "time=35000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0000"
+          },
+          {
+            "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+            "cycle_or_time": "time=165000",
+            "expected": "expected=valid=0000",
+            "observed": "observed=valid=0010"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "enq_v=0 deq=0 idx=0 reuse=0",
+          "cycle_or_time": "time=35000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0000"
+        },
+        {
+          "scenario": "enq_v=0 deq=1 idx=1 reuse=0",
+          "cycle_or_time": "time=165000",
+          "expected": "expected=valid=0000",
+          "observed": "observed=valid=0010"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-021",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "do not implement FIFO shifting",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-022",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "do not drop a request unless deq_en clears its selected slot",
+      "status": "FAIL",
+      "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+      "checks": 116,
+      "failures": 44,
+      "verification_method": "simulation",
+      "requires_static_support": false,
+      "verification_label": "UVM simulation",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "FAIL",
+        "evidence": "Executable requirement checks reported failures. 44 of 116 comparisons failed; see scenario, expected and observed evidence. A failed comparison alone does not establish whether the RTL or checker is incorrect.",
+        "checks": 116,
+        "failures": 44,
+        "comparison_evidence": [
+          {
+            "scenario": "persist slot=0 enq_v=1 deq=0",
+            "cycle_or_time": "time=55000",
+            "expected": "expected=valid[0]=1 data=0101100000001",
+            "observed": "observed=valid[0]=1 data=0101100000001"
+          },
+          {
+            "scenario": "persist slot=1 enq_v=1 deq=1",
+            "cycle_or_time": "time=205000",
+            "expected": "expected=valid[1]=1 data=013e88c7e0396",
+            "observed": "observed=valid[1]=1 data=0606000000006"
+          }
+        ]
+      },
+      "gap_kind": "",
+      "comparison_evidence": [
+        {
+          "scenario": "persist slot=0 enq_v=1 deq=0",
+          "cycle_or_time": "time=55000",
+          "expected": "expected=valid[0]=1 data=0101100000001",
+          "observed": "observed=valid[0]=1 data=0101100000001"
+        },
+        {
+          "scenario": "persist slot=1 enq_v=1 deq=1",
+          "cycle_or_time": "time=205000",
+          "expected": "expected=valid[1]=1 data=013e88c7e0396",
+          "observed": "observed=valid[1]=1 data=0606000000006"
+        }
+      ],
+      "evidence_gap": ""
+    }
+  ],
+  "untested_requirements": [
+    {
+      "id": "REQ-019",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "use request_t for enq_req and req_array entries",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: request_t typedef usage (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-023",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: sequential ordering (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    },
+    {
+      "id": "REQ-024",
+      "category": "implementation_constraint",
+      "source": "implementation_constraints",
+      "requirement": "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes",
+      "status": "NOT_TESTED",
+      "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+      "checks": 0,
+      "failures": 0,
+      "verification_method": "static",
+      "requires_static_support": false,
+      "verification_label": "structural verification",
+      "static": {
+        "status": "NOT_TESTED",
+        "evidence": "Source/implementation constraint requires structural evidence; no implemented static checker for this constraint.",
+        "method": "static"
+      },
+      "simulation": {
+        "status": "NOT_TESTED",
+        "evidence": "Static: reuse_slot signal (source review)",
+        "checks": 0,
+        "failures": 0,
+        "comparison_evidence": []
+      },
+      "gap_kind": "structural_check",
+      "comparison_evidence": [],
+      "evidence_gap": ""
+    }
+  ],
+  "coverage_limitations": [],
+  "artifacts": {
+    "approved_spec.yaml": "agent2/approved_spec.yaml",
+    "requirement_catalog.json": "agent2/requirement_catalog.json",
+    "candidates/iter_0/dut_pkg.sv": "agent2/candidates/iter_0/dut_pkg.sv",
+    "candidates/iter_0/dut_if.sv": "agent2/candidates/iter_0/dut_if.sv",
+    "candidates/iter_0/dut_tb_top.sv": "agent2/candidates/iter_0/dut_tb_top.sv",
+    "generation_audit_iter_0.json": "agent2/generation_audit_iter_0.json",
+    "candidates/iter_1/dut_pkg.sv": "agent2/candidates/iter_1/dut_pkg.sv",
+    "candidates/iter_1/dut_if.sv": "agent2/candidates/iter_1/dut_if.sv",
+    "candidates/iter_1/dut_tb_top.sv": "agent2/candidates/iter_1/dut_tb_top.sv",
+    "generation_audit_iter_1.json": "agent2/generation_audit_iter_1.json",
+    "compile_iter_1.log": "agent2/compile_iter_1.log",
+    "candidates/iter_2/dut_pkg.sv": "agent2/candidates/iter_2/dut_pkg.sv",
+    "candidates/iter_2/dut_if.sv": "agent2/candidates/iter_2/dut_if.sv",
+    "candidates/iter_2/dut_tb_top.sv": "agent2/candidates/iter_2/dut_tb_top.sv",
+    "generation_audit_iter_2.json": "agent2/generation_audit_iter_2.json",
+    "compile_iter_2.log": "agent2/compile_iter_2.log",
+    "candidates/iter_3/dut_pkg.sv": "agent2/candidates/iter_3/dut_pkg.sv",
+    "candidates/iter_3/dut_if.sv": "agent2/candidates/iter_3/dut_if.sv",
+    "candidates/iter_3/dut_tb_top.sv": "agent2/candidates/iter_3/dut_tb_top.sv",
+    "generation_audit_iter_3.json": "agent2/generation_audit_iter_3.json",
+    "compile_iter_3.log": "agent2/compile_iter_3.log",
+    "candidates/iter_4/dut_pkg.sv": "agent2/candidates/iter_4/dut_pkg.sv",
+    "candidates/iter_4/dut_if.sv": "agent2/candidates/iter_4/dut_if.sv",
+    "candidates/iter_4/dut_tb_top.sv": "agent2/candidates/iter_4/dut_tb_top.sv",
+    "generation_audit_iter_4.json": "agent2/generation_audit_iter_4.json",
+    "compile_iter_4.log": "agent2/compile_iter_4.log",
+    "sim_iter_4.log": "agent2/sim_iter_4.log",
+    "combined_requirement_verification.json": "agent2/combined_requirement_verification.json",
+    "requirement_traceability.json": "agent2/requirement_traceability.json",
+    "console.log": "agent2/console.log"
+  },
+  "failure_stage": "simulation",
+  "failure_detail": null,
+  "phase": "simulation",
+  "started_at": "2026-09-30T18:00:25.155498+00:00",
+  "updated_at": "2026-09-30T18:07:00.831304+00:00",
+  "module_name": "ddr4_request_queue",
+  "rtl_files": [
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue.sv"
+  ],
+  "yaml_spec_file": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/rtl_ddr4_request_queue/ddr4_request_queue_request_queue.yaml",
+  "llm_configuration": {
+    "endpoint": "https://chat-api.tamu.ai/openai/chat/completions",
+    "model": "protected.Claude Sonnet 4.5",
+    "max_tokens": 16384
+  },
+  "llm_http_status": 200,
+  "llm_request_attempts": 1,
+  "generation_issues": [],
+  "compile_passed": true,
+  "simulation_completed": true,
+  "verification_status": "FAIL",
+  "checks": {
+    "passed": 470,
+    "failed": 318,
+    "uvm_errors": 318,
+    "uvm_fatals": 0
+  },
+  "finished_at": "2026-09-30T18:07:00.140576+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "run_id": "2026-09-30_13-00-20",
+  "agent": "agent3",
+  "status": "SKIPPED",
+  "reason": "Agent 2 did not complete successfully.",
+  "exit_code": null,
+  "requirements": [],
+  "failed_requirements": [],
+  "untested_requirements": [],
+  "coverage_limitations": [],
+  "artifacts": {},
+  "finished_at": "2026-09-30T18:07:01.350087+00:00",
+  "updated_at": "2026-09-30T18:07:01.350095+00:00"
+}
