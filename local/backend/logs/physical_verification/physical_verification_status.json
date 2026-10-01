@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "message": "Physical verification failed: antenna report needs exactly one explicit violation total.",
+  "attempts": [],
+  "report_dir": "/home/antgamez1203/CAPSTONE/local/backend/logs/physical_verification/55e7f1df948f40c1928a019c493693fb"
+}

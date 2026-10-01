@@ -9,8 +9,8 @@
     "request_metadata": {
       "api_style": "chat_completions_fallback",
       "base_url": "https://chat-api.tamu.ai/openai",
-      "builddir": "build_netlist_250MHz_01",
-      "candidate_path": "build_mapped_250MHz_01",
+      "builddir": "build_netlist_260MHz_01",
+      "candidate_path": "build_mapped_260MHz_01",
       "execution_ok": true,
       "local_error_count": 0,
       "local_warning_count": 11,
@@ -18,18 +18,17 @@
       "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
     },
     "suggested_fixes": [
-      "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-      "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+      "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+      "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
     ],
-    "summary": "Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+    "summary": "Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
     "warnings": [
-      "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-      "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-      "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+      "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+      "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
     ]
   },
-  "failure_class": "non_fatal_warning_only_issue",
-  "failure_stage_owner": "gdsii",
+  "failure_class": "physical_verification_failure",
+  "failure_stage_owner": "physical_verification",
   "local_review": {
     "blocking_errors": [],
     "errors": [],
@@ -65,8 +64,8 @@
       "request_metadata": {
         "api_style": "chat_completions_fallback",
         "base_url": "https://chat-api.tamu.ai/openai",
-        "builddir": "build_netlist_250MHz_01",
-        "candidate_path": "build_mapped_250MHz_01",
+        "builddir": "build_netlist_260MHz_01",
+        "candidate_path": "build_mapped_260MHz_01",
         "execution_ok": true,
         "local_error_count": 0,
         "local_warning_count": 11,
@@ -74,25 +73,24 @@
         "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
       },
       "suggested_fixes": [
-        "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-        "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+        "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+        "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
       ],
-      "summary": "Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+      "summary": "Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
       "warnings": [
-        "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-        "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-        "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+        "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+        "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
       ]
     },
     "blocking_errors": [],
-    "candidate_path": "build_mapped_250MHz_01",
+    "candidate_path": "build_mapped_260MHz_01",
     "context": {
       "detected_outputs": [
         "results/ddr4_controller_top_mapped.db",
         "results/ddr4_controller_top_mapped.sdc",
         "results/ddr4_controller_top_mapped.v"
       ],
-      "input_builddir": "build_netlist_250MHz_01",
+      "input_builddir": "build_netlist_260MHz_01",
       "input_inventory": {
         "files": [
           ".rs_antgamez1203.tstamp",
@@ -121,9 +119,9 @@
       },
       "key_files": {
         "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-        "output:agent_mapped_progress.log": "[2026-09-28T21:45:46-05:00] mapped launcher started\n[2026-09-28T21:45:46-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T21:45:46-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T21:45:46-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T21:45:46-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T21:45:46-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T21:45:46-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T21:45:46-05:00] mapped still running\n[2026-09-28T21:46:46-05:00] mapped still running\n[2026-09-28T21:47:41-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+        "output:agent_mapped_progress.log": "[2026-10-01T13:24:52-05:00] mapped launcher started\n[2026-10-01T13:24:52-05:00] builddir=build_netlist_260MHz_01\n[2026-10-01T13:24:52-05:00] builddir_source=state.remote_netlist_dir\n[2026-10-01T13:24:52-05:00] outdir=build_mapped_260MHz_01\n[2026-10-01T13:24:52-05:00] outdir_source=state.remote_mapped_dir\n[2026-10-01T13:24:52-05:00] mapped_script=scripts_260MHz_01/run_genus_mapped_260MHz_01.py\n[2026-10-01T13:24:52-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-10-01T13:24:52-05:00] mapped still running\n[2026-10-01T13:25:52-05:00] mapped still running\n[2026-10-01T13:26:46-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
         "output:agent_mapped_stderr.log": "",
-        "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_1115646_ff8e9374-5534-4143-893a-65d3102cd89e_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Z6mA8j\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[21:45:47.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 21:45:47 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     1115646\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[21:45:47.017291] Periodic Lic check successful\n[21:45:47.541592] Feature usage summary:\n[21:45:47.541593] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+        "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_260MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_260MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_1079050_e6b968a1-5201-4813-a88c-2dfb4a81abb4_n01-zeus.olympus.ece.tamu.edu_antgamez1203_NdlBFz\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:24:52.501641] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl \nDate:    Thu Oct 01 13:24:52 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     1079050\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:24:52.068218] Periodic Lic check successful\n[13:24:52.592520] Feature usage summary:\n[13:24:52.592521] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
       },
       "log_classification": {
         "blocking_diagnostics": [],
@@ -217,10 +215,10 @@
     "route_back_to_stage": null,
     "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
     "suggested_fixes": [
-      "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-      "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+      "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+      "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
     ],
-    "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+    "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
     "warnings": [
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
@@ -233,16 +231,15 @@
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
-      "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-      "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-      "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+      "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+      "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
     ]
   },
   "mapped_review_suggested_fixes": [
-    "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-    "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+    "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+    "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
   ],
-  "mapped_review_summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+  "mapped_review_summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
   "mapped_review_warnings": [
     "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
     "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
@@ -255,9 +252,8 @@
     "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
     "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
     "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
-    "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-    "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-    "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+    "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+    "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
   ],
   "validation_review": {
     "ai_review": {
@@ -270,8 +266,8 @@
       "request_metadata": {
         "api_style": "chat_completions_fallback",
         "base_url": "https://chat-api.tamu.ai/openai",
-        "builddir": "build_netlist_250MHz_01",
-        "candidate_path": "build_mapped_250MHz_01",
+        "builddir": "build_netlist_260MHz_01",
+        "candidate_path": "build_mapped_260MHz_01",
         "execution_ok": true,
         "local_error_count": 0,
         "local_warning_count": 11,
@@ -279,26 +275,25 @@
         "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
       },
       "suggested_fixes": [
-        "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-        "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+        "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+        "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
       ],
-      "summary": "Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+      "summary": "Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
       "warnings": [
-        "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-        "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-        "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+        "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+        "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
       ]
     },
     "attempt": 1,
     "blocking_errors": [],
-    "candidate_path": "build_mapped_250MHz_01",
+    "candidate_path": "build_mapped_260MHz_01",
     "context": {
       "detected_outputs": [
         "results/ddr4_controller_top_mapped.db",
         "results/ddr4_controller_top_mapped.sdc",
         "results/ddr4_controller_top_mapped.v"
       ],
-      "input_builddir": "build_netlist_250MHz_01",
+      "input_builddir": "build_netlist_260MHz_01",
       "input_inventory": {
         "files": [
           ".rs_antgamez1203.tstamp",
@@ -327,9 +322,9 @@
       },
       "key_files": {
         "input_artifacts": "results/ddr4_controller_top_generic.sdc\nresults/ddr4_controller_top_generic.v\nresults/ddr4_controller_top_generic/syn/ddr4_controller_top.db",
-        "output:agent_mapped_progress.log": "[2026-09-28T21:45:46-05:00] mapped launcher started\n[2026-09-28T21:45:46-05:00] builddir=build_netlist_250MHz_01\n[2026-09-28T21:45:46-05:00] builddir_source=state.remote_netlist_dir\n[2026-09-28T21:45:46-05:00] outdir=build_mapped_250MHz_01\n[2026-09-28T21:45:46-05:00] outdir_source=state.remote_mapped_dir\n[2026-09-28T21:45:46-05:00] mapped_script=scripts_250MHz_01/run_genus_mapped_250MHz_01.py\n[2026-09-28T21:45:46-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-09-28T21:45:46-05:00] mapped still running\n[2026-09-28T21:46:46-05:00] mapped still running\n[2026-09-28T21:47:41-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
+        "output:agent_mapped_progress.log": "[2026-10-01T13:24:52-05:00] mapped launcher started\n[2026-10-01T13:24:52-05:00] builddir=build_netlist_260MHz_01\n[2026-10-01T13:24:52-05:00] builddir_source=state.remote_netlist_dir\n[2026-10-01T13:24:52-05:00] outdir=build_mapped_260MHz_01\n[2026-10-01T13:24:52-05:00] outdir_source=state.remote_mapped_dir\n[2026-10-01T13:24:52-05:00] mapped_script=scripts_260MHz_01/run_genus_mapped_260MHz_01.py\n[2026-10-01T13:24:52-05:00] mapped_top=ddr4_controller_top\nEDA_MAPPED_GENUS_BIN:/opt/coe/cadence/DDI231/bin/genus\n[2026-10-01T13:24:52-05:00] mapped still running\n[2026-10-01T13:25:52-05:00] mapped still running\n[2026-10-01T13:26:46-05:00] mapped exited rc=0\nEDA_MAPPED_RUN_COMPLETE:0\n",
         "output:agent_mapped_stderr.log": "",
-        "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_250MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_1115646_ff8e9374-5534-4143-893a-65d3102cd89e_n01-zeus.olympus.ece.tamu.edu_antgamez1203_Z6mA8j\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[21:45:47.501689] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_250MHz_01/run_genus_mapped.tcl \nDate:    Mon Sep 28 21:45:47 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     1115646\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[21:45:47.017291] Periodic Lic check successful\n[21:45:47.541592] Feature usage summary:\n[21:45:47.541593] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
+        "output:agent_mapped_stdout.log": "Generic dir : /home/ugrads/a/antgamez1203/capstone/build_netlist_260MHz_01\nOut dir     : /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01\nGenus bin   : /opt/coe/cadence/DDI231/GENUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE: 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nInput DB    : /home/ugrads/a/antgamez1203/capstone/build_netlist_260MHz_01/results/ddr4_controller_top_generic/syn/ddr4_controller_top.db\nTop         : ddr4_controller_top\nTcl         : /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl\nSetup only  : False\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/GENUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\necho \"GENUS_LAUNCH_DIR=$(pwd)\"\nwhich genus || true\ngenus -files \"/home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl\"\n\nPATH=/opt/coe/cadence/DDI231/GENUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025/bin/x86_64-linux:/usr/share/Modules/bin:/opt/coe/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/:/opt/coe/cadence/JASPERGOLD240/bin/:/opt/coe/cadence/VIPCAT/bin/:/opt/coe/synopsys/vcs/bin/\nCDS_LIC_FILE=5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE=5280@coe-vtls2.engr.tamu.edu\nGENUS_LAUNCH_DIR=/home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01\n/opt/coe/cadence/DDI231/GENUS231/bin/genus\nNo DISPLAY environment variable set.\nGUI mode requires a valid DISPLAY.\nReverting to shell mode.\n\nTMPDIR is being set to /tmp/genus_temp_1079050_e6b968a1-5201-4813-a88c-2dfb4a81abb4_n01-zeus.olympus.ece.tamu.edu_antgamez1203_NdlBFz\nCadence Genus(TM) Synthesis Solution.\nCopyright 2024 Cadence Design Systems, Inc. All rights reserved worldwide.\nCadence and the Cadence logo are registered trademarks and Genus is a trademark\nof Cadence Design Systems, Inc. in the United States and other countries.\n\n[13:24:52.501641] Configured Lic search path (23.02-s006): 5280@coe-vtls2.engr.tamu.edu\n\nVersion: 23.13-s073_1, built Fri Nov 08 08:01:49 PST 2024\nOptions: -files /home/ugrads/a/antgamez1203/capstone/build_mapped_260MHz_01/run_genus_mapped.tcl \nDate:    Thu Oct 01 13:24:52 2026\nHost:    n01-zeus.olympus.ece.tamu.edu (x86_64 w/Linux 4.18.0-553.153.1.el8_10.x86_64) (24cores*48cpus*2physical cpus*AMD EPYC 7F72 24-Core Processor 512KB) (1056568208KB)\nPID:     1079050\nOS:      Red Hat Enterprise Linux 8.10 (Ootpa)\n\nChecking out license: Genus_Synthesis\n[13:24:52.068218] Periodic Lic check successful\n[13:24:52.592520] Feature usage summary:\n[13:24:52.592521] Genus_Synthesis\n\n\n\n***********************************************************************************************************\n***************************************************************************************************\n...<truncated>..."
       },
       "log_classification": {
         "blocking_diagnostics": [],
@@ -395,10 +390,10 @@
     "detected_patterns": [],
     "errors": [],
     "execution_context": {
-      "builddir": "build_netlist_250MHz_01",
+      "builddir": "build_netlist_260MHz_01",
       "exit_code": 0,
       "ok": true,
-      "outdir": "build_mapped_250MHz_01"
+      "outdir": "build_mapped_260MHz_01"
     },
     "failure_class": "non_fatal_warning_only_issue",
     "failure_stage_owner": "mapped_netlist",
@@ -429,10 +424,10 @@
     "route_back_to_stage": null,
     "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_genus_mapped_instructions.md",
     "suggested_fixes": [
-      "(Optional) If you want a cleaner log, filter/downgrade Genus message IDs LBR-40 and LBR-9 in your log classifier for known Sky130 liberty quirks.",
-      "(Optional) Use a Sky130 liberty variant or pre-processed liberty that removes/normalizes the unsupported top-level attributes if your environment provides one."
+      "No mapped-stage fix required if QoR and mapping results are acceptable. If you want to silence recurring Liberty parser noise, use a Genus-supported Liberty flavor/version or pre-process the Liberty to remove unsupported top-level attributes (e.g., 'define', 'library_features')—coordinate with the PDK/lib source rather than patching mapped-stage flow.",
+      "If the [LBR-9] decap warnings are undesirable, use a synthesis-target Liberty set that excludes decap-only cells from the logic library, or provide separate physical-only/decap views (library management change, not a mapped-stage issue)."
     ],
-    "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped-stage run completed successfully (rc=0), produced expected mapped outputs (.v/.sdc/.db), and reached mapping/reporting. Only non-blocking library compatibility/info warnings were observed; no evidence of a broken netlist-stage handoff or mapped-stage failure.",
+    "summary": "Benign Liberty parser info diagnostics that Genus explicitly ignored were downgraded to warnings. No blocking mapped-stage log classifier findings were detected. Local mapped-stage review passed with 0 errors and 11 warnings. Mapped stage appears successful: launcher rc=0, mapping/reporting completed, and expected mapped outputs were produced (ddr4_controller_top_mapped.v/.sdc/.db). The only findings are non-blocking library/parser warnings; input generic netlist contract looks complete, so no routing back to netlist is indicated.",
     "warnings": [
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 2) Check to see if this construct is really needed for synthesis. Many liberty constructs are not actually required.",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 3)",
@@ -445,9 +440,8 @@
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 10)",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'define' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 11)",
       "Non-blocking Liberty compatibility info: Info [LBR-40] An unsupported construct was detected in this library. Unknown Liberty attribute 'library_features' encountered. Ignoring (File /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib, Line 136)",
-      "Genus reported Liberty parser compatibility infos [LBR-40] for unknown attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; these were explicitly ignored by Genus and appear benign for synthesis/mapping.",
-      "Genus also emitted Liberty warnings [LBR-9] about decap cells (e.g., sky130_fd_sc_hd__decap_12/_3/_4/_6) having no output pins and being marked unusable; typically benign because decaps are not intended for logic mapping, but keep an eye out if your flow expects decap insertion during synthesis.",
-      "Tool fell back to shell mode due to missing DISPLAY; non-blocking for batch mapped synthesis."
+      "Genus emitted Liberty-compatibility infos [LBR-40] for unsupported/unknown Liberty attributes ('define', 'library_features') in sky130_fd_sc_hd__tt_025C_1v80.lib; Genus explicitly ignored these constructs and continued.",
+      "Genus also reported library warnings [LBR-9] about SKY130 decap cells lacking output pins (cells will be marked unusable for mapping). This is typically benign because decap cells are not intended for logic mapping, but it is still a library-quality warning worth tracking if unexpected."
     ]
   }
 }

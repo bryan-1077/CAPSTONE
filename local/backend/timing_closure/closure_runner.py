@@ -239,6 +239,10 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 **settings,
                 "history": working["history"],
                 "timing_closure_eco_plan": eco_plan,
+                "physical_verification_plan": None,
+                "physical_verification_status": "pending",
+                "physical_verification_analysis": {},
+                "physical_verification_attempts": [],
                 "timing_closure_limits": working["timing_closure_limits"],
                 "timing_closure_best_attempt": working.get("timing_closure_best_attempt"),
                 "remote_gdsii_dir": outdir,
@@ -254,8 +258,24 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             attempt_log_dir.mkdir(parents=True, exist_ok=True)
             (attempt_log_dir / f"attempt_{attempt}_state.json").write_text(json.dumps(working, indent=2) + "\n")
             if working.get("stage_status", {}).get("gdsii") != "success":
+                if working.get("physical_verification_status") == "failed":
+                    entry["status"] = "physical_verification_failed"
+                    entry["physical_verification_report_dir"] = working.get("physical_verification_report_dir")
+                    entry["error"] = working.get("last_error")
+                    record("running", f"Timing attempt {attempt} rejected by physical verification: {entry['error']}")
+                    continue
                 entry["status"] = "implementation_failed"
                 return fail(working.get("last_error") or "Backend implementation failed before timing validation.")
+            # Physical repair may create a new build. Measure and recover from
+            # that build rather than the unverified template's original output.
+            if working.get("physical_verification_status") == "passed":
+                verified_outdir = (working.get("physical_verification_analysis") or {}).get("outdir")
+                if not verified_outdir:
+                    return fail("Physical verification passed without identifying its verified build.")
+                entry["generated_outdir"] = outdir
+                outdir = verified_outdir
+                entry["outdir"] = outdir
+                entry["physical_verification_report_dir"] = working.get("physical_verification_report_dir")
             working = merge(working, {"stage_status": {**working["stage_status"], "gdsii": "checking_timing"}})
             paths, fetched = fetch_remote_reports(
                 ssh=ssh, remote_project_root=project_root,

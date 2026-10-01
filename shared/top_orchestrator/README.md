@@ -246,8 +246,13 @@ remote build handling, internal retries, and timing-closure logic.
 
 A backend pass requires exit zero, a JSON state reporting `done`, success for all
 four implementation stages, the expected RTL digest and target period, and
-successful timing closure when enabled. Early stage stops, missing results, and
-mismatched evidence fail. This is backend completion, not functional validation.
+successful timing closure when enabled. Failed or missing physical-verification
+status when that gate is enabled also prevents completion. The backend's separate
+physical agent checks DRC and process
+antenna counts and rechecks setup/hold timing after its repairs; see
+[physical verification](../../local/backend/physical_verification/README.md).
+Early stage stops, missing results, and mismatched evidence fail. This is backend
+completion, not functional validation.
 Native failure triage is retained in the JSON result; PD debug intake translation
 is not yet connected. Remote output paths remain in backend state; this adapter
 does not download every physical-design artifact.

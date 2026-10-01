@@ -99,6 +99,9 @@ class MailboxBackendTests(unittest.TestCase):
                  ({**payload, "timing_target_clock_period_ns": 4}, 0, "failed"),
                  ({**payload, "stage_status": {"rtl_prep": "success"}}, 0, "failed"),
                  ({**payload, "timing_closure_status": "error"}, 0, "failed"),
+                 ({**payload, "physical_verification_enabled": True, "physical_verification_status": "failed"}, 0, "failed"),
+                 ({**payload, "physical_verification_enabled": True}, 0, "failed"),
+                 ({**payload, "physical_verification_enabled": True, "physical_verification_status": "passed"}, 0, "passed"),
                  ({**payload, "current_stage": "failed"}, 0, "failed"),
                  (None, 0, "failed")]
         for index, (result, code, expected) in enumerate(cases):

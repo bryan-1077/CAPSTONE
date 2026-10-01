@@ -196,7 +196,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
               and isinstance(stages, dict)
               and all(stages.get(stage) == "success" for stage in ("rtl_prep", "netlist", "mapped_netlist", "gdsii"))
               and payload.get("timing_closure_status") in (None, "passed")
-              and (not payload.get("timing_closure_enabled") or payload.get("timing_closure_status") == "passed"))
+              and (not payload.get("timing_closure_enabled") or payload.get("timing_closure_status") == "passed")
+              and (not payload.get("physical_verification_enabled") or payload.get("physical_verification_status") == "passed"))
     message = "Backend completed on an unvalidated snapshot." if passed else str(
         payload.get("last_error") or "Backend incomplete, failed, or returned mismatched input/target evidence.")
     if not passed:
