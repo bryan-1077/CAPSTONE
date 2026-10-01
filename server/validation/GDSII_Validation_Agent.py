@@ -7,7 +7,6 @@ import os
 import re
 import json
 from collections import Counter
-
 # Optional dependency for GDSII parsing
 try:
     import gdspy
@@ -404,7 +403,7 @@ class GDSIIValidationAgent:
         self.reports = reports or []
         self.report_dirs = report_dirs or []
         self.gds_libraries = [os.path.abspath(p) for p in gds_libraries or []]
-        self.netlist_file = os.path.abspath(netlist_file)
+        self.netlist_file = os.path.abspath(netlist_file) if netlist_file else None
         self.gds_file = os.path.abspath(gds_file)
         self.top_module = top_module
         self.gds_top = gds_top
@@ -422,21 +421,29 @@ class GDSIIValidationAgent:
             for root, dirs, files in os.walk(folder):
                 dirs[:] = sorted(d for d in dirs if d not in ('verification_reports', '.git'))
                 paths.extend(os.path.join(root, name) for name in sorted(files))
-        excluded = {os.path.realpath(p) for p in [self.netlist_file, self.gds_file] + self.gds_libraries}
+        excluded = {os.path.realpath(p) for p in [self.netlist_file, self.gds_file] + self.gds_libraries if p}
         return list(dict.fromkeys(p for p in paths if os.path.realpath(p) not in excluded))
 
     def validate(self):
-        structure = StructureNetlistConsistencyAgent(
-            self.netlist_file, self.required_modules, self.required_ports, self.top_module).run()
+        if self.netlist_file:
+            structure = StructureNetlistConsistencyAgent(
+                self.netlist_file, self.required_modules, self.required_ports, self.top_module).run()
+        else:
+            structure = {'status': 'NOT_TESTED', 'pass': None, 'top_module': None,
+                         'reason': 'No netlist supplied; only layout structure and supplied reports are inspected.'}
+            if self.required_modules or self.required_ports or self.top_module:
+                structure.update(status='ERROR', **{'pass': False,
+                    'reason': 'Netlist top/module/port checks require --netlist; use --gds-top for layout-only selection.'})
         # By default require a matching top. Backend renaming is explicit via gds_top.
         layout = GDSIILayoutStructureConsistencyAgent(
             self.gds_file, self.required_cells, self.gds_top or structure.get('top_module'), self.gds_libraries).run()
         checks = {'netlist_structure': structure, 'gdsii_layout_structure': layout}
-        if not all(os.path.isfile(p) for p in (self.netlist_file, self.gds_file)):
+        checked = [row for row in checks.values() if row.get('status') != 'NOT_TESTED']
+        if not all(os.path.isfile(p) for p in (self.netlist_file, self.gds_file) if p):
             status = 'ERROR'
-        elif not layout.get('gds_available'):
+        elif not layout.get('gds_available') or structure.get('status') == 'ERROR':
             status = 'ERROR'
-        elif not all(row.get('pass') for row in checks.values()):
+        elif not all(row.get('pass') for row in checked):
             status = 'FAIL'
         else:
             status = 'PASS_WITH_GAPS'
@@ -453,8 +460,8 @@ class GDSIIValidationAgent:
                 'unparsed_backend_reports': [r for r in backend_reports if r['status'] == 'NOT_TESTED'],
                 'netlist_file': self.netlist_file, 'gds_file': self.gds_file,
                 'gds_libraries': self.gds_libraries, 'checks': checks,
-                'structural_checks_passed': all(row.get('pass') for row in checks.values()),
-                'coverage_limitations': [
+                'structural_checks_passed': all(row.get('pass') for row in checked),
+                'coverage_limitations': (['No netlist supplied; netlist/layout correspondence was not checked.'] if not self.netlist_file else []) + [
                     'Netlist inspection uses a lightweight parser; it does not compile or simulate the design.',
                     'Layout-versus-schematic (LVS) connectivity and design-rule checks (DRC) were not run.',
                     'Backend report findings are imported evidence, not rerun checks; matching design names do not establish run provenance.',
@@ -491,10 +498,42 @@ class GDSIIValidationAgent:
 Validation2Agent = GDSIIValidationAgent
 
 
+def discover_backend_inputs(folder, netlist_file=None, gds_file=None, gds_libraries=None):
+    """Discover one artifact pair, never guess between multiple designs."""
+    folder = os.path.abspath(folder)
+    if not os.path.isdir(folder):
+        raise ValueError('Backend directory does not exist: ' + folder)
+    layouts, netlists, reports = [], [], []
+    libraries = {os.path.realpath(p) for p in gds_libraries or []}
+    for root, dirs, files in os.walk(folder):
+        dirs[:] = sorted(d for d in dirs if d not in ('verification_reports', '.git', '__pycache__'))
+        for name in sorted(files):
+            path = os.path.join(root, name)
+            suffix = os.path.splitext(name)[1].lower()
+            if os.path.realpath(path) in libraries:
+                continue
+            if suffix in ('.gds', '.gdsii'):
+                layouts.append(path)
+            elif suffix in ('.v', '.sv'):
+                netlists.append(path)
+            elif suffix in ('.rpt', '.log', '.txt', '.json', '.xml', '.html', '.csv', '.pdf'):
+                reports.append(path)
+    if not gds_file:
+        if len(layouts) != 1:
+            raise ValueError('Expected one GDS/GDSII file, found {}. Select the layout with --gds. Candidates: {}'.format(len(layouts), ', '.join(layouts)))
+        gds_file = layouts[0]
+    if not netlist_file:
+        if len(netlists) > 1:
+            raise ValueError('Multiple Verilog files found; select the matching netlist with --netlist: ' + ', '.join(netlists))
+        netlist_file = netlists[0] if netlists else None
+    return netlist_file, gds_file, reports
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--netlist', required=True, dest='netlist_file')
-    parser.add_argument('--gds', required=True, dest='gds_file')
+    parser.add_argument('backend_dir', nargs='?', help='Discover layout, optional netlist, and reports in this directory')
+    parser.add_argument('--netlist', dest='netlist_file')
+    parser.add_argument('--gds', dest='gds_file')
     parser.add_argument('--report', action='append', dest='reports', help='Backend report file; repeat for any number of reports')
     parser.add_argument('--reports-dir', action='append', dest='report_dirs', help='Recursively ingest a backend report directory; repeat as needed')
     parser.add_argument('--top', dest='top_module', help='Netlist top; required if inference is ambiguous')
@@ -503,7 +542,18 @@ def main():
     parser.add_argument('--require-module', action='append', dest='required_modules')
     parser.add_argument('--require-port', action='append', dest='required_ports')
     parser.add_argument('--require-cell', action='append', dest='required_cells')
-    validator = GDSIIValidationAgent(**vars(parser.parse_args()))
+    options = vars(parser.parse_args())
+    folder = options.pop('backend_dir')
+    if folder:
+        try:
+            netlist, gds, reports = discover_backend_inputs(folder, options['netlist_file'], options['gds_file'], options['gds_libraries'])
+        except ValueError as exc:
+            parser.error(str(exc))
+        options.update(netlist_file=netlist, gds_file=gds,
+                       reports=list(dict.fromkeys((options['reports'] or []) + reports)))
+    if not options['gds_file']:
+        parser.error('Supply a backend directory or --gds FILE')
+    validator = GDSIIValidationAgent(**options)
     result = validator.run()
     print(json.dumps(result, indent=2))
     print('Report: ' + validator.report_path)

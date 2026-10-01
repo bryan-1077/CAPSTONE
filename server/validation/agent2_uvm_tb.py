@@ -4181,7 +4181,7 @@ def build_requirement_report(requirements, sim_text, simulation_ok=True, reset_c
                           row['status'] == 'NOT_TESTED' for row in rows)
     if verification_failed or failed:
         overall = "FAIL"
-    elif simulation_passed == 0:
+    elif simulation_passed == 0 or not rows:
         overall = "NOT_TESTED"
     elif gaps:
         overall = "PASS_WITH_GAPS"
@@ -4190,7 +4190,12 @@ def build_requirement_report(requirements, sim_text, simulation_ok=True, reset_c
     return {"overall_status": overall, "total_requirements": len(rows),
             "startup_reset": reset_evidence,
             "failure_stage": 'testbench_initialization' if reset_failed else
-                             ('simulation' if overall == 'FAIL' else None),
+                             ('simulation' if verification_failed or failed else
+                              'coverage' if overall == 'NOT_TESTED' else None),
+            'failure_reason': ('Required checks failed or simulation did not complete successfully.'
+                               if verification_failed or failed else
+                               'Verification incomplete: every required check must have passing evidence.'
+                               if overall == 'NOT_TESTED' else None),
             "tested_requirements": sum(row['verification_method'] == 'simulation' and
                                        row['simulation']['checks'] > 0 for row in rows),
             "passed_requirements": passed, "failed_requirements": failed,
@@ -5053,7 +5058,7 @@ def run_uvm_agent(
             json.dump(combined, report_file, indent=2)
         if ACTIVE_REPORT is not None:
             ACTIVE_REPORT.artifact('combined_requirement_verification.json', data=combined)
-        requirement_report["coverage_policy"] = "Allow Agent 3 after passing UVM checks; report coverage gaps."
+        requirement_report["coverage_policy"] = "Allow Agent 3 after passing UVM checks; retain and report unverified requirements."
         requirement_report["combined_overall_status"] = combined["overall_status"]
         requirement_report["combined_report_file"] = os.path.abspath(combined_path)
         try:
@@ -5155,12 +5160,6 @@ def run_uvm_agent(
 
             return False
 
-        if requirement_report["overall_status"] not in ("PASS", "PASS_WITH_GAPS"):
-            log("UVM_TB_AGENT",
-                "Verification incomplete or failed: no trustworthy overall pass.",
-                "error")
-            return False
-
         if coverage_state is not None:
             last_sequence = coverage_state['name']
             coverage_state = None
@@ -5173,33 +5172,13 @@ def run_uvm_agent(
                               'name': 'agent2_coverage_sequence_{}'.format(coverage_round)}
             continue
 
-        # ====================================================
-        # PASS WITH GAPS
-        # ====================================================
-
-        if (
-            requirement_report[
-                "not_tested_requirements"
-            ]
-            >
-            0
-        ):
-
-            print(
-                "\n{}\n".format(
-                    c(
-                        "yellow",
-                        (
-                            "[UVM_TB_AGENT] RTL VERIFICATION "
-                            "PASS WITH GAPS - all dynamically "
-                            "tested RTL requirements passed, "
-                            "some requirements remain unverified by this run. "
-                            "See the report for gaps. Agent 3 may proceed."
-                        ),
-                    )
-                )
-            )
-
+        if requirement_report["overall_status"] not in ("PASS", "PASS_WITH_GAPS"):
+            log("UVM_TB_AGENT", "Verification incomplete or failed: no trustworthy overall pass.", "error")
+            return False
+        if requirement_report["overall_status"] == "PASS_WITH_GAPS":
+            log("UVM_TB_AGENT", "PASS WITH GAPS - executed checks passed; {} requirements remain unverified. "
+                "Agent 3 may proceed with additional vectors; gaps remain in the report until verified.".format(
+                    requirement_report['not_tested_requirements']), "warning")
             return True
 
         # ====================================================

@@ -1,61 +1,7 @@
-# Local credentials/configuration (keep sanitized templates eligible for Git).
-.env
-.env.*
-!.env.example
-!.env.template
+# Ignore everything except Python source files and this ignore policy.
+*
 
-# External PDK/tool installations: provision separately from the repository.
-sky130_handoff/
-sky130A/
-sky130B/
-oss-cad-suite/
-
-# Generated agent workspaces, at any depth (including per-design batch runs).
-.agent1_compile/
-build_auto/
-build_auto_tv/
-tb_auto/
-tv_auto/
-tb_tv_auto/
-verification_reports/
-/demo_queue_fault/verification_*/
-
-# VCS compilation products and simulator runtime files.
-csrc/
-simv
-simv_*
-*.daidir/
-ucli.key
-vc_hdrs.h
-DVEfiles/
-.vcs*
-*.vpd
-*.fsdb
-*.vcd
-*.fst
-*.vvp
-
-# Generated top-level handoff/results. Do not ignore arbitrary JSON specs/plans.
-/validation_result.json
-/validation2_report.json
-/testvector_plan.json
-/gdsii_validation_report.json
-/lec_report.json
-
-# Large physical-design outputs; retain source RTL/YAML and text input reports.
-*.gds
-*.gdsii
-*.oas
-*.oasis
-*.def
-*.lef
-*.lib
-*.db
-
-# Python/editor runtime files.
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.venv/
-venv/
-.DS_Store
+# Allow traversal into subdirectories so nested Python files can be tracked.
+!*/
+!*.py
+!.gitignore

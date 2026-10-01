@@ -913,6 +913,13 @@ def vector_transaction_contract(files):
         raise ValueError('Saved UVM environment needs dut_sequence and dut_driver with an explicit transaction type.')
     item = sequence.group(2)
     declarations = re.findall(r'\b' + re.escape(item) + r'\s+(\w+)\s*;', driver.group())
+    # uvm_driver supplies req as an inherited transaction handle. Generated
+    # drivers need not redeclare it. Include handles actually received from
+    # the sequencer, then discover only fields consumed by assignments below.
+    received = re.findall(
+        r'\bseq_item_port\s*\.\s*get_next_item\s*\(\s*(?:this\s*\.\s*)?(\w+)\s*\)',
+        driver.group())
+    declarations = list(dict.fromkeys(declarations + received))
     bindings = {}
     for variable in declarations:
         for assignment in re.finditer(r'\b(\w+(?:\.\w+){1,2})\s*(?:<=|=(?!=))\s*([^;]+);', driver.group()):
@@ -1171,9 +1178,17 @@ def combine_uvm_requirement_reports(original, directed):
     merged['tested_requirements'] = sum(r.get('verification_method') == 'simulation' and r['checks'] > 0 for r in rows)
     for field in ('scoreboard_passed_checks', 'scoreboard_failed_checks', 'uvm_errors', 'uvm_fatals'):
         merged[field] = (original.get(field) or 0) + (directed.get(field) or 0)
-    merged['overall_status'] = ('FAIL' if merged['failed_requirements'] or 'FAIL' in
-                                (original.get('overall_status'), directed.get('overall_status')) else
-                                'PASS_WITH_GAPS' if merged['not_tested_requirements'] else 'PASS')
+    # Missing coverage in one stage may be supplied by the other, but an
+    # actual mismatch or execution failure must never be overwritten.
+    hard_failure = any(r.get('overall_status') == 'FAIL' and r.get('failure_stage') != 'coverage'
+                       for r in (original, directed))
+    incomplete = merged['not_tested_requirements'] > 0 or not rows
+    merged['overall_status'] = ('FAIL' if hard_failure or merged['failed_requirements'] else
+                                'PASS_WITH_GAPS' if incomplete else 'PASS')
+    merged['failure_stage'] = ('simulation' if hard_failure or merged['failed_requirements'] else
+                               None)
+    merged['failure_reason'] = ('Required checks failed or execution failed.' if merged['failure_stage'] == 'simulation' else
+                                'Verification incomplete: required checks remain untested.' if incomplete else None)
     return merged
 
 
@@ -1220,8 +1235,13 @@ def build_directed_uvm_report(plan, manifest, sim_out, simulation_ok):
     status = ('FAIL' if not simulation_ok or errors or fatals or combined['failed_requirements'] or
               any(not t['completed'] for t in tests) or
               any(t['status'] == 'FAIL' for t in tests) else
+              'FAIL' if combined['overall_status'] == 'FAIL' or not tests else
               'PASS_WITH_GAPS' if combined['not_tested_requirements'] or any(t['status'] != 'PASS' for t in tests) else 'PASS')
-    return {'verification_status': status, 'uvm_environment_reused': True,
+    return {'verification_status': status,
+            'failure_reason': (None if status in ('PASS', 'PASS_WITH_GAPS') else
+                'Verification failed or incomplete; inspect failed tests, untested tests, and requirement evidence.'),
+            'coverage_policy': 'Executed checks must pass; remaining coverage gaps stay visible in the combined report.',
+            'uvm_environment_reused': True,
             'verification_scope': 'directed_vectors_with_saved_uvm_checkers',
             'simulation_timescale': manifest.get('timescale'),
             'tests': tests, 'failed_tests': [t for t in tests if t['status'] == 'FAIL'],
@@ -1289,7 +1309,7 @@ def run_directed_uvm(report, rtl_files, dut_spec):
     for test in result['tests']:
         print('  {}: {} ({} passed checks, {} failed checks)'.format(
             test['name'], test['status'], test['passed_checks'], test['failed_checks']))
-    return result['verification_status'] != 'FAIL' and all(t['completed'] for t in result['tests'])
+    return result['verification_status'] in ('PASS', 'PASS_WITH_GAPS') and bool(result['tests']) and all(t['completed'] for t in result['tests'])
 
 
 def _main(report):

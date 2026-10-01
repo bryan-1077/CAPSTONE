@@ -4,7 +4,9 @@
 #source /opt/coe/synopsys/vcs/W-2024.09-SP2-4/setup.vcs.sh
 
 #python3 llm_caller_test.py
+#python3 server/validation/llm_caller_test.py
 
+#cd server/validation
 #python3 run_pipeline.py rtl/
 
 #python3 GDSII_Validation_Agent.py --netlist /path/to/backend/netlist.v --gds /path/to/backend/layout.gds
