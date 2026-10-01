@@ -60,10 +60,11 @@ class PostRouteTclTests(unittest.TestCase):
         args.update(top="top", netlist=Path("mapped.v"), lef_files=[], mmmc_file=Path("mmmc.tcl"),
                     outdir=Path("out"), site="site", routing_layers=["met1", "met2"],
                     filler_cells=[], stream_map=None, pwr_pins=[], gnd_pins=[], antenna_diode_cell=None,
-                    tiehi_net=None, tielo_net=None, final_postroute_setup_opt=True, timing_eco_plan=None)
+                    tiehi_net=None, tielo_net=None, final_postroute_setup_opt=True, timing_eco_plan=None,
+                    physical_repair_plan=None)
         script = build_innovus_tcl(**args)
         start = script.index('puts "INFO: configuring OCV')
-        end = script.index('if {[catch {report_timing', start)
+        end = script.index('catch {saveDesign $DBS_DIR/05e_postroute_setup_opt.enc}', start)
         return script[start:end]
 
     def test_ocv_is_set_before_optimization_executes(self):

@@ -636,7 +636,7 @@ def build_mmmc_tcl(sdc_path, timing_libs, qrc_tech, cap_table):
     ).format(sdc_part, lib_list, rc_line)
 
 
-def build_timing_eco_tcl(plan, top):
+def build_timing_eco_tcl(plan, top, *, check_die_limit=True):
     """Compile data-only resize actions; never execute model-generated Tcl."""
     def word(value):
         if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9_./\[\]-]+", value):
@@ -656,8 +656,9 @@ def build_timing_eco_tcl(plan, top):
         'if {![file isfile $eco_checkpoint] || ![file readable $eco_checkpoint]} {error "Checkpoint restore script is missing or unreadable: $eco_checkpoint"}',
         'if {![file isdirectory ${eco_checkpoint}.dat] || ![file readable ${eco_checkpoint}.dat]} {error "Checkpoint database is missing or unreadable: ${eco_checkpoint}.dat"}',
         'source $eco_checkpoint',
-        'if {[eda_die_area_mm2] > 4.0} {error "Die footprint exceeds 4 mm^2; resizing stopped"}',
     ]
+    if check_die_limit:
+        lines.append('if {[eda_die_area_mm2] > 4.0} {error "Die footprint exceeds 4 mm^2; resizing stopped"}')
     seen = set()
     # Restored checkpoints include this flow's FILL instances even when the
     # recovery only remeasures a checkpoint without explicit resize actions.
@@ -682,6 +683,37 @@ def build_timing_eco_tcl(plan, top):
     if plan["actions"]:
         lines.extend(["refinePlace", "ecoRoute"])
     lines.extend(['} timing_eco_err]} {', 'puts "ERROR: timing ECO failed: $timing_eco_err"', 'exit 6', '}'])
+    return lines
+
+
+def build_physical_repair_tcl(plan, top, antenna_diode_cell):
+    """Compile fixed repair recipes; model output never becomes executable Tcl."""
+    if not isinstance(plan, dict) or set(plan) != {"checkpoint", "actions"}:
+        raise ValueError("Physical repair requires checkpoint and actions")
+    if not isinstance(plan["actions"], list) or not 1 <= len(plan["actions"]) <= 3:
+        raise ValueError("Physical repair requires one to three recipes")
+    recipes = set()
+    for action in plan["actions"]:
+        if (not isinstance(action, dict) or set(action) != {"recipe", "reason"}
+                or not all(isinstance(v, str) for v in action.values())
+                or action["recipe"] not in {"reroute", "refill_and_reroute", "antenna_cleanup"}
+                or action["recipe"] in recipes):
+            raise ValueError("Unsupported or duplicate physical repair recipe")
+        recipes.add(action["recipe"])
+    # The physical runner measures the current configured area/power limits;
+    # this restore performs no cell resizing or floorplan edits.
+    lines = build_timing_eco_tcl({"checkpoint": plan["checkpoint"], "actions": []}, top, check_die_limit=False)
+    lines += ['if {[catch {']
+    if "antenna_cleanup" in recipes:
+        if not antenna_diode_cell or not re.fullmatch(r"[A-Za-z0-9_]+", antenna_diode_cell):
+            raise ValueError("Antenna repair requires a valid loaded diode cell")
+        lines += [
+            'if {[lsearch -exact [dbGet head.libCells.name] {%s}] < 0} {error "Antenna diode cell is not loaded"}' % antenna_diode_cell,
+            "setNanoRouteMode -routeInsertAntennaDiode true",
+            "setNanoRouteMode -routeAntennaCellName {%s}" % antenna_diode_cell,
+        ]
+    lines.append("ecoRoute" if "refill_and_reroute" in recipes else "ecoRoute -target")
+    lines += ['} physical_repair_err]} {', 'puts "ERROR: physical repair failed: $physical_repair_err"', 'exit 7', '}']
     return lines
 
 
@@ -718,7 +750,10 @@ def build_innovus_tcl(
     tiehi_net,
     tielo_net,
     timing_eco_plan=None,
+    physical_repair_plan=None,
 ):
+    if timing_eco_plan is not None and physical_repair_plan is not None:
+        raise ValueError("Timing and physical repair plans must run separately")
     results_dir = "$OUTDIR/results"
     reports_dir = "$OUTDIR/reports"
     db_dir = "$OUTDIR/db"
@@ -838,12 +873,12 @@ def build_innovus_tcl(
     lines.append("    set fh [open $report_file r]")
     lines.append('    set current_net ""')
     lines.append("    while {[gets $fh line] >= 0} {")
-    lines.append('        if {[regexp {^(\\S.*)\\s+\\(\\d+\\)\\s*$} $line -> net_name]} {')
+    lines.append(r'        if {[regexp {^(\S.*)\s+\(\d+\)\s*$} $line -> net_name]} {')
     lines.append("            set current_net $net_name")
     lines.append("            continue")
     lines.append("        }")
     lines.append('        if {$current_net eq ""} { continue }')
-    lines.append('        if {[regexp {^\\s+(\\S+)\\s+\\([^)]+\\)\\s+(\\S+)\\s*$} $line -> inst_name pin_name]} {')
+    lines.append(r'        if {[regexp {^\s+(\S+)\s+\([^)]+\)\s+(\S+)\s*$} $line -> inst_name pin_name]} {')
     lines.append("            lappend targets [list $current_net $inst_name $pin_name]")
     lines.append('            set current_net ""')
     lines.append("        }")
@@ -857,7 +892,7 @@ def build_innovus_tcl(
     lines.append("    set fh [open $report_file r]")
     lines.append("    set count -1")
     lines.append("    while {[gets $fh line] >= 0} {")
-    lines.append('        if {[regexp {^Total number of process antenna violations:\\s+(\\d+)\\s*$} $line -> vio_count]} {')
+    lines.append(r'        if {[regexp {^\s*#?\s*Total number of process antenna violations\s*[:=]\s*(\d+)\s*$} $line -> vio_count]} {')
     lines.append("            set count $vio_count")
     lines.append("            break")
     lines.append("        }")
@@ -1067,6 +1102,8 @@ def build_innovus_tcl(
     lines.append("")
     if timing_eco_plan is not None:
         lines[implementation_start:] = build_timing_eco_tcl(timing_eco_plan, top)
+    if physical_repair_plan is not None:
+        lines[implementation_start:] = build_physical_repair_tcl(physical_repair_plan, top, antenna_diode_cell)
     # Timing repair needs placement space. Reinsert fillers and perform PG,
     # routing, connectivity, DRC and timing checks only after optimization.
     if final_postroute_setup_opt:
@@ -1084,7 +1121,7 @@ def build_innovus_tcl(
         lines.append("}")
         lines.append("catch {saveDesign $DBS_DIR/05e_postroute_setup_opt.enc}")
         lines.append("")
-    if timing_eco_plan is not None:
+    if timing_eco_plan is not None or physical_repair_plan is not None:
         lines.extend([
             'if {[catch {optDesign -postRoute -hold} eco_hold_err]} {',
             '    puts "ERROR: timing ECO hold optimization failed: $eco_hold_err"',
@@ -1166,7 +1203,9 @@ def build_innovus_tcl(
     lines.append("}")
     lines.append("")
     if antenna_diode_cell:
-        lines.append("set antfix_max_passes 3")
+        antenna_repair = physical_repair_plan is not None and any(
+            action["recipe"] == "antenna_cleanup" for action in physical_repair_plan["actions"])
+        lines.append("set antfix_max_passes %d" % (5 if antenna_repair else 3))
         lines.append("set antfix_pass 1")
         lines.append("set antfix_remaining [parse_antenna_violation_count $ANTENNA_RPT]")
         lines.append('while {$antfix_pass <= $antfix_max_passes && $antfix_remaining > 0} {')
@@ -1232,11 +1271,16 @@ def build_innovus_tcl(
     lines.append('puts "INFO: review $OUTDIR/checkDesign/checknetlist.rpt and $OUTDIR/checkDesign/pgTermConnectivity.main.htm for final connectivity status"')
     lines.append('puts "INFO: review $REPORTS_DIR/netlist_constraint_usage.rpt for intentional constant assigns and inferred tie-net handling"')
     lines.append("")
-    lines.append('if {[catch {verify_drc} drc_verify_err]} {')
+    lines.append('if {[catch {verify_drc -report $REPORTS_DIR/${TOP}.geom.rpt} drc_verify_err]} {')
     lines.append('    puts "ERROR: verify_drc failed: $drc_verify_err"')
     lines.append("    exit 3")
     lines.append("} else {")
     lines.append('    puts "INFO: verify_drc command finished; review violation count in the log"')
+    lines.append("}")
+    lines.append("")
+    lines.append('if {[catch {verifyProcessAntenna -report $REPORTS_DIR/${TOP}.antenna.rpt} physical_antenna_err]} {')
+    lines.append('    puts "ERROR: final process antenna verification failed: $physical_antenna_err"')
+    lines.append("    exit 7")
     lines.append("}")
     lines.append("")
     lines.append('if {[catch {report_timing -max_paths 10 > $REPORTS_DIR/timing_postroute.rpt} timing_report_err]} {')
@@ -1318,6 +1362,7 @@ def write_tcl(
     tiehi_net,
     tielo_net,
     timing_eco_plan=None,
+    physical_repair_plan=None,
 ):
     txt = build_innovus_tcl(
         top=top,
@@ -1352,6 +1397,7 @@ def write_tcl(
         tiehi_net=tiehi_net,
         tielo_net=tielo_net,
         timing_eco_plan=timing_eco_plan,
+        physical_repair_plan=physical_repair_plan,
     )
     write_text(tcl_path, txt)
 
@@ -1407,6 +1453,7 @@ def main():
     parser.add_argument("--ccopt-target-max-transition", type=float, default=0.50)
     parser.add_argument("--final-postroute-setup-opt", action="store_true")
     parser.add_argument("--timing-eco-json", help="Validated resize plan and source checkpoint, encoded as JSON")
+    parser.add_argument("--physical-repair-json", help="Bounded antenna/DRC repair recipes and source checkpoint, encoded as JSON")
     parser.add_argument("--core-margin", type=float, default=10.0)
     parser.add_argument("--ring-width", type=float, default=2.0)
     parser.add_argument("--ring-spacing", type=float, default=2.0)
@@ -1566,6 +1613,7 @@ def main():
         tiehi_net=tiehi_net,
         tielo_net=tielo_net,
         timing_eco_plan=json.loads(args.timing_eco_json) if args.timing_eco_json else None,
+        physical_repair_plan=json.loads(args.physical_repair_json) if args.physical_repair_json else None,
     )
 
     summary = (

@@ -195,6 +195,48 @@ class ClosureTests(unittest.TestCase):
         self.assertTrue(result["gated"])
         gate.assert_called_once()
 
+    def test_timing_measures_repaired_template_and_saves_its_checkpoint(self):
+        def verified(state):
+            result = self.implementation(state)
+            repaired = state["remote_gdsii_dir"] + "_physical_repaired"
+            return {**result, "remote_gdsii_dir": repaired, "physical_verification_status": "passed",
+                    "physical_verification_analysis": {"outdir": repaired}}
+        ssh = FakeSSH([-0.119, 0.012])
+        with patch.object(ssh, "fetch_file", wraps=ssh.fetch_file) as fetch:
+            result = closure.run_setup_closure(self.state, ssh, verified, lambda state, updates: {**state, **updates})
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertEqual(result["timing_closure_best_attempt"]["outdir"], "build_GDSII_210MHz_02_physical_repaired")
+        self.assertEqual(result["timing_closure_attempts"][0]["generated_outdir"], "build_GDSII_210MHz_01")
+        timing_paths = [call.args[0] for call in fetch.call_args_list if call.args[0].endswith("timing_postroute.rpt")]
+        self.assertTrue(all("_physical_repaired/reports/" in path for path in timing_paths))
+
+    def test_failed_physical_template_is_excluded_and_next_template_runs(self):
+        def verified(state):
+            result = self.implementation(state)
+            if len(self.states) == 1:
+                return {**result, "stage_status": {"gdsii": "failed"}, "physical_verification_status": "failed",
+                        "last_error": "Two DRC violations remain."}
+            return {**result, "physical_verification_status": "passed",
+                    "physical_verification_analysis": {"outdir": state["remote_gdsii_dir"]}}
+        result = closure.run_setup_closure(self.state, FakeSSH([0.012]), verified, lambda state, updates: {**state, **updates})
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertEqual(len(self.states), 2)
+        self.assertEqual(result["timing_closure_attempts"][0]["status"], "physical_verification_failed")
+        self.assertEqual(result["timing_closure_best_attempt"]["attempt"], 2)
+
+    def test_no_dirty_template_can_become_a_timing_recovery_source(self):
+        self.state["timing_closure_ai_enabled"] = True
+        def dirty(state):
+            result = self.implementation(state)
+            return {**result, "stage_status": {"gdsii": "failed"}, "physical_verification_status": "failed",
+                    "last_error": "Antenna violations remain."}
+        with patch.object(closure, "plan_timing_recovery") as planner:
+            result = closure.run_setup_closure(self.state, FakeSSH([]), dirty, lambda state, updates: {**state, **updates})
+        self.assertEqual(len(self.states), 3)
+        self.assertEqual(result["timing_closure_status"], "failed")
+        self.assertFalse(result.get("timing_closure_best_attempt"))
+        planner.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,6 +42,7 @@ from schemas.state import FlowState
 from timing_closure.remote_analyze import fetch_remote_reports
 from timing_closure.timing_analyzer import analyze_reports, parse_timing_report
 from timing_closure.closure_runner import run_setup_closure
+from physical_verification.closure_runner import run_physical_closure
 from agents.openai_prep_review import (
     merge_prep_review_results,
     run_openai_prep_review,
@@ -3420,13 +3421,28 @@ def _run_gdsii_edit(
 def _make_gdsii_runner(ssh: SSHExecutor) -> Callable[[FlowState], dict]:
     implementation_runner = _make_gdsii_implementation_runner(ssh)
 
+    def verified_implementation(state: FlowState) -> dict:
+        generated = implementation_runner(state)
+        # Check every preset/ECO, including candidates that still fail setup.
+        # Repair execution uses the raw runner so this wrapper cannot recurse.
+        return run_physical_closure(generated, ssh, implementation_runner, _merge_state,
+                                    require_setup_timing=False)
+
     def runner(state: FlowState) -> dict:
         if not state.get("timing_closure_enabled", True):
-            return implementation_runner(_merge_state(state, {
+            # Standalone generation also needs the updated physical report exporter.
+            from uuid import uuid4
+            script = f".physical_verification_initial_{uuid4().hex}.py"
+            ssh.upload_file(Path(__file__).resolve().parents[1] / "probes/run_innovus_GDSII_universal.py",
+                            f"{state['remote_project_root']}/{script}", exclusive=True)
+            result = implementation_runner(_merge_state(state, {
+                "gdsii_script": script,
                 "timing_closure_status": "disabled",
                 "history": state["history"] + ["Timing closure explicitly disabled; GDS generation only"],
             }))
-        return run_setup_closure(state, ssh, implementation_runner, _merge_state)
+        else:
+            return run_setup_closure(state, ssh, verified_implementation, _merge_state)
+        return run_physical_closure(result, ssh, implementation_runner, _merge_state)
 
     return runner
 

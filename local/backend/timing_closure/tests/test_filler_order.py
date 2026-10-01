@@ -25,7 +25,7 @@ class FillerOrderTests(unittest.TestCase):
 
     def assert_final_checks(self, script):
         checks = ["addFiller -cell", "ecoRoute -target", "checkDesign -all} check_final_err",
-                  "verify_drc} drc_verify_err", "report_timing -max_paths", "report_power -power_unit W",
+                  "verify_drc -report $REPORTS_DIR/${TOP}.geom.rpt} drc_verify_err", "report_timing -max_paths", "report_power -power_unit W",
                   "report_timing -early", 'puts "INFO: entering final export stage"']
         positions = [script.index(text) for text in checks]
         self.assertEqual(positions, sorted(positions))
@@ -54,5 +54,5 @@ class FillerOrderTests(unittest.TestCase):
     def test_explicit_no_filler_keeps_final_checks(self):
         script = self.generate([], no_filler=True)
         self.assertNotIn("addFiller -cell", script)
-        self.assertLess(script.index("optDesign -postRoute -hold"), script.index("verify_drc} drc_verify_err"))
+        self.assertLess(script.index("optDesign -postRoute -hold"), script.index("verify_drc -report $REPORTS_DIR/${TOP}.geom.rpt} drc_verify_err"))
         self.assertIn("report_timing -early", script)

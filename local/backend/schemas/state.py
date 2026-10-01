@@ -70,6 +70,14 @@ class FlowState(TypedDict, total=False):
     timing_closure_source_mapped_dir: str
     timing_closure_mapped_snapshot_dir: str
     timing_closure_base_outdir: str
+    physical_verification_enabled: bool
+    physical_verification_ai_enabled: bool
+    physical_verification_max_attempts: int
+    physical_verification_status: str
+    physical_verification_plan: Optional[Dict[str, Any]]
+    physical_verification_attempts: List[Dict[str, Any]]
+    physical_verification_analysis: Dict[str, Any]
+    physical_verification_report_dir: str
     inner_compute_host: str
     mapped_top_module: str
     gdsii_script: str

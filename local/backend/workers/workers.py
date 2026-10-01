@@ -108,6 +108,8 @@ def _build_gdsii_timing_closure_args(state: FlowState) -> str:
         args += " --final-postroute-setup-opt"
     if state.get("timing_closure_eco_plan") is not None:
         args += " --timing-eco-json " + shlex.quote(json.dumps(state["timing_closure_eco_plan"]))
+    if state.get("physical_verification_plan") is not None:
+        args += " --physical-repair-json " + shlex.quote(json.dumps(state["physical_verification_plan"]))
     return args
 
 
