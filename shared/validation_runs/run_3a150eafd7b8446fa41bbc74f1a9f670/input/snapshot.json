@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "files": {
+    "approved_specs.yaml": "5348514cd080589250c7dbc5879a8a008e68ee23efa6f09f7ad5944440b3334f",
+    "rtl/README.md": "6c727179f69cf460918db22392cc6dadf69417d0a837917a83dd3c12121e2748",
+    "rtl/ddr4_bank_activate_fsm.sv": "2bbbab11b86983800ab2ce0354c5844d1f48adfee1399dbb25aa483af153542c",
+    "rtl/ddr4_bank_bank_sequencer.sv": "b7493d9c90808a8ffc06466993406924336953e80137fde258f7d758cc062214",
+    "rtl/ddr4_bank_precharge_fsm.sv": "fb5fa5528536a5958d4e28faed7a28e682602174a95e4ebfbd6756bfe65a4c6b",
+    "rtl/ddr4_bank_tRAS_fsm.sv": "fcd177779b63505fb58de87bdc58a37ec2d11dab0076341bed98136ac23e34d4",
+    "rtl/ddr4_bank_top.sv": "768d697e777fbef0e2cd996fa7f941d655f80d8c6b8ec371ff68a4e65ddf4617",
+    "rtl/ddr4_controller_top.sv": "c3935c06db28ad3bdbbb5c5be3b62e3c8d980ac9cfa9fa650f876002e35232a3",
+    "rtl/ddr4_refresh_refresh_controller.sv": "83883a382f160cab72c8887377f4e212fb20f5661ec1101915d0835c82851592",
+    "rtl/ddr4_request_queue.sv": "a699a55fe64ebf010aa43f5ac06aa811e5ab681c746d4b988bd67da1ed879874",
+    "rtl/ddr4_scheduler_scheduler.sv": "c0e679c0a9a2b45b6369587a1706c7caa8823609c99a9584acddad1b7f559734",
+    "rtl/ddr4_tFAW_tFAW_tracker.sv": "a3e72e344655817bfd3009c0d1aca697f8d0a4ad08f77ce44d1f82d834f0d3df",
+    "rtl/ddr4_tRRD_simple_tRRD.sv": "5ad30e7ad09b6ab72c94e78448a3be7d2b8ce2232c0255c7a1b0b3da55359d5a",
+    "rtl/filelist.f": "75203668704fcc19a173448707c3a70af8c2909be812690255e0f2aaca2c2aae",
+    "rtl/manifest.json": "ca69d79889c659174603aae4837330e8f01154d407bf4d19a89c67bab5d4d40e",
+    "specs/ddr4_bank_activate_fsm.yaml": "c84322f2a5f2414556fa492e4baaca1d9de9b4cde32c591789267f96562edea3",
+    "specs/ddr4_bank_bank_sequencer.yaml": "f2693a0286883f37d2344de5ffa49ba3b3b6d94aeaa5e07bcc8e937a1b19e53a",
+    "specs/ddr4_bank_precharge_fsm.yaml": "28609f7c2c206504d47117f59f995467640d936577e9fc46f7817163837b3e44",
+    "specs/ddr4_bank_tRAS_fsm.yaml": "b11d54185533eeaf85752ac0ee0727843b0859f27ebe726140ef9763966034bf",
+    "specs/ddr4_refresh_refresh_controller.yaml": "8fed3ffdccf1ef20ee6ab3c462eb7dfb68dad9f2385373f014847a1ae9549842",
+    "specs/ddr4_request_queue_request_queue.yaml": "19173849881b6f771cf4ac4358a50a12394903c58d40e959255bd24e9644fb27",
+    "specs/ddr4_scheduler_scheduler.yaml": "08d6797b1118f5b6547c5715c823c0818e7aae107a8ac41764774f46bd81cc44",
+    "specs/ddr4_tFAW_tFAW_tracker.yaml": "8061a58f9e8c8397a4dfba7ccd3f5c0a19606140ea71e51759c5d84dbb002ff7",
+    "specs/ddr4_tRRD_simple_tRRD.yaml": "f0f78b51d4abc8eed255c70aaeeb1fed23b8829ce67ba14717c5f0cfc74ad037"
+  },
+  "rtl_revision": "09b2195435d2380a4e803b9adda7f0b19faa1a984c398c4c361d216e8f0fb400",
+  "modules_without_specs": [
+    "ddr4_bank_top",
+    "ddr4_controller_top"
+  ]
+}

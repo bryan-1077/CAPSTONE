@@ -1,0 +1,44 @@
+clock:
+  name: clk
+design_name: ddr4_refresh_refresh_controller
+design_type: fsm
+implementation_constraints:
+- exactly two states
+- counter increments only while in IDLE
+- counter resets on any state transition
+- ref_req asserted only in REQUEST
+- no queues or scheduling logic
+- fully self-contained FSM
+invariants:
+- FSM has exactly 2 states
+- ref_req == (current_state == REQUEST)
+- counter increments only in IDLE
+- counter resets after REQUEST -> IDLE transition
+- counter resets after IDLE -> REQUEST transition
+output_overrides:
+  ref_req: (current_state == REQUEST)
+ports:
+- description: Refresh acknowledge pulse from the downstream scheduler
+  direction: input
+  name: ref_ack
+  width: 1
+- description: Refresh request signal asserted while waiting for acknowledge
+  direction: output
+  name: ref_req
+  width: 1
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: true
+state_machine:
+  reset_state: IDLE
+  states:
+  - IDLE
+  - REQUEST
+  transitions:
+  - condition: counter >= 12480
+    from: IDLE
+    to: REQUEST
+  - condition: ref_ack == 1
+    from: REQUEST
+    to: IDLE

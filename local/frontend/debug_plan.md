@@ -218,6 +218,41 @@ Add:
 - `needs_human` status after the attempt limit is reached
 - final `fix.md` and `status.json`
 
+Current repair/autorepair loop:
+
+Both graph backends now retry rejected patches and failed checks under
+`--max-attempts`. Failed checks require verified rollback before retrying;
+kept patches and rollback failures stop the flow. These retries reuse the
+existing investigation and include prior attempt feedback in proposal prompts.
+Re-investigation after a failed hypothesis remains future work.
+
+Git validation, application, and rollback share a command builder that maps
+frontend-relative paths to the repository root. Verbose Git output is retained,
+skipped patches fail validation, and unchanged target hashes fail application
+before lint or simulation. Mode changes are rejected along with file operations.
+
+```text
+repair
+  -> propose attempt_N
+  -> validate attempt_N
+  -> apply attempt_N
+  -> lint/check attempt_N
+  -> if fixed: record fix and stop
+  -> if checks failed and rollback passed: retry with previous attempt context
+  -> if patch invalid and budget remains: retry with validation feedback
+  -> if NO_PATCH, rollback failure, kept failed patch, or budget exhausted: stop
+```
+
+Near-term autorepair policy:
+
+- Treat `--max-attempts` as the total attempt budget for a single repair run.
+- Reuse previous attempt artifacts in the next prompt so the model sees rejected diffs, failed checks, and rollback outcomes.
+- Retry only when the tree is clean enough to continue, which currently means failed checks were rolled back successfully.
+- Stop immediately on `NO_PATCH`; repeating the same under-evidenced prompt is not useful.
+- Stop immediately when `--keep-failed-patch` or `--demo-mode` leaves a failed patch in the RTL tree.
+- Record `needs_human` after repeated invalid patches or failed checks consume the attempt budget.
+- Keep the loop local to `rtl_output/*.sv`; generator backports remain a later mining step after a fix is proven.
+
 ### Phase 3: Richer Debug Context
 
 Add:

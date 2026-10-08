@@ -1,0 +1,6 @@
+{
+  "invocation_id": "3a150eafd7b8446fa41bbc74f1a9f670",
+  "snapshot_digest": "365fced9a5fe31d25b5f7a370fad3711373882e7afcd1a7aa016b1e1fcead90c",
+  "pipeline": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/run_pipeline.py",
+  "jobs": 1
+}

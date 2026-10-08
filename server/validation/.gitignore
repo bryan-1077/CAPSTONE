@@ -2,6 +2,6 @@
 *
 
 # Allow traversal into subdirectories so nested Python files can be tracked.
-!*/
+
 !*.py
 !.gitignore

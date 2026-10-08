@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "invocation_id": "3a150eafd7b8446fa41bbc74f1a9f670",
+  "snapshot_digest": "365fced9a5fe31d25b5f7a370fad3711373882e7afcd1a7aa016b1e1fcead90c",
+  "input_directory": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_3a150eafd7b8446fa41bbc74f1a9f670/input",
+  "pipeline_returncode": 1,
+  "summary": null,
+  "input_unchanged": true,
+  "pipeline_digest": "04e345d2f57db259fd7e80f3301447bf980589658f3bd42e4e7f743372e228df",
+  "command": [
+    "/usr/bin/python3.11",
+    "-u",
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/run_pipeline.py",
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_3a150eafd7b8446fa41bbc74f1a9f670/input/rtl",
+    "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_3a150eafd7b8446fa41bbc74f1a9f670/input/specs",
+    "--jobs",
+    "1"
+  ],
+  "error": "ValueError: Expected one invocation summary, found 0",
+  "reports_digest": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85"
+}

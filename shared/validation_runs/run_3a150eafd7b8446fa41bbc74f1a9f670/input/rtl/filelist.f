@@ -1,0 +1,11 @@
+ddr4_bank_activate_fsm.sv
+ddr4_bank_bank_sequencer.sv
+ddr4_bank_precharge_fsm.sv
+ddr4_bank_tRAS_fsm.sv
+ddr4_bank_top.sv
+ddr4_controller_top.sv
+ddr4_refresh_refresh_controller.sv
+ddr4_request_queue.sv
+ddr4_scheduler_scheduler.sv
+ddr4_tFAW_tFAW_tracker.sv
+ddr4_tRRD_simple_tRRD.sv

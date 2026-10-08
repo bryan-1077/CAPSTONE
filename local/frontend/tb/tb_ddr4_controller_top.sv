@@ -67,6 +67,7 @@ module tb_ddr4_controller_top;
     logic [DATA_WIDTH-1:0] txn_wdata;
     logic [1:0] txn_bank;
     logic cmd_ready;
+    logic txn_ready;
     logic rsp_valid;
     logic [DATA_WIDTH-1:0] rsp_rdata;
 
@@ -128,6 +129,7 @@ module tb_ddr4_controller_top;
         .txn_addr(txn_addr),
         .txn_wdata(txn_wdata),
         .txn_bank(txn_bank),
+        .txn_ready(txn_ready),
         .cmd_ready(cmd_ready),
         .rsp_valid(rsp_valid),
         .rsp_rdata(rsp_rdata)
@@ -196,6 +198,9 @@ module tb_ddr4_controller_top;
             $display("===== PERFORMANCE SUMMARY =====");
             $display("Page Policy           : %s", PAGE_POLICY);
             $display("Accepted Transactions : %0d", dut.cnt_accept);
+            $display("Host Accepted         : %0d", dut.requests_accepted);
+            $display("Requests Dispatched   : %0d", dut.requests_dispatched);
+            $display("Requests Completed    : %0d", dut.requests_completed);
             $display("Row Hits              : %0d", dut.cnt_row_hit);
             $display("Row Misses            : %0d", dut.cnt_row_miss);
             $display("Row Closed            : %0d", dut.cnt_row_closed);
@@ -740,7 +745,14 @@ module tb_ddr4_controller_top;
 
             while ((accept_cycle < 0) && (wait_count < MAX_CYCLES)) begin
                 @(posedge clk);
-                #1;
+                // Sample the host handshake before NBA updates. Drop valid
+                // after the edge; the next wait observes execution dispatch.
+                if (txn_valid && txn_ready) begin
+                    #1;
+                    txn_valid = 1'b0;
+                end else begin
+                    #1;
+                end
                 if (dut.accept_txn) begin
                     accept_cycle = cycle;
 
@@ -975,7 +987,7 @@ module tb_ddr4_controller_top;
             observed_tfaw_admission_stall_cycles <= 0;
             observed_tfaw_hard_block_cycles <= 0;
         end else begin
-            if (!saw_backpressure && (txn_valid === 1'b1) && (cmd_ready === 1'b0)) begin
+            if (!saw_backpressure && dut.issue_valid && !dut.dispatch_fire) begin
                 saw_backpressure <= 1'b1;
             end
 
@@ -986,11 +998,11 @@ module tb_ddr4_controller_top;
             if (!saw_tFAW_block && dut.tFAW_block) begin
                 saw_tFAW_block <= 1'b1;
             end
-            if (txn_valid && !cmd_ready && !dut.service_pending_q &&
+            if (dut.issue_valid && !dut.dispatch_fire && !dut.service_pending_q &&
                 (!dut.tRRD_block) && !dut.tfaw_can_accept_act) begin
                 observed_tfaw_admission_stall_cycles <= observed_tfaw_admission_stall_cycles + 1;
             end
-            if (txn_valid && !cmd_ready && !dut.service_pending_q && dut.tFAW_block) begin
+            if (dut.issue_valid && !dut.dispatch_fire && !dut.service_pending_q && dut.tFAW_block) begin
                 observed_tfaw_hard_block_cycles <= observed_tfaw_hard_block_cycles + 1;
             end
             if (dut.accept_txn && dut.is_row_closed) begin
@@ -1013,14 +1025,14 @@ module tb_ddr4_controller_top;
     end
 
     always @(posedge clk) begin
-        if (rst_n && txn_valid && !cmd_ready && detail_logging_enabled()) begin
-            $display("[STALL][id=%0d][cycle=%0d] txn blocked (cmd_ready=0)",
+        if (rst_n && dut.issue_valid && !dut.dispatch_fire && detail_logging_enabled()) begin
+            $display("[STALL][id=%0d][cycle=%0d] queued request awaiting dispatch",
                      active_txn_id, cycle);
         end
     end
 
     always @(posedge clk) begin
-        if (rst_n && txn_valid && dut.tRRD_block && !dut.is_row_hit && !dut.accept_txn &&
+        if (rst_n && dut.issue_valid && dut.tRRD_block && !dut.is_row_hit && !dut.accept_txn &&
             detail_logging_enabled()) begin
             $display("[tRRD ][id=%0d][cycle=%0d] BLOCKED activation",
                      active_txn_id, cycle);
