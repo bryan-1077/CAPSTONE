@@ -5,16 +5,30 @@ attempt, before the timing agent evaluates that attempt. This includes each
 preset and each timing ECO/restore attempt, even when setup slack is negative.
 Physical repair candidates also receive fresh verification within the physical
 agent's own loop. Clean reports
-require no AI request. Nonzero DRC or process antenna counts trigger the separate
+require no AI request. Only a positive DRC count triggers the separate
 `agents/openai_physical_verification.py` planner, with up to three repair attempts
 by default.
+When DRC is zero, the repair planner and implementation are skipped. Remaining
+antenna violations still fail verification without launching the repair agent.
+
+The same physical agent has a separate checkpoint-selection role when setup timing
+still fails after the backend presets. It compares all preset geometry, hold, and
+post-route setup reports and chooses a verified eligible source for the timing
+resizer. This comparison can run on clean DRC builds; it does not launch physical
+repair. Only clean DRC/antenna, passing hold, and area/power-compliant presets with
+valid setup evidence are selectable. Its choice and rationale are stored under the
+timing run's `physical_selection*.json` artifacts. A passing preset needs neither
+selection nor resizing.
 
 Each generated build exports `reports/<top>.geom.rpt` and
 `reports/<top>.antenna.rpt` using explicit Innovus report paths. For this controller,
 these are `ddr4_controller_top.geom.rpt` and `ddr4_controller_top.antenna.rpt`.
 The agent derives the filename prefix from `mapped_resolved_top`, then
 `mapped_top_module`, then `top_module`; it does not hardcode the controller name.
-Missing reports, missing/ambiguous totals, tool
+The parser accepts explicit numeric totals and Innovus's clean messages
+(`No DRC violations were found` and `No Violations Found`). Repeated matching
+totals are accepted; conflicting results are rejected.
+Missing reports, missing/conflicting totals, tool
 errors, or nonzero counts cannot pass. This is the Innovus physical verification
 gate; it does not replace foundry signoff checks such as LVS or external DRC.
 

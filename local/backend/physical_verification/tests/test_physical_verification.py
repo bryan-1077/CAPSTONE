@@ -114,6 +114,36 @@ class PhysicalTests(unittest.TestCase):
         planner.assert_not_called()
         self.assertFalse(self.launches)
 
+    def test_innovus_clean_messages_and_repeated_totals(self):
+        self.assertEqual(violation_count("No DRC violations were found\n", "drc"), 0)
+        self.assertEqual(violation_count("No Violations Found\n", "antenna"), 0)
+        for kind, total in (("drc", "Total Violations: 2\n"),
+                            ("antenna", "Total number of process antenna violations = 2\n")):
+            with self.subTest(kind=kind):
+                self.assertEqual(violation_count(total * 2, kind), 2)
+        with self.assertRaises(ValueError):
+            violation_count("No DRC violations were found\nTotal Violations: 2\n", "drc")
+
+    def test_innovus_clean_reports_skip_planner_and_implementation(self):
+        ssh = FakeSSH(drc=0)
+        fetch = ssh.fetch_file
+
+        def fetch_clean(remote, local):
+            result = fetch(remote, local)
+            if remote.endswith(".geom.rpt"):
+                Path(local).write_text("No DRC violations were found\n")
+            elif remote.endswith(".antenna.rpt"):
+                Path(local).write_text("No Violations Found\n")
+            return result
+
+        ssh.fetch_file = fetch_clean
+        result, planner = self.run_closure(ssh)
+        self.assertEqual(result["physical_verification_status"], "passed")
+        planner.assert_not_called()
+        self.assertFalse(self.launches)
+        self.assertFalse(ssh.uploads)
+        self.assertFalse(ssh.commands)
+
     def test_timing_pass_with_two_drc_violations_triggers_separate_agent(self):
         ssh = FakeSSH()
         result, planner = self.run_closure(ssh)
@@ -128,10 +158,12 @@ class PhysicalTests(unittest.TestCase):
         self.assertEqual(len(ssh.uploads), 1)
         self.assertIn("--physical-repair-json", _build_gdsii_timing_closure_args(launched))
 
-    def test_antenna_only_violation_triggers_antenna_recipe(self):
+    def test_antenna_only_violation_does_not_launch_agent(self):
         result, planner = self.run_closure(FakeSSH(drc=0, antenna=2), repair("antenna_cleanup"))
-        self.assertEqual(result["physical_verification_status"], "passed")
-        self.assertEqual(planner.call_args.args[0]["available_recipes"], ["antenna_cleanup"])
+        self.assertEqual(result["physical_verification_status"], "failed")
+        self.assertIn("agent skipped", result["last_error"])
+        planner.assert_not_called()
+        self.assertFalse(self.launches)
 
     def test_missing_drc_or_hold_report_fails_closed(self):
         for name in (".geom.rpt", ".antenna.rpt", "hold_postroute.rpt"):
@@ -233,6 +265,29 @@ class PhysicalTests(unittest.TestCase):
         self.assertEqual(json.loads(path.read_text())["status"], "validated")
         schema = client.chat.completions.create.call_args.kwargs["response_format"]["json_schema"]["schema"]
         self.assertIs(schema, agent.PLAN_SCHEMA)
+
+    def test_selection_api_uses_physical_agent_schema_and_saves_diagnostics(self):
+        client = Mock()
+        selection = {"selected_attempt": 2, "summary": "Best setup paths with adequate hold margin."}
+        client.responses.create.side_effect = RuntimeError("404 Not Found")
+        context = {"eligible_attempts": [1, 2, 3], "presets": []}
+        path = Path(self.temp.name) / "selection_response.json"
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}), \
+             patch.object(agent, "_build_client", return_value=client), \
+             patch.object(agent, "_is_not_found_error", return_value=True), \
+             patch.object(agent, "_recovery_response_text", return_value=(json.dumps(selection), "response")):
+            self.assertEqual(agent.select_resize_source(context, diagnostics_path=path), selection)
+        self.assertEqual(json.loads(path.read_text())["status"], "validated")
+        request = client.chat.completions.create.call_args.kwargs
+        self.assertIs(request["response_format"]["json_schema"]["schema"], agent.SELECTION_SCHEMA)
+        self.assertIn("hold_postroute.rpt", request["messages"][0]["content"])
+
+    def test_selection_rejects_ineligible_ids_and_invalid_output(self):
+        for selected in (2, True, "1", None):
+            with self.subTest(selected=selected), self.assertRaises(ValueError):
+                agent.validate_selection({"selected_attempt": selected, "summary": "Choice"}, [1, 3])
+        with self.assertRaises(ValueError):
+            agent.validate_selection({"selected_attempt": 1, "summary": ""}, [1])
 
     def test_unavailable_ai_cannot_waive_violations(self):
         with patch.object(closure, "plan_physical_repair", side_effect=RuntimeError("API unavailable")):

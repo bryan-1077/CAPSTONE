@@ -10,10 +10,17 @@ def violation_count(text, kind):
         raise ValueError("Unknown physical report kind.")
     if re.search(r"\*\*ERROR|^\s*ERROR\s*:", text, re.M | re.I):
         raise ValueError(f"{kind} verification reported a tool error.")
-    counts = re.findall(pattern, text, re.M | re.I)
-    if len(counts) != 1:
-        raise ValueError(f"{kind} report needs exactly one explicit violation total.")
-    return int(counts[0])
+    counts = [int(value) for value in re.findall(pattern, text, re.M | re.I)]
+    clean_pattern = (r"^\s*No DRC violations were found\s*\.?\s*$"
+                     if kind == "drc" else
+                     r"^\s*No Violations Found\s*\.?\s*$")
+    if re.search(clean_pattern, text, re.M | re.I):
+        counts.append(0)
+    if not counts:
+        raise ValueError(f"{kind} report contains no recognized violation total or clean result.")
+    if len(set(counts)) != 1:
+        raise ValueError(f"{kind} report contains conflicting violation totals or clean results.")
+    return counts[0]
 
 
 def analyze_physical_reports(drc, antenna):

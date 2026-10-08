@@ -121,6 +121,8 @@ def _run(state, ssh, implementation_runner, merge, repo, log_root, log_dir, *, r
             record("violated", f"{source_dir}: DRC={evidence['drc_count']}, antenna={evidence['antenna_count']}.")
             if not evidence["drc_count"] and not evidence["antenna_count"]:
                 return fail("Physical reports are clean but final timing or area/power checks failed.")
+            if not evidence["drc_count"]:
+                return fail("DRC=0; physical repair agent skipped. Process antenna violations remain.")
             if attempt == limit or not state.get("physical_verification_ai_enabled", True):
                 return fail("Physical verification could not reach zero DRC and antenna violations within its repair budget.")
             context = {"evidence": evidence, "available_recipes": available_recipes(evidence),
