@@ -22,7 +22,7 @@ from timing_closure.timing_analyzer import (
 
 DEFAULT_SSH_HOST = "olympus.ece.tamu.edu"
 DEFAULT_SSH_PORT = 22
-DEFAULT_REMOTE_PROJECT_ROOT = "/home/ugrads/a/antgamez1203/capstone"
+DEFAULT_REMOTE_PROJECT_ROOT = "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend"
 
 
 def _remote_project_path(remote_root: str, report_path: str) -> str:

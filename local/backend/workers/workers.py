@@ -17,7 +17,7 @@ from services.synthesis_recipe_library import build_synthesis_recipe_library_pay
 from services.prep_top import tcl_selects_top
 
 DEFAULT_INNER_HOST = "n01-zeus"
-DEFAULT_PROJECT_ROOT = "/home/ugrads/a/antgamez1203/capstone"
+DEFAULT_PROJECT_ROOT = "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend"
 DEFAULT_REMOTE_INNOVUS_BIN = "/opt/coe/cadence/DDI231/bin/innovus"
 DEFAULT_PREPARE_SCRIPT = "prepare_rtl_for_genus_universal.py"
 DEFAULT_NETLIST_SCRIPT = "run_genus_netlist_universal.py"

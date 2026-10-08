@@ -9,7 +9,7 @@ from unittest.mock import patch, Mock
 
 from agents import openai_timing_closure as agent
 from timing_closure import closure_runner as closure
-from timing_closure.constraints import evaluate_limits, parse_total_power
+from timing_closure.constraints import evaluate_limits, parse_total_power, MAX_DIE_AREA_MM2, MAX_POWER_W
 from timing_closure.tests import test_closure_runner as fixtures
 from probes.run_innovus_GDSII_universal import build_timing_eco_tcl
 from workers.workers import _build_gdsii_timing_closure_args
@@ -54,6 +54,13 @@ class AIClosureTests(unittest.TestCase):
     def setUp(self):
         fixtures.ClosureTests.setUp(self)
         self.state.update(timing_closure_ai_enabled=True, timing_closure_ai_max_attempts=2)
+        selector = patch.object(closure, "select_resize_source", side_effect=lambda context, **kwargs: {
+            "selected_attempt": max((item for item in context["presets"] if item["eligible"]),
+                                    key=lambda item: item["setup_wns_ns"])["attempt"],
+            "summary": "Best measured setup slack with clean physical reports and passing hold.",
+        })
+        self.selector = selector.start()
+        self.addCleanup(selector.stop)
 
     def test_uses_best_measured_preset_not_last_and_recovers(self):
         with patch.object(closure, "plan_timing_recovery", return_value=plan()) as ai:
@@ -63,7 +70,7 @@ class AIClosureTests(unittest.TestCase):
         source = self.states[3]["timing_closure_eco_plan"]["checkpoint"]
         self.assertTrue(source.endswith("build_GDSII_210MHz_02/db/06_final.enc"))
         self.assertEqual(self.states[3]["innovus_utilization"], 0.55)
-        self.assertEqual(ai.call_args.args[0]["limits"], {"max_die_area_mm2": 4.0, "max_power_w": 2.0})
+        self.assertEqual(ai.call_args.args[0]["limits"], {"max_die_area_mm2": MAX_DIE_AREA_MM2, "max_power_w": MAX_POWER_W})
         self.assertIn("g189616", ai.call_args.args[0]["resize_choices"])
         self.assertEqual(result["timing_closure_best_attempt"]["attempt"], 4)
         self.assertTrue(result["timing_closure_limits"]["within_limits"])
@@ -71,6 +78,64 @@ class AIClosureTests(unittest.TestCase):
         command = _build_gdsii_timing_closure_args(self.states[3])
         self.assertIn("--timing-eco-json", command)
         self.assertIn("--clock-period 4.762", command)
+
+    def test_physical_agent_choice_controls_resizer_even_with_lower_setup_wns(self):
+        self.selector.side_effect = None
+        self.selector.return_value = {"selected_attempt": 1, "summary": "Preset 1 has more hold margin for resizing."}
+        with patch.object(closure, "plan_timing_recovery", return_value=plan()) as resizer:
+            result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2, 0.01]))
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.selector.assert_called_once()
+        context = self.selector.call_args.args[0]
+        self.assertEqual(context["eligible_attempts"], [1, 2, 3])
+        self.assertEqual([item["setup_wns_ns"] for item in context["presets"]], [-0.3, -0.1, -0.2])
+        for item in context["presets"]:
+            for kind in ("geometry", "setup", "hold"):
+                self.assertEqual(item["reports"][kind]["source_build"], item["outdir"])
+                self.assertIn("content", item["reports"][kind])
+        self.assertTrue(self.states[3]["timing_closure_eco_plan"]["checkpoint"].endswith("build_GDSII_210MHz_01/db/06_final.enc"))
+        self.assertEqual(resizer.call_args.args[0]["physical_source_selection"]["selected_attempt"], 1)
+        folder = self.repo / "logs/timing_closure/target_210MHz"
+        self.assertEqual(json.loads((folder / "physical_selection.json").read_text()), self.selector.return_value)
+        self.assertEqual(result["physical_verification_source_selection"], self.selector.return_value)
+
+    def test_physical_agent_rejects_hold_failure_and_dirty_geometry(self):
+        class UnsafePresetSSH(EvidenceSSH):
+            def fetch_file(self, remote, local):
+                result = super().fetch_file(remote, local)
+                if "210MHz_02/" in remote and remote.endswith("hold_postroute.rpt"):
+                    Path(local).write_text(Path(local).read_text().replace("0.020", "-0.030"))
+                if "210MHz_03/" in remote and remote.endswith(".geom.rpt"):
+                    Path(local).write_text("Total Violations: 2\n")
+                return result
+        with patch.object(closure, "plan_timing_recovery", return_value=plan()):
+            result = self.run_closure(UnsafePresetSSH([-0.3, -0.1, -0.2, 0.01]))
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertEqual(self.selector.call_args.args[0]["eligible_attempts"], [1])
+        self.assertTrue(self.states[3]["timing_closure_eco_plan"]["checkpoint"].endswith("210MHz_01/db/06_final.enc"))
+
+    def test_invalid_selector_result_does_not_reach_resizer(self):
+        self.selector.side_effect = None
+        self.selector.return_value = {"selected_attempt": 99, "summary": "Invented build"}
+        with patch.object(closure, "plan_timing_recovery") as resizer:
+            result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2]))
+        self.assertEqual(result["timing_closure_status"], "failed")
+        resizer.assert_not_called()
+        self.assertEqual(len(self.states), 3)
+
+    def test_selector_failure_does_not_silently_use_wns_fallback(self):
+        self.selector.side_effect = RuntimeError("Physical selector unavailable")
+        with patch.object(closure, "plan_timing_recovery") as resizer:
+            result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2]))
+        self.assertIn("Physical selector unavailable", result["last_error"])
+        resizer.assert_not_called()
+
+    def test_already_passing_preset_needs_no_selection_or_resizing(self):
+        with patch.object(closure, "plan_timing_recovery") as resizer:
+            result = self.run_closure(EvidenceSSH([0.01]))
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.selector.assert_not_called()
+        resizer.assert_not_called()
 
     def test_recovery_request_includes_best_build_reports(self):
         with patch.object(closure, "plan_timing_recovery", return_value=plan()) as ai:
@@ -103,7 +168,7 @@ class AIClosureTests(unittest.TestCase):
         self.assertIn(self.states[3]["remote_gdsii_dir"], self.states[4]["timing_closure_eco_plan"]["checkpoint"])
 
     def test_passing_timing_over_budget_is_rejected_and_best_preserved(self):
-        for overrides in ({"ai_power": 2.01}, {"ai_area": 4.01}, {"hold_slack": -0.03}):
+        for overrides in ({"ai_power": MAX_POWER_W + 0.01}, {"ai_area": MAX_DIE_AREA_MM2 + 0.01}, {"hold_slack": -0.03}):
             with self.subTest(overrides=overrides):
                 self.state["timing_closure_ai_max_attempts"] = 1
                 with patch.object(closure, "plan_timing_recovery", return_value=plan()):
@@ -145,6 +210,7 @@ class AIClosureTests(unittest.TestCase):
             result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2, 0.01], missing_metric="hold_postroute.rpt"))
         self.assertEqual(result["timing_closure_status"], "failed")
         self.assertIn("hold", result["last_error"])
+        self.selector.assert_not_called()
         self.states.clear()
         with patch.object(closure, "plan_timing_recovery", return_value={"summary": "No useful legal change", "actions": []}):
             result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2]))
@@ -186,7 +252,7 @@ class LimitTests(unittest.TestCase):
         for text in ("Total Power: 2 W", "Total Power: 2000 mW", "Total Power: 2e6 uW", "Total Power (mW) = 2000", "Power Units: W\nTotal Power: 2", "Total Power (W)  2 (100%)"):
             with self.subTest(text=text):
                 self.assertTrue(evaluate_limits("die_area_mm2: 4", text)["within_limits"])
-        self.assertFalse(evaluate_limits("die_area_mm2: 4.0001", "Total Power: 2 W")["within_limits"])
+        self.assertFalse(evaluate_limits(f"die_area_mm2: {MAX_DIE_AREA_MM2 + 0.0001}", "Total Power: 2 W")["within_limits"])
         self.assertFalse(evaluate_limits("die_area_mm2: 4", "Total Power: 2.0001 W")["within_limits"])
 
     def test_unknown_nonfinite_and_placeholder_measurements_rejected(self):
@@ -304,7 +370,7 @@ proc ecoRoute {} {puts ROUTED}
             self.assertIn("ecoChangeCell -inst {g189616}", script)
             self.assertIn("optDesign -postRoute -hold", script)
             self.assertIn("report_timing -early", script)
-            self.assertIn("report_power -unit W", script)
+            self.assertIn("report_power -power_unit W", script)
             self.assertIn("die_area_mm2:", script)
             self.assertIn("saveDesign $DBS_DIR/06_final.enc", script)
 

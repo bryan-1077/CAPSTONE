@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "message": "Physical verification failed: drc report needs exactly one explicit violation total.",
+  "attempts": [],
+  "report_dir": "/home/antgamez1203/CAPSTONE/local/backend/logs/physical_verification/1566913bd08c4d169908f8c0fdf8ab74"
+}

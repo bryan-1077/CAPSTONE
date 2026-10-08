@@ -18,6 +18,8 @@ from services.build_names import frequency_label
 from session_log_utils import SessionLogCapture
 from agents.openai_timing_closure import plan_timing_recovery, resize_choices, validate_plan
 from timing_closure.constraints import evaluate_limits, MAX_DIE_AREA_MM2, MAX_POWER_W
+from physical_verification.selection import build_selection_context
+from agents.openai_physical_verification import select_resize_source, validate_selection
 
 
 def evaluate_setup_report(report, target_period: float) -> tuple[str, str]:
@@ -74,6 +76,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
     attempts = []
     candidates = []
     tried_plans = set()
+    source_selection = None
     working = merge(state, {
         "timing_closure_run_name": run_name,
         "timing_closure_status": "running",
@@ -89,6 +92,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
         updates = {
             "timing_closure_status": status,
             "timing_closure_attempts": list(attempts),
+            "physical_verification_source_selection": source_selection,
             "history": working["history"] + [message],
         }
         if analysis is not None:
@@ -96,13 +100,16 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             updates["validation"] = {**working.get("validation", {}), "timing_closure_analysis": analysis}
         working = merge(working, updates)
         summary = {"run_name": run_name, "run_id": run_id, "status": status, "message": message, "attempts": attempts,
-                   "limits": working["timing_closure_limits"], "best_attempt": working.get("timing_closure_best_attempt")}
+                   "limits": working["timing_closure_limits"], "best_attempt": working.get("timing_closure_best_attempt"),
+                   "physical_source_selection": source_selection}
         (log_dir / "timing_closure_status.json").write_text(json.dumps(summary, indent=2) + "\n")
         (run_log_dir / "timing_closure_status.json").write_text(json.dumps(summary, indent=2) + "\n")
         report_text = f"# Setup timing closure: {status}\n\n{message}\n\nRun: `{run_name}`\n\n"
         if analysis is not None:
             report_text += render_markdown(analysis)
-        report_text += "\nLimits: die footprint <= 4 mm²; reported total power <= 2 W.\n"
+        report_text += f"\nLimits: die footprint <= {MAX_DIE_AREA_MM2:g} mm²; reported total power <= {MAX_POWER_W:g} W.\n"
+        if source_selection:
+            report_text += f"\nPhysical agent selected attempt {source_selection['selected_attempt']}: {source_selection['summary']}\n"
         for entry in attempts:
             report_text += f"\nAttempt {entry['attempt']} ({entry.get('kind', 'preset')}): {entry['status']}; WNS {entry.get('wns_ns')}; measurements {entry.get('limits', {})}\n"
             if entry.get("ai_plan"):
@@ -177,8 +184,22 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             source_entry = None
             input_state = working
             if is_ai:
-                if not candidates:
-                    return fail("No measured checkpoint satisfies the 4 mm² / 2 W limits; AI resizing cannot start.")
+                if source_selection is None:
+                    selection_context = build_selection_context(state, ssh, staging, attempts, candidates, target)
+                    (run_log_dir / "physical_selection_context.json").write_text(json.dumps(selection_context, indent=2) + "\n")
+                    if not selection_context["eligible_attempts"]:
+                        return fail("No preset has verified clean geometry/antenna, passing hold timing, valid setup evidence, and area/power within limits; AI resizing cannot start.")
+                    record("selecting", "Physical verification AI: comparing preset geometry, hold, and post-route setup reports before resizing.")
+                    source_selection = validate_selection(select_resize_source(selection_context,
+                        diagnostics_path=run_log_dir / "physical_selection_response.json"),
+                        selection_context["eligible_attempts"])
+                    # Subsequent resizing can advance from this seed or its improved
+                    # descendants, but must not silently switch to another preset.
+                    candidates = [item for item in candidates
+                                  if item["entry"]["attempt"] == source_selection["selected_attempt"]]
+                    working["timing_closure_best_attempt"] = candidates[0]["entry"]
+                    (run_log_dir / "physical_selection.json").write_text(json.dumps(source_selection, indent=2) + "\n")
+                    record("selected", f"Physical agent selected preset {source_selection['selected_attempt']} for resizing: {source_selection['summary']}")
                 best = max(candidates, key=lambda item: item["entry"]["wns_ns"])
                 source_entry = best["entry"]
                 library_paths, _ = fetch_remote_reports(
@@ -197,6 +218,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                     "timing_report": excerpt(timing_text, 16000), "resize_choices": choices,
                     "report_evidence": build_recovery_evidence(ssh, project_root, staging, source_entry, attempts),
                     "attempt_history": deepcopy(attempts),
+                    "physical_source_selection": source_selection,
                 }
                 record("planning", f"AI recovery {attempt - limit}/{ai_limit}: inspect best attempt {source_entry['attempt']} with WNS {source_entry['wns_ns']:.3f} ns.")
                 (run_log_dir / f"ai_context_{run_id}_{attempt}.json").write_text(json.dumps(context, indent=2) + "\n")
@@ -243,6 +265,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 "physical_verification_status": "pending",
                 "physical_verification_analysis": {},
                 "physical_verification_attempts": [],
+                "physical_verification_source_selection": source_selection,
                 "timing_closure_limits": working["timing_closure_limits"],
                 "timing_closure_best_attempt": working.get("timing_closure_best_attempt"),
                 "remote_gdsii_dir": outdir,

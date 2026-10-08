@@ -302,7 +302,7 @@ def _run_single_target(args, *, require_timing_closure=False):
         "ssh_user": "antgamez1203",
         "ssh_port": 22,
         "ssh_key_file": "~/.ssh/id_ed25519",
-        "remote_project_root": "/home/ugrads/a/antgamez1203/capstone",
+        "remote_project_root": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend",
     }
 
     ssh_config = {

@@ -35,6 +35,8 @@ class FakeSSH:
             "die_area.rpt": "die_area_mm2: 3.5\n",
             "power_postroute.rpt": "Total Power: 1.2 W\n",
             "eco_library.rpt": "sky130_fd_sc_hd__inv_2\nsky130_fd_sc_hd__inv_4\nsky130_fd_sc_hd__inv_8\nsky130_fd_sc_hd__nor2_1\nsky130_fd_sc_hd__nor2_2\n",
+            "ddr4_controller_top.geom.rpt": "No DRC violations were found\n",
+            "ddr4_controller_top.antenna.rpt": "No Violations Found\n",
         }
         if Path(remote).name in extra_reports:
             Path(local).parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +75,7 @@ class ClosureTests(unittest.TestCase):
             "timing_target_clock_period_ns": 4.762, "history": [], "logs": {},
             "stage_status": {"mapped_netlist": "success"},
             "timing_closure_ai_enabled": False,
+            "top_module": "ddr4_controller_top",
         }
 
     def implementation(self, state):

@@ -1,25 +1,25 @@
 {
   "directory_resolution": {
     "gdsii_directory_resolution": {
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_260MHz_01",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_260MHz_01",
+      "outdir": "build_GDSII_250MHz_03",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_260MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     }
   },
   "log_entries": {
     "gdsii_directory_resolution": {
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_260MHz_01",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_260MHz_01",
+      "outdir": "build_GDSII_250MHz_03",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_260MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "gdsii_generate_1_completed": {
@@ -29,18 +29,18 @@
       "timeout_sec": 14400
     },
     "gdsii_generate_1_directory_resolution": {
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_260MHz_01",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_260MHz_01",
+      "outdir": "build_GDSII_250MHz_03",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_260MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "gdsii_review_1_local_result": {
       "blocking_errors": [],
-      "candidate_path": "build_GDSII_260MHz_01",
+      "candidate_path": "build_GDSII_250MHz_03",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top.gds"
@@ -55,12 +55,12 @@
           "total_files": 4,
           "truncated": false
         },
-        "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+        "input_mappeddir": "build_mapped_snapshot_250MHz_01",
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-          "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+          "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
           "output:agent_gdsii_stderr.log": "",
-          "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+          "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -333,7 +333,6 @@
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-            "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -371,7 +370,6 @@
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-            "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -446,7 +444,6 @@
             "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/06_final.enc.dat/ddr4_controller_top.globals",
             "db/06_final.enc.dat/ddr4_controller_top.init",
-            "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
             "db/06_final.enc.dat/ddr4_controller_top.mode",
             "db/06_final.enc.dat/ddr4_controller_top.opconds",
             "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -476,9 +473,12 @@
             "logs/run_wrapper.log",
             "reports/area_postroute.rpt",
             "reports/ccopt.spec",
-            "reports/ddr4_controller_top.antenna.rpt"
+            "reports/ddr4_controller_top.antenna.rpt",
+            "reports/ddr4_controller_top.conn.rpt",
+            "reports/ddr4_controller_top.geom.rpt",
+            "reports/die_area.rpt"
           ],
-          "total_files": 473,
+          "total_files": 470,
           "truncated": true
         }
       },
@@ -503,29 +503,29 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "candidate_path": "build_GDSII_260MHz_01",
+          "candidate_path": "build_GDSII_250MHz_03",
           "execution_ok": true,
           "local_error_count": 0,
           "local_warning_count": 0,
-          "mappeddir": "build_mapped_snapshot_260MHz_01",
+          "mappeddir": "build_mapped_snapshot_250MHz_01",
           "model": "protected.gpt-5.2",
           "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
         },
         "suggested_fixes": [
-          "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-          "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-          "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+          "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+          "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+          "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
         ],
-        "summary": "GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+        "summary": "GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
         "warnings": [
-          "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-          "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-          "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-          "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+          "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+          "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+          "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+          "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
         ]
       },
       "blocking_errors": [],
-      "candidate_path": "build_GDSII_260MHz_01",
+      "candidate_path": "build_GDSII_250MHz_03",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top.gds"
@@ -540,12 +540,12 @@
           "total_files": 4,
           "truncated": false
         },
-        "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+        "input_mappeddir": "build_mapped_snapshot_250MHz_01",
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-          "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+          "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
           "output:agent_gdsii_stderr.log": "",
-          "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+          "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -818,7 +818,6 @@
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-            "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -856,7 +855,6 @@
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-            "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -931,7 +929,6 @@
             "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/06_final.enc.dat/ddr4_controller_top.globals",
             "db/06_final.enc.dat/ddr4_controller_top.init",
-            "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
             "db/06_final.enc.dat/ddr4_controller_top.mode",
             "db/06_final.enc.dat/ddr4_controller_top.opconds",
             "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -961,9 +958,12 @@
             "logs/run_wrapper.log",
             "reports/area_postroute.rpt",
             "reports/ccopt.spec",
-            "reports/ddr4_controller_top.antenna.rpt"
+            "reports/ddr4_controller_top.antenna.rpt",
+            "reports/ddr4_controller_top.conn.rpt",
+            "reports/ddr4_controller_top.geom.rpt",
+            "reports/die_area.rpt"
           ],
-          "total_files": 473,
+          "total_files": 470,
           "truncated": true
         }
       },
@@ -985,16 +985,16 @@
       "route_back_to_stage": null,
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_gdsii_instructions.md",
       "suggested_fixes": [
-        "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-        "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-        "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+        "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+        "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+        "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
       ],
-      "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+      "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
       "warnings": [
-        "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-        "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-        "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-        "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+        "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+        "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+        "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+        "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
       ]
     },
     "gdsii_review_1_routing": {
@@ -1034,12 +1034,12 @@
       "total_files": 4,
       "truncated": false
     },
-    "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+    "input_mappeddir": "build_mapped_snapshot_250MHz_01",
     "key_files": {
       "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-      "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+      "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
       "output:agent_gdsii_stderr.log": "",
-      "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+      "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
     },
     "log_classification": {
       "blocking_diagnostics": [],
@@ -1312,7 +1312,6 @@
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-        "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
         "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -1350,7 +1349,6 @@
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-        "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
         "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -1425,7 +1423,6 @@
         "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
         "db/06_final.enc.dat/ddr4_controller_top.globals",
         "db/06_final.enc.dat/ddr4_controller_top.init",
-        "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
         "db/06_final.enc.dat/ddr4_controller_top.mode",
         "db/06_final.enc.dat/ddr4_controller_top.opconds",
         "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -1455,9 +1452,12 @@
         "logs/run_wrapper.log",
         "reports/area_postroute.rpt",
         "reports/ccopt.spec",
-        "reports/ddr4_controller_top.antenna.rpt"
+        "reports/ddr4_controller_top.antenna.rpt",
+        "reports/ddr4_controller_top.conn.rpt",
+        "reports/ddr4_controller_top.geom.rpt",
+        "reports/die_area.rpt"
       ],
-      "total_files": 473,
+      "total_files": 470,
       "truncated": true
     }
   },
@@ -1468,815 +1468,15 @@
     "rtl_failure_category": null,
     "rtl_failure_handoff_owner": null
   },
-  "timing_closure_analysis": {
-    "category_counts": {
-      "synthesized memory/flop-array read mux": 6,
-      "unknown": 4
-    },
-    "ranked_recommendations": [
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.486,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_4",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__inv_2",
-          "sky130_fd_sc_hd__a22o_1",
-          "sky130_fd_sc_hd__a221oi_1",
-          "sky130_fd_sc_hd__o22ai_1",
-          "sky130_fd_sc_hd__a221oi_2",
-          "sky130_fd_sc_hd__nand4_1",
-          "sky130_fd_sc_hd__a22oi_2",
-          "sky130_fd_sc_hd__nand2_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[11]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.0692,
-        "rank": 1,
-        "required_time": 4.166,
-        "slack": 0.008,
-        "startpoint": "service_addr_q_reg[2]/Q"
-      },
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.485,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_4",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__inv_2",
-          "sky130_fd_sc_hd__a22o_1",
-          "sky130_fd_sc_hd__a221oi_1",
-          "sky130_fd_sc_hd__o22ai_1",
-          "sky130_fd_sc_hd__a221oi_2",
-          "sky130_fd_sc_hd__nand4_1",
-          "sky130_fd_sc_hd__a22oi_2",
-          "sky130_fd_sc_hd__nand2_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[0]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.068,
-        "rank": 2,
-        "required_time": 4.163,
-        "slack": 0.02,
-        "startpoint": "service_addr_q_reg[2]/Q"
-      },
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.476,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_4",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__inv_2",
-          "sky130_fd_sc_hd__a22o_1",
-          "sky130_fd_sc_hd__a221oi_1",
-          "sky130_fd_sc_hd__o22ai_1",
-          "sky130_fd_sc_hd__nand4_1",
-          "sky130_fd_sc_hd__a22oi_2",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__dfxtp_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[21]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.068,
-        "rank": 3,
-        "required_time": 4.159,
-        "slack": 0.02,
-        "startpoint": "service_addr_q_reg[2]/Q"
-      },
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.484,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_4",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__inv_2",
-          "sky130_fd_sc_hd__a22o_1",
-          "sky130_fd_sc_hd__a221oi_1",
-          "sky130_fd_sc_hd__o22ai_1",
-          "sky130_fd_sc_hd__a221oi_2",
-          "sky130_fd_sc_hd__nand4_2",
-          "sky130_fd_sc_hd__a22oi_2",
-          "sky130_fd_sc_hd__nand2_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[14]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.067,
-        "rank": 4,
-        "required_time": 4.158,
-        "slack": 0.03,
-        "startpoint": "service_addr_q_reg[2]/Q"
-      },
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.475,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_4",
-          "sky130_fd_sc_hd__nor2_1",
-          "sky130_fd_sc_hd__buf_12",
-          "sky130_fd_sc_hd__buf_6",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__a221oi_2",
-          "sky130_fd_sc_hd__nand4_1",
-          "sky130_fd_sc_hd__a22oi_1",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__dfxtp_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[7]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.0669,
-        "rank": 5,
-        "required_time": 4.147,
-        "slack": 0.031,
-        "startpoint": "service_addr_q_reg[2]/Q"
-      },
-      {
-        "actions": [
-          "Consider registering the memory read address or read data and documenting the added response latency.",
-          "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-          "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-        ],
-        "arrival_time": 0.479,
-        "category": "synthesized memory/flop-array read mux",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxtp_1",
-          "sky130_fd_sc_hd__inv_2",
-          "sky130_fd_sc_hd__nand2_8",
-          "sky130_fd_sc_hd__buf_2",
-          "sky130_fd_sc_hd__o22ai_1",
-          "sky130_fd_sc_hd__a221oi_1",
-          "sky130_fd_sc_hd__nand4_1",
-          "sky130_fd_sc_hd__a22oi_2",
-          "sky130_fd_sc_hd__nand2_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "rsp_rdata_q_reg[1]/D",
-        "human_review_required_for": [
-          "pipeline insertion",
-          "response latency changes",
-          "memory read/write semantic changes"
-        ],
-        "owner": "RTL advisory",
-        "path_group": "clk",
-        "priority_score": 0.0661,
-        "rank": 6,
-        "required_time": 4.144,
-        "slack": 0.039,
-        "startpoint": "service_addr_q_reg[1]/Q"
-      },
-      {
-        "actions": [
-          "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-        ],
-        "arrival_time": 0.5,
-        "category": "unknown",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxbp_2",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__nor2_1",
-          "sky130_fd_sc_hd__nand4_2",
-          "sky130_fd_sc_hd__nand3_2",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__o221ai_4",
-          "sky130_fd_sc_hd__nand3_4",
-          "sky130_fd_sc_hd__nor2b_1",
-          "sky130_fd_sc_hd__a21oi_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "u_request_queue_req_mem_reg[1][bank][0]/D",
-        "human_review_required_for": [],
-        "owner": "Investigate",
-        "path_group": "clk",
-        "priority_score": 0.018,
-        "rank": 7,
-        "required_time": 4.227,
-        "slack": 0.02,
-        "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-      },
-      {
-        "actions": [
-          "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-        ],
-        "arrival_time": 0.5,
-        "category": "unknown",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxbp_2",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__nor2_1",
-          "sky130_fd_sc_hd__nand4_2",
-          "sky130_fd_sc_hd__nand3_2",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__o221ai_4",
-          "sky130_fd_sc_hd__nand3_4",
-          "sky130_fd_sc_hd__nor2b_1",
-          "sky130_fd_sc_hd__a21oi_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "u_request_queue_req_mem_reg[1][bank][1]/D",
-        "human_review_required_for": [],
-        "owner": "Investigate",
-        "path_group": "clk",
-        "priority_score": 0.0174,
-        "rank": 8,
-        "required_time": 4.228,
-        "slack": 0.026,
-        "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-      },
-      {
-        "actions": [
-          "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-        ],
-        "arrival_time": 0.495,
-        "category": "unknown",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxbp_2",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__nor2_1",
-          "sky130_fd_sc_hd__nand4_2",
-          "sky130_fd_sc_hd__nand3_2",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__o221ai_4",
-          "sky130_fd_sc_hd__nand3_4",
-          "sky130_fd_sc_hd__nor2b_1",
-          "sky130_fd_sc_hd__a21oi_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "u_request_queue_req_mem_reg[1][row][0]/D",
-        "human_review_required_for": [],
-        "owner": "Investigate",
-        "path_group": "clk",
-        "priority_score": 0.0163,
-        "rank": 9,
-        "required_time": 4.226,
-        "slack": 0.037,
-        "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-      },
-      {
-        "actions": [
-          "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-        ],
-        "arrival_time": 0.495,
-        "category": "unknown",
-        "clock_period": 3.846,
-        "dominant_cells": [
-          "sky130_fd_sc_hd__dfxbp_2",
-          "sky130_fd_sc_hd__nand2_1",
-          "sky130_fd_sc_hd__nor2_1",
-          "sky130_fd_sc_hd__nand4_2",
-          "sky130_fd_sc_hd__nand3_2",
-          "sky130_fd_sc_hd__and2_4",
-          "sky130_fd_sc_hd__o221ai_4",
-          "sky130_fd_sc_hd__nand3_4",
-          "sky130_fd_sc_hd__nor2b_1",
-          "sky130_fd_sc_hd__a21oi_1"
-        ],
-        "dominant_nets": [],
-        "endpoint": "u_request_queue_req_mem_reg[1][row][1]/D",
-        "human_review_required_for": [],
-        "owner": "Investigate",
-        "path_group": "clk",
-        "priority_score": 0.0161,
-        "rank": 10,
-        "required_time": 4.227,
-        "slack": 0.039,
-        "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-      }
-    ],
-    "remote_fetch": [
-      {
-        "error": null,
-        "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-        "ok": true,
-        "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/reports/timing_postroute.rpt"
-      }
-    ],
-    "reports": [
-      {
-        "clock_period": 3.846,
-        "paths": [
-          {
-            "arrival_time": 0.486,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_4",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__a221oi_1",
-              "sky130_fd_sc_hd__o22ai_1",
-              "sky130_fd_sc_hd__a221oi_2",
-              "sky130_fd_sc_hd__nand4_1",
-              "sky130_fd_sc_hd__a22oi_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__dfxtp_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[11]/D",
-            "evidence": [
-              "Path 1: MET Setup Check with Pin rsp_rdata_q_reg[11]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[11]/D   (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.486",
-              "= Required Time                 4.166",
-              "- Arrival Time                  4.158",
-              "= Slack Time                    0.008",
-              "= Beginpoint Arrival Time       0.043",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.051 |",
-              "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.552 |",
-              "| rsp_rdata_q_reg[11]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.158 |    4.166 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.166,
-            "slack": 0.008,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[2]/Q"
-          },
-          {
-            "arrival_time": 0.485,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_4",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__a221oi_1",
-              "sky130_fd_sc_hd__o22ai_1",
-              "sky130_fd_sc_hd__a221oi_2",
-              "sky130_fd_sc_hd__nand4_1",
-              "sky130_fd_sc_hd__a22oi_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__dfxtp_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[0]/D",
-            "evidence": [
-              "Path 2: MET Setup Check with Pin rsp_rdata_q_reg[0]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[0]/D    (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.485",
-              "= Required Time                 4.163",
-              "- Arrival Time                  4.143",
-              "= Slack Time                    0.020",
-              "= Beginpoint Arrival Time       0.043",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.063 |",
-              "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.563 |",
-              "| rsp_rdata_q_reg[0]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.143 |    4.163 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.163,
-            "slack": 0.02,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[2]/Q"
-          },
-          {
-            "arrival_time": 0.5,
-            "category": "unknown",
-            "category_reasons": [
-              "No reusable timing-closure category matched with high confidence."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxbp_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__nor2_1",
-              "sky130_fd_sc_hd__nand4_2",
-              "sky130_fd_sc_hd__nand3_2",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__o221ai_4",
-              "sky130_fd_sc_hd__nand3_4",
-              "sky130_fd_sc_hd__nor2b_1",
-              "sky130_fd_sc_hd__a21oi_1",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__nor2_2",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__nand2_4",
-              "sky130_fd_sc_hd__a21oi_4",
-              "sky130_fd_sc_hd__nand2_2",
-              "sky130_fd_sc_hd__and2_1",
-              "sky130_fd_sc_hd__clkbuf_1",
-              "sky130_fd_sc_hd__dfxtp_2"
-            ],
-            "dominant_nets": [],
-            "endpoint": "u_request_queue_req_mem_reg[1][bank][0]/D",
-            "evidence": [
-              "Other End Arrival Time          0.500",
-              "= Required Time                 4.227",
-              "- Arrival Time                  4.207",
-              "= Slack Time                    0.020",
-              "= Beginpoint Arrival Time       0.047",
-              "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.227,
-            "slack": 0.02,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-          },
-          {
-            "arrival_time": 0.476,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_4",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__a221oi_1",
-              "sky130_fd_sc_hd__o22ai_1",
-              "sky130_fd_sc_hd__nand4_1",
-              "sky130_fd_sc_hd__a22oi_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__dfxtp_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[21]/D",
-            "evidence": [
-              "Path 4: MET Setup Check with Pin rsp_rdata_q_reg[21]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[21]/D   (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.476",
-              "= Required Time                 4.159",
-              "- Arrival Time                  4.139",
-              "= Slack Time                    0.020",
-              "= Beginpoint Arrival Time       0.043",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.063 |",
-              "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.564 |",
-              "| rsp_rdata_q_reg[21]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.139 |    4.159 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.159,
-            "slack": 0.02,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[2]/Q"
-          },
-          {
-            "arrival_time": 0.5,
-            "category": "unknown",
-            "category_reasons": [
-              "No reusable timing-closure category matched with high confidence."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxbp_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__nor2_1",
-              "sky130_fd_sc_hd__nand4_2",
-              "sky130_fd_sc_hd__nand3_2",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__o221ai_4",
-              "sky130_fd_sc_hd__nand3_4",
-              "sky130_fd_sc_hd__nor2b_1",
-              "sky130_fd_sc_hd__a21oi_1",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__nor2_2",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__nand2_4",
-              "sky130_fd_sc_hd__a21oi_4",
-              "sky130_fd_sc_hd__nand2_2",
-              "sky130_fd_sc_hd__and2_1",
-              "sky130_fd_sc_hd__clkbuf_1",
-              "sky130_fd_sc_hd__dfxtp_2"
-            ],
-            "dominant_nets": [],
-            "endpoint": "u_request_queue_req_mem_reg[1][bank][1]/D",
-            "evidence": [
-              "Other End Arrival Time          0.500",
-              "= Required Time                 4.228",
-              "- Arrival Time                  4.202",
-              "= Slack Time                    0.026",
-              "= Beginpoint Arrival Time       0.047",
-              "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.228,
-            "slack": 0.026,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-          },
-          {
-            "arrival_time": 0.484,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_4",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__a221oi_1",
-              "sky130_fd_sc_hd__o22ai_1",
-              "sky130_fd_sc_hd__a221oi_2",
-              "sky130_fd_sc_hd__nand4_2",
-              "sky130_fd_sc_hd__a22oi_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__dfxtp_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[14]/D",
-            "evidence": [
-              "Path 6: MET Setup Check with Pin rsp_rdata_q_reg[14]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[14]/D   (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.484",
-              "= Required Time                 4.158",
-              "- Arrival Time                  4.127",
-              "= Slack Time                    0.030",
-              "= Beginpoint Arrival Time       0.043",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.073 |",
-              "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.574 |",
-              "| rsp_rdata_q_reg[14]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.127 |    4.158 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.158,
-            "slack": 0.03,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[2]/Q"
-          },
-          {
-            "arrival_time": 0.475,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_4",
-              "sky130_fd_sc_hd__nor2_1",
-              "sky130_fd_sc_hd__buf_12",
-              "sky130_fd_sc_hd__buf_6",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__a221oi_2",
-              "sky130_fd_sc_hd__nand4_1",
-              "sky130_fd_sc_hd__a22oi_1",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__dfxtp_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[7]/D",
-            "evidence": [
-              "Path 7: MET Setup Check with Pin rsp_rdata_q_reg[7]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[7]/D    (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[2]/Q (^) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.475",
-              "= Required Time                 4.147",
-              "- Arrival Time                  4.116",
-              "= Slack Time                    0.031",
-              "= Beginpoint Arrival Time       0.043",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.074 |",
-              "| service_addr_q_reg[2] | CLK ^ -> Q ^ | sky130_fd_sc_hd__dfxtp_4  | 0.551 |   0.594 |    0.625 |",
-              "| rsp_rdata_q_reg[7]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.116 |    4.147 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.147,
-            "slack": 0.031,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[2]/Q"
-          },
-          {
-            "arrival_time": 0.495,
-            "category": "unknown",
-            "category_reasons": [
-              "No reusable timing-closure category matched with high confidence."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxbp_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__nor2_1",
-              "sky130_fd_sc_hd__nand4_2",
-              "sky130_fd_sc_hd__nand3_2",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__o221ai_4",
-              "sky130_fd_sc_hd__nand3_4",
-              "sky130_fd_sc_hd__nor2b_1",
-              "sky130_fd_sc_hd__a21oi_1",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__nor2_2",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__nand2_4",
-              "sky130_fd_sc_hd__a21oi_4",
-              "sky130_fd_sc_hd__nand2_2",
-              "sky130_fd_sc_hd__and2_1",
-              "sky130_fd_sc_hd__clkbuf_1",
-              "sky130_fd_sc_hd__dfxtp_2"
-            ],
-            "dominant_nets": [],
-            "endpoint": "u_request_queue_req_mem_reg[1][row][0]/D",
-            "evidence": [
-              "Other End Arrival Time          0.495",
-              "= Required Time                 4.226",
-              "- Arrival Time                  4.190",
-              "= Slack Time                    0.037",
-              "= Beginpoint Arrival Time       0.047",
-              "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.226,
-            "slack": 0.037,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-          },
-          {
-            "arrival_time": 0.495,
-            "category": "unknown",
-            "category_reasons": [
-              "No reusable timing-closure category matched with high confidence."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxbp_2",
-              "sky130_fd_sc_hd__nand2_1",
-              "sky130_fd_sc_hd__nor2_1",
-              "sky130_fd_sc_hd__nand4_2",
-              "sky130_fd_sc_hd__nand3_2",
-              "sky130_fd_sc_hd__and2_4",
-              "sky130_fd_sc_hd__o221ai_4",
-              "sky130_fd_sc_hd__nand3_4",
-              "sky130_fd_sc_hd__nor2b_1",
-              "sky130_fd_sc_hd__a21oi_1",
-              "sky130_fd_sc_hd__a22o_1",
-              "sky130_fd_sc_hd__nor2_2",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__nand2_4",
-              "sky130_fd_sc_hd__a21oi_4",
-              "sky130_fd_sc_hd__nand2_2",
-              "sky130_fd_sc_hd__and2_1",
-              "sky130_fd_sc_hd__clkbuf_1",
-              "sky130_fd_sc_hd__dfxtp_2"
-            ],
-            "dominant_nets": [],
-            "endpoint": "u_request_queue_req_mem_reg[1][row][1]/D",
-            "evidence": [
-              "Other End Arrival Time          0.495",
-              "= Required Time                 4.227",
-              "- Arrival Time                  4.188",
-              "= Slack Time                    0.039",
-              "= Beginpoint Arrival Time       0.047",
-              "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.227,
-            "slack": 0.039,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-          },
-          {
-            "arrival_time": 0.479,
-            "category": "synthesized memory/flop-array read mux",
-            "category_reasons": [
-              "Memory/address/read-data names indicate a synthesized array read mux."
-            ],
-            "clock_period": 3.846,
-            "dominant_cells": [
-              "sky130_fd_sc_hd__dfxtp_1",
-              "sky130_fd_sc_hd__inv_2",
-              "sky130_fd_sc_hd__nand2_8",
-              "sky130_fd_sc_hd__buf_2",
-              "sky130_fd_sc_hd__o22ai_1",
-              "sky130_fd_sc_hd__a221oi_1",
-              "sky130_fd_sc_hd__nand4_1",
-              "sky130_fd_sc_hd__a22oi_2",
-              "sky130_fd_sc_hd__nand2_1"
-            ],
-            "dominant_nets": [],
-            "endpoint": "rsp_rdata_q_reg[1]/D",
-            "evidence": [
-              "Path 10: MET Setup Check with Pin rsp_rdata_q_reg[1]/CLK",
-              "Endpoint:   rsp_rdata_q_reg[1]/D    (v) checked with  leading edge of 'clk'",
-              "Beginpoint: service_addr_q_reg[1]/Q (^) triggered by  leading edge of 'clk'",
-              "Other End Arrival Time          0.479",
-              "= Required Time                 4.144",
-              "- Arrival Time                  4.105",
-              "= Slack Time                    0.039",
-              "= Beginpoint Arrival Time       0.044",
-              "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-              "| service_addr_q_reg[1] | CLK ^        |                           |       |   0.044 |    0.083 |",
-              "| service_addr_q_reg[1] | CLK ^ -> Q ^ | sky130_fd_sc_hd__dfxtp_1  | 0.734 |   0.777 |    0.816 |",
-              "| rsp_rdata_q_reg[1]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.105 |    4.144 |"
-            ],
-            "path_group": "clk",
-            "required_time": 4.144,
-            "slack": 0.039,
-            "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-            "startpoint": "service_addr_q_reg[1]/Q"
-          }
-        ],
-        "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-        "tns": null,
-        "tool": "innovus",
-        "violating_path_count": 0,
-        "warnings": [],
-        "wns": 0.008
-      }
-    ],
-    "target_frequency_mhz": 260.0,
-    "target_period": 3.8461538461538463,
-    "tns": null,
-    "violating_path_count": null,
-    "wns": 0.008,
-    "worst_arrival_time": 0.486,
-    "worst_category": "synthesized memory/flop-array read mux",
-    "worst_endpoint": "rsp_rdata_q_reg[11]/D",
-    "worst_path_group": "clk",
-    "worst_required_time": 4.166,
-    "worst_slack": 0.008,
-    "worst_startpoint": "service_addr_q_reg[2]/Q"
-  },
   "validation_entries": {
     "gdsii_directory_resolution": {
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "mappeddir_source": "state.remote_mapped_dir",
-      "netlist_dir": "build_netlist_260MHz_01",
+      "netlist_dir": "build_netlist_250MHz_01",
       "netlist_dir_source": "state.remote_netlist_dir",
-      "outdir": "build_GDSII_260MHz_01",
+      "outdir": "build_GDSII_250MHz_03",
       "outdir_source": "state.remote_gdsii_dir",
-      "prep_dir": "build_prep_260MHz_01",
+      "prep_dir": "build_prep_250MHz_01",
       "prep_dir_source": "state.prep_candidate_path"
     },
     "gdsii_review": {
@@ -2290,30 +1490,30 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "candidate_path": "build_GDSII_260MHz_01",
+          "candidate_path": "build_GDSII_250MHz_03",
           "execution_ok": true,
           "local_error_count": 0,
           "local_warning_count": 0,
-          "mappeddir": "build_mapped_snapshot_260MHz_01",
+          "mappeddir": "build_mapped_snapshot_250MHz_01",
           "model": "protected.gpt-5.2",
           "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
         },
         "suggested_fixes": [
-          "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-          "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-          "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+          "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+          "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+          "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
         ],
-        "summary": "GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+        "summary": "GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
         "warnings": [
-          "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-          "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-          "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-          "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+          "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+          "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+          "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+          "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
         ]
       },
       "attempt": 1,
       "blocking_errors": [],
-      "candidate_path": "build_GDSII_260MHz_01",
+      "candidate_path": "build_GDSII_250MHz_03",
       "context": {
         "detected_outputs": [
           "results/ddr4_controller_top.gds"
@@ -2328,12 +1528,12 @@
           "total_files": 4,
           "truncated": false
         },
-        "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+        "input_mappeddir": "build_mapped_snapshot_250MHz_01",
         "key_files": {
           "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-          "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+          "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
           "output:agent_gdsii_stderr.log": "",
-          "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+          "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
         },
         "log_classification": {
           "blocking_diagnostics": [],
@@ -2606,7 +1806,6 @@
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-            "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
             "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -2644,7 +1843,6 @@
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-            "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
             "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -2719,7 +1917,6 @@
             "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
             "db/06_final.enc.dat/ddr4_controller_top.globals",
             "db/06_final.enc.dat/ddr4_controller_top.init",
-            "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
             "db/06_final.enc.dat/ddr4_controller_top.mode",
             "db/06_final.enc.dat/ddr4_controller_top.opconds",
             "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -2749,18 +1946,21 @@
             "logs/run_wrapper.log",
             "reports/area_postroute.rpt",
             "reports/ccopt.spec",
-            "reports/ddr4_controller_top.antenna.rpt"
+            "reports/ddr4_controller_top.antenna.rpt",
+            "reports/ddr4_controller_top.conn.rpt",
+            "reports/ddr4_controller_top.geom.rpt",
+            "reports/die_area.rpt"
           ],
-          "total_files": 473,
+          "total_files": 470,
           "truncated": true
         }
       },
       "errors": [],
       "execution_context": {
         "exit_code": 0,
-        "mappeddir": "build_mapped_snapshot_260MHz_01",
+        "mappeddir": "build_mapped_snapshot_250MHz_01",
         "ok": true,
-        "outdir": "build_GDSII_260MHz_01"
+        "outdir": "build_GDSII_250MHz_03"
       },
       "failure_class": "non_fatal_warning_only_issue",
       "failure_stage_owner": "gdsii",
@@ -2779,817 +1979,17 @@
       "route_back_to_stage": null,
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_gdsii_instructions.md",
       "suggested_fixes": [
-        "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-        "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-        "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+        "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+        "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+        "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
       ],
-      "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+      "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
       "warnings": [
-        "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-        "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-        "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-        "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+        "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+        "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+        "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+        "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
       ]
-    },
-    "timing_closure_analysis": {
-      "category_counts": {
-        "synthesized memory/flop-array read mux": 6,
-        "unknown": 4
-      },
-      "ranked_recommendations": [
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.486,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_4",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__inv_2",
-            "sky130_fd_sc_hd__a22o_1",
-            "sky130_fd_sc_hd__a221oi_1",
-            "sky130_fd_sc_hd__o22ai_1",
-            "sky130_fd_sc_hd__a221oi_2",
-            "sky130_fd_sc_hd__nand4_1",
-            "sky130_fd_sc_hd__a22oi_2",
-            "sky130_fd_sc_hd__nand2_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[11]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.0692,
-          "rank": 1,
-          "required_time": 4.166,
-          "slack": 0.008,
-          "startpoint": "service_addr_q_reg[2]/Q"
-        },
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.485,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_4",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__inv_2",
-            "sky130_fd_sc_hd__a22o_1",
-            "sky130_fd_sc_hd__a221oi_1",
-            "sky130_fd_sc_hd__o22ai_1",
-            "sky130_fd_sc_hd__a221oi_2",
-            "sky130_fd_sc_hd__nand4_1",
-            "sky130_fd_sc_hd__a22oi_2",
-            "sky130_fd_sc_hd__nand2_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[0]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.068,
-          "rank": 2,
-          "required_time": 4.163,
-          "slack": 0.02,
-          "startpoint": "service_addr_q_reg[2]/Q"
-        },
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.476,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_4",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__inv_2",
-            "sky130_fd_sc_hd__a22o_1",
-            "sky130_fd_sc_hd__a221oi_1",
-            "sky130_fd_sc_hd__o22ai_1",
-            "sky130_fd_sc_hd__nand4_1",
-            "sky130_fd_sc_hd__a22oi_2",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__dfxtp_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[21]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.068,
-          "rank": 3,
-          "required_time": 4.159,
-          "slack": 0.02,
-          "startpoint": "service_addr_q_reg[2]/Q"
-        },
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.484,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_4",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__inv_2",
-            "sky130_fd_sc_hd__a22o_1",
-            "sky130_fd_sc_hd__a221oi_1",
-            "sky130_fd_sc_hd__o22ai_1",
-            "sky130_fd_sc_hd__a221oi_2",
-            "sky130_fd_sc_hd__nand4_2",
-            "sky130_fd_sc_hd__a22oi_2",
-            "sky130_fd_sc_hd__nand2_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[14]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.067,
-          "rank": 4,
-          "required_time": 4.158,
-          "slack": 0.03,
-          "startpoint": "service_addr_q_reg[2]/Q"
-        },
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.475,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_4",
-            "sky130_fd_sc_hd__nor2_1",
-            "sky130_fd_sc_hd__buf_12",
-            "sky130_fd_sc_hd__buf_6",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__a221oi_2",
-            "sky130_fd_sc_hd__nand4_1",
-            "sky130_fd_sc_hd__a22oi_1",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__dfxtp_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[7]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.0669,
-          "rank": 5,
-          "required_time": 4.147,
-          "slack": 0.031,
-          "startpoint": "service_addr_q_reg[2]/Q"
-        },
-        {
-          "actions": [
-            "Consider registering the memory read address or read data and documenting the added response latency.",
-            "If this is a flop-array standing in for memory, consider replacing it with a proper SRAM/register-file implementation or banking the read path.",
-            "Keep any patch as a human-reviewed RTL proposal because it can change read latency and memory semantics."
-          ],
-          "arrival_time": 0.479,
-          "category": "synthesized memory/flop-array read mux",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxtp_1",
-            "sky130_fd_sc_hd__inv_2",
-            "sky130_fd_sc_hd__nand2_8",
-            "sky130_fd_sc_hd__buf_2",
-            "sky130_fd_sc_hd__o22ai_1",
-            "sky130_fd_sc_hd__a221oi_1",
-            "sky130_fd_sc_hd__nand4_1",
-            "sky130_fd_sc_hd__a22oi_2",
-            "sky130_fd_sc_hd__nand2_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "rsp_rdata_q_reg[1]/D",
-          "human_review_required_for": [
-            "pipeline insertion",
-            "response latency changes",
-            "memory read/write semantic changes"
-          ],
-          "owner": "RTL advisory",
-          "path_group": "clk",
-          "priority_score": 0.0661,
-          "rank": 6,
-          "required_time": 4.144,
-          "slack": 0.039,
-          "startpoint": "service_addr_q_reg[1]/Q"
-        },
-        {
-          "actions": [
-            "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-          ],
-          "arrival_time": 0.5,
-          "category": "unknown",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxbp_2",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__nor2_1",
-            "sky130_fd_sc_hd__nand4_2",
-            "sky130_fd_sc_hd__nand3_2",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__o221ai_4",
-            "sky130_fd_sc_hd__nand3_4",
-            "sky130_fd_sc_hd__nor2b_1",
-            "sky130_fd_sc_hd__a21oi_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "u_request_queue_req_mem_reg[1][bank][0]/D",
-          "human_review_required_for": [],
-          "owner": "Investigate",
-          "path_group": "clk",
-          "priority_score": 0.018,
-          "rank": 7,
-          "required_time": 4.227,
-          "slack": 0.02,
-          "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-        },
-        {
-          "actions": [
-            "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-          ],
-          "arrival_time": 0.5,
-          "category": "unknown",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxbp_2",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__nor2_1",
-            "sky130_fd_sc_hd__nand4_2",
-            "sky130_fd_sc_hd__nand3_2",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__o221ai_4",
-            "sky130_fd_sc_hd__nand3_4",
-            "sky130_fd_sc_hd__nor2b_1",
-            "sky130_fd_sc_hd__a21oi_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "u_request_queue_req_mem_reg[1][bank][1]/D",
-          "human_review_required_for": [],
-          "owner": "Investigate",
-          "path_group": "clk",
-          "priority_score": 0.0174,
-          "rank": 8,
-          "required_time": 4.228,
-          "slack": 0.026,
-          "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-        },
-        {
-          "actions": [
-            "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-          ],
-          "arrival_time": 0.495,
-          "category": "unknown",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxbp_2",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__nor2_1",
-            "sky130_fd_sc_hd__nand4_2",
-            "sky130_fd_sc_hd__nand3_2",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__o221ai_4",
-            "sky130_fd_sc_hd__nand3_4",
-            "sky130_fd_sc_hd__nor2b_1",
-            "sky130_fd_sc_hd__a21oi_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "u_request_queue_req_mem_reg[1][row][0]/D",
-          "human_review_required_for": [],
-          "owner": "Investigate",
-          "path_group": "clk",
-          "priority_score": 0.0163,
-          "rank": 9,
-          "required_time": 4.226,
-          "slack": 0.037,
-          "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-        },
-        {
-          "actions": [
-            "Collect full path, QoR, fanout, transition, capacitance, and congestion reports before applying changes."
-          ],
-          "arrival_time": 0.495,
-          "category": "unknown",
-          "clock_period": 3.846,
-          "dominant_cells": [
-            "sky130_fd_sc_hd__dfxbp_2",
-            "sky130_fd_sc_hd__nand2_1",
-            "sky130_fd_sc_hd__nor2_1",
-            "sky130_fd_sc_hd__nand4_2",
-            "sky130_fd_sc_hd__nand3_2",
-            "sky130_fd_sc_hd__and2_4",
-            "sky130_fd_sc_hd__o221ai_4",
-            "sky130_fd_sc_hd__nand3_4",
-            "sky130_fd_sc_hd__nor2b_1",
-            "sky130_fd_sc_hd__a21oi_1"
-          ],
-          "dominant_nets": [],
-          "endpoint": "u_request_queue_req_mem_reg[1][row][1]/D",
-          "human_review_required_for": [],
-          "owner": "Investigate",
-          "path_group": "clk",
-          "priority_score": 0.0161,
-          "rank": 10,
-          "required_time": 4.227,
-          "slack": 0.039,
-          "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-        }
-      ],
-      "remote_fetch": [
-        {
-          "error": null,
-          "local_path": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-          "ok": true,
-          "remote_path": "/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/reports/timing_postroute.rpt"
-        }
-      ],
-      "reports": [
-        {
-          "clock_period": 3.846,
-          "paths": [
-            {
-              "arrival_time": 0.486,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_4",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__a221oi_1",
-                "sky130_fd_sc_hd__o22ai_1",
-                "sky130_fd_sc_hd__a221oi_2",
-                "sky130_fd_sc_hd__nand4_1",
-                "sky130_fd_sc_hd__a22oi_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__dfxtp_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[11]/D",
-              "evidence": [
-                "Path 1: MET Setup Check with Pin rsp_rdata_q_reg[11]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[11]/D   (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.486",
-                "= Required Time                 4.166",
-                "- Arrival Time                  4.158",
-                "= Slack Time                    0.008",
-                "= Beginpoint Arrival Time       0.043",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.051 |",
-                "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.552 |",
-                "| rsp_rdata_q_reg[11]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.158 |    4.166 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.166,
-              "slack": 0.008,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[2]/Q"
-            },
-            {
-              "arrival_time": 0.485,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_4",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__a221oi_1",
-                "sky130_fd_sc_hd__o22ai_1",
-                "sky130_fd_sc_hd__a221oi_2",
-                "sky130_fd_sc_hd__nand4_1",
-                "sky130_fd_sc_hd__a22oi_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__dfxtp_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[0]/D",
-              "evidence": [
-                "Path 2: MET Setup Check with Pin rsp_rdata_q_reg[0]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[0]/D    (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.485",
-                "= Required Time                 4.163",
-                "- Arrival Time                  4.143",
-                "= Slack Time                    0.020",
-                "= Beginpoint Arrival Time       0.043",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.063 |",
-                "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.563 |",
-                "| rsp_rdata_q_reg[0]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.143 |    4.163 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.163,
-              "slack": 0.02,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[2]/Q"
-            },
-            {
-              "arrival_time": 0.5,
-              "category": "unknown",
-              "category_reasons": [
-                "No reusable timing-closure category matched with high confidence."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxbp_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__nor2_1",
-                "sky130_fd_sc_hd__nand4_2",
-                "sky130_fd_sc_hd__nand3_2",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__o221ai_4",
-                "sky130_fd_sc_hd__nand3_4",
-                "sky130_fd_sc_hd__nor2b_1",
-                "sky130_fd_sc_hd__a21oi_1",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__nor2_2",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__nand2_4",
-                "sky130_fd_sc_hd__a21oi_4",
-                "sky130_fd_sc_hd__nand2_2",
-                "sky130_fd_sc_hd__and2_1",
-                "sky130_fd_sc_hd__clkbuf_1",
-                "sky130_fd_sc_hd__dfxtp_2"
-              ],
-              "dominant_nets": [],
-              "endpoint": "u_request_queue_req_mem_reg[1][bank][0]/D",
-              "evidence": [
-                "Other End Arrival Time          0.500",
-                "= Required Time                 4.227",
-                "- Arrival Time                  4.207",
-                "= Slack Time                    0.020",
-                "= Beginpoint Arrival Time       0.047",
-                "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.227,
-              "slack": 0.02,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-            },
-            {
-              "arrival_time": 0.476,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_4",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__a221oi_1",
-                "sky130_fd_sc_hd__o22ai_1",
-                "sky130_fd_sc_hd__nand4_1",
-                "sky130_fd_sc_hd__a22oi_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__dfxtp_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[21]/D",
-              "evidence": [
-                "Path 4: MET Setup Check with Pin rsp_rdata_q_reg[21]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[21]/D   (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.476",
-                "= Required Time                 4.159",
-                "- Arrival Time                  4.139",
-                "= Slack Time                    0.020",
-                "= Beginpoint Arrival Time       0.043",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.063 |",
-                "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.564 |",
-                "| rsp_rdata_q_reg[21]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.139 |    4.159 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.159,
-              "slack": 0.02,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[2]/Q"
-            },
-            {
-              "arrival_time": 0.5,
-              "category": "unknown",
-              "category_reasons": [
-                "No reusable timing-closure category matched with high confidence."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxbp_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__nor2_1",
-                "sky130_fd_sc_hd__nand4_2",
-                "sky130_fd_sc_hd__nand3_2",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__o221ai_4",
-                "sky130_fd_sc_hd__nand3_4",
-                "sky130_fd_sc_hd__nor2b_1",
-                "sky130_fd_sc_hd__a21oi_1",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__nor2_2",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__nand2_4",
-                "sky130_fd_sc_hd__a21oi_4",
-                "sky130_fd_sc_hd__nand2_2",
-                "sky130_fd_sc_hd__and2_1",
-                "sky130_fd_sc_hd__clkbuf_1",
-                "sky130_fd_sc_hd__dfxtp_2"
-              ],
-              "dominant_nets": [],
-              "endpoint": "u_request_queue_req_mem_reg[1][bank][1]/D",
-              "evidence": [
-                "Other End Arrival Time          0.500",
-                "= Required Time                 4.228",
-                "- Arrival Time                  4.202",
-                "= Slack Time                    0.026",
-                "= Beginpoint Arrival Time       0.047",
-                "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.228,
-              "slack": 0.026,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-            },
-            {
-              "arrival_time": 0.484,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_4",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__a221oi_1",
-                "sky130_fd_sc_hd__o22ai_1",
-                "sky130_fd_sc_hd__a221oi_2",
-                "sky130_fd_sc_hd__nand4_2",
-                "sky130_fd_sc_hd__a22oi_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__dfxtp_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[14]/D",
-              "evidence": [
-                "Path 6: MET Setup Check with Pin rsp_rdata_q_reg[14]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[14]/D   (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[2]/Q (v) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.484",
-                "= Required Time                 4.158",
-                "- Arrival Time                  4.127",
-                "= Slack Time                    0.030",
-                "= Beginpoint Arrival Time       0.043",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.073 |",
-                "| service_addr_q_reg[2] | CLK ^ -> Q v | sky130_fd_sc_hd__dfxtp_4  | 0.501 |   0.543 |    0.574 |",
-                "| rsp_rdata_q_reg[14]   | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.127 |    4.158 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.158,
-              "slack": 0.03,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[2]/Q"
-            },
-            {
-              "arrival_time": 0.475,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_4",
-                "sky130_fd_sc_hd__nor2_1",
-                "sky130_fd_sc_hd__buf_12",
-                "sky130_fd_sc_hd__buf_6",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__a221oi_2",
-                "sky130_fd_sc_hd__nand4_1",
-                "sky130_fd_sc_hd__a22oi_1",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__dfxtp_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[7]/D",
-              "evidence": [
-                "Path 7: MET Setup Check with Pin rsp_rdata_q_reg[7]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[7]/D    (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[2]/Q (^) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.475",
-                "= Required Time                 4.147",
-                "- Arrival Time                  4.116",
-                "= Slack Time                    0.031",
-                "= Beginpoint Arrival Time       0.043",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[2] | CLK ^        |                           |       |   0.043 |    0.074 |",
-                "| service_addr_q_reg[2] | CLK ^ -> Q ^ | sky130_fd_sc_hd__dfxtp_4  | 0.551 |   0.594 |    0.625 |",
-                "| rsp_rdata_q_reg[7]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.116 |    4.147 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.147,
-              "slack": 0.031,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[2]/Q"
-            },
-            {
-              "arrival_time": 0.495,
-              "category": "unknown",
-              "category_reasons": [
-                "No reusable timing-closure category matched with high confidence."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxbp_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__nor2_1",
-                "sky130_fd_sc_hd__nand4_2",
-                "sky130_fd_sc_hd__nand3_2",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__o221ai_4",
-                "sky130_fd_sc_hd__nand3_4",
-                "sky130_fd_sc_hd__nor2b_1",
-                "sky130_fd_sc_hd__a21oi_1",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__nor2_2",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__nand2_4",
-                "sky130_fd_sc_hd__a21oi_4",
-                "sky130_fd_sc_hd__nand2_2",
-                "sky130_fd_sc_hd__and2_1",
-                "sky130_fd_sc_hd__clkbuf_1",
-                "sky130_fd_sc_hd__dfxtp_2"
-              ],
-              "dominant_nets": [],
-              "endpoint": "u_request_queue_req_mem_reg[1][row][0]/D",
-              "evidence": [
-                "Other End Arrival Time          0.495",
-                "= Required Time                 4.226",
-                "- Arrival Time                  4.190",
-                "= Slack Time                    0.037",
-                "= Beginpoint Arrival Time       0.047",
-                "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.226,
-              "slack": 0.037,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-            },
-            {
-              "arrival_time": 0.495,
-              "category": "unknown",
-              "category_reasons": [
-                "No reusable timing-closure category matched with high confidence."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxbp_2",
-                "sky130_fd_sc_hd__nand2_1",
-                "sky130_fd_sc_hd__nor2_1",
-                "sky130_fd_sc_hd__nand4_2",
-                "sky130_fd_sc_hd__nand3_2",
-                "sky130_fd_sc_hd__and2_4",
-                "sky130_fd_sc_hd__o221ai_4",
-                "sky130_fd_sc_hd__nand3_4",
-                "sky130_fd_sc_hd__nor2b_1",
-                "sky130_fd_sc_hd__a21oi_1",
-                "sky130_fd_sc_hd__a22o_1",
-                "sky130_fd_sc_hd__nor2_2",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__nand2_4",
-                "sky130_fd_sc_hd__a21oi_4",
-                "sky130_fd_sc_hd__nand2_2",
-                "sky130_fd_sc_hd__and2_1",
-                "sky130_fd_sc_hd__clkbuf_1",
-                "sky130_fd_sc_hd__dfxtp_2"
-              ],
-              "dominant_nets": [],
-              "endpoint": "u_request_queue_req_mem_reg[1][row][1]/D",
-              "evidence": [
-                "Other End Arrival Time          0.495",
-                "= Required Time                 4.227",
-                "- Arrival Time                  4.188",
-                "= Slack Time                    0.039",
-                "= Beginpoint Arrival Time       0.047",
-                "|                Instance                 |     Arc      |           Cell            | Delay | Arrival | Required |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.227,
-              "slack": 0.039,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "u_request_queue_req_mem_reg[3][bank][1]/Q"
-            },
-            {
-              "arrival_time": 0.479,
-              "category": "synthesized memory/flop-array read mux",
-              "category_reasons": [
-                "Memory/address/read-data names indicate a synthesized array read mux."
-              ],
-              "clock_period": 3.846,
-              "dominant_cells": [
-                "sky130_fd_sc_hd__dfxtp_1",
-                "sky130_fd_sc_hd__inv_2",
-                "sky130_fd_sc_hd__nand2_8",
-                "sky130_fd_sc_hd__buf_2",
-                "sky130_fd_sc_hd__o22ai_1",
-                "sky130_fd_sc_hd__a221oi_1",
-                "sky130_fd_sc_hd__nand4_1",
-                "sky130_fd_sc_hd__a22oi_2",
-                "sky130_fd_sc_hd__nand2_1"
-              ],
-              "dominant_nets": [],
-              "endpoint": "rsp_rdata_q_reg[1]/D",
-              "evidence": [
-                "Path 10: MET Setup Check with Pin rsp_rdata_q_reg[1]/CLK",
-                "Endpoint:   rsp_rdata_q_reg[1]/D    (v) checked with  leading edge of 'clk'",
-                "Beginpoint: service_addr_q_reg[1]/Q (^) triggered by  leading edge of 'clk'",
-                "Other End Arrival Time          0.479",
-                "= Required Time                 4.144",
-                "- Arrival Time                  4.105",
-                "= Slack Time                    0.039",
-                "= Beginpoint Arrival Time       0.044",
-                "|       Instance        |     Arc      |           Cell            | Delay | Arrival | Required |",
-                "| service_addr_q_reg[1] | CLK ^        |                           |       |   0.044 |    0.083 |",
-                "| service_addr_q_reg[1] | CLK ^ -> Q ^ | sky130_fd_sc_hd__dfxtp_1  | 0.734 |   0.777 |    0.816 |",
-                "| rsp_rdata_q_reg[1]    | D v          | sky130_fd_sc_hd__dfxtp_1  | 0.000 |   4.105 |    4.144 |"
-              ],
-              "path_group": "clk",
-              "required_time": 4.144,
-              "slack": 0.039,
-              "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-              "startpoint": "service_addr_q_reg[1]/Q"
-            }
-          ],
-          "source_file": "/home/antgamez1203/CAPSTONE/local/backend/logs/timing_closure/remote/44d69b18bd8f472c8d7f51a7e340d240/build_GDSII_260MHz_01__reports__timing_postroute.rpt",
-          "tns": null,
-          "tool": "innovus",
-          "violating_path_count": 0,
-          "warnings": [],
-          "wns": 0.008
-        }
-      ],
-      "target_frequency_mhz": 260.0,
-      "target_period": 3.8461538461538463,
-      "tns": null,
-      "violating_path_count": null,
-      "wns": 0.008,
-      "worst_arrival_time": 0.486,
-      "worst_category": "synthesized memory/flop-array read mux",
-      "worst_endpoint": "rsp_rdata_q_reg[11]/D",
-      "worst_path_group": "clk",
-      "worst_required_time": 4.166,
-      "worst_slack": 0.008,
-      "worst_startpoint": "service_addr_q_reg[2]/Q"
     }
   }
 }

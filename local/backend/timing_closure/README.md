@@ -31,7 +31,27 @@ This calculates the period as `1000 / MHz` (230 MHz is about 4.348 ns) and disab
 
 ### AI recovery after timing failure
 
-After the preset attempts fail, the controller selects the highest-WNS checkpoint that meets the area/power caps. The AI reads its critical paths, the loaded library's available drive strengths, measured limits, and experiment history, then proposes up to 16 gate/buffer resizes. Each experiment restores that checkpoint into a new output directory, checks the instance/master identities, applies `ecoChangeCell`, legalizes placement, reroutes, and reruns optimization and reporting. Unsuccessful or over-budget experiments never replace the best eligible checkpoint. An improved candidate becomes the source of the next experiment.
+After the preset attempts fail, the physical verification AI compares each preset's
+geometry (`<top>.geom.rpt`), hold (`hold_postroute.rpt`), and routed setup
+(`timing_postroute.rpt`) reports. It chooses an eligible checkpoint based on setup
+recoverability, hold margin, and area/power headroom, and explains its choice.
+Only checkpoints with zero DRC/antenna violations, passing hold, valid setup
+evidence at the requested period, and measurements within the configured limits
+can be selected. An already passing preset ends the run without selection or resizing.
+
+The timing resizer receives that selection and reads the chosen checkpoint's
+critical paths, available drive strengths, measured limits, and experiment history,
+then proposes up to 16 gate/buffer resizes. Each experiment restores that checkpoint
+into a new output directory, checks instance/master identities, applies
+`ecoChangeCell`, legalizes placement, reroutes, and reruns optimization and reporting.
+Unsuccessful experiments retain the selected source. An improved eligible resize
+candidate becomes the next source; the controller does not switch back to an
+unchosen preset. Selection/API failure stops recovery without a silent ranking fallback.
+
+The comparison, selection rationale, and API diagnostics are saved as
+`physical_selection_context.json`, `physical_selection.json`, and
+`physical_selection_response.json` beside the attempt states. The selection also
+appears in the timing status/report and is passed to the resizer.
 
 Default recovery budget: **3 AI experiments** after the preset attempts. `EDA_TIMING_CLOSURE_AI_MAX_ATTEMPTS` accepts 1–10. `EDA_TIMING_CLOSURE_AI_ENABLED=0` disables AI recovery, but does not disable the area/power acceptance limits. AI uses the existing `OPENAI_API_KEY`, `OPENAI_MODEL`, and optional `OPENAI_BASE_URL` configuration. API failure, an invalid plan, repeated experiments, or no legal resize choices stop recovery explicitly.
 

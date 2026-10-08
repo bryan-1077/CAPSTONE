@@ -78,6 +78,7 @@ class FlowState(TypedDict, total=False):
     physical_verification_attempts: List[Dict[str, Any]]
     physical_verification_analysis: Dict[str, Any]
     physical_verification_report_dir: str
+    physical_verification_source_selection: Optional[Dict[str, Any]]
     inner_compute_host: str
     mapped_top_module: str
     gdsii_script: str

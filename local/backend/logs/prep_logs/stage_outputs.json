@@ -1,7 +1,7 @@
 {
   "candidate_paths": {
-    "prep_candidate_path": "build_prep_260MHz_01",
-    "remote_prepare_dir": "build_prep_260MHz_01"
+    "prep_candidate_path": "build_prep_250MHz_01",
+    "remote_prepare_dir": "build_prep_250MHz_01"
   },
   "execution_context": {
     "exit_code": 0,
@@ -11,7 +11,7 @@
     "generated_files": []
   },
   "outputs": {
-    "rtl_bundle_remote": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01"
+    "rtl_bundle_remote": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01"
   },
   "prep_outputs": {
     "generated_files": [],
@@ -79,57 +79,57 @@
         {
           "entry": "./rtl/ddr4_bank_activate_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_top.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_controller_top.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
         },
         {
           "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
         },
         {
           "entry": "./rtl/ddr4_request_queue.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
         },
         {
           "entry": "./rtl/ddr4_scheduler_scheduler.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
         },
         {
           "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
         },
         {
           "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
         }
       ],
       "truncated": false,

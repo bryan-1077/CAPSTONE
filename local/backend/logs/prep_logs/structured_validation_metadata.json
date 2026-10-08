@@ -15,7 +15,7 @@
     },
     "rtl_prep_review_1_local_result": {
       "applicable_recipe_ids": [],
-      "candidate_path": "build_prep_260MHz_01",
+      "candidate_path": "build_prep_250MHz_01",
       "chosen_recipe_id": null,
       "context": {
         "artifact_status": {
@@ -76,57 +76,57 @@
             {
               "entry": "./rtl/ddr4_bank_activate_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_controller_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
             },
             {
               "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
             },
             {
               "entry": "./rtl/ddr4_request_queue.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
             },
             {
               "entry": "./rtl/ddr4_scheduler_scheduler.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
             },
             {
               "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
             },
             {
               "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
             }
           ],
           "truncated": false,
@@ -178,7 +178,7 @@
           "resolved_errors": []
         },
         "key_files": {
-          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n",
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
           "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
           "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
           "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\nset TOP \"ddr4_controller_top\"\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nread_hdl -sv -f $FILELIST\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
@@ -467,7 +467,7 @@
       "current_errors": [],
       "latest_applied_actions": [
         "replace_text run_genus_mc.tcl",
-        "append_text README_prepared.txt"
+        "replace_text constraints/mc_genus.sdc"
       ],
       "new_errors": [],
       "persistent_errors": [],
@@ -476,11 +476,11 @@
       ],
       "prior_fix_history": [
         "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-        "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-        "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-        "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt.",
+        "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+        "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+        "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none.",
         "replace_text run_genus_mc.tcl",
-        "append_text README_prepared.txt"
+        "replace_text constraints/mc_genus.sdc"
       ],
       "resolved_errors": [
         "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
@@ -488,7 +488,7 @@
     },
     "rtl_prep_review_1_post_fix_local_result": {
       "applicable_recipe_ids": [],
-      "candidate_path": "build_prep_260MHz_01",
+      "candidate_path": "build_prep_250MHz_01",
       "chosen_recipe_id": null,
       "context": {
         "artifact_status": {
@@ -549,57 +549,57 @@
             {
               "entry": "./rtl/ddr4_bank_activate_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_controller_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
             },
             {
               "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
             },
             {
               "entry": "./rtl/ddr4_request_queue.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
             },
             {
               "entry": "./rtl/ddr4_scheduler_scheduler.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
             },
             {
               "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
             },
             {
               "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
             }
           ],
           "truncated": false,
@@ -641,7 +641,7 @@
           "current_errors": [],
           "latest_applied_actions": [
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "new_errors": [],
           "persistent_errors": [],
@@ -650,21 +650,21 @@
           ],
           "prior_fix_history": [
             "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-            "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-            "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-            "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt.",
+            "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+            "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+            "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none.",
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "resolved_errors": [
             "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
           ]
         },
         "key_files": {
-          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n\nAddendum (Genus Tcl behavior):\n  - No preprocessor macros were detected in the prepared RTL for this bundle.\n  - run_genus_mc.tcl supports optional defines via env(DEFINES), forwarded to read_hdl.\n    Example:\n      export DEFINES=\"FEATURE_X FOO=1\"\n      genus -f run_genus_mc.tcl\n",
-          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\nset _clk_ports [get_ports -quiet {clk}]\nif {[sizeof_collection $_clk_ports] > 0} {\n    create_clock -name clk -period 5.000 $_clk_ports\n    set_clock_uncertainty 0.10 [get_clocks clk]\n} else {\n    puts \"WARNING: No top-level port 'clk' found; create_clock not applied.\"\n}\n\nset _rst_ports [get_ports -quiet {rst_n}]\nif {[sizeof_collection $_rst_ports] > 0} {\n    set_false_path -from $_rst_ports\n} else {\n    puts \"WARNING: No top-level port 'rst_n' found; reset false-path not applied.\"\n}\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
           "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
-          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Top selection:\n# Prefer env(TOP) if set; otherwise read ./top_module.txt for bundle-consistent behavior.\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} else {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional preprocessor defines:\n# If you need macros for conditional RTL, pass them explicitly via env(DEFINES), e.g.:\n#   export DEFINES=\"FOO BAR=1\"\n# These will be forwarded to read_hdl as -define entries.\nset DEFINES_LIST {}\nif {[info exists ::env(DEFINES)] && [string trim $::env(DEFINES)] ne \"\"} {\n    set DEFINES_LIST [split [string trim $::env(DEFINES)]]\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nif {[llength $DEFINES_LIST] > 0} {\n    puts \"DEFINES  = $DEFINES_LIST\"\n    read_hdl -sv -define $DEFINES_LIST -f $FILELIST\n} else {\n    puts \"DEFINES  = (none)\"\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Resolve TOP in this order:\n#   1) env(TOP) override\n#   2) top_module.txt (generated by prep)\n#   3) fallback default\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n    if {$TOP eq \"\"} { set TOP \"ddr4_controller_top\" }\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional macro hook:\n# If your design requires preprocessor defines, set env(HDL_DEFINES) to a space-separated list,\n# e.g.  export HDL_DEFINES=\"FOO BAR=1\".  This bundle's README reports no detected macros.\nset HDL_DEFINES \"\"\nif {[info exists ::env(HDL_DEFINES)]} { set HDL_DEFINES [string trim $::env(HDL_DEFINES)] }\n\n# Read HDL; apply defines only if provided\nif {$HDL_DEFINES ne \"\"} {\n    puts \"HDL_DEFINES = $HDL_DEFINES\"\n    read_hdl -sv -define $HDL_DEFINES -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
           "top_module.txt": "ddr4_controller_top\n"
         },
         "rtl_samples": [
@@ -954,7 +954,7 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "candidate_path": "build_prep_260MHz_01",
+          "candidate_path": "build_prep_250MHz_01",
           "inventory_file_count": 16,
           "local_error_count": 0,
           "local_warning_count": 0,
@@ -963,22 +963,21 @@
           "rtl_sample_count": 11
         },
         "suggested_fixes": [
-          "Choose one defines mechanism in run_genus_mc.tcl and document it:\n- Preferred: keep env(DEFINES) -> read_hdl -define, and remove the env(GENUS_DEFINES)/set_db hdl_define block; OR\n- If you want set_db hdl_define as the standard, then remove env(DEFINES) forwarding and just use one environment variable.\nUpdate README_prepared.txt accordingly so users don’t guess wrong.",
-          "Remove the duplicate lines:\n- Delete the second pair of `set SDC ...` and `set OUTDIR ...` assignments in run_genus_mc.tcl to reduce accidental divergence.",
-          "Harden SDC for top overrides:\n- Use `get_ports -quiet clk` and only call create_clock if the port exists, or emit a clear warning stating which ports were found.\n- Alternatively, document in README that overriding TOP requires providing a matching SDC."
+          "Tcl hygiene: remove duplicate lines in run_genus_mc.tcl (the second 'set SDC ...' and 'set OUTDIR ...') to reduce confusion without changing behavior.",
+          "Tcl hygiene: choose one defines path. Recommended: keep env(HDL_DEFINES) -> read_hdl -define and drop env(GENUS_DEFINES)/set_db hdl_define (or clearly document precedence) to avoid double-define scenarios.",
+          "Optional robustness: in constraints/mc_genus.sdc, consider guarding the set_input_delay/set_output_delay with a check that clock 'clk' was actually created (or use -clock [get_clocks -quiet clk] and skip if empty) to avoid tool warnings if top is overridden to a design without clk."
         ],
-        "summary": "Prep bundle is complete and internally consistent for the selected top ddr4_controller_top: filelist includes all defined/instantiated modules, top selection indirection (top_module.txt with optional env(TOP)) is correct, no testbench/harness top indicators, and no interface ports at the synthesis boundary. Remaining items are non-blocking script/constraint hygiene improvements (defines mechanism consistency, redundant Tcl assignments, and SDC robustness when TOP is overridden).",
+        "summary": "Bundle is internally consistent and prep-contract complete: filelist exists and resolves, run_genus_mc.tcl honors env(TOP) and top_module.txt indirection, top_module.txt/README agree on ddr4_controller_top, selected top is not a testbench/harness and has no interface ports at the boundary, and dependency analysis shows no missing modules/files. No prep-stage blockers found.",
         "warnings": [
-          "run_genus_mc.tcl defines handling is internally inconsistent: it supports env(DEFINES) forwarded to read_hdl -define, but it also separately reads env(GENUS_DEFINES) and applies set_db hdl_define. This can cause confusion about which mechanism is authoritative and can result in duplicate/competing define application if both are set.",
-          "run_genus_mc.tcl redundantly assigns SDC and OUTDIR twice. Not functionally blocking, but it’s a sign the script was edited and could drift again.",
-          "mc_genus.sdc assumes an input port literally named clk and reset port literally named rst_n. That matches README/top sample, but if TOP is overridden via env(TOP) to a different module, constraints may silently not apply (or apply partially). Consider guarding create_clock with -quiet/get_ports checks or documenting that SDC is valid only for the default top.",
-          "The bundle looks like a simplified controller core (txn_* request/response ports) rather than a real DDR PHY/top-level memory interface. This is not a prep error, but be aware downstream users may expect DDR interface pins and need a different integration top/wrapper outside this bundle.",
-          "Some RTL uses SystemVerilog features that are usually OK for Genus but can still trigger tool/version quirks (warnings only at prep stage): $countones(), struct casts like REQUEST_WIDTH'(req_mem[j]), and unpacked arrays of packed structs (req_mem[DEPTH]). If Genus elaboration fails, these are the first constructs to check/adjust."
+          "run_genus_mc.tcl contains some redundant re-definitions (SDC/OUTDIR are set twice). This is harmless but can confuse future edits/reviews.",
+          "SDC is a generic bring-up constraint: it applies 0.0 input/output delays to all non-clock/reset ports. This is fine for first bring-up but should be reviewed before interpreting timing/QoR results as meaningful.",
+          "Genus define handling is split between env(HDL_DEFINES) passed to read_hdl -define and set_db hdl_define via env(GENUS_DEFINES). If a user sets both, behavior may be ambiguous; consider consolidating to one mechanism.",
+          "RTL contains SystemVerilog packed structs/arrays and $countones usage (e.g., ddr4_request_queue, ddr4_tFAW_tFAW_tracker). This is not a prep-stage issue, but if elaboration fails in a given Genus/version/library environment, these are likely first places to look."
         ]
       },
       "ambiguity_reason": null,
       "applicable_recipe_ids": [],
-      "candidate_path": "build_prep_260MHz_01",
+      "candidate_path": "build_prep_250MHz_01",
       "chosen_recipe_id": null,
       "context": {
         "artifact_status": {
@@ -1039,57 +1038,57 @@
             {
               "entry": "./rtl/ddr4_bank_activate_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_controller_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
             },
             {
               "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
             },
             {
               "entry": "./rtl/ddr4_request_queue.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
             },
             {
               "entry": "./rtl/ddr4_scheduler_scheduler.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
             },
             {
               "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
             },
             {
               "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
             }
           ],
           "truncated": false,
@@ -1131,7 +1130,7 @@
           "current_errors": [],
           "latest_applied_actions": [
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "new_errors": [],
           "persistent_errors": [],
@@ -1140,21 +1139,21 @@
           ],
           "prior_fix_history": [
             "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-            "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-            "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-            "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt.",
+            "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+            "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+            "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none.",
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "resolved_errors": [
             "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
           ]
         },
         "key_files": {
-          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n\nAddendum (Genus Tcl behavior):\n  - No preprocessor macros were detected in the prepared RTL for this bundle.\n  - run_genus_mc.tcl supports optional defines via env(DEFINES), forwarded to read_hdl.\n    Example:\n      export DEFINES=\"FEATURE_X FOO=1\"\n      genus -f run_genus_mc.tcl\n",
-          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\nset _clk_ports [get_ports -quiet {clk}]\nif {[sizeof_collection $_clk_ports] > 0} {\n    create_clock -name clk -period 5.000 $_clk_ports\n    set_clock_uncertainty 0.10 [get_clocks clk]\n} else {\n    puts \"WARNING: No top-level port 'clk' found; create_clock not applied.\"\n}\n\nset _rst_ports [get_ports -quiet {rst_n}]\nif {[sizeof_collection $_rst_ports] > 0} {\n    set_false_path -from $_rst_ports\n} else {\n    puts \"WARNING: No top-level port 'rst_n' found; reset false-path not applied.\"\n}\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
           "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
-          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Top selection:\n# Prefer env(TOP) if set; otherwise read ./top_module.txt for bundle-consistent behavior.\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} else {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional preprocessor defines:\n# If you need macros for conditional RTL, pass them explicitly via env(DEFINES), e.g.:\n#   export DEFINES=\"FOO BAR=1\"\n# These will be forwarded to read_hdl as -define entries.\nset DEFINES_LIST {}\nif {[info exists ::env(DEFINES)] && [string trim $::env(DEFINES)] ne \"\"} {\n    set DEFINES_LIST [split [string trim $::env(DEFINES)]]\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nif {[llength $DEFINES_LIST] > 0} {\n    puts \"DEFINES  = $DEFINES_LIST\"\n    read_hdl -sv -define $DEFINES_LIST -f $FILELIST\n} else {\n    puts \"DEFINES  = (none)\"\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Resolve TOP in this order:\n#   1) env(TOP) override\n#   2) top_module.txt (generated by prep)\n#   3) fallback default\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n    if {$TOP eq \"\"} { set TOP \"ddr4_controller_top\" }\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional macro hook:\n# If your design requires preprocessor defines, set env(HDL_DEFINES) to a space-separated list,\n# e.g.  export HDL_DEFINES=\"FOO BAR=1\".  This bundle's README reports no detected macros.\nset HDL_DEFINES \"\"\nif {[info exists ::env(HDL_DEFINES)]} { set HDL_DEFINES [string trim $::env(HDL_DEFINES)] }\n\n# Read HDL; apply defines only if provided\nif {$HDL_DEFINES ne \"\"} {\n    puts \"HDL_DEFINES = $HDL_DEFINES\"\n    read_hdl -sv -define $HDL_DEFINES -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
           "top_module.txt": "ddr4_controller_top\n"
         },
         "rtl_samples": [
@@ -1436,17 +1435,16 @@
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal genus prep instruction.md",
       "subclass": null,
       "suggested_fixes": [
-        "Choose one defines mechanism in run_genus_mc.tcl and document it:\n- Preferred: keep env(DEFINES) -> read_hdl -define, and remove the env(GENUS_DEFINES)/set_db hdl_define block; OR\n- If you want set_db hdl_define as the standard, then remove env(DEFINES) forwarding and just use one environment variable.\nUpdate README_prepared.txt accordingly so users don’t guess wrong.",
-        "Remove the duplicate lines:\n- Delete the second pair of `set SDC ...` and `set OUTDIR ...` assignments in run_genus_mc.tcl to reduce accidental divergence.",
-        "Harden SDC for top overrides:\n- Use `get_ports -quiet clk` and only call create_clock if the port exists, or emit a clear warning stating which ports were found.\n- Alternatively, document in README that overriding TOP requires providing a matching SDC."
+        "Tcl hygiene: remove duplicate lines in run_genus_mc.tcl (the second 'set SDC ...' and 'set OUTDIR ...') to reduce confusion without changing behavior.",
+        "Tcl hygiene: choose one defines path. Recommended: keep env(HDL_DEFINES) -> read_hdl -define and drop env(GENUS_DEFINES)/set_db hdl_define (or clearly document precedence) to avoid double-define scenarios.",
+        "Optional robustness: in constraints/mc_genus.sdc, consider guarding the set_input_delay/set_output_delay with a check that clock 'clk' was actually created (or use -clock [get_clocks -quiet clk] and skip if empty) to avoid tool warnings if top is overridden to a design without clk."
       ],
-      "summary": "Local prep review passed with 0 errors and 0 warnings. Prep bundle is complete and internally consistent for the selected top ddr4_controller_top: filelist includes all defined/instantiated modules, top selection indirection (top_module.txt with optional env(TOP)) is correct, no testbench/harness top indicators, and no interface ports at the synthesis boundary. Remaining items are non-blocking script/constraint hygiene improvements (defines mechanism consistency, redundant Tcl assignments, and SDC robustness when TOP is overridden).",
+      "summary": "Local prep review passed with 0 errors and 0 warnings. Bundle is internally consistent and prep-contract complete: filelist exists and resolves, run_genus_mc.tcl honors env(TOP) and top_module.txt indirection, top_module.txt/README agree on ddr4_controller_top, selected top is not a testbench/harness and has no interface ports at the boundary, and dependency analysis shows no missing modules/files. No prep-stage blockers found.",
       "warnings": [
-        "run_genus_mc.tcl defines handling is internally inconsistent: it supports env(DEFINES) forwarded to read_hdl -define, but it also separately reads env(GENUS_DEFINES) and applies set_db hdl_define. This can cause confusion about which mechanism is authoritative and can result in duplicate/competing define application if both are set.",
-        "run_genus_mc.tcl redundantly assigns SDC and OUTDIR twice. Not functionally blocking, but it’s a sign the script was edited and could drift again.",
-        "mc_genus.sdc assumes an input port literally named clk and reset port literally named rst_n. That matches README/top sample, but if TOP is overridden via env(TOP) to a different module, constraints may silently not apply (or apply partially). Consider guarding create_clock with -quiet/get_ports checks or documenting that SDC is valid only for the default top.",
-        "The bundle looks like a simplified controller core (txn_* request/response ports) rather than a real DDR PHY/top-level memory interface. This is not a prep error, but be aware downstream users may expect DDR interface pins and need a different integration top/wrapper outside this bundle.",
-        "Some RTL uses SystemVerilog features that are usually OK for Genus but can still trigger tool/version quirks (warnings only at prep stage): $countones(), struct casts like REQUEST_WIDTH'(req_mem[j]), and unpacked arrays of packed structs (req_mem[DEPTH]). If Genus elaboration fails, these are the first constructs to check/adjust."
+        "run_genus_mc.tcl contains some redundant re-definitions (SDC/OUTDIR are set twice). This is harmless but can confuse future edits/reviews.",
+        "SDC is a generic bring-up constraint: it applies 0.0 input/output delays to all non-clock/reset ports. This is fine for first bring-up but should be reviewed before interpreting timing/QoR results as meaningful.",
+        "Genus define handling is split between env(HDL_DEFINES) passed to read_hdl -define and set_db hdl_define via env(GENUS_DEFINES). If a user sets both, behavior may be ambiguous; consider consolidating to one mechanism.",
+        "RTL contains SystemVerilog packed structs/arrays and $countones usage (e.g., ddr4_request_queue, ddr4_tFAW_tFAW_tracker). This is not a prep-stage issue, but if elaboration fails in a given Genus/version/library environment, these are likely first places to look."
       ]
     },
     "rtl_prep_review_1_result": {
@@ -1461,7 +1459,7 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "candidate_path": "build_prep_260MHz_01",
+          "candidate_path": "build_prep_250MHz_01",
           "inventory_file_count": 16,
           "local_error_count": 1,
           "local_warning_count": 0,
@@ -1470,19 +1468,20 @@
           "rtl_sample_count": 11
         },
         "suggested_fixes": [
-          "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-          "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-          "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt."
+          "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+          "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+          "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none."
         ],
-        "summary": "Prep-contract looks complete and internally consistent: filelist_genus.f resolves to existing RTL, selected top (ddr4_controller_top) is not a harness and has normal ports, SDC targets [get_ports clk]/rst_n consistent with top, and no interface ports at the top boundary. The single reported local error about missing defines is likely a false alarm given README says no macros were detected. Treat as pass, with a recommendation to improve run_genus_mc.tcl top/define indirection robustness.",
+        "summary": "Prep-contract review: bundle is internally consistent and complete for Genus bring-up (filelist, top_module.txt, Tcl, and SDC align; no missing modules; selected top is not a testbench/harness; no interface ports at the synthesis boundary). The single local-review error appears to be a false blocker because the prepared README reports no detected macros. Marking as pass with warnings and recommended robustness tweaks.",
         "warnings": [
-          "Local review error appears inconsistent with bundle metadata: README_prepared.txt reports \"Preprocessor macros detected in source: - none\". If no macros are required, run_genus_mc.tcl does not need to apply any `define settings.",
-          "run_genus_mc.tcl hardcodes `set TOP \"ddr4_controller_top\"` while top_module.txt also specifies ddr4_controller_top. This is consistent now, but it weakens the intended indirection/override model (top_module.txt and optional env(TOP)). Consider aligning Tcl to read top_module.txt (and/or honor env(TOP)) to avoid future mismatches."
+          "Local review error claims “source macros detected but run_genus_mc.tcl does not apply any `define settings.” However README_prepared.txt explicitly says “Preprocessor macros detected in source: - none”. With no detected/declared macros, lack of `define handling in the Tcl is not a prep-stage blocker for this bundle as-prepared.",
+          "run_genus_mc.tcl hardcodes `set TOP \"ddr4_controller_top\"` instead of reading top_module.txt and/or honoring an env(TOP) override. This is not a functional issue given top_module.txt matches, but it reduces bundle portability and can cause confusion if top_module.txt is edited later.",
+          "SDC create_clock assumes a top-level port named clk and reset named rst_n. This matches README detection, but if the top is overridden later, constraints may silently not apply; consider adding -quiet guards or failing fast when clock port not found."
         ]
       },
       "ambiguity_reason": null,
       "applicable_recipe_ids": [],
-      "candidate_path": "build_prep_260MHz_01",
+      "candidate_path": "build_prep_250MHz_01",
       "chosen_recipe_id": null,
       "context": {
         "artifact_status": {
@@ -1543,57 +1542,57 @@
             {
               "entry": "./rtl/ddr4_bank_activate_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_controller_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
             },
             {
               "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
             },
             {
               "entry": "./rtl/ddr4_request_queue.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
             },
             {
               "entry": "./rtl/ddr4_scheduler_scheduler.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
             },
             {
               "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
             },
             {
               "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
             }
           ],
           "truncated": false,
@@ -1645,7 +1644,7 @@
           "resolved_errors": []
         },
         "key_files": {
-          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n",
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
           "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
           "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
           "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\nset TOP \"ddr4_controller_top\"\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nread_hdl -sv -f $FILELIST\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
@@ -1937,14 +1936,15 @@
       "subclass": null,
       "suggested_fixes": [
         "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-        "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-        "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-        "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt."
+        "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+        "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+        "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none."
       ],
-      "summary": "Local prep review failed with 1 errors and 0 warnings. Prep-contract looks complete and internally consistent: filelist_genus.f resolves to existing RTL, selected top (ddr4_controller_top) is not a harness and has normal ports, SDC targets [get_ports clk]/rst_n consistent with top, and no interface ports at the top boundary. The single reported local error about missing defines is likely a false alarm given README says no macros were detected. Treat as pass, with a recommendation to improve run_genus_mc.tcl top/define indirection robustness.",
+      "summary": "Local prep review failed with 1 errors and 0 warnings. Prep-contract review: bundle is internally consistent and complete for Genus bring-up (filelist, top_module.txt, Tcl, and SDC align; no missing modules; selected top is not a testbench/harness; no interface ports at the synthesis boundary). The single local-review error appears to be a false blocker because the prepared README reports no detected macros. Marking as pass with warnings and recommended robustness tweaks.",
       "warnings": [
-        "Local review error appears inconsistent with bundle metadata: README_prepared.txt reports \"Preprocessor macros detected in source: - none\". If no macros are required, run_genus_mc.tcl does not need to apply any `define settings.",
-        "run_genus_mc.tcl hardcodes `set TOP \"ddr4_controller_top\"` while top_module.txt also specifies ddr4_controller_top. This is consistent now, but it weakens the intended indirection/override model (top_module.txt and optional env(TOP)). Consider aligning Tcl to read top_module.txt (and/or honor env(TOP)) to avoid future mismatches."
+        "Local review error claims “source macros detected but run_genus_mc.tcl does not apply any `define settings.” However README_prepared.txt explicitly says “Preprocessor macros detected in source: - none”. With no detected/declared macros, lack of `define handling in the Tcl is not a prep-stage blocker for this bundle as-prepared.",
+        "run_genus_mc.tcl hardcodes `set TOP \"ddr4_controller_top\"` instead of reading top_module.txt and/or honoring an env(TOP) override. This is not a functional issue given top_module.txt matches, but it reduces bundle portability and can cause confusion if top_module.txt is edited later.",
+        "SDC create_clock assumes a top-level port named clk and reset named rst_n. This matches README detection, but if the top is overridden later, constraints may silently not apply; consider adding -quiet guards or failing fast when clock port not found."
       ]
     },
     "stage_routing_decision_rtl_prep_1": {
@@ -2045,57 +2045,57 @@
         {
           "entry": "./rtl/ddr4_bank_activate_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_top.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
         },
         {
           "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
         },
         {
           "entry": "./rtl/ddr4_controller_top.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
         },
         {
           "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
         },
         {
           "entry": "./rtl/ddr4_request_queue.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
         },
         {
           "entry": "./rtl/ddr4_scheduler_scheduler.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
         },
         {
           "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
         },
         {
           "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
           "exists": true,
-          "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+          "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
         }
       ],
       "truncated": false,
@@ -2137,7 +2137,7 @@
       "current_errors": [],
       "latest_applied_actions": [
         "replace_text run_genus_mc.tcl",
-        "append_text README_prepared.txt"
+        "replace_text constraints/mc_genus.sdc"
       ],
       "new_errors": [],
       "persistent_errors": [],
@@ -2146,21 +2146,21 @@
       ],
       "prior_fix_history": [
         "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-        "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-        "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-        "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt.",
+        "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+        "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+        "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none.",
         "replace_text run_genus_mc.tcl",
-        "append_text README_prepared.txt"
+        "replace_text constraints/mc_genus.sdc"
       ],
       "resolved_errors": [
         "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
       ]
     },
     "key_files": {
-      "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n\nAddendum (Genus Tcl behavior):\n  - No preprocessor macros were detected in the prepared RTL for this bundle.\n  - run_genus_mc.tcl supports optional defines via env(DEFINES), forwarded to read_hdl.\n    Example:\n      export DEFINES=\"FEATURE_X FOO=1\"\n      genus -f run_genus_mc.tcl\n",
-      "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+      "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
+      "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\nset _clk_ports [get_ports -quiet {clk}]\nif {[sizeof_collection $_clk_ports] > 0} {\n    create_clock -name clk -period 5.000 $_clk_ports\n    set_clock_uncertainty 0.10 [get_clocks clk]\n} else {\n    puts \"WARNING: No top-level port 'clk' found; create_clock not applied.\"\n}\n\nset _rst_ports [get_ports -quiet {rst_n}]\nif {[sizeof_collection $_rst_ports] > 0} {\n    set_false_path -from $_rst_ports\n} else {\n    puts \"WARNING: No top-level port 'rst_n' found; reset false-path not applied.\"\n}\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
       "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
-      "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Top selection:\n# Prefer env(TOP) if set; otherwise read ./top_module.txt for bundle-consistent behavior.\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} else {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional preprocessor defines:\n# If you need macros for conditional RTL, pass them explicitly via env(DEFINES), e.g.:\n#   export DEFINES=\"FOO BAR=1\"\n# These will be forwarded to read_hdl as -define entries.\nset DEFINES_LIST {}\nif {[info exists ::env(DEFINES)] && [string trim $::env(DEFINES)] ne \"\"} {\n    set DEFINES_LIST [split [string trim $::env(DEFINES)]]\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nif {[llength $DEFINES_LIST] > 0} {\n    puts \"DEFINES  = $DEFINES_LIST\"\n    read_hdl -sv -define $DEFINES_LIST -f $FILELIST\n} else {\n    puts \"DEFINES  = (none)\"\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+      "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Resolve TOP in this order:\n#   1) env(TOP) override\n#   2) top_module.txt (generated by prep)\n#   3) fallback default\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n    if {$TOP eq \"\"} { set TOP \"ddr4_controller_top\" }\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional macro hook:\n# If your design requires preprocessor defines, set env(HDL_DEFINES) to a space-separated list,\n# e.g.  export HDL_DEFINES=\"FOO BAR=1\".  This bundle's README reports no detected macros.\nset HDL_DEFINES \"\"\nif {[info exists ::env(HDL_DEFINES)]} { set HDL_DEFINES [string trim $::env(HDL_DEFINES)] }\n\n# Read HDL; apply defines only if provided\nif {$HDL_DEFINES ne \"\"} {\n    puts \"HDL_DEFINES = $HDL_DEFINES\"\n    read_hdl -sv -define $HDL_DEFINES -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
       "top_module.txt": "ddr4_controller_top\n"
     },
     "rtl_samples": [
@@ -2808,7 +2808,7 @@
         "request_metadata": {
           "api_style": "chat_completions_fallback",
           "base_url": "https://chat-api.tamu.ai/openai",
-          "candidate_path": "build_prep_260MHz_01",
+          "candidate_path": "build_prep_250MHz_01",
           "inventory_file_count": 16,
           "local_error_count": 0,
           "local_warning_count": 0,
@@ -2817,23 +2817,22 @@
           "rtl_sample_count": 11
         },
         "suggested_fixes": [
-          "Choose one defines mechanism in run_genus_mc.tcl and document it:\n- Preferred: keep env(DEFINES) -> read_hdl -define, and remove the env(GENUS_DEFINES)/set_db hdl_define block; OR\n- If you want set_db hdl_define as the standard, then remove env(DEFINES) forwarding and just use one environment variable.\nUpdate README_prepared.txt accordingly so users don’t guess wrong.",
-          "Remove the duplicate lines:\n- Delete the second pair of `set SDC ...` and `set OUTDIR ...` assignments in run_genus_mc.tcl to reduce accidental divergence.",
-          "Harden SDC for top overrides:\n- Use `get_ports -quiet clk` and only call create_clock if the port exists, or emit a clear warning stating which ports were found.\n- Alternatively, document in README that overriding TOP requires providing a matching SDC."
+          "Tcl hygiene: remove duplicate lines in run_genus_mc.tcl (the second 'set SDC ...' and 'set OUTDIR ...') to reduce confusion without changing behavior.",
+          "Tcl hygiene: choose one defines path. Recommended: keep env(HDL_DEFINES) -> read_hdl -define and drop env(GENUS_DEFINES)/set_db hdl_define (or clearly document precedence) to avoid double-define scenarios.",
+          "Optional robustness: in constraints/mc_genus.sdc, consider guarding the set_input_delay/set_output_delay with a check that clock 'clk' was actually created (or use -clock [get_clocks -quiet clk] and skip if empty) to avoid tool warnings if top is overridden to a design without clk."
         ],
-        "summary": "Prep bundle is complete and internally consistent for the selected top ddr4_controller_top: filelist includes all defined/instantiated modules, top selection indirection (top_module.txt with optional env(TOP)) is correct, no testbench/harness top indicators, and no interface ports at the synthesis boundary. Remaining items are non-blocking script/constraint hygiene improvements (defines mechanism consistency, redundant Tcl assignments, and SDC robustness when TOP is overridden).",
+        "summary": "Bundle is internally consistent and prep-contract complete: filelist exists and resolves, run_genus_mc.tcl honors env(TOP) and top_module.txt indirection, top_module.txt/README agree on ddr4_controller_top, selected top is not a testbench/harness and has no interface ports at the boundary, and dependency analysis shows no missing modules/files. No prep-stage blockers found.",
         "warnings": [
-          "run_genus_mc.tcl defines handling is internally inconsistent: it supports env(DEFINES) forwarded to read_hdl -define, but it also separately reads env(GENUS_DEFINES) and applies set_db hdl_define. This can cause confusion about which mechanism is authoritative and can result in duplicate/competing define application if both are set.",
-          "run_genus_mc.tcl redundantly assigns SDC and OUTDIR twice. Not functionally blocking, but it’s a sign the script was edited and could drift again.",
-          "mc_genus.sdc assumes an input port literally named clk and reset port literally named rst_n. That matches README/top sample, but if TOP is overridden via env(TOP) to a different module, constraints may silently not apply (or apply partially). Consider guarding create_clock with -quiet/get_ports checks or documenting that SDC is valid only for the default top.",
-          "The bundle looks like a simplified controller core (txn_* request/response ports) rather than a real DDR PHY/top-level memory interface. This is not a prep error, but be aware downstream users may expect DDR interface pins and need a different integration top/wrapper outside this bundle.",
-          "Some RTL uses SystemVerilog features that are usually OK for Genus but can still trigger tool/version quirks (warnings only at prep stage): $countones(), struct casts like REQUEST_WIDTH'(req_mem[j]), and unpacked arrays of packed structs (req_mem[DEPTH]). If Genus elaboration fails, these are the first constructs to check/adjust."
+          "run_genus_mc.tcl contains some redundant re-definitions (SDC/OUTDIR are set twice). This is harmless but can confuse future edits/reviews.",
+          "SDC is a generic bring-up constraint: it applies 0.0 input/output delays to all non-clock/reset ports. This is fine for first bring-up but should be reviewed before interpreting timing/QoR results as meaningful.",
+          "Genus define handling is split between env(HDL_DEFINES) passed to read_hdl -define and set_db hdl_define via env(GENUS_DEFINES). If a user sets both, behavior may be ambiguous; consider consolidating to one mechanism.",
+          "RTL contains SystemVerilog packed structs/arrays and $countones usage (e.g., ddr4_request_queue, ddr4_tFAW_tFAW_tracker). This is not a prep-stage issue, but if elaboration fails in a given Genus/version/library environment, these are likely first places to look."
         ]
       },
       "ambiguity_reason": null,
       "applicable_recipe_ids": [],
       "attempt": 1,
-      "candidate_path": "build_prep_260MHz_01",
+      "candidate_path": "build_prep_250MHz_01",
       "chosen_recipe_id": null,
       "context": {
         "artifact_status": {
@@ -2894,57 +2893,57 @@
             {
               "entry": "./rtl/ddr4_bank_activate_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_activate_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_activate_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_bank_sequencer.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_bank_sequencer.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_precharge_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_precharge_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_top.sv"
             },
             {
               "entry": "./rtl/ddr4_bank_tRAS_fsm.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_bank_tRAS_fsm.sv"
             },
             {
               "entry": "./rtl/ddr4_controller_top.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_controller_top.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_controller_top.sv"
             },
             {
               "entry": "./rtl/ddr4_refresh_refresh_controller.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_refresh_refresh_controller.sv"
             },
             {
               "entry": "./rtl/ddr4_request_queue.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_request_queue.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_request_queue.sv"
             },
             {
               "entry": "./rtl/ddr4_scheduler_scheduler.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_scheduler_scheduler.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_scheduler_scheduler.sv"
             },
             {
               "entry": "./rtl/ddr4_tFAW_tFAW_tracker.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tFAW_tFAW_tracker.sv"
             },
             {
               "entry": "./rtl/ddr4_tRRD_simple_tRRD.sv",
               "exists": true,
-              "resolved": "/home/ugrads/a/antgamez1203/capstone/build_prep_260MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
+              "resolved": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_prep_250MHz_01/rtl/ddr4_tRRD_simple_tRRD.sv"
             }
           ],
           "truncated": false,
@@ -2986,7 +2985,7 @@
           "current_errors": [],
           "latest_applied_actions": [
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "new_errors": [],
           "persistent_errors": [],
@@ -2995,21 +2994,21 @@
           ],
           "prior_fix_history": [
             "Update run_genus_mc.tcl so detected synthesis defines are applied explicitly before read_hdl.",
-            "If macros truly are not used/required, remove/ignore the local prep error and mark this check as N/A for this bundle.",
-            "Harden top selection indirection in run_genus_mc.tcl (non-blocking but recommended):\n- if {[info exists ::env(TOP)] && $::env(TOP) ne \"\"} { set TOP $::env(TOP) } else { set fh [open \"./top_module.txt\" r]; set TOP [string trim [read $fh]]; close $fh }\nThis keeps bundle metadata and Tcl behavior from diverging when the inferred top changes.",
-            "If you later introduce required `ifdef features, add an explicit, documented define mechanism rather than guessing:\n- accept env(DEFINES) and pass to read_hdl via -define (or set_db hdl_define_* if that is your local Genus convention), and document it in README_prepared.txt.",
+            "Resolve the inconsistency in the local review pipeline: only raise the “macros detected but not applied” error when at least one macro is actually detected/required, or store detected macros in a machine-readable artifact (e.g., defines.txt) and have run_genus_mc.tcl consume it.",
+            "Optional robustness: modify run_genus_mc.tcl to support top indirection: if env(TOP) exists use it; else read top_module.txt; else fall back to current hardcoded value. This aligns with the prep contract and avoids hardcoding a specific design name in Tcl when metadata already selects the top.",
+            "Optional: add a minimal `defines` hook (non-blocking) such as reading env(HDL_DEFINES) and passing `read_hdl -define $HDL_DEFINES ...` (or equivalent Genus option), but keep it empty by default since this bundle detected none.",
             "replace_text run_genus_mc.tcl",
-            "append_text README_prepared.txt"
+            "replace_text constraints/mc_genus.sdc"
           ],
           "resolved_errors": [
             "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
           ]
         },
         "key_files": {
-          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_260MHz_01 --top ddr4_controller_top\n\nAddendum (Genus Tcl behavior):\n  - No preprocessor macros were detected in the prepared RTL for this bundle.\n  - run_genus_mc.tcl supports optional defines via env(DEFINES), forwarded to read_hdl.\n    Example:\n      export DEFINES=\"FEATURE_X FOO=1\"\n      genus -f run_genus_mc.tcl\n",
-          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\ncreate_clock -name clk -period 5.000 [get_ports clk]\nset_clock_uncertainty 0.10 [get_clocks clk]\n\nset_false_path -from [get_ports rst_n]\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
+          "README_prepared.txt": "Prepared for generic Cadence Genus synthesis.\n\nTop module: ddr4_controller_top\n\nThis prep flow is intentionally generic:\n  - copies RTL recursively\n  - strips SVA/property/sequence constructs\n  - strips debug system tasks like $display/$strobe/$monitor\n  - preserves packages, interfaces, and module hierarchy\n  - excludes obvious unit-test / testbench files when detected\n\nIncluded synthesizable source files: 11\n\nTop candidates:\n  - ddr4_controller_top (score 183)\n  - ddr4_bank_top (score 55)\n  - ddr4_refresh_refresh_controller (score 24)\n  - ddr4_bank_bank_sequencer (score 16)\n  - ddr4_scheduler_scheduler (score 13)\n  - ddr4_request_queue (score 9)\n  - ddr4_tFAW_tFAW_tracker (score 6)\n  - ddr4_bank_activate_fsm (score 5)\n\nDetected clock ports:\n  - clk: 5.000 ns\nDetected reset ports:\n  - rst_n\n\nPreprocessor macros detected in source:\n  - none\n\nNotes:\n  - If the inferred top is wrong, rerun with --top <module_name>.\n  - If the design depends on `ifdef features, rerun with --define NAME.\n  - The generated mc_genus.sdc is only a starting point.\n  - Interface-heavy designs may still need project-specific constraint or wrapper work.\n\nTypical next step:\n  python3 run_genus_netlist.py --builddir build_prep_250MHz_01 --top ddr4_controller_top\n",
+          "constraints/mc_genus.sdc": "# Auto-generated generic block-level SDC for Genus bring-up\n# Review and refine this file before signoff timing work.\n\nset _clk_ports [get_ports -quiet {clk}]\nif {[sizeof_collection $_clk_ports] > 0} {\n    create_clock -name clk -period 5.000 $_clk_ports\n    set_clock_uncertainty 0.10 [get_clocks clk]\n} else {\n    puts \"WARNING: No top-level port 'clk' found; create_clock not applied.\"\n}\n\nset _rst_ports [get_ports -quiet {rst_n}]\nif {[sizeof_collection $_rst_ports] > 0} {\n    set_false_path -from $_rst_ports\n} else {\n    puts \"WARNING: No top-level port 'rst_n' found; reset false-path not applied.\"\n}\n\nset bidir_ports {}\nset reset_ports [get_ports -quiet {rst_n}]\nset clock_ports [get_ports -quiet {clk}]\nset excluded_inputs  [add_to_collection $clock_ports $reset_ports]\nset excluded_outputs $bidir_ports\nset timed_inputs  [remove_from_collection [all_inputs]  $excluded_inputs]\nset timed_outputs [remove_from_collection [all_outputs] $excluded_outputs]\n\nif {[sizeof_collection $timed_inputs] > 0} { set_input_delay 0.0 -clock clk $timed_inputs }\nif {[sizeof_collection $timed_outputs] > 0} { set_output_delay 0.0 -clock clk $timed_outputs }\n\n# Note:\n# - inout ports are excluded from generic IO timing here\n# - interface/PHY-specific timing should be modeled explicitly later\n\n",
           "filelist_genus.f": "+incdir+./rtl\n./rtl/ddr4_bank_activate_fsm.sv\n./rtl/ddr4_bank_bank_sequencer.sv\n./rtl/ddr4_bank_precharge_fsm.sv\n./rtl/ddr4_bank_top.sv\n./rtl/ddr4_bank_tRAS_fsm.sv\n./rtl/ddr4_controller_top.sv\n./rtl/ddr4_refresh_refresh_controller.sv\n./rtl/ddr4_request_queue.sv\n./rtl/ddr4_scheduler_scheduler.sv\n./rtl/ddr4_tFAW_tFAW_tracker.sv\n./rtl/ddr4_tRRD_simple_tRRD.sv\n",
-          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Top selection:\n# Prefer env(TOP) if set; otherwise read ./top_module.txt for bundle-consistent behavior.\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} else {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional preprocessor defines:\n# If you need macros for conditional RTL, pass them explicitly via env(DEFINES), e.g.:\n#   export DEFINES=\"FOO BAR=1\"\n# These will be forwarded to read_hdl as -define entries.\nset DEFINES_LIST {}\nif {[info exists ::env(DEFINES)] && [string trim $::env(DEFINES)] ne \"\"} {\n    set DEFINES_LIST [split [string trim $::env(DEFINES)]]\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nif {[llength $DEFINES_LIST] > 0} {\n    puts \"DEFINES  = $DEFINES_LIST\"\n    read_hdl -sv -define $DEFINES_LIST -f $FILELIST\n} else {\n    puts \"DEFINES  = (none)\"\n    read_hdl -sv -f $FILELIST\n}\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
+          "run_genus_mc.tcl": "# Auto-generated generic Genus Tcl\nif {![info exists ::env(GENUS_LIBS)] || [string trim $::env(GENUS_LIBS)] eq \"\"} {\n    puts \"ERROR: Set GENUS_LIBS to one or more SKY130A .lib files before running Genus.\"\n    exit 2\n}\n\n# Resolve TOP in this order:\n#   1) env(TOP) override\n#   2) top_module.txt (generated by prep)\n#   3) fallback default\nset TOP \"ddr4_controller_top\"\nif {[info exists ::env(TOP)] && [string trim $::env(TOP)] ne \"\"} {\n    set TOP [string trim $::env(TOP)]\n} elseif {[file exists \"./top_module.txt\"]} {\n    set fh [open \"./top_module.txt\" r]\n    set TOP [string trim [read $fh]]\n    close $fh\n    if {$TOP eq \"\"} { set TOP \"ddr4_controller_top\" }\n}\n\nset FILELIST [file normalize \"./filelist_genus.f\"]\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\n# Optional macro hook:\n# If your design requires preprocessor defines, set env(HDL_DEFINES) to a space-separated list,\n# e.g.  export HDL_DEFINES=\"FOO BAR=1\".  This bundle's README reports no detected macros.\nset HDL_DEFINES \"\"\nif {[info exists ::env(HDL_DEFINES)]} { set HDL_DEFINES [string trim $::env(HDL_DEFINES)] }\n\n# Read HDL; apply defines only if provided\nif {$HDL_DEFINES ne \"\"} {\n    puts \"HDL_DEFINES = $HDL_DEFINES\"\n    read_hdl -sv -define $HDL_DEFINES -f $FILELIST\n} else {\n    read_hdl -sv -f $FILELIST\n}\nset SDC [file normalize \"./constraints/mc_genus.sdc\"]\nset OUTDIR [file normalize \"./../build_genus_mc\"]\n\nfile mkdir $OUTDIR\nfile mkdir $OUTDIR/reports\nfile mkdir $OUTDIR/results\n\nset lib_list [split $::env(GENUS_LIBS)]\nset PREPDIR [file dirname $FILELIST]\nset_db init_hdl_search_path [list $PREPDIR [file join $PREPDIR rtl]]\nset_db init_lib_search_path [list [file dirname [lindex $lib_list 0]]]\nset_db library $lib_list\nset_db hdl_language sv\nset_db information_level 7\nset_db hdl_append_generic_ports 0\nset_db hdl_resolve_parameterized_instance_with_structural_module true\ncatch {set_db hdl_track_filename_row_col true}\n\nset ACTIVE_DEFINES [list none]\nif {[info exists ::env(GENUS_DEFINES)] && [string trim $::env(GENUS_DEFINES)] ne \"\"} {\n    set ACTIVE_DEFINES [split $::env(GENUS_DEFINES)]\n}\nif {[llength $ACTIVE_DEFINES] > 0} {\n    set_db hdl_define $ACTIVE_DEFINES\n}\nputs \"DEFINES  = $ACTIVE_DEFINES\"\n\nputs \"TOP      = $TOP\"\nputs \"FILELIST = $FILELIST\"\nputs \"SDC      = $SDC\"\nputs \"OUTDIR   = $OUTDIR\"\nputs \"LIBS     = $lib_list\"\n\nelaborate $TOP\ncheck_design -unresolved > $OUTDIR/reports/check_unresolved_pre_sdc.rpt\n\nif {[file exists $SDC]} {\n    read_sdc $SDC\n} else {\n    puts \"WARNING: SDC file not found; continuing without constraints\"\n}\n\nset_db syn_generic_effort medium\nset_db syn_map_effort medium\nset_db syn_opt_effort medium\n\nsyn_generic\nsyn_map\nsyn_opt\n\nreport_qor > $OUTDIR/reports/qor.rpt\nreport_area > $OUTDIR/reports/area.rpt\nreport_timing -max_paths 20 > $OUTDIR/reports/timing.rpt\nreport_power > $OUTDIR/reports/power.rpt\nreport_gates > $OUTDIR/reports/gates.rpt\ncheck_design > $OUTDIR/reports/check_design_post_syn.rpt\nreport_messages > $OUTDIR/reports/messages.rpt\n\nwrite_hdl > $OUTDIR/results/${TOP}_mapped.v\nwrite_sdc > $OUTDIR/results/${TOP}_mapped.sdc\nwrite_design -innovus -base_name $OUTDIR/results/${TOP}\n\nputs \"Genus run complete.\"\nexit\n",
           "top_module.txt": "ddr4_controller_top\n"
         },
         "rtl_samples": [
@@ -3295,17 +3294,16 @@
       "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal genus prep instruction.md",
       "subclass": null,
       "suggested_fixes": [
-        "Choose one defines mechanism in run_genus_mc.tcl and document it:\n- Preferred: keep env(DEFINES) -> read_hdl -define, and remove the env(GENUS_DEFINES)/set_db hdl_define block; OR\n- If you want set_db hdl_define as the standard, then remove env(DEFINES) forwarding and just use one environment variable.\nUpdate README_prepared.txt accordingly so users don’t guess wrong.",
-        "Remove the duplicate lines:\n- Delete the second pair of `set SDC ...` and `set OUTDIR ...` assignments in run_genus_mc.tcl to reduce accidental divergence.",
-        "Harden SDC for top overrides:\n- Use `get_ports -quiet clk` and only call create_clock if the port exists, or emit a clear warning stating which ports were found.\n- Alternatively, document in README that overriding TOP requires providing a matching SDC."
+        "Tcl hygiene: remove duplicate lines in run_genus_mc.tcl (the second 'set SDC ...' and 'set OUTDIR ...') to reduce confusion without changing behavior.",
+        "Tcl hygiene: choose one defines path. Recommended: keep env(HDL_DEFINES) -> read_hdl -define and drop env(GENUS_DEFINES)/set_db hdl_define (or clearly document precedence) to avoid double-define scenarios.",
+        "Optional robustness: in constraints/mc_genus.sdc, consider guarding the set_input_delay/set_output_delay with a check that clock 'clk' was actually created (or use -clock [get_clocks -quiet clk] and skip if empty) to avoid tool warnings if top is overridden to a design without clk."
       ],
-      "summary": "Local prep review passed with 0 errors and 0 warnings. Prep bundle is complete and internally consistent for the selected top ddr4_controller_top: filelist includes all defined/instantiated modules, top selection indirection (top_module.txt with optional env(TOP)) is correct, no testbench/harness top indicators, and no interface ports at the synthesis boundary. Remaining items are non-blocking script/constraint hygiene improvements (defines mechanism consistency, redundant Tcl assignments, and SDC robustness when TOP is overridden).",
+      "summary": "Local prep review passed with 0 errors and 0 warnings. Bundle is internally consistent and prep-contract complete: filelist exists and resolves, run_genus_mc.tcl honors env(TOP) and top_module.txt indirection, top_module.txt/README agree on ddr4_controller_top, selected top is not a testbench/harness and has no interface ports at the boundary, and dependency analysis shows no missing modules/files. No prep-stage blockers found.",
       "warnings": [
-        "run_genus_mc.tcl defines handling is internally inconsistent: it supports env(DEFINES) forwarded to read_hdl -define, but it also separately reads env(GENUS_DEFINES) and applies set_db hdl_define. This can cause confusion about which mechanism is authoritative and can result in duplicate/competing define application if both are set.",
-        "run_genus_mc.tcl redundantly assigns SDC and OUTDIR twice. Not functionally blocking, but it’s a sign the script was edited and could drift again.",
-        "mc_genus.sdc assumes an input port literally named clk and reset port literally named rst_n. That matches README/top sample, but if TOP is overridden via env(TOP) to a different module, constraints may silently not apply (or apply partially). Consider guarding create_clock with -quiet/get_ports checks or documenting that SDC is valid only for the default top.",
-        "The bundle looks like a simplified controller core (txn_* request/response ports) rather than a real DDR PHY/top-level memory interface. This is not a prep error, but be aware downstream users may expect DDR interface pins and need a different integration top/wrapper outside this bundle.",
-        "Some RTL uses SystemVerilog features that are usually OK for Genus but can still trigger tool/version quirks (warnings only at prep stage): $countones(), struct casts like REQUEST_WIDTH'(req_mem[j]), and unpacked arrays of packed structs (req_mem[DEPTH]). If Genus elaboration fails, these are the first constructs to check/adjust."
+        "run_genus_mc.tcl contains some redundant re-definitions (SDC/OUTDIR are set twice). This is harmless but can confuse future edits/reviews.",
+        "SDC is a generic bring-up constraint: it applies 0.0 input/output delays to all non-clock/reset ports. This is fine for first bring-up but should be reviewed before interpreting timing/QoR results as meaningful.",
+        "Genus define handling is split between env(HDL_DEFINES) passed to read_hdl -define and set_db hdl_define via env(GENUS_DEFINES). If a user sets both, behavior may be ambiguous; consider consolidating to one mechanism.",
+        "RTL contains SystemVerilog packed structs/arrays and $countones usage (e.g., ddr4_request_queue, ddr4_tFAW_tFAW_tracker). This is not a prep-stage issue, but if elaboration fails in a given Genus/version/library environment, these are likely first places to look."
       ]
     }
   }

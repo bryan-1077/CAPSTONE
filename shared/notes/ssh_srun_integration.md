@@ -48,6 +48,14 @@ do not wrap the backend app in an additional remote invocation.
 
 ## Configuration to supply
 
+As of October 8, 2026, the backend working directory on the Texas A&M server is
+`/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend`.
+Backend defaults use this directory for scripts, staging, and build outputs.
+The SSH host remains `olympus.ece.tamu.edu`. The shared orchestrator's
+`CAPSTONE_REMOTE_PROJECT_DIR` is a separate setting for the deployed repository
+root; it should not point at `server/backend` when using repository-relative
+validation paths such as `server/validation/run_pipeline.py`.
+
 Keep these configurable rather than copying backend account-specific values:
 
 - SSH host, port, username, and local private-key path.

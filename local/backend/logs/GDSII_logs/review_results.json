@@ -9,25 +9,25 @@
     "request_metadata": {
       "api_style": "chat_completions_fallback",
       "base_url": "https://chat-api.tamu.ai/openai",
-      "candidate_path": "build_GDSII_260MHz_01",
+      "candidate_path": "build_GDSII_250MHz_03",
       "execution_ok": true,
       "local_error_count": 0,
       "local_warning_count": 0,
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "model": "protected.gpt-5.2",
       "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
     },
     "suggested_fixes": [
-      "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-      "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-      "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+      "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+      "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+      "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
     ],
-    "summary": "GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+    "summary": "GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
     "warnings": [
-      "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-      "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-      "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-      "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+      "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+      "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+      "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+      "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
     ]
   },
   "failure_class": "physical_verification_failure",
@@ -44,29 +44,29 @@
       "request_metadata": {
         "api_style": "chat_completions_fallback",
         "base_url": "https://chat-api.tamu.ai/openai",
-        "candidate_path": "build_GDSII_260MHz_01",
+        "candidate_path": "build_GDSII_250MHz_03",
         "execution_ok": true,
         "local_error_count": 0,
         "local_warning_count": 0,
-        "mappeddir": "build_mapped_snapshot_260MHz_01",
+        "mappeddir": "build_mapped_snapshot_250MHz_01",
         "model": "protected.gpt-5.2",
         "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
       },
       "suggested_fixes": [
-        "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-        "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-        "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+        "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+        "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+        "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
       ],
-      "summary": "GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+      "summary": "GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
       "warnings": [
-        "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-        "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-        "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-        "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+        "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+        "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+        "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+        "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
       ]
     },
     "blocking_errors": [],
-    "candidate_path": "build_GDSII_260MHz_01",
+    "candidate_path": "build_GDSII_250MHz_03",
     "context": {
       "detected_outputs": [
         "results/ddr4_controller_top.gds"
@@ -81,12 +81,12 @@
         "total_files": 4,
         "truncated": false
       },
-      "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+      "input_mappeddir": "build_mapped_snapshot_250MHz_01",
       "key_files": {
         "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-        "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+        "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
         "output:agent_gdsii_stderr.log": "",
-        "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+        "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
       },
       "log_classification": {
         "blocking_diagnostics": [],
@@ -359,7 +359,6 @@
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-          "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -397,7 +396,6 @@
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-          "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -472,7 +470,6 @@
           "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/06_final.enc.dat/ddr4_controller_top.globals",
           "db/06_final.enc.dat/ddr4_controller_top.init",
-          "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
           "db/06_final.enc.dat/ddr4_controller_top.mode",
           "db/06_final.enc.dat/ddr4_controller_top.opconds",
           "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -502,9 +499,12 @@
           "logs/run_wrapper.log",
           "reports/area_postroute.rpt",
           "reports/ccopt.spec",
-          "reports/ddr4_controller_top.antenna.rpt"
+          "reports/ddr4_controller_top.antenna.rpt",
+          "reports/ddr4_controller_top.conn.rpt",
+          "reports/ddr4_controller_top.geom.rpt",
+          "reports/die_area.rpt"
         ],
-        "total_files": 473,
+        "total_files": 470,
         "truncated": true
       }
     },
@@ -526,29 +526,29 @@
     "route_back_to_stage": null,
     "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_gdsii_instructions.md",
     "suggested_fixes": [
-      "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-      "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-      "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+      "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+      "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+      "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
     ],
-    "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+    "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
     "warnings": [
-      "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-      "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-      "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-      "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+      "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+      "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+      "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+      "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
     ]
   },
   "gdsii_review_suggested_fixes": [
-    "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-    "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-    "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+    "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+    "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+    "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
   ],
-  "gdsii_review_summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+  "gdsii_review_summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
   "gdsii_review_warnings": [
-    "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-    "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-    "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-    "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+    "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+    "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+    "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+    "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
   ],
   "local_review": {
     "blocking_errors": [],
@@ -572,30 +572,30 @@
       "request_metadata": {
         "api_style": "chat_completions_fallback",
         "base_url": "https://chat-api.tamu.ai/openai",
-        "candidate_path": "build_GDSII_260MHz_01",
+        "candidate_path": "build_GDSII_250MHz_03",
         "execution_ok": true,
         "local_error_count": 0,
         "local_warning_count": 0,
-        "mappeddir": "build_mapped_snapshot_260MHz_01",
+        "mappeddir": "build_mapped_snapshot_250MHz_01",
         "model": "protected.gpt-5.2",
         "responses_api_error": "Error code: 404 - {'detail': 'Not Found'}"
       },
       "suggested_fixes": [
-        "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-        "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-        "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+        "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+        "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+        "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
       ],
-      "summary": "GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+      "summary": "GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
       "warnings": [
-        "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-        "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-        "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-        "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+        "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+        "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+        "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+        "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
       ]
     },
     "attempt": 1,
     "blocking_errors": [],
-    "candidate_path": "build_GDSII_260MHz_01",
+    "candidate_path": "build_GDSII_250MHz_03",
     "context": {
       "detected_outputs": [
         "results/ddr4_controller_top.gds"
@@ -610,12 +610,12 @@
         "total_files": 4,
         "truncated": false
       },
-      "input_mappeddir": "build_mapped_snapshot_260MHz_01",
+      "input_mappeddir": "build_mapped_snapshot_250MHz_01",
       "key_files": {
         "input_artifacts": "results/ddr4_controller_top_mapped.db\nresults/ddr4_controller_top_mapped.sdc\nresults/ddr4_controller_top_mapped.v",
-        "output:agent_gdsii_progress.log": "[2026-10-01T13:26:58-05:00] gdsii launcher started\n[2026-10-01T13:26:58-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-01T13:26:58-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-01T13:26:58-05:00] mappeddir=build_mapped_snapshot_260MHz_01\n[2026-10-01T13:26:58-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-01T13:26:58-05:00] outdir=build_GDSII_260MHz_01\n[2026-10-01T13:26:58-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-01T13:26:58-05:00] gdsii_script=.timing_closure_runner_260MHz_01.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-01T13:26:58-05:00] gdsii still running\n[2026-10-01T13:27:58-05:00] gdsii still running\n[2026-10-01T13:28:58-05:00] gdsii still running\n[2026-10-01T13:29:58-05:00] gdsii still running\n[2026-10-01T13:30:58-05:00] gdsii still running\n[2026-10-01T13:31:58-05:00] gdsii still running\n[2026-10-01T13:32:58-05:00] gdsii still running\n[2026-10-01T13:33:58-05:00] gdsii still running\n[2026-10-01T13:34:58-05:00] gdsii still running\n[2026-10-01T13:35:58-05:00] gdsii still running\n[2026-10-01T13:36:12-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
+        "output:agent_gdsii_progress.log": "[2026-10-08T12:53:53-05:00] gdsii launcher started\n[2026-10-08T12:53:53-05:00] prep_dir_source=state.prep_candidate_path\n[2026-10-08T12:53:53-05:00] netlist_dir_source=state.remote_netlist_dir\n[2026-10-08T12:53:53-05:00] mappeddir=build_mapped_snapshot_250MHz_01\n[2026-10-08T12:53:53-05:00] mappeddir_source=state.remote_mapped_dir\n[2026-10-08T12:53:53-05:00] outdir=build_GDSII_250MHz_03\n[2026-10-08T12:53:53-05:00] outdir_source=state.remote_gdsii_dir\n[2026-10-08T12:53:53-05:00] gdsii_script=.timing_closure_runner_250MHz_03.py\nEDA_GDSII_INNOVUS_BIN:/opt/coe/cadence/DDI231/bin/innovus\nEDA_GDSII_INNOVUS_BIN_SOURCE:workers.default_innovus_path\n[2026-10-08T12:53:53-05:00] gdsii still running\n[2026-10-08T12:54:53-05:00] gdsii still running\n[2026-10-08T12:55:53-05:00] gdsii still running\n[2026-10-08T12:56:53-05:00] gdsii still running\n[2026-10-08T12:57:53-05:00] gdsii still running\n[2026-10-08T12:58:53-05:00] gdsii still running\n[2026-10-08T12:59:54-05:00] gdsii still running\n[2026-10-08T13:00:54-05:00] gdsii still running\n[2026-10-08T13:01:54-05:00] gdsii still running\n[2026-10-08T13:02:32-05:00] gdsii exited rc=0\nEDA_GDSII_RUN_COMPLETE:0\n",
         "output:agent_gdsii_stderr.log": "",
-        "output:agent_gdsii_stdout.log": "Mapped dir   : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01\nOut dir      : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /home/ugrads/a/antgamez1203/capstone/build_mapped_snapshot_260MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 3.846\nCCOpt target skew       : 0.250\nCCOpt target max trans  : 0.500\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus_native.log\" -files \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/tcl/run_innovus.tcl\" | tee \"/home/ugrads/a/antgamez1203/capstone/build_GDSII_260MHz_01/logs/innovus.log\"\n\nPATH=/opt/coe/cadence/DDI231/INNOVUS231/bin:/opt/coe/bin:/opt/coe/bin:/usr/local/texlive/2025\n...<truncated>..."
+        "output:agent_gdsii_stdout.log": "Mapped dir   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01\nOut dir      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03\nInnovus bin  : /opt/coe/cadence/DDI231/INNOVUS231/bin/.cdnWrapperIndep\nCDS_LIC_FILE : 5280@coe-vtls2.engr.tamu.edu\nLM_LICENSE_FILE: 5280@coe-vtls2.engr.tamu.edu\nNetlist      : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.v\nTop          : ddr4_controller_top\nSDC original : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_mapped_snapshot_250MHz_01/results/ddr4_controller_top_mapped.sdc\nSDC Innovus  : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/tcl/ddr4_controller_top_mapped.innovus.sdc\nSDC sanitize : removed 2 unsupported set_units command(s)\nPDK root     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A\nTech LEF     : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef\nLEFs         : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__rram__nom.tlef, /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef\nTiming libs  : /home/ugrads/a/antgamez1203/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib\nQRC tech     : NONE\nCap table    : NONE\nStream map   : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/streamOut.map\nSite         : unithd\nRouting      : ['li1', 'met1', 'met2', 'met3', 'met4', 'met5']\nFillers      : sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__fill_4, sky130_fd_sc_hd__fill_8\nPower pins   : ['VPWR', 'VPB', 'KAPWR']\nGround pins  : ['VGND', 'VNB']\nTieHi net    : NONE\nTieLo net    : NONE\nConst assigns: 0 top-level, 0 direct literal pin ties\nCTS enabled  : True\nNo filler    : False\nAntenna diode: sky130_fd_sc_hd__diode_2\nClock period override ns: 4.000\nCCOpt target skew       : 0.120\nCCOpt target max trans  : 0.250\nFinal post-route setup opt: True\n\n\n[RUN]\nset -euo pipefail\nexport PATH=\"/opt/coe/cadence/DDI231/INNOVUS231/bin:$PATH\"\nexport CDS_LIC_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\nexport LM_LICENSE_FILE=\"5280@coe-vtls2.engr.tamu.edu\"\necho \"PATH=$PATH\"\necho \"CDS_LIC_FILE=${CDS_LIC_FILE-}\"\necho \"LM_LICENSE_FILE=${LM_LICENSE_FILE-}\"\nwhich innovus || true\ninnovus -no_gui -log \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_250MHz_03/logs/innovus_native.log\" -files \"/mnt/nfs-scratch/ECEN_403-404/ddr4_capsto\n...<truncated>..."
       },
       "log_classification": {
         "blocking_diagnostics": [],
@@ -888,7 +888,6 @@
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.globals",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.init",
-          "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.marker.gz",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.mode",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.opconds",
           "db/05c_post_eco_ant.enc.dat/ddr4_controller_top.pg.gz",
@@ -926,7 +925,6 @@
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.globals",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.init",
-          "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.marker.gz",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.mode",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.opconds",
           "db/05d_targeted_ant_cleanup.enc.dat/ddr4_controller_top.pg.gz",
@@ -1001,7 +999,6 @@
           "db/06_final.enc.dat/ddr4_controller_top.fp.spr.gz",
           "db/06_final.enc.dat/ddr4_controller_top.globals",
           "db/06_final.enc.dat/ddr4_controller_top.init",
-          "db/06_final.enc.dat/ddr4_controller_top.marker.gz",
           "db/06_final.enc.dat/ddr4_controller_top.mode",
           "db/06_final.enc.dat/ddr4_controller_top.opconds",
           "db/06_final.enc.dat/ddr4_controller_top.pg.gz",
@@ -1031,18 +1028,21 @@
           "logs/run_wrapper.log",
           "reports/area_postroute.rpt",
           "reports/ccopt.spec",
-          "reports/ddr4_controller_top.antenna.rpt"
+          "reports/ddr4_controller_top.antenna.rpt",
+          "reports/ddr4_controller_top.conn.rpt",
+          "reports/ddr4_controller_top.geom.rpt",
+          "reports/die_area.rpt"
         ],
-        "total_files": 473,
+        "total_files": 470,
         "truncated": true
       }
     },
     "errors": [],
     "execution_context": {
       "exit_code": 0,
-      "mappeddir": "build_mapped_snapshot_260MHz_01",
+      "mappeddir": "build_mapped_snapshot_250MHz_01",
       "ok": true,
-      "outdir": "build_GDSII_260MHz_01"
+      "outdir": "build_GDSII_250MHz_03"
     },
     "failure_class": "non_fatal_warning_only_issue",
     "failure_stage_owner": "gdsii",
@@ -1061,16 +1061,16 @@
     "route_back_to_stage": null,
     "rules_path": "/home/antgamez1203/CAPSTONE/local/backend/templates/universal_gdsii_instructions.md",
     "suggested_fixes": [
-      "If timing accuracy matters, provide/enable a proper QRC tech file and cap table for sky130 (or equivalent Quantus/QRC setup) instead of running with QRC tech NONE.",
-      "Set/propagate the correct technology node/process metadata into the Innovus run (or adjust the script) to avoid default 130nm extraction/filtering assumptions.",
-      "Review the mapped SDC for set_units usage; replace unsupported commands with Innovus-compatible equivalents (or ensure the runner’s sanitize step also enforces the intended units explicitly)."
+      "If you want to eliminate the SDC sanitization step, adjust mapped_netlist SDC generation to avoid unsupported set_units (or gate them per tool).",
+      "Set explicit design tech node/process metadata in the Innovus setup (or in the generated run_innovus.tcl) to avoid default 130nm capacitance filtering assumptions.",
+      "Update the log classifier heuristics so reached_import becomes true when Innovus reports reading LEF/LIB and 'Reading verilog netlist' / 'Set top cell'."
     ],
-    "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage appears successful: launcher exited rc=0 and a GDS output (results/ddr4_controller_top.gds) was detected. No evidence of missing mapped handoff artifacts; input bundle contains mapped .v/.sdc/.db. Only non-blocking flow-quality warnings were observed (SDC sanitization, missing QRC/captable, tech node not set, minor LEF syntax warning).",
+    "summary": "No blocking GDSII-stage log classifier findings were detected. Local GDSII-stage review passed with 0 errors and 0 warnings. GDSII stage run completed successfully (exit_code=0) and produced results/ddr4_controller_top.gds. No blocking issues found; only minor warnings about SDC sanitization, missing explicit tech node metadata, and benign LEF/PDK warnings. Ownership remains with gdsii (no need to route back to mapped_netlist).",
     "warnings": [
-      "SDC was sanitized for Innovus: removed 2 unsupported set_units command(s). Verify time/cap units are still as intended for signoff-quality timing.",
-      "QRC tech and cap table are reported as NONE; post-route RC extraction will use default/approx settings, which may reduce timing/si accuracy depending on project requirements.",
-      "Innovus log notes: \"Design tech node is not set.\" This can affect default extraction/filtering assumptions (e.g., it applied 130nm defaults). Ensure the correct tech/process node is configured if required by your flow.",
-      "LEF warning: NOWIREEXTENSIONATPIN is obsolete and ignored (LEFPARS-2008). Likely benign but confirms some LEF syntax is legacy."
+      "Input mapped handoff bundle is minimal (only mapped_snapshot.json, *_mapped.db, *_mapped.sdc, *_mapped.v). This is acceptable here because the GDSII run completed and produced a .gds, but if future runs require additional handoff artifacts (e.g., DEF/tech collateral), they would need to be added by mapped_netlist.",
+      "Innovus log shows tech/process node not set and uses recommended 130nm defaults; likely benign for sky130 but indicates missing/unspecified node metadata in the flow configuration.",
+      "LEF parser warning LEFPARS-2008 (NOWIREEXTENSIONATPIN obsolete) observed; benign PDK/library noise.",
+      "SDC sanitization removed 2 unsupported set_units commands for Innovus. This is non-fatal but indicates the mapped SDC contains constructs not supported/desired in this stage."
     ]
   }
 }
