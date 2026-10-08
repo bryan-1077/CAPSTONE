@@ -67,7 +67,7 @@ def execute(invocation):
         # Preserve startup tracebacks in the result while still streaming them live.
         stderr_tail = deque(maxlen=40)
         with subprocess.Popen(command, cwd=work, env=environment, stderr=subprocess.PIPE,
-                              text=True, errors="replace") as process:
+                              universal_newlines=True, errors="replace") as process:
             for line in process.stderr:
                 stderr_tail.append(line[-8000:])
                 print(line, end="", file=sys.stderr, flush=True)

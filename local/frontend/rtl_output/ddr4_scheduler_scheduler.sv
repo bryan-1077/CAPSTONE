@@ -16,9 +16,7 @@ module ddr4_scheduler_scheduler (
     input  logic         timing_ok
 );
 
-    parameter int DEPTH = 4;
-    parameter int NUM_BANKS = 4;
-
+    localparam int DEPTH = 4;
     localparam int REQUEST_WIDTH = 51;
     localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
 
@@ -32,15 +30,13 @@ module ddr4_scheduler_scheduler (
 
     request_t req_unpacked [0:DEPTH-1];
     logic [DEPTH-1:0] row_hit;
-    logic [SEL_WIDTH-1:0] candidate_idx;
     logic candidate_valid;
-    logic candidate_success;
-    logic candidate_blocked;
+    logic [SEL_WIDTH-1:0] candidate_idx;
     logic locked_valid;
     logic [SEL_WIDTH-1:0] locked_idx;
     logic successful_issue;
-    logic [SEL_WIDTH-1:0] sel_idx_int;
-    logic issue_valid_int;
+    logic candidate_success;
+    logic candidate_blocked;
 
     always_comb begin
         for (int i = 0; i < DEPTH; i++) begin
@@ -50,7 +46,7 @@ module ddr4_scheduler_scheduler (
 
     always_comb begin
         for (int j = 0; j < DEPTH; j++) begin
-            row_hit[j] = req_valid[j] && bank_active[req_unpacked[j].bank] && (bank_open_row[(req_unpacked[j].bank * 10) +: 10] == req_unpacked[j].row);
+            row_hit[j] = req_valid[j] && bank_active[req_unpacked[j].bank] && (bank_open_row[(req_unpacked[j].bank*10) +: 10] == req_unpacked[j].row);
         end
     end
 
@@ -59,7 +55,7 @@ module ddr4_scheduler_scheduler (
         candidate_idx = SEL_WIDTH'(0);
 
         for (int k = 0; k < DEPTH; k++) begin
-            if (!candidate_valid && row_hit[k]) begin
+            if ((!candidate_valid) && row_hit[k]) begin
                 candidate_valid = 1'b1;
                 candidate_idx = SEL_WIDTH'(k);
             end
@@ -67,7 +63,7 @@ module ddr4_scheduler_scheduler (
 
         if (!candidate_valid) begin
             for (int m = 0; m < DEPTH; m++) begin
-                if (!candidate_valid && req_valid[m]) begin
+                if ((!candidate_valid) && req_valid[m]) begin
                     candidate_valid = 1'b1;
                     candidate_idx = SEL_WIDTH'(m);
                 end
@@ -77,20 +73,18 @@ module ddr4_scheduler_scheduler (
 
     always_comb begin
         if (locked_valid) begin
-            sel_idx_int = locked_idx;
-            issue_valid_int = req_valid[locked_idx];
+            issue_valid = req_valid[locked_idx];
+            sel_idx = locked_idx;
         end else begin
-            sel_idx_int = candidate_idx;
-            issue_valid_int = candidate_valid;
+            issue_valid = candidate_valid;
+            sel_idx = candidate_idx;
         end
 
         issue_ref = ref_req && cmd_ready && timing_ok;
-        issue_txn = issue_valid_int && cmd_ready && timing_ok && !ref_req && !issue_ref;
-        successful_issue = issue_valid_int && cmd_ready && timing_ok && !ref_req && !issue_ref;
+        issue_txn = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+        successful_issue = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
         candidate_success = candidate_valid && cmd_ready && timing_ok && !ref_req;
         candidate_blocked = candidate_valid && !ref_req && !candidate_success;
-        issue_valid = issue_valid_int;
-        sel_idx = sel_idx_int[1:0];
     end
 
     always_ff @(posedge clk) begin
@@ -101,11 +95,18 @@ module ddr4_scheduler_scheduler (
             if (locked_valid) begin
                 if (successful_issue) begin
                     locked_valid <= 1'b0;
+                    locked_idx <= locked_idx;
+                end else begin
+                    locked_valid <= locked_valid;
+                    locked_idx <= locked_idx;
                 end
             end else begin
                 if (candidate_blocked) begin
                     locked_valid <= 1'b1;
                     locked_idx <= candidate_idx;
+                end else begin
+                    locked_valid <= 1'b0;
+                    locked_idx <= locked_idx;
                 end
             end
         end

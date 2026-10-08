@@ -5,8 +5,11 @@
   "project_dir": "/absolute/server/path/to/your/project",
   "partition": "adademic",
   "qos": "olympus-academic",
-  "python": "python3.11",
-  "setup_commands": ["source ~/.bashrc"],
+  "python": "/usr/bin/python3",
+  "setup_commands": [
+    "source ~/.bashrc",
+    "source /opt/coe/synopsys/vcs/W-2024.09-SP2-4/setup.vcs.sh"
+  ],
   "required_tools": [],
   "allocation_wait_seconds": 30,
   "job_seconds": 120,

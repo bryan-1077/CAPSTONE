@@ -24,9 +24,12 @@ class RemoteConfig:
     qos: str
     port: int = 22
     key_filename: str | None = None
-    python: str = "python3.11"
+    python: str = "/usr/bin/python3"
     # load-ecen-454 is an allocation alias; srun is already added by slurm_command.
-    setup_commands: tuple[str, ...] = ("source ~/.bashrc",)
+    setup_commands: tuple[str, ...] = (
+        "source ~/.bashrc",
+        "source /opt/coe/synopsys/vcs/W-2024.09-SP2-4/setup.vcs.sh",
+    )
     required_tools: tuple[str, ...] = ()
     cpus: int = 1
     allocation_wait_seconds: int = 30

@@ -281,7 +281,7 @@ export CAPSTONE_SLURM_PARTITION=adademic
 export CAPSTONE_SLURM_QOS=olympus-academic
 # Optional: omit to use SSH-agent/default-key discovery.
 export CAPSTONE_SSH_KEY="$HOME/.ssh/id_ed25519"
-export CAPSTONE_REMOTE_PYTHON=python3.11
+# Python and VCS setup are built into the remote defaults; no exports needed.
 ```
 
 The partition spelling above is copied literally from backend; use the actual
@@ -310,7 +310,9 @@ reconnection) and is not saved in configuration or run artifacts. `--plan` never
 prompts. This option handles an account password; it does not implement custom
 Duo/MFA challenge handling. A terminal capable of disabling echo is required.
 
-By default the compute job runs `source ~/.bashrc` in its remote login Bash shell.
+By default the compute job runs `source ~/.bashrc`, then
+`source /opt/coe/synopsys/vcs/W-2024.09-SP2-4/setup.vcs.sh` in its remote login Bash
+shell, and uses `/usr/bin/python3` (the server's existing Python 3.6 environment).
 `load-ecen-454` is an alias for allocating an interactive `srun` session; do not
 include it in setup because the orchestrator already allocates the job. Its
 `--pty` and `--x11=first` options are unnecessary for this command-line probe.
@@ -354,13 +356,21 @@ as `remote-check`. The default deployed pipeline path is
 already have the validation scripts, Python dependencies, simulator, and model
 configuration installed. This adapter does not deploy or edit that source folder.
 
-Install the validation Python dependencies **on the server**, from the remote
-project directory, using the interpreter selected by `CAPSTONE_REMOTE_PYTHON`
-(or the JSON `python` setting; the default is `python3.11`):
+Use the server interpreter that already runs the validation agents successfully.
+`CAPSTONE_REMOTE_PYTHON` (or the JSON `python` setting) defaults to `/usr/bin/python3`;
+the uploaded wrapper supports Python 3.6. The local orchestrator still requires
+Python 3.10+. Existing Slurm and environment setup applies to this interpreter.
+Environment and JSON overrides still take precedence. Remove old
+`CAPSTONE_REMOTE_PYTHON` and `CAPSTONE_REMOTE_SETUP` exports to use the built-in
+defaults (`unset CAPSTONE_REMOTE_PYTHON CAPSTONE_REMOTE_SETUP` in the current
+terminal). Remove corresponding JSON overrides if using `--remote-config`.
+
+For a new server environment only, install the validation dependencies there,
+from the remote project directory, using the selected interpreter:
 
 ```bash
-python3.11 -m pip install --user -r server/validation/requirements.txt
-python3.11 -c 'import sys, yaml, requests, dotenv; print(sys.executable)'
+python3 -m pip install --user -r server/validation/requirements.txt
+python3 -c 'import sys, yaml, requests, dotenv; print(sys.executable)'
 ```
 
 For a virtual environment, omit `--user` and set the remote `python` setting to
