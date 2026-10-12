@@ -63,5 +63,20 @@ Regression tests run without model calls:
 
 ```bash
 cd local/frontend
-python3 -m unittest test_debug_repair -v
+python3 -m unittest test_debug_repair test_debug_llm_api -v
 ```
+
+Assessment and patch API calls start with an 8,192-token output budget. Responses
+marked `length` or `max_tokens` are rejected and retried with a larger budget,
+up to 16,384 tokens. If that ceiling is reached, the debug flow reports a
+truncation error before parsing an assessment or validating a patch. Each retry
+makes another API call. Provider model limits still apply.
+
+Set `DEBUG_LLM_MAX_TOKENS` and `DEBUG_LLM_MAX_RETRY_TOKENS` to override the initial
+budget and retry ceiling. Both must be positive integers, with the ceiling at
+least as large as the initial budget. Equal values disable truncation retries.
+
+Investigation diagnostics are saved in `analysis/assessment_*.api.json`;
+patch proposal diagnostics are saved in `attempts/attempt_*/api.json`. The existing
+top-level completion metadata describes the final API attempt, and `attempts`
+preserves each request's budget, completion status, usage, and error type.

@@ -2212,6 +2212,7 @@ def extract_response_text(data: dict[str, object]) -> str:
 
 def call_patch_llm(prompt: str, model: str, *, system_prompt: str | None = None,
                    diagnostic_path: Path | None = None) -> str:
+    """Return complete assessment/patch text, retrying token-limited responses."""
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "")
     if not api_key:
         raise RuntimeError("TAMUS_AI_CHAT_API_KEY is not set; use --offline or export it before proposing online.")
@@ -2221,48 +2222,85 @@ def call_patch_llm(prompt: str, model: str, *, system_prompt: str | None = None,
     except ImportError as exc:
         raise RuntimeError("The requests package is required for online patch proposals.") from exc
 
-    response = requests.post(
-        TAMU_API_URL,
-        headers={
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "max_tokens": 4096,
-            "stream": False,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt or "You are an expert ASIC RTL debug engineer. Return only a minimal unified diff or NO_PATCH.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-        },
-        timeout=120,
-    )
-    if diagnostic_path:
-        write_json(diagnostic_path, {"model": model, "http_status": response.status_code})
-    if response.status_code != 200:
-        text = (response.text or "").strip()
-        if len(text) > 800:
-            text = text[:800] + "..."
-        raise RuntimeError(f"Patch proposal API failed with HTTP {response.status_code}: {text}")
+    try:
+        token_budget = int(os.environ.get("DEBUG_LLM_MAX_TOKENS", "8192"))
+        token_ceiling = int(os.environ.get("DEBUG_LLM_MAX_RETRY_TOKENS", "16384"))
+        if not 0 < token_budget <= token_ceiling:
+            raise ValueError("require 0 < initial budget <= retry ceiling")
+    except ValueError as exc:
+        raise RuntimeError(f"Invalid DEBUG_LLM_MAX_TOKENS/DEBUG_LLM_MAX_RETRY_TOKENS: {exc}") from exc
 
-    data = response.json()
-    choices = data.get("choices", [])
-    metadata = {"model": model, "http_status": response.status_code,
-                "usage": data.get("usage"), "finish_reasons": [
-                    item.get("finish_reason") for item in choices if isinstance(item, dict)
-                ] if isinstance(choices, list) else []}
-    text = extract_response_text(data)
-    metadata["content_characters"] = len(text)
-    if diagnostic_path:
-        write_json(diagnostic_path, metadata)
-    if not text:
-        raise RuntimeError(f"Model API returned no message content; finish_reasons={metadata['finish_reasons']}; "
-                           f"usage={metadata['usage']}")
-    return text
+    payload = {
+        "model": model,
+        "max_tokens": token_budget,
+        "stream": False,
+        "messages": [
+            {"role": "system", "content": system_prompt or
+             "You are an expert ASIC RTL debug engineer. Return only a minimal unified diff or NO_PATCH."},
+            {"role": "user", "content": prompt},
+        ],
+    }
+    attempts = []
+
+    def save_attempt(metadata: dict) -> None:
+        attempts.append(dict(metadata))
+        if diagnostic_path:
+            # Keep existing top-level fields while preserving every retry's metadata.
+            write_json(diagnostic_path, {**metadata, "attempts": attempts})
+
+    while True:
+        metadata = {"model": model, "max_tokens": payload["max_tokens"],
+                    "attempt": len(attempts) + 1}
+        try:
+            response = requests.post(
+                TAMU_API_URL,
+                headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
+                json=dict(payload), timeout=180,
+            )
+        except requests.exceptions.RequestException as exc:
+            save_attempt({**metadata, "error_type": "network_error"})
+            raise RuntimeError(f"Debug model API network error: {str(exc).replace(api_key, '[redacted]')}") from exc
+
+        metadata["http_status"] = response.status_code
+        if response.status_code != 200:
+            save_attempt({**metadata, "error_type": "http_error"})
+            text = (response.text or "").replace(api_key, "[redacted]").strip()
+            if len(text) > 800:
+                text = text[:800] + "..."
+            raise RuntimeError(f"Debug model API failed with HTTP {response.status_code}: {text}")
+
+        try:
+            data = response.json()
+            choices = data["choices"]
+            finish_reason = choices[0].get("finish_reason")
+            text = extract_response_text(data)
+            metadata.update(usage=data.get("usage"), finish_reasons=[
+                item.get("finish_reason") for item in choices if isinstance(item, dict)
+            ], content_characters=len(text))
+        except (KeyError, ValueError, IndexError, TypeError, AttributeError) as exc:
+            save_attempt({**metadata, "error_type": "invalid_response"})
+            raise RuntimeError(f"Debug model API returned an unexpected response shape: {exc}") from exc
+
+        if finish_reason in ("length", "max_tokens"):
+            save_attempt({**metadata, "error_type": "truncated_response"})
+            if payload["max_tokens"] >= token_ceiling:
+                raise RuntimeError(
+                    f"Debug model response truncated at token limit (model={model}, "
+                    f"max_tokens={payload['max_tokens']}, usage={metadata['usage']}); "
+                    "incomplete assessment/patch output rejected. Increase DEBUG_LLM_MAX_RETRY_TOKENS "
+                    "if supported by the provider, or reduce the requested output.")
+            payload["max_tokens"] = min(payload["max_tokens"] * 2, token_ceiling)
+            print(f"[debug] Model response truncated; retrying with max_tokens={payload['max_tokens']}.")
+            continue
+        if finish_reason not in (None, "stop", "end_turn"):
+            save_attempt({**metadata, "error_type": "incomplete_response"})
+            raise RuntimeError(f"Debug model API returned no completed text response; finish_reason={finish_reason}")
+        if not text:
+            save_attempt({**metadata, "error_type": "empty_response"})
+            raise RuntimeError(f"Model API returned no message content; finish_reasons={metadata['finish_reasons']}; "
+                               f"usage={metadata['usage']}")
+        save_attempt(metadata)
+        return text
 
 
 def extract_diff(response_text: str) -> str:
@@ -3359,7 +3397,7 @@ def propose_patch(args: argparse.Namespace) -> int:
             response_text = "NO_PATCH\nOffline mode: prompt generated but the LLM API was not called.\n"
         else:
             log_debug(failure_dir, f"Calling patch LLM model: {args.model}")
-            response_text = call_patch_llm(prompt, args.model)
+            response_text = call_patch_llm(prompt, args.model, diagnostic_path=attempt_dir / "api.json")
 
         patch_text = extract_diff(response_text)
         patch_text, normalization_warnings = normalize_patch_text(patch_text)
