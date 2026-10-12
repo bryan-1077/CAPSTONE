@@ -21,6 +21,8 @@ def main() -> int:
     parser.add_argument("--mailbox", type=Path, help="Explicit published snapshot for validation or backend entry.")
     parser.add_argument("--allow-unvalidated", action="store_true",
                         help="Allow direct backend testing without validation; does not bypass normal generation routing.")
+    parser.add_argument("--skip-verification", action="store_true",
+                        help="Generate and check RTL, publish a new snapshot, then run backend without remote verification.")
     parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
     parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
     parser.add_argument("--ask-password", action="store_true", help="Prompt securely for SSH authentication, including backend entry.")
@@ -37,17 +39,24 @@ def main() -> int:
     parser.add_argument("--plan", action="store_true", help="Print routing and commands without executing or writing files.")
     parser.add_argument("--run-dir", type=Path, help="New directory for logs and state.json.")
     args = parser.parse_args()
-    needs_remote = args.entry in ("generate", "validation", "remote-check") or (args.entry == "debug" and args.repair)
-    if args.entry != "backend" and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
+    if args.skip_verification and args.entry != "generate":
+        parser.error("--skip-verification applies only to generate")
+    if args.skip_verification and args.checks_only and args.target_mhz is None:
+        parser.error("--checks-only with --skip-verification requires --target-mhz")
+    backend_route = args.entry == "backend" or args.skip_verification
+    needs_remote = (args.entry in ("generate", "validation", "remote-check") and not args.skip_verification) or (args.entry == "debug" and args.repair)
+    if not backend_route and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
         from .remote import RemoteConfig, probe_command
         try:
             remote = RemoteConfig.load(args.remote_config)
         except (OSError, ValueError, TypeError) as exc:
             parser.error(str(exc))
-    if args.entry == "backend" and args.remote_config is not None:
+    if backend_route and args.remote_config is not None:
         parser.error("Backend entry uses CAPSTONE_SSH_* environment settings rather than --remote-config")
-    if (args.allow_unvalidated or args.backend_python) and args.entry != "backend":
-        parser.error("--allow-unvalidated and --backend-python apply only to backend entry")
+    if args.allow_unvalidated and args.entry != "backend":
+        parser.error("--allow-unvalidated applies only to backend entry; use --skip-verification for generation")
+    if args.backend_python and not backend_route:
+        parser.error("--backend-python requires backend entry or --skip-verification")
     if args.mailbox and args.entry not in ("validation", "backend"):
         parser.error("--mailbox applies to validation or backend entry")
     if args.entry == "validation" and args.mailbox is None:
@@ -78,7 +87,7 @@ def main() -> int:
                        mailbox=args.mailbox.expanduser().resolve() if args.mailbox else None,
                        allow_unvalidated=args.allow_unvalidated, backend_python=args.backend_python,
                        remote_config=args.remote_config.expanduser().resolve() if args.remote_config else None,
-                       ask_password=args.ask_password)
+                       ask_password=args.ask_password, skip_verification=args.skip_verification)
     if args.plan:
         if args.entry == "remote-check":
             print(f"SSH {remote.username}@{remote.host}:{remote.port}; remote directory: {remote.project_dir}")
@@ -103,14 +112,26 @@ def main() -> int:
         if args.entry == "generate":
             print("Then: bash local/frontend/run_sim.sh --no-wave-prompt (BIST)")
             print("After checks pass: publish RTL and matching YAMLs to a new mailbox revision")
-        routes = {"generate": "generate -> publish snapshot -> remote validation -> stop (no backend)",
+            if args.skip_verification:
+                print(shlex.join(backend_command(config if args.target_mhz is not None else replace(
+                    config, target_mhz=DEFAULT_TARGET_MHZ), Path("shared/mailbox/<run-id>/revision_001")) + [
+                    "--result-json", "<backend-stage-dir>/backend_result.json",
+                    "--log-dir", "<backend-stage-dir>/backend_reports"]))
+                if args.target_mhz is None:
+                    print("Backend command preview uses the fallback; execution uses the selected frequency.")
+        routes = {"generate": ("generate -> lint/BIST -> publish new snapshot -> backend (remote verification skipped)"
+                               if args.skip_verification else "generate -> publish snapshot -> remote validation -> stop (no backend)"),
                   "debug": "debug -> system lint + BIST -> publish snapshot -> remote validation -> stop",
                   "validation": "upload selected snapshot -> SSH/srun validation -> retrieve reports -> stop (no backend)",
                   "backend": ("backend on explicit UNVALIDATED snapshot -> inspect result" if args.allow_unvalidated
                               else "backend blocked: validation gate is not connected")}
         print(routes[args.entry])
-        print("Frontend failures with supported evidence -> debug -> recheck -> publish -> validation")
-        print("Remote validation failures stop with reports; backend execution is deferred.")
+        print("Frontend failures with supported evidence -> debug -> recheck -> publish -> "
+              + ("backend" if args.skip_verification else "validation"))
+        if args.skip_verification:
+            print("Backend completion records validation: not_run.")
+        else:
+            print("Remote validation failures stop with reports; automatic backend execution after validation is deferred.")
         return 0
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
     run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()

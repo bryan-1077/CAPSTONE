@@ -120,6 +120,43 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(state.status, "needs_attention")
             self.assertEqual(len(state.results), 3)
 
+    def test_skip_verification_preserves_frontend_repair_and_rechecks_before_backend(self):
+        attempts = []
+        def generate(config, directory):
+            attempts.append(config)
+            if len(attempts) == 1:
+                return StageResult("generate", "failed", "BIST failed",
+                    failure=FailureReport("bist", directory / "bist.log"))
+            self.assertTrue(config.recheck_only)
+            return StageResult("generate", "passed", "rechecked")
+        def backend(config, directory):
+            self.assertTrue(config.allow_unvalidated)
+            self.assertEqual(config.target_mhz, 200)
+            self.assertIsNotNone(config.mailbox)
+            return StageResult("backend", "passed", "done")
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+                "shared.top_orchestrator.orchestrator.NODES", {
+                    "generate": generate,
+                    "debug": lambda c, d: StageResult("debug", "passed", "repaired"),
+                    "backend": backend,
+                    "validation": lambda c, d: self.fail("Verification must be skipped"),
+                }):
+            state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
+        self.assertEqual(state.status, "complete")
+        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend"])
+
+    def test_skip_verification_stops_on_frontend_failure_or_publication_failure(self):
+        for failure in ("frontend", "publication"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary, patch.dict(
+                    "shared.top_orchestrator.orchestrator.NODES", {
+                        "generate": lambda c, d: StageResult("generate",
+                            "failed" if failure == "frontend" else "passed", "test"),
+                        "backend": lambda c, d: self.fail("Backend must not run on failed input"),
+                    }), patch("shared.top_orchestrator.orchestrator.publish", side_effect=OSError("publication failed")):
+                state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
+            self.assertEqual(state.status, "failed")
+            self.assertEqual(len(state.results), 1)
+
     def test_default_generation_selects_specs(self):
         command = spec_command(Path("/approved.yaml"))
         self.assertTrue(any(part.endswith("configure_from_text.py") for part in command))

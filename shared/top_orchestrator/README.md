@@ -17,6 +17,9 @@ python -m shared.top_orchestrator generate --input local/frontend/configs/user_i
 # Bypass the frequency prompt with an explicit backend target.
 python -m shared.top_orchestrator --input local/frontend/configs/user_input.yaml --target-mhz 230
 
+# Generate fresh RTL, run frontend checks, then go straight to backend.
+python -m shared.top_orchestrator generate --skip-verification --target-mhz 200 --ask-password
+
 # Inspect an existing frontend failure workspace without model calls.
 python -m shared.top_orchestrator debug --failure-dir /absolute/path/to/failure_workspace --offline
 
@@ -64,7 +67,7 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-Generation now continues through remote validation and stops there. A pass requires
+By default, generation continues through remote validation and stops there. A pass requires
 complete structural and behavioral evidence for every published YAML design. Backend
 is not invoked after verification. Its gate for consuming validated evidence remains
 deferred; direct backend entry without
@@ -77,6 +80,22 @@ Exit codes: 0 = complete (or plan printed), 2 = incomplete/stopped or CLI misuse
 1 = run-artifact filesystem error. A specs-to-verification run completes when the
 required verification evidence passes. A direct unvalidated backend test can complete;
 its result explicitly records `validation: not_run`.
+
+For frontend-to-backend execution, use `generate --skip-verification`. This starts
+with the usual interactive spec selection and frequency selection, runs RTL
+generation and frontend lint/BIST, publishes a fresh mailbox revision in the
+current checkout, and passes that exact snapshot to the local backend app. It
+skips remote verification and records `validation: not_run`. No `--mailbox` or
+`--allow-unvalidated` argument is needed. Frontend failures still follow the
+existing bounded repair/recheck flow; failed checks or publication stop before
+backend execution. Backend failure stops with its logs and structured result.
+
+Use `--input local/frontend/configs/user_input.yaml` to reuse approved YAML;
+add `--cache` to reuse frontend RTL generation. For existing RTL, use
+`--checks-only --skip-verification --target-mhz 200`. The checks-only route
+requires an explicit frequency because it skips selection. Backend SSH settings
+and `--ask-password` apply to these routes, and `--backend-python` can select the
+backend environment. Validation's `--remote-config` is not used by this route.
 
 State files are diagnostic records, not resumable checkpoints. The frontend still
 writes into its existing shared output directories; run one workflow at a time.
@@ -228,7 +247,8 @@ Snapshots do not claim verification coverage. They are never updated by the
 orchestrator; input hash verification detects later edits before backend launch.
 The frontend remains a shared workspace, so run one workflow at a time.
 
-Normal generation stops at validation. To test only backend execution on a
+Default generation stops at validation; `--skip-verification` instead runs backend
+on its newly published snapshot. To test only backend execution on a
 published snapshot without functional validation:
 
 ```bash

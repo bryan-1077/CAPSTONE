@@ -1,6 +1,7 @@
 """Snapshot and subprocess boundaries, without SSH, models, or EDA tools."""
 
 import json
+import io
 import sys
 import tempfile
 import unittest
@@ -136,6 +137,64 @@ class MailboxBackendTests(unittest.TestCase):
                              "needs_attention")
             command.assert_not_called()
             self.assertEqual(backend_node(self.config(), self.root).status, "failed")
+
+    def test_frontend_to_backend_uses_new_snapshot_and_skips_validation(self):
+        seen = []
+        def backend(config, directory):
+            seen.append(config)
+            metadata = verify(config.mailbox)
+            payload = {**self.payload(), "mailbox_revision": metadata["rtl_revision"]}
+            script = ("import sys, pathlib\n"
+                      "path = pathlib.Path(sys.argv[sys.argv.index('--result-json') + 1])\n"
+                      f"path.write_text({json.dumps(payload)!r})\n")
+            with patch("shared.top_orchestrator.nodes.backend_command", return_value=[sys.executable, "-c", script]):
+                return backend_node(config, directory)
+        with patch("shared.top_orchestrator.orchestrator.FRONTEND", self.frontend), patch(
+                "shared.top_orchestrator.orchestrator.REPO_ROOT", self.root), patch.dict(
+                "shared.top_orchestrator.orchestrator.NODES", {
+                    "generate": lambda c, d: StageResult("generate", "passed", "checks passed"),
+                    "backend": backend,
+                    "validation": lambda c, d: self.fail("Remote verification must be skipped"),
+                }):
+            state = run(RunConfig("generate", recheck_only=True, target_mhz=200,
+                                  skip_verification=True, ask_password=True), self.root / "new_run")
+        self.assertEqual(state.status, "complete")
+        self.assertEqual([r.stage for r in state.results], ["generate", "backend"])
+        self.assertEqual(seen[0].mailbox, self.root / "shared/mailbox/new_run/revision_001")
+        self.assertTrue(seen[0].allow_unvalidated)
+        self.assertTrue(seen[0].ask_password)
+        self.assertEqual(seen[0].target_mhz, 200)
+        saved = json.loads((self.root / "new_run/state.json").read_text())
+        self.assertTrue(saved["config"]["skip_verification"])
+        self.assertEqual(saved["results"][-1]["artifacts"]["validation"], "not_run")
+
+    def test_skip_verification_cli_needs_no_validation_configuration(self):
+        from shared.top_orchestrator.__main__ import main
+        argv = ["orchestrator", "generate", "--skip-verification", "--target-mhz", "200",
+                "--ask-password", "--backend-python", "/backend/python"]
+        with patch.dict("os.environ", {}, clear=True), patch("sys.argv", argv), patch(
+                "shared.top_orchestrator.__main__.run") as execute, patch(
+                "shared.top_orchestrator.remote.RemoteConfig.load", side_effect=AssertionError("Validation config loaded")):
+            execute.return_value.status = "complete"
+            self.assertEqual(main(), 0)
+            config = execute.call_args.args[0]
+            self.assertTrue(config.skip_verification)
+            self.assertTrue(config.ask_password)
+            self.assertEqual(config.backend_python, "/backend/python")
+        with patch("sys.argv", argv + ["--plan"]), patch("sys.stdout", io.StringIO()) as output:
+            self.assertEqual(main(), 0)
+            self.assertIn("remote verification skipped", output.getvalue())
+            self.assertIn("--ask-password", output.getvalue())
+
+    def test_skip_verification_rejects_incompatible_entry_and_missing_checks_target(self):
+        from shared.top_orchestrator.__main__ import main
+        for argv in (["backend", "--skip-verification"], ["validation", "--skip-verification"],
+                     ["--checks-only", "--skip-verification"],
+                     ["--skip-verification", "--remote-config", "/unused.json"]):
+            with self.subTest(argv=argv), patch("sys.argv", ["orchestrator", *argv]), patch(
+                    "sys.stderr", io.StringIO()), self.assertRaises(SystemExit) as caught:
+                main()
+            self.assertEqual(caught.exception.code, 2)
 
     def test_repair_publishes_new_revision_and_preserves_target(self):
         seen = []

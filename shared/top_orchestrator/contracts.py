@@ -35,6 +35,7 @@ class RunConfig:
     backend_python: str | None = None
     remote_config: Path | None = None
     ask_password: bool = False
+    skip_verification: bool = False
 
 
 @dataclass
