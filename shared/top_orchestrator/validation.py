@@ -122,6 +122,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
 
         try:
             remote = RemoteConfig.load(config.remote_config)
+            record.update(host=remote.host, username=remote.username, python=remote.python)
             if not remote.allow_validation_output_dirs:
                 raise ValueError(
                     "Validation is disabled because the deployed pipeline creates report and scratch directories. "

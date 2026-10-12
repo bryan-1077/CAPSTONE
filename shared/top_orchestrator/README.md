@@ -381,6 +381,26 @@ the pipeline before any summary exists. The wrapper records the interpreter and
 the end of pipeline stderr in `remote_validation_result.json` and reports that
 startup error when a failed pipeline has no summary.
 
+Check imports under the **same SSH account** the orchestrator uses. Packages
+installed with `pip --user` belong to that account; an import under another login
+does not verify the orchestrator's environment, even with `/usr/bin/python3` on
+the same compute node. Use `dotenv.__file__` to print the module path
+(`dotenv.file` is not a module attribute):
+
+```bash
+whoami
+/usr/bin/python3 -c 'import sys, site, dotenv; from dotenv import load_dotenv; print(sys.executable); print(dotenv.__file__); print(site.getusersitepackages())'
+```
+
+Each validation result records the configured SSH username, and the remote
+wrapper logs and saves `python_environment` with the actual compute account,
+interpreter, import paths, user site settings, and imports of `yaml`, `requests`,
+and `dotenv` after Slurm/tool setup. It does not include API keys or `.env`
+contents. Compare these diagnostics with your manual session before installing
+packages. Generated simulator symlinks inside `verification_reports` are excluded
+from snapshot checks and report archives; symlinks in published inputs remain
+an error.
+
 ```bash
 # Interactive spec selection -> RTL -> lint/BIST -> snapshot -> verification.
 python -m shared.top_orchestrator --ask-password

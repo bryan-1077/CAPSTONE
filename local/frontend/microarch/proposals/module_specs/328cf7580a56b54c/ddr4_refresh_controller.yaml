@@ -1,0 +1,93 @@
+design_name: ddr4_refresh_controller
+design_type: fsm
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: ref_ack
+  direction: input
+  width: 1
+  description: Refresh acknowledge pulse from the downstream scheduler
+- name: ref_req
+  direction: output
+  width: 1
+  description: Refresh request signal asserted while waiting for acknowledge
+implementation_constraints:
+- exactly two states
+- counter increments only while in IDLE
+- counter resets on any state transition
+- ref_req asserted only in REQUEST
+- no queues or scheduling logic
+- fully self-contained FSM
+invariants:
+- FSM has exactly 2 states
+- ref_req == (current_state == REQUEST)
+- counter increments only in IDLE
+- counter resets after REQUEST -> IDLE transition
+- counter resets after IDLE -> REQUEST transition
+state_machine:
+  states:
+  - IDLE
+  - REQUEST
+  reset_state: IDLE
+  transitions:
+  - from: IDLE
+    to: REQUEST
+    condition: counter >= 12480
+  - from: REQUEST
+    to: IDLE
+    condition: ref_ack == 1
+output_overrides:
+  ref_req: (current_state == REQUEST)
+combinational_dependencies:
+  ref_req: []
+verification_requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.
+- id: BASE_REFRESH
+  text: Retain periodic refresh requests using profile tREFI, refresh priority and
+    request/acknowledgment handling without dropping queued traffic. Refresh must
+    make progress and normal requests must resume. Existing refresh is simplified;
+    full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+    describe drain/row-state interaction and acknowledge once at commit.
+  owners:
+  - u_refresh
+  - u_command_engine
+  - u_timing
+  - u_request_queue
+  verification: Reach tREFI=12480 with queued traffic, verify ref_req persists until
+    one REF commit and ref_ack, then verify queued transaction dispatch resumes.

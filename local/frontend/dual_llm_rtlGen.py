@@ -43,10 +43,10 @@ except AttributeError:
 # ---------------------------------------------------------------------------
 
 # LLM #1: generator / merger
-LLM1_MODEL = "protected.gpt-5.4"
+LLM1_MODEL = "protected.gpt-5.6-terra"
 
 # LLM #2: reviewer / fixer — different model for diverse critique
-LLM2_MODEL = "protected.Claude Sonnet 4.6"
+LLM2_MODEL = "protected.Claude Sonnet 5"
 
 # Maximum full rounds before accepting best-so-far output
 MAX_ROUNDS = 3
@@ -549,7 +549,8 @@ def _finalize_dual_llm_rtl(rtl_code, module_name):
 
 
 def _cache_dir():
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), CACHE_DIRNAME)
+    return os.environ.get("CAPSTONE_RTL_CACHE_DIR") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), CACHE_DIRNAME)
 
 
 def _cache_path(module_name):
@@ -557,6 +558,8 @@ def _cache_path(module_name):
 
 
 def _cache_display_path(module_name):
+    if os.environ.get("CAPSTONE_RTL_CACHE_DIR"):
+        return _cache_path(module_name)
     return os.path.join(CACHE_DIRNAME, "{}.sv".format(module_name))
 
 

@@ -15,8 +15,8 @@ module ddr4_scheduler_scheduler (
     output logic [1:0]   sel_idx,
     input  logic         timing_ok
 );
+    parameter int DEPTH = 4;
 
-    localparam int DEPTH = 4;
     localparam int REQUEST_WIDTH = 51;
     localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
 
@@ -30,13 +30,13 @@ module ddr4_scheduler_scheduler (
 
     request_t req_unpacked [0:DEPTH-1];
     logic [DEPTH-1:0] row_hit;
-    logic candidate_valid;
+    logic             candidate_valid;
     logic [SEL_WIDTH-1:0] candidate_idx;
-    logic locked_valid;
+    logic             candidate_success;
+    logic             candidate_blocked;
+    logic             successful_issue;
+    logic             locked_valid;
     logic [SEL_WIDTH-1:0] locked_idx;
-    logic successful_issue;
-    logic candidate_success;
-    logic candidate_blocked;
 
     always_comb begin
         for (int i = 0; i < DEPTH; i++) begin
@@ -55,7 +55,7 @@ module ddr4_scheduler_scheduler (
         candidate_idx = SEL_WIDTH'(0);
 
         for (int k = 0; k < DEPTH; k++) begin
-            if ((!candidate_valid) && row_hit[k]) begin
+            if (!candidate_valid && row_hit[k]) begin
                 candidate_valid = 1'b1;
                 candidate_idx = SEL_WIDTH'(k);
             end
@@ -63,7 +63,7 @@ module ddr4_scheduler_scheduler (
 
         if (!candidate_valid) begin
             for (int m = 0; m < DEPTH; m++) begin
-                if ((!candidate_valid) && req_valid[m]) begin
+                if (!candidate_valid && req_valid[m]) begin
                     candidate_valid = 1'b1;
                     candidate_idx = SEL_WIDTH'(m);
                 end
@@ -72,6 +72,8 @@ module ddr4_scheduler_scheduler (
     end
 
     always_comb begin
+        issue_ref = ref_req && cmd_ready && timing_ok;
+
         if (locked_valid) begin
             issue_valid = req_valid[locked_idx];
             sel_idx = locked_idx;
@@ -80,7 +82,6 @@ module ddr4_scheduler_scheduler (
             sel_idx = candidate_idx;
         end
 
-        issue_ref = ref_req && cmd_ready && timing_ok;
         issue_txn = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
         successful_issue = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
         candidate_success = candidate_valid && cmd_ready && timing_ok && !ref_req;

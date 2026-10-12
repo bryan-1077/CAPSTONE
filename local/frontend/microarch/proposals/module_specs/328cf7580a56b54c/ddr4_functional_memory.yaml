@@ -1,0 +1,151 @@
+design_name: ddr4_functional_memory
+design_type: datapath
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: rw_commit
+  direction: input
+  width: 1
+- name: commit_opcode
+  direction: input
+  width: 3
+- name: active_req
+  direction: input
+  width: 51
+- name: rsp_valid
+  direction: output
+  width: 1
+- name: rsp_rdata
+  direction: output
+  width: 32
+behavior:
+  description: Storage is four isolated banks of sixteen 32-bit words reset to zero.
+    active_req is decoded as bank[50:49], row[48:39], column[38:33], is_write[32],
+    wdata[31:0]. Functional address within a bank is {row[1:0],column[1:0]}. On rw_commit
+    with WRITE opcode 4, only addressed bank and location update and no response is
+    generated. On rw_commit with READ opcode 3, the stored word is captured into the
+    registered response stage and rsp_valid is set for the following cycle. rsp_valid
+    otherwise clears each cycle. Stalled candidates, dispatch, ACT, PRE, REF, and
+    uncommitted proposals cannot modify storage or create a response.
+  invariants:
+  - Each committed read produces exactly one rsp_valid pulse
+  - Writes produce no host response
+  - Storage is bank-isolated
+  - Reset clears every word and response stage
+invariants:
+- Memory write enable is rw_commit and commit_opcode==4 only
+combinational_dependencies:
+  rsp_valid: []
+  rsp_rdata: []
+verification_requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_HOST
+  text: Preserve the existing host ports and widths listed in the baseline contract.
+    Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload
+    while stalled. Consecutive accepted cycles with txn_valid held high are distinct
+    requests. cmd_ready is execution/timing visibility, not the host acceptance handshake.
+    Deassert txn_ready and rsp_valid during reset.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Drive txn_valid high for consecutive ready cycles and verify distinct
+    queue entries; stall with txn_ready low and verify no admission; assert reset
+    and verify txn_ready and rsp_valid are low.
+- id: BASE_ADDRESS
+  text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+    zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit
+    txn_bank for multi-bank configurations; a single-bank configuration uses bank
+    0. Internal packed requests retain bank(2), row(10), column(6), write flag(1),
+    write data(32).'
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Submit all sixteen txn_addr values in two banks and inspect packed
+    fields and independent memory locations.
+- id: BASE_QUEUE
+  text: 'Preserve four WAITING request slots PLUS one separately stored active-service
+    request: total capacity is five outstanding requests. The active request must
+    not consume one of the four waiting slots. Dispatch transfers a queued request
+    into active registers and frees its waiting slot without retiring the transaction.
+    Full queues backpressure the host; a same-cycle transfer/retirement may reuse
+    a slot. Accepted request fields survive stalls and each accepted request is serviced
+    exactly once. Keep admission, dispatch/retirement, service completion and read
+    response delivery distinct.'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_memory
+  verification: Fill four waiting slots, dispatch one into active service, refill
+    the freed slot, and verify five outstanding requests with exactly one eventual
+    completion per accepted request.
+- id: BASE_DATA
+  text: Provide functional 32-bit memory storage with 16 addresses per bank, bank
+    isolation and reset-to-zero contents. Accepted writes update only their addressed
+    location at service completion or a committed WRITE. Each accepted read produces
+    exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ
+    commit, using the existing one-cycle response stage. Writes produce no host response.
+    Selection and stalled candidates cannot mutate memory; mere command output without
+    storage and read responses is insufficient.
+  owners:
+  - u_command_engine
+  - u_memory
+  - u_host_adapter
+  verification: Write distinct values to equal addresses in separate banks, read both
+    back, verify one delayed response pulse per read, no response for writes, and
+    reset-to-zero behavior.
+- id: BASE_MODULARITY
+  text: Keep request storage, request selection, command sequencing, timing enforcement
+    and functional memory in independently verifiable modules with explicit interfaces.
+    No single controller core may own all these functions. Each mandatory role has
+    distinct module owners with functional inter-module connections. Module names
+    and further decomposition remain design choices.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  verification: Independently simulate queue admission and removal, scheduler selection,
+    engine sequencing, timing permission, and memory response modules through declared
+    interfaces.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.

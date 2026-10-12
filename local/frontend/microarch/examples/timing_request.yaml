@@ -1,0 +1,6 @@
+design_name: timing_demo
+memory:
+  protocol: DDR4
+  speed: '3200'
+requirements:
+  - Provide a reusable activation spacing gate for the DDR4-3200 profile. An accepted activation must block subsequent activation attempts for the configured tRRD interval. Expose the block output and use a asynchronous active-low reset.

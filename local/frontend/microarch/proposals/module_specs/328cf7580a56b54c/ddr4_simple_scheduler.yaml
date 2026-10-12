@@ -1,0 +1,174 @@
+design_name: ddr4_simple_scheduler
+design_type: datapath
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: req_array
+  direction: input
+  width: 204
+- name: req_valid
+  direction: input
+  width: 4
+- name: bank_active
+  direction: input
+  width: 4
+- name: bank_open_row
+  direction: input
+  width: 40
+- name: dispatch_fire
+  direction: input
+  width: 1
+- name: sel_valid
+  direction: output
+  width: 1
+- name: sel_idx
+  direction: output
+  width: 2
+- name: sel_req
+  direction: output
+  width: 51
+behavior:
+  description: When not locked, select the lowest-index valid row-hit request. A row
+    hit requires the addressed bank_active bit and equality between that bank open
+    row and request row. If no row hit exists, select the lowest-index valid request.
+    When a selected request cannot dispatch, register and hold the selected index
+    and request. dispatch_fire clears the lock on the rising edge. Selection depends
+    only on queue and registered row state; it does not consume timing_ok and does
+    not dequeue storage.
+  invariants:
+  - Lowest-index row hit wins over non-hits
+  - Lowest-index valid fallback is used when no row hit exists
+  - Locked selection remains stable until dispatch_fire
+  - No oldest-first, fairness, or same-address ordering guarantee
+invariants:
+- sel_valid implies req_valid for the selected slot unless dispatch_fire completes
+  selected dispatch on that edge
+combinational_dependencies:
+  sel_valid:
+  - req_array
+  - req_valid
+  - bank_active
+  - bank_open_row
+  sel_idx:
+  - req_array
+  - req_valid
+  - bank_active
+  - bank_open_row
+  sel_req:
+  - req_array
+  - req_valid
+  - bank_active
+  - bank_open_row
+verification_requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_QUEUE
+  text: 'Preserve four WAITING request slots PLUS one separately stored active-service
+    request: total capacity is five outstanding requests. The active request must
+    not consume one of the four waiting slots. Dispatch transfers a queued request
+    into active registers and frees its waiting slot without retiring the transaction.
+    Full queues backpressure the host; a same-cycle transfer/retirement may reuse
+    a slot. Accepted request fields survive stalls and each accepted request is serviced
+    exactly once. Keep admission, dispatch/retirement, service completion and read
+    response delivery distinct.'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_memory
+  verification: Fill four waiting slots, dispatch one into active service, refill
+    the freed slot, and verify five outstanding requests with exactly one eventual
+    completion per accepted request.
+- id: BASE_SEQUENCE
+  text: Dispatch captures the complete selected request in separate active-service
+    registers before freeing its waiting queue slot. Hold that active request and
+    payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+    Setup commands never retire the active request. Aggregate service also keeps active-service
+    ownership through completion. Waiting-queue dequeue at dispatch is distinct from
+    active-request retirement. Row state changes only on the responsible committed
+    operation; uncommitted proposals cannot change state.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  - u_timing
+  verification: Dispatch a row-miss request, hold timing permission low through PRE
+    and ACT candidates, and verify active payload remains unchanged until committed
+    READ or WRITE.
+- id: BASE_MODULARITY
+  text: Keep request storage, request selection, command sequencing, timing enforcement
+    and functional memory in independently verifiable modules with explicit interfaces.
+    No single controller core may own all these functions. Each mandatory role has
+    distinct module owners with functional inter-module connections. Module names
+    and further decomposition remain design choices.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  verification: Independently simulate queue admission and removal, scheduler selection,
+    engine sequencing, timing permission, and memory response modules through declared
+    interfaces.
+- id: BASE_LEGALITY
+  text: Compute command permission from registered timing/bank history and an independent
+    candidate. An accepted ACT pulse is derived from candidate && permission; permission
+    must not combinationally depend on that same accepted pulse. Scheduler selection/validity
+    must be available independently of timing_ok; timing_ok may gate commit but must
+    not create a selection-validity feedback loop. Declare accurate per-output combinational
+    input dependencies.
+  owners:
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  verification: Hold an ACT candidate while timing_ok is false and verify history
+    is unchanged; verify scheduler selection remains present regardless of timing
+    permission.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.
+- id: BASE_POLICY
+  text: Preserve page policy open_page and scheduler simple. Simple scheduling prefers
+    a row hit then the lowest-index valid request; do not claim oldest-first fairness
+    or same-address ordering is already implemented. Open-page retains a serviced
+    row; close-page closes it before subsequent bank use. Preserve request ownership
+    through any setup sequence.
+  owners:
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  verification: Queue a lower-index row miss and higher-index row hit; verify row
+    hit dispatches first and serviced row remains open after READ or WRITE.

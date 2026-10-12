@@ -1,0 +1,176 @@
+design_name: ddr4_waiting_request_queue
+design_type: datapath
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: enq_valid
+  direction: input
+  width: 1
+- name: enq_req
+  direction: input
+  width: 51
+- name: enq_ready
+  direction: output
+  width: 1
+- name: req_array
+  direction: output
+  width: 204
+- name: req_valid
+  direction: output
+  width: 4
+- name: deq_en
+  direction: input
+  width: 1
+- name: deq_idx
+  direction: input
+  width: 2
+behavior:
+  description: Four independent waiting slots store 51-bit requests and four valid
+    bits. A request is admitted on a rising edge when enq_valid and enq_ready are
+    high. enq_ready is high if any slot is invalid or if deq_en permits same-cycle
+    reuse of deq_idx. The insertion target is the lowest-index invalid slot; when
+    all slots are valid and deq_en is high, insertion target is deq_idx. deq_en clears
+    only deq_idx except same-cycle insertion to that index wins and leaves the new
+    entry valid. Entries never shift. req_array and req_valid expose registered storage.
+    Reset clears valid bits and request storage.
+  invariants:
+  - There are exactly four waiting slots
+  - Dispatch dequeue removes only a waiting slot and never indicates service retirement
+  - At most one enqueue and one dequeue occur per cycle
+  - Accepted requests remain stored until explicit dequeue
+invariants:
+- enq_ready is asserted on same-cycle dequeue reuse even when all slots were valid
+- same-index enqueue takes priority over dequeue clear
+combinational_dependencies:
+  enq_ready:
+  - deq_en
+  - deq_idx
+  req_array: []
+  req_valid: []
+verification_requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_HOST
+  text: Preserve the existing host ports and widths listed in the baseline contract.
+    Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload
+    while stalled. Consecutive accepted cycles with txn_valid held high are distinct
+    requests. cmd_ready is execution/timing visibility, not the host acceptance handshake.
+    Deassert txn_ready and rsp_valid during reset.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Drive txn_valid high for consecutive ready cycles and verify distinct
+    queue entries; stall with txn_ready low and verify no admission; assert reset
+    and verify txn_ready and rsp_valid are low.
+- id: BASE_ADDRESS
+  text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+    zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit
+    txn_bank for multi-bank configurations; a single-bank configuration uses bank
+    0. Internal packed requests retain bank(2), row(10), column(6), write flag(1),
+    write data(32).'
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Submit all sixteen txn_addr values in two banks and inspect packed
+    fields and independent memory locations.
+- id: BASE_QUEUE
+  text: 'Preserve four WAITING request slots PLUS one separately stored active-service
+    request: total capacity is five outstanding requests. The active request must
+    not consume one of the four waiting slots. Dispatch transfers a queued request
+    into active registers and frees its waiting slot without retiring the transaction.
+    Full queues backpressure the host; a same-cycle transfer/retirement may reuse
+    a slot. Accepted request fields survive stalls and each accepted request is serviced
+    exactly once. Keep admission, dispatch/retirement, service completion and read
+    response delivery distinct.'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_memory
+  verification: Fill four waiting slots, dispatch one into active service, refill
+    the freed slot, and verify five outstanding requests with exactly one eventual
+    completion per accepted request.
+- id: BASE_SEQUENCE
+  text: Dispatch captures the complete selected request in separate active-service
+    registers before freeing its waiting queue slot. Hold that active request and
+    payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+    Setup commands never retire the active request. Aggregate service also keeps active-service
+    ownership through completion. Waiting-queue dequeue at dispatch is distinct from
+    active-request retirement. Row state changes only on the responsible committed
+    operation; uncommitted proposals cannot change state.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  - u_timing
+  verification: Dispatch a row-miss request, hold timing permission low through PRE
+    and ACT candidates, and verify active payload remains unchanged until committed
+    READ or WRITE.
+- id: BASE_MODULARITY
+  text: Keep request storage, request selection, command sequencing, timing enforcement
+    and functional memory in independently verifiable modules with explicit interfaces.
+    No single controller core may own all these functions. Each mandatory role has
+    distinct module owners with functional inter-module connections. Module names
+    and further decomposition remain design choices.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  verification: Independently simulate queue admission and removal, scheduler selection,
+    engine sequencing, timing permission, and memory response modules through declared
+    interfaces.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.
+- id: BASE_REFRESH
+  text: Retain periodic refresh requests using profile tREFI, refresh priority and
+    request/acknowledgment handling without dropping queued traffic. Refresh must
+    make progress and normal requests must resume. Existing refresh is simplified;
+    full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+    describe drain/row-state interaction and acknowledge once at commit.
+  owners:
+  - u_refresh
+  - u_command_engine
+  - u_timing
+  - u_request_queue
+  verification: Reach tREFI=12480 with queued traffic, verify ref_req persists until
+    one REF commit and ref_ack, then verify queued transaction dispatch resumes.

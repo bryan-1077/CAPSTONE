@@ -1,5 +1,12 @@
 # Microarchitecture flow
 
+The new **LLM architecture proposal + deterministic graph compiler** path is
+available through `run_flow.py --microarch` or `--microarch-only`. It supports
+reusable and custom module specs, generates integration from the proposed graph,
+and uses isolated build outputs. See [architecture_flow.md](architecture_flow.md)
+for usage, the manifest contract, verification status, and current limitations.
+The input-expansion flow below remains the default during migration.
+
 Run `./start_flow.sh` from `local/frontend/`, or pass a config, basic YAML, or basic YAML directory to `run_flow.py`.
 
 1. `configure_from_text.py` writes `configs/user_input.yaml` (skipped by `start_flow.sh --cache`).
