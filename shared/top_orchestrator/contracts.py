@@ -36,6 +36,8 @@ class RunConfig:
     remote_config: Path | None = None
     ask_password: bool = False
     skip_verification: bool = False
+    no_backend: bool = False
+    no_bist: bool = False
 
 
 @dataclass

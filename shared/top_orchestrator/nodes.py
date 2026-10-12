@@ -228,6 +228,10 @@ def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
             attach_lint_report(result, run_dir, lint_command, previous_report)
     if result.status != "passed":
         return result
+    if config.no_bist:
+        result.artifacts["bist"] = "not_run"
+        result.message = "Frontend RTL lint completed; BIST skipped."
+        return result
     print_node_header("bist")
     log = run_dir / "bist.log"
     result.artifacts["bist_log"] = str(log)

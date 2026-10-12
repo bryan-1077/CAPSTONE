@@ -3,6 +3,29 @@
 Run from the repository root using Python 3.10+. Frequency selection uses PyYAML;
 frontend execution and optional frequency advice need the existing frontend dependencies.
 
+Generation accepts these stage controls:
+
+| Flag | Behavior |
+| --- | --- |
+| `--no-verif` | Skip remote verification; alias for `--skip-verification`. Continues to backend unless `--no-backend` is also set. |
+| `--no-backend` | Disable backend execution. Combine with `--no-verif` to stop after frontend checks and snapshot publication. |
+| `--no-rtlgen` | Check existing RTL without spec selection or generation; alias for `--checks-only`. Cannot be combined with `--input` or `--cache`. |
+| `--no-bist` | Skip BIST simulation while retaining RTL lint. Records BIST as `not_run`. |
+
+For frontend generation, lint, BIST, and automatic repair only:
+
+```bash
+python3 -m shared.top_orchestrator generate \
+  --input local/frontend/configs/user_input.yaml --no-verif --no-backend
+```
+
+To check existing RTL instead, omit `--input` and add `--no-rtlgen`.
+Add `--no-bist` to run only RTL lint. Frontend-only runs need no remote
+configuration or backend-frequency selection. Automatic repair preserves the
+selected stage controls and rechecks existing RTL after a successful repair.
+These controls apply to `generate` entry; existing default routing still stops
+after remote validation, and `--no-verif` alone retains the existing direct backend route.
+
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
 python -m shared.top_orchestrator

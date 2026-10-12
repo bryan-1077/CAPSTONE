@@ -17,7 +17,7 @@ def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | 
     if result.status != "passed":
         return None
     if result.stage == "generate" and config is not None and config.skip_verification:
-        return "backend"
+        return None if config.no_backend else "backend"
     return {"generate": "validation", "debug": "generate",
             "validation": None, "backend": None, "remote-check": None}[result.stage]
 
@@ -69,8 +69,12 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
                 active_config = replace(active_config, mailbox=mailbox,
                     allow_unvalidated=active_config.allow_unvalidated or config.skip_verification)
                 if config.skip_verification:
-                    result.message = "Frontend checks passed; remote verification skipped; continuing to backend."
+                    result.message = ("Frontend completed; verification and backend skipped."
+                                      if config.no_backend else
+                                      "Frontend checks passed; remote verification skipped; continuing to backend.")
                     result.artifacts["validation"] = "not_run"
+                if config.no_backend:
+                    result.artifacts["backend"] = "not_run"
                 state.config = active_config
             except Exception as exc:
                 result.status = "failed"
