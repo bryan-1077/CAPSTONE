@@ -85,10 +85,11 @@ module tb_ddr4_controller_top;
         logic        is_write;
         logic [31:0] wdata;
     } sched_request_t;
-    sched_request_t sched_req_array [4];
-    logic sched_req_valid [4];
+    // Packed stimulus avoids stale unpacked-array port updates on Verilator 5.020.
+    sched_request_t [3:0] sched_req_array;
+    logic [3:0] sched_req_valid;
     logic [3:0] sched_bank_active;
-    logic [9:0] sched_bank_open_row [4];
+    logic [3:0][9:0] sched_bank_open_row;
     logic [203:0] sched_req_array_packed;
     logic [3:0] sched_req_valid_packed;
     logic [39:0] sched_bank_open_row_packed;
