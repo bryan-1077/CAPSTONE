@@ -49,6 +49,11 @@ out = root / 'verification_reports/this_run'
 out.mkdir(parents=True)
 (out / 'summary.json').write_text(json.dumps(result))
 (out / 'details.log').write_text('verification evidence')
+if mode == 'report_symlink':
+    (out / 'work').mkdir()
+    (out / 'work/simulator').symlink_to(sys.executable)
+if mode == 'input_symlink':
+    (rtl / 'alias.sv').symlink_to(rtl / 'a.sv')
 print('fake pipeline finished', flush=True)
 '''
 
@@ -303,6 +308,45 @@ class ValidationTests(unittest.TestCase):
         self.assertIn('ModuleNotFoundError', payload['pipeline_stderr_tail'])
         self.assertTrue(payload['input_unchanged'])
         self.assertTrue((output / 'reports.zip').is_file())
+
+    def test_report_symlinks_do_not_invalidate_published_inputs(self):
+        (self.server / 'mode').write_text('report_symlink')
+        output = self.root / 'report_symlink'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        payload = json.loads((output / 'remote_validation_result.json').read_text())
+        self.assertTrue(payload['input_unchanged'])
+        with zipfile.ZipFile(output / 'reports.zip') as archive:
+            self.assertFalse(any(name.endswith('/simulator') for name in archive.namelist()))
+
+    def test_input_symlinks_still_invalidate_snapshot(self):
+        (self.server / 'mode').write_text('input_symlink')
+        output = self.root / 'input_symlink'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'needs_attention')
+        self.assertIn('Symlink in validation inputs', result.message)
+
+    def test_python_diagnostics_use_pipeline_import_directory(self):
+        # A dependency available beside the deployed scripts must be probed
+        # there, even though the uploaded wrapper lives in another directory.
+        (self.server / 'dotenv.py').write_text('def load_dotenv(): pass\n')
+        output = self.root / 'python_diagnostics'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        payload = json.loads((output / 'remote_validation_result.json').read_text())
+        runtime = payload['python_environment']
+        self.assertEqual(runtime['executable'], sys.executable)
+        self.assertTrue(runtime['username'])
+        self.assertEqual(runtime['dependencies']['dotenv'],
+                         dict(available=True, file=str(self.server / 'dotenv.py')))
+        record = json.loads((output / 'validation_result.json').read_text())
+        self.assertEqual(record['username'], 'fake')
 
     def test_missing_result_preserves_remote_execution_diagnostic(self):
         class MissingResultSSH(LocalSSH):

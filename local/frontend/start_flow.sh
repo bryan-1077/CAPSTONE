@@ -14,6 +14,14 @@ Flags:
   --interactive   Prompt before each generation-flow step.
   --no-lint       Skip both dual-LLM single-file lint and full-system lint.
   --cache         Use existing configs/user_input.yaml and cached dual-LLM RTL; do not call LLMs.
+  --microarch     Use the architecture proposal/graph flow with the existing config.
+  --microarch-only Save/validate a proposal and stop before RTL generation.
+  --input PATH    Use a requirements/config YAML or architecture manifest (implies --microarch).
+  --requirements-file PATH  Add free-form requirements to the proposal.
+  --architecture-output PATH  Proposal output path.
+  --microarch-response PATH  Replay a saved JSON proposal without an LLM call.
+  --microarch-model NAME     Architecture proposal model.
+  --build-dir PATH           Isolated architecture build directory.
   -h, --help      Show this help message.
 EOF
 }
@@ -21,6 +29,9 @@ EOF
 interactive=0
 no_lint=0
 cache=0
+microarch=0
+architecture_input="configs/user_input.yaml"
+architecture_args=()
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -32,6 +43,25 @@ while [ "$#" -gt 0 ]; do
             ;;
         --cache)
             cache=1
+            ;;
+        --microarch)
+            microarch=1
+            ;;
+        --microarch-only)
+            microarch=1
+            architecture_args+=(--microarch-only)
+            ;;
+        --input)
+            if [ "$#" -lt 2 ]; then echo "--input requires a path" >&2; exit 2; fi
+            shift
+            architecture_input="$1"
+            microarch=1
+            ;;
+        --requirements-file|--architecture-output|--microarch-response|--microarch-model|--build-dir)
+            if [ "$#" -lt 2 ]; then echo "$1 requires a value" >&2; exit 2; fi
+            architecture_args+=("$1" "$2")
+            shift
+            microarch=1
             ;;
         -h|--help)
             usage
@@ -57,7 +87,9 @@ if [ "$cache" -eq 1 ]; then
     flow_args+=(--cache)
 fi
 
-if [ "$cache" -eq 1 ]; then
+if [ "$microarch" -eq 1 ]; then
+    python3 -u run_flow.py "$architecture_input" --microarch "${architecture_args[@]}" "${flow_args[@]}"
+elif [ "$cache" -eq 1 ]; then
     python3 -u run_flow.py configs/user_input.yaml "${flow_args[@]}"
 else
     python3 -u configure_from_text.py --run-flow "${flow_args[@]}"

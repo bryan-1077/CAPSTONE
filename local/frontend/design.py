@@ -11,6 +11,7 @@ import os
 import argparse
 import importlib.util
 import json
+import hashlib
 from datetime import datetime
 from dataclasses import asdict
 
@@ -249,6 +250,7 @@ def parse_args():
         action="store_true",
         help="Use cached dual-LLM RTL and avoid LLM calls for dual-LLM modules.",
     )
+    parser.add_argument("--output-root", help="Isolated build root for IR, RTL and reviewed cache.")
     return parser.parse_args()
 
 
@@ -257,6 +259,11 @@ def main():
     args = parse_args()
     yaml_path = args.yaml_path
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    output_root = os.path.abspath(args.output_root) if args.output_root else root_dir
+    if args.output_root:
+        with open(yaml_path, "rb") as handle:
+            spec_digest = hashlib.sha256(handle.read()).hexdigest()
+        os.environ["CAPSTONE_RTL_CACHE_DIR"] = os.path.join(output_root, ".llm_cache", spec_digest)
     yaml_label = display_path(yaml_path, root_dir)
     module_name = os.path.splitext(os.path.basename(yaml_path))[0]
 
@@ -289,7 +296,7 @@ def main():
         print("Validation failed. Aborting RTL generation.")
         sys.exit(2)
     # Ensure IR output directory exists
-    ir_dir = os.path.join(root_dir, "microarch", "ir")
+    ir_dir = os.path.join(output_root, "microarch", "ir")
     os.makedirs(ir_dir, exist_ok=True)
 
     # Convert dataclass IR → dictionary
@@ -306,7 +313,7 @@ def main():
     module_name = spec.design_name
     route = generation_route(spec, module_name)
     print_module_start_banner(module_name, ROUTE_BANNER_LABELS[route])
-    work_dir = os.path.join(root_dir, "rtl_output")
+    work_dir = os.path.join(output_root, "rtl_output")
     os.makedirs(work_dir, exist_ok=True)
 
     if route == ROUTE_DUAL_LLM:

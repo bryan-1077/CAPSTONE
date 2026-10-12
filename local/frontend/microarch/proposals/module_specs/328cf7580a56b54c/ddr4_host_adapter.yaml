@@ -1,0 +1,153 @@
+design_name: ddr4_host_adapter
+design_type: datapath
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: txn_valid
+  direction: input
+  width: 1
+- name: txn_is_write
+  direction: input
+  width: 1
+- name: txn_addr
+  direction: input
+  width: 4
+- name: txn_wdata
+  direction: input
+  width: 32
+- name: txn_bank
+  direction: input
+  width: 2
+- name: queue_ready
+  direction: input
+  width: 1
+- name: engine_cmd_ready
+  direction: input
+  width: 1
+- name: mem_rsp_valid
+  direction: input
+  width: 1
+- name: mem_rsp_rdata
+  direction: input
+  width: 32
+- name: enq_valid
+  direction: output
+  width: 1
+- name: enq_req
+  direction: output
+  width: 51
+- name: txn_ready
+  direction: output
+  width: 1
+- name: cmd_ready
+  direction: output
+  width: 1
+- name: rsp_valid
+  direction: output
+  width: 1
+- name: rsp_rdata
+  direction: output
+  width: 32
+behavior:
+  description: Packed request layout is bank[50:49], row[48:39], column[38:33], is_write[32],
+    wdata[31:0]. Row is zero-extended from txn_addr[3:2] and column is zero-extended
+    from txn_addr[1:0]. enq_valid equals txn_valid when rst_n is high. txn_ready equals
+    queue_ready when rst_n is high. A host request is accepted only on a rising edge
+    with txn_valid and txn_ready high; no edge detector is used, so consecutive qualifying
+    cycles are distinct requests. The host holds payload stable while txn_valid is
+    high and txn_ready is low. cmd_ready forwards engine execution visibility and
+    does not affect admission. rsp_valid forwards the one-cycle memory response stage
+    when rst_n is high. Reset forces outputs low.
+  invariants:
+  - txn_ready is independent of cmd_ready
+  - txn_bank is retained for the four-bank topology
+  - no request bypasses the waiting queue
+  - rsp_valid is low during reset
+invariants:
+- row[9:2] is zero and row[1:0] equals txn_addr[3:2]
+- column[5:2] is zero and column[1:0] equals txn_addr[1:0]
+combinational_dependencies:
+  enq_valid:
+  - txn_valid
+  - rst_n
+  enq_req:
+  - txn_is_write
+  - txn_addr
+  - txn_wdata
+  - txn_bank
+  txn_ready:
+  - queue_ready
+  - rst_n
+  cmd_ready:
+  - engine_cmd_ready
+  - rst_n
+  rsp_valid:
+  - mem_rsp_valid
+  - rst_n
+  rsp_rdata:
+  - mem_rsp_rdata
+  - rst_n
+verification_requirements:
+- id: BASE_HOST
+  text: Preserve the existing host ports and widths listed in the baseline contract.
+    Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload
+    while stalled. Consecutive accepted cycles with txn_valid held high are distinct
+    requests. cmd_ready is execution/timing visibility, not the host acceptance handshake.
+    Deassert txn_ready and rsp_valid during reset.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Drive txn_valid high for consecutive ready cycles and verify distinct
+    queue entries; stall with txn_ready low and verify no admission; assert reset
+    and verify txn_ready and rsp_valid are low.
+- id: BASE_ADDRESS
+  text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+    zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit
+    txn_bank for multi-bank configurations; a single-bank configuration uses bank
+    0. Internal packed requests retain bank(2), row(10), column(6), write flag(1),
+    write data(32).'
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Submit all sixteen txn_addr values in two banks and inspect packed
+    fields and independent memory locations.
+- id: BASE_DATA
+  text: Provide functional 32-bit memory storage with 16 addresses per bank, bank
+    isolation and reset-to-zero contents. Accepted writes update only their addressed
+    location at service completion or a committed WRITE. Each accepted read produces
+    exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ
+    commit, using the existing one-cycle response stage. Writes produce no host response.
+    Selection and stalled candidates cannot mutate memory; mere command output without
+    storage and read responses is insufficient.
+  owners:
+  - u_command_engine
+  - u_memory
+  - u_host_adapter
+  verification: Write distinct values to equal addresses in separate banks, read both
+    back, verify one delayed response pulse per read, no response for writes, and
+    reset-to-zero behavior.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.

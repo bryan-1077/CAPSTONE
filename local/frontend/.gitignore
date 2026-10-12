@@ -1,6 +1,7 @@
 # Documentation
 *.md
 !README.md
+!microarch/architecture_flow.md
 
 # Python runtime artifacts
 __pycache__/

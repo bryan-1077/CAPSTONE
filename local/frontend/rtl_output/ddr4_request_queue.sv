@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 // GENERATED VIA DUAL-LLM FLOW
 module ddr4_request_queue #(
-    parameter int DEPTH = 4
+    parameter int DEPTH = 4,
+    parameter int SEL_IDX_WIDTH = ((DEPTH <= 1) ? 1 : $clog2(DEPTH))
 ) (
     input  logic                     clk,
     input  logic                     deq_en,
@@ -11,7 +12,7 @@ module ddr4_request_queue #(
     output logic [DEPTH*51-1:0]      req_array,
     output logic [DEPTH-1:0]         req_valid,
     input  logic                     rst_n,
-    input  logic [((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1:0] sel_idx
+    input  logic [SEL_IDX_WIDTH-1:0] sel_idx
 );
     localparam int REQUEST_WIDTH = 51;
     localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
@@ -26,11 +27,12 @@ module ddr4_request_queue #(
 
     request_t enq_req_t;
     request_t req_mem [0:DEPTH-1];
-    logic [DEPTH-1:0] req_valid_n;
     request_t req_mem_n [0:DEPTH-1];
+    logic [DEPTH-1:0] req_valid_n;
     logic has_free_slot;
     logic [SEL_WIDTH-1:0] first_free_idx;
     logic [SEL_WIDTH-1:0] insert_idx;
+    logic do_enqueue;
     logic reuse_slot;
 
     assign enq_req_t = enq_req;
@@ -47,18 +49,13 @@ module ddr4_request_queue #(
     end
 
     always_comb begin
+        enq_ready = has_free_slot || deq_en;
         if (has_free_slot) begin
             insert_idx = first_free_idx;
         end else begin
             insert_idx = sel_idx;
         end
-    end
-
-    always_comb begin
-        enq_ready = has_free_slot | deq_en;
-    end
-
-    always_comb begin
+        do_enqueue = enq_valid && enq_ready;
         reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx);
     end
 
@@ -72,7 +69,7 @@ module ddr4_request_queue #(
             req_valid_n[sel_idx] = 1'b0;
         end
 
-        if (enq_valid && enq_ready) begin
+        if (do_enqueue) begin
             req_mem_n[insert_idx] = enq_req_t;
             req_valid_n[insert_idx] = 1'b1;
         end
@@ -86,16 +83,16 @@ module ddr4_request_queue #(
             end
         end else begin
             req_valid <= req_valid_n;
-            for (int m = 0; m < DEPTH; m++) begin
-                req_mem[m] <= req_mem_n[m];
+            for (int k = 0; k < DEPTH; k++) begin
+                req_mem[k] <= req_mem_n[k];
             end
         end
     end
 
     always_comb begin
         req_array = '0;
-        for (int n = 0; n < DEPTH; n++) begin
-            req_array[(n*REQUEST_WIDTH) +: REQUEST_WIDTH] = req_mem[n];
+        for (int m = 0; m < DEPTH; m++) begin
+            req_array[(m*REQUEST_WIDTH) +: REQUEST_WIDTH] = req_mem[m];
         end
     end
 endmodule

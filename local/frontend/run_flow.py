@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -84,6 +85,8 @@ MANAGED_DESIGN_ARTIFACTS = {
 
 
 def parse_args() -> argparse.Namespace:
+    from generate_microarch import DEFAULT_MODEL
+
     parser = argparse.ArgumentParser(
         description="Run config expansion, expand_spec, design generation, and wrapper generation."
     )
@@ -103,6 +106,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use cached dual-LLM RTL for cache-backed modules and avoid LLM calls.",
     )
+    parser.add_argument("--microarch", action="store_true", help="Propose an LLM architecture before generation.")
+    parser.add_argument("--microarch-only", action="store_true", help="Save/validate the architecture and stop before RTL.")
+    parser.add_argument("--requirements-file", type=Path, help="Additional free-form architecture requirements.")
+    parser.add_argument("--architecture-output", type=Path, default=SCRIPT_DIR / "microarch/proposals/architecture.yaml")
+    parser.add_argument("--microarch-model", default=DEFAULT_MODEL,
+                        help="Architecture model (defaults to generate_microarch.DEFAULT_MODEL).")
+    parser.add_argument("--microarch-response", type=Path, help="Replay a saved JSON architecture without calling the LLM.")
+    parser.add_argument("--build-dir", type=Path, help="Architecture build directory (defaults to content-addressed microarch/builds/).")
     return parser.parse_args()
 
 
@@ -551,6 +562,77 @@ def should_run_expand_spec(interactive: bool, source_count: int, source_path: Pa
     return prompt_yes_no(f"Run expand_spec for {display_path(source_path)}? (y/n): ")
 
 
+def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
+    """Lower the proposed graph directly, bypassing fixed controller integration."""
+    from architecture import fingerprint, lower_architecture, validate_architecture, emit_verification_specs
+    from generate_microarch import build_request, propose
+
+    source = load_yaml(input_path)
+    if "architecture_version" in source:
+        if args.requirements_file or args.microarch_response:
+            raise ValueError("Proposal inputs cannot be combined with an already-authored architecture")
+        manifest = source
+        validate_architecture(manifest)
+    else:
+        request = build_request(source, args.requirements_file.read_text() if args.requirements_file else "")
+        if request.get('baseline_contract'):
+            print(f'[MICROARCH] Preserving baseline: {request["baseline_contract"]["id"]} (host, data, queue and timing contracts)')
+        manifest = propose(request, output=args.architecture_output, model=args.microarch_model,
+                           cache=args.cache, response_path=args.microarch_response)
+    print(f'[MICROARCH] Validated architecture: {manifest["design_name"]}')
+    if args.microarch_only:
+        proposal_path = input_path if 'architecture_version' in source else args.architecture_output
+        specs = emit_verification_specs(manifest, proposal_path)
+        print(f'[MICROARCH] Module YAMLs for verification: {specs[0].parent} ({len(specs)} definitions)')
+        print(f'[MICROARCH] Verification index: {proposal_path.with_suffix(".modules.json")}')
+        print("[MICROARCH] Proposal ready for review; RTL generation has not run.")
+        return 0
+    build_dir = (args.build_dir or SCRIPT_DIR / "microarch/builds" / fingerprint(manifest)[:16]).resolve()
+    if build_dir == SCRIPT_DIR:
+        raise ValueError("Architecture builds must use a separate directory")
+    specs = lower_architecture(manifest, build_dir)
+    status = {"structural_validation": "passed", "declared_dependency_validation": "passed", "rtl_generation": "in_progress",
+              "integration_lint": "not_run", "behavioral_verification": "not_run"}
+    status_path = build_dir / "build_status.json"
+    status_path.write_text(json.dumps(status, indent=2) + "\n")
+    try:
+        for spec in specs:
+            run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache) +
+                        ["--output-root", str(build_dir)])
+        status["rtl_generation"] = "passed"
+        if not args.no_lint:
+            from dual_llm_rtlGen import _run_verilator_lint_file_set, LINT_MODE_INTEGRATION
+            rtl_dir = build_dir / "rtl_output"
+            files = [str(rtl_dir / name) for name in (rtl_dir / "filelist.f").read_text().splitlines()]
+            result = _run_verilator_lint_file_set(files, LINT_MODE_INTEGRATION, manifest["design_name"])
+            (build_dir / "integration_lint.json").write_text(json.dumps(result, indent=2) + "\n")
+            if not result or not result["ok"]:
+                raise ValueError(f"Architecture integration lint failed; see {build_dir}/integration_lint.json")
+            status["integration_lint"] = "passed"
+        else:
+            status["integration_lint"] = "skipped"
+    except (subprocess.CalledProcessError, ValueError, OSError):
+        if status["rtl_generation"] == "in_progress":
+            status["rtl_generation"] = "failed"
+        elif status["integration_lint"] == "not_run":
+            status["integration_lint"] = "failed"
+        status["result"] = "failed"
+        status_path.write_text(json.dumps(status, indent=2) + "\n")
+        raise
+    status["result"] = "generated"
+    status_path.write_text(json.dumps(status, indent=2) + "\n")
+    (build_dir / "README.md").write_text(
+        f'# {manifest["design_name"]}\n\n{manifest["rationale"]}\n\n'
+        'Compile from rtl_output using filelist.f. architecture.yaml owns the graph; '
+        'microarch/gen_exp contains resolved module specifications.\n\n'
+        'Behavioral verification has not run. verification_plan.json records the '
+        'requirements and scenarios; build_status.json records generation/lint results. '
+        'The legacy controller testbench is not applicable to arbitrary architectures.\n')
+    print(f"[MICROARCH] Generated build: {build_dir}")
+    print("[MICROARCH] Behavioral verification remains pending; see verification_plan.json.")
+    return 0
+
+
 def main() -> int:
     args = parse_args()
     start_time = time.time()
@@ -562,6 +644,10 @@ def main() -> int:
         input_path = input_path.resolve()
 
     try:
+        if args.microarch or args.microarch_only or (input_path.is_file() and "architecture_version" in load_yaml(input_path)):
+            return run_architecture_flow(input_path, args)
+        if args.requirements_file or args.microarch_response or args.build_dir:
+            raise ValueError("Architecture options require --microarch or an architecture manifest input")
         input_path, validated_user_config = maybe_expand_user_config(input_path)
         source_yamls, design_names = discover_targets(input_path)
 
