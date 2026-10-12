@@ -43,10 +43,10 @@ except AttributeError:
 # ---------------------------------------------------------------------------
 
 # LLM #1: generator / merger
-LLM1_MODEL = "protected.gpt-5.6-terra"
+LLM1_MODEL = "protected.Claude-Opus-5"
 
 # LLM #2: reviewer / fixer — different model for diverse critique
-LLM2_MODEL = "protected.Claude Sonnet 5"
+LLM2_MODEL = "protected.gpt-5.6-terra"
 
 # Maximum full rounds before accepting best-so-far output
 MAX_ROUNDS = 3

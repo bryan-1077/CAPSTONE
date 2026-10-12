@@ -31,7 +31,7 @@ RTL_OUTPUT_DIR = SCRIPT_DIR / "rtl_output"
 MANIFEST_PATH = RTL_OUTPUT_DIR / "manifest.json"
 SUPPORTED_SOURCES = ("lint", "bist", "verif", "pd")
 FAILURE_SUBDIRS = ("intake", "analysis", "attempts", "result")
-DEFAULT_PATCH_MODEL = "protected.Claude Opus 4.8"
+DEFAULT_PATCH_MODEL = "protected.gpt-5.6-sol"
 TAMU_API_URL = "https://chat-api.tamu.ai/openai/chat/completions"
 MAX_PATCH_CONTEXT_CHARS = 12000
 MAX_ATTEMPT_CONTEXT_CHARS = 4000
@@ -1977,6 +1977,19 @@ def collect_previous_attempts_context(failure_dir: Path, max_attempts: int = 3) 
         }
         if isinstance(checks, dict):
             attempt["checks"] = checks.get("checks", [])
+        response_path = attempt_dir / "response.md"
+        if response_path.is_file():
+            attempt["response_excerpt"] = read_limited_text(response_path, 3000)[0]
+        # Build output can dwarf the actual failure; prioritize diagnostics.
+        diagnostics = {}
+        for name in ("lint", "target"):
+            log_path = attempt_dir / f"{name}.log"
+            if log_path.is_file():
+                lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                selected = [line for line in lines if re.search(
+                    r"\[ERROR\]|%Error|%Warning|TEST (?:FAIL|PASS)|Errors:|Assertion|fatal", line, re.I)]
+                diagnostics[name] = "\n".join(selected)[:6000] or "\n".join(lines[-30:])[-3000:]
+        attempt["check_diagnostics"] = diagnostics
         attempts.append(attempt)
 
     return attempts
@@ -4276,7 +4289,10 @@ def graph_assess_evidence_node(state: DebugGraphState) -> DebugGraphState:
                     record["decision"] = "insufficient_evidence"
                     log_debug(failure_dir, f"Assessment rejected; requesting correction within budget: {exc}")
                     continue
-                record.pop("assessment_feedback", None)
+                if record["decision"] == "sufficient_evidence":
+                    record.pop("assessment_feedback", None)
+                elif record.get("assessment_feedback"):
+                    log_debug(failure_dir, record["assessment_feedback"])
                 break
             except Exception as exc:
                 write_json(prefix.with_suffix(".error.json"), {"error_type": type(exc).__name__, "message": str(exc)})
@@ -4426,17 +4442,17 @@ def graph_validate_patch_node(state: DebugGraphState) -> DebugGraphState:
     }, "validate_patch")
 
 
-def route_after_validate(state: DebugGraphState) -> Literal["apply_patch", "record_result", "propose_patch"]:
+def route_after_validate(state: DebugGraphState) -> Literal["apply_patch", "record_result", "reassess_repair"]:
     validation = state.get("validation", {})
     can_apply = isinstance(validation, dict) and bool(validation.get("can_apply"))
     if can_apply and not state.get("stop_reason"):
         return "apply_patch"
     if validation.get("status") == "patch_rejected":
-        return "propose_patch"
+        return "reassess_repair"
     return "record_result"
 
 
-def route_after_apply(state: DebugGraphState) -> Literal["propose_patch", "record_result"]:
+def route_after_apply(state: DebugGraphState) -> Literal["reassess_repair", "record_result"]:
     status = state.get("status", {})
     rollback = status.get("rollback", {})
     if (state.get("stop_reason") == "checks_failed"
@@ -4444,8 +4460,27 @@ def route_after_apply(state: DebugGraphState) -> Literal["propose_patch", "recor
             and not status.get("rtl_modified")
             and rollback.get("passed")
             and not state.get("keep_failed_patch") and not state.get("demo_mode")):
-        return "propose_patch"
+        return "reassess_repair"
     return "record_result"
+
+
+def graph_reassess_repair_node(state: DebugGraphState) -> DebugGraphState:
+    """Revisit the cause after a rejected proposal or a rolled-back failing repair."""
+    failure_dir = graph_failure_dir(state)
+    record = investigation_record(state)
+    record["repair_feedback"] = collect_previous_attempts_context(failure_dir)
+    record["decision"] = "insufficient_evidence"
+    record.pop("stop_reason", None)
+    if len(numbered_attempt_dirs(failure_dir)) >= int(state.get("max_attempts", MAX_REPAIR_ATTEMPTS)):
+        record["stop_reason"] = "repair_attempts_exhausted"
+        record["unresolved_questions"] = ["Repair budget exhausted; inspect saved responses and failed-check diagnostics."]
+    refreshed = dict(state)
+    refreshed.update(save_investigation(state, record, "reassess_repair"))
+    if record.get("stop_reason"):
+        return refreshed
+    log_debug(failure_dir, "Reassessing the cause using proposal responses and failed-check diagnostics")
+    refreshed.update(graph_assess_evidence_node(refreshed))
+    return refreshed
 
 
 def graph_apply_patch_node(state: DebugGraphState) -> DebugGraphState:
@@ -4536,6 +4571,7 @@ def build_langgraph_runner() -> Callable[[DebugGraphState], DebugGraphState]:
     graph.add_node("propose_patch", graph_propose_patch_node)
     graph.add_node("validate_patch", graph_validate_patch_node)
     graph.add_node("apply_patch", graph_apply_patch_node)
+    graph.add_node("reassess_repair", graph_reassess_repair_node)
     graph.add_node("record_result", graph_record_result_node)
     graph.add_edge(START, "run_or_ingest")
     graph.add_edge("run_or_ingest", "parse_failure")
@@ -4549,6 +4585,7 @@ def build_langgraph_runner() -> Callable[[DebugGraphState], DebugGraphState]:
     graph.add_conditional_edges("propose_patch", route_after_propose)
     graph.add_conditional_edges("validate_patch", route_after_validate)
     graph.add_conditional_edges("apply_patch", route_after_apply)
+    graph.add_conditional_edges("reassess_repair", route_after_assessment)
     graph.add_edge("record_result", END)
     compiled = graph.compile(checkpointer=MemorySaver())
 
@@ -4602,10 +4639,19 @@ def run_fallback_graph(state: DebugGraphState) -> DebugGraphState:
         route = route_after_validate(current)
         if route == "record_result":
             break
-        if route == "propose_patch":
-            continue
-        current.update(graph_apply_patch_node(current))
-        if route_after_apply(current) == "record_result":
+        if route == "apply_patch":
+            current.update(graph_apply_patch_node(current))
+            route = route_after_apply(current)
+        if route == "record_result":
+            break
+        current.update(graph_reassess_repair_node(current))
+        while route_after_assessment(current) == "investigate":
+            current.update(graph_investigate_node(current))
+            current.update(graph_assess_evidence_node(current))
+        if route_after_assessment(current) == "record_result":
+            break
+        current.update(graph_build_patch_context_node(current))
+        if route_after_build_patch_context(current) == "record_result":
             break
     current.update(graph_record_result_node(current))
     return current
