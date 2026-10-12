@@ -23,7 +23,7 @@ def main() -> int:
                         help="Allow direct backend testing without validation; does not bypass normal generation routing.")
     parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
     parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
-    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for remote preflight or validation SSH authentication.")
+    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for SSH authentication, including backend entry.")
     parser.add_argument("--cache", action="store_true")
     parser.add_argument("--target-mhz", type=positive_mhz,
                         help="Backend clock target; bypass the frequency prompt.")
@@ -44,8 +44,8 @@ def main() -> int:
             remote = RemoteConfig.load(args.remote_config)
         except (OSError, ValueError, TypeError) as exc:
             parser.error(str(exc))
-    if args.entry == "backend" and (args.remote_config is not None or args.ask_password):
-        parser.error("Backend entry uses its own SSH configuration")
+    if args.entry == "backend" and args.remote_config is not None:
+        parser.error("Backend entry uses CAPSTONE_SSH_* environment settings rather than --remote-config")
     if (args.allow_unvalidated or args.backend_python) and args.entry != "backend":
         parser.error("--allow-unvalidated and --backend-python apply only to backend entry")
     if args.mailbox and args.entry not in ("validation", "backend"):

@@ -244,6 +244,16 @@ and saves `backend.log`, `backend_result.json`, and `backend_reports/` beneath
 this invocation's run directory. Backend retains its existing SSH configuration,
 remote build handling, internal retries, and timing-closure logic.
 
+Backend SSH settings can be overridden with `CAPSTONE_SSH_HOST`,
+`CAPSTONE_SSH_USER`, `CAPSTONE_SSH_PORT`, and `CAPSTONE_SSH_KEY`. They otherwise
+retain the backend defaults. Set `CAPSTONE_SSH_KEY` to an empty string to omit
+the explicit default key (SSH agent/discovered keys remain available). Backend
+does not consume `--remote-config` or the validation project-directory setting.
+For password authentication, add `--ask-password` to the command above. The local
+backend prompts securely and reuses the password for staging and execution;
+the password is not put in command arguments or saved state. A terminal is required.
+Authentication errors occur before RTL staging or EDA execution.
+
 A backend pass requires exit zero, a JSON state reporting `done`, success for all
 four implementation stages, the expected RTL digest and target period, and
 successful timing closure when enabled. Failed or missing physical-verification

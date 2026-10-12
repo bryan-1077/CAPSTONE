@@ -33,6 +33,70 @@ class AppCLITests(unittest.TestCase):
                     app.run_cli(args)
             self.assertEqual(json.loads(output.read_text())["current_stage"], "failed")
 
+    def test_original_error_survives_session_logger_exit(self):
+        def logger(callback, **kwargs):
+            try:
+                callback()
+            except RuntimeError:
+                raise SystemExit(1)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "result.json"
+            args = app._parse_args(["--result-json", str(output)])
+            with patch.object(app, "main", side_effect=RuntimeError("SSH authentication rejected")), patch.object(
+                    app, "run_with_session_logging", side_effect=logger):
+                with self.assertRaises(SystemExit):
+                    app.run_cli(args)
+            self.assertEqual(json.loads(output.read_text())["last_error"],
+                             "RuntimeError: SSH authentication rejected")
+
+    def test_ssh_overrides_and_password_reach_both_connections_without_saved_secret(self):
+        secret = "test-secret-only"
+        args = app._parse_args(["--mailbox", "/unused", "--ask-password"])
+        with patch.dict("os.environ", {
+            "CAPSTONE_SSH_HOST": "test-host", "CAPSTONE_SSH_USER": "test-user",
+            "CAPSTONE_SSH_PORT": "2222", "CAPSTONE_SSH_KEY": "",
+        }, clear=True), patch.object(app, "_load_service_exports"), patch.object(
+                app.getpass, "getpass", return_value=secret) as prompt, patch.object(
+                app, "stage_mailbox", return_value={}) as staging, patch.object(
+                app, "run_flow", side_effect=lambda **kw: kw["initial_state"]) as run:
+            state = app.main(args)
+        connection = run.call_args.kwargs["ssh_config"]
+        self.assertEqual(connection, {"host": "test-host", "username": "test-user",
+                                     "port": 2222, "key_filename": None, "password": secret})
+        self.assertEqual(staging.call_args.args[2], connection)
+        prompt.assert_called_once()
+        self.assertNotIn(secret, json.dumps(state))
+        self.assertIsNone(args._ssh_password)
+
+    def test_password_prompt_cancellation_and_unsafe_terminal_stop_before_ssh(self):
+        for error in (EOFError(), app.getpass.GetPassWarning("no terminal")):
+            with self.subTest(error=type(error).__name__), patch.object(
+                    app, "_load_service_exports"), patch.object(app.getpass, "getpass", side_effect=error), patch.object(
+                    app, "stage_mailbox") as staging, patch.object(app, "run_flow") as run:
+                args = app._parse_args(["--mailbox", "/unused", "--ask-password"])
+                with self.assertRaises(type(error)):
+                    app.main(args)
+                staging.assert_not_called()
+                run.assert_not_called()
+                self.assertIsNone(args._ssh_password)
+
+    def test_sweep_prompts_once_and_clears_cached_password(self):
+        def sweep(run):
+            run(230)
+            return run(235)
+        args = app._parse_args(["max", "clocking", "--ask-password"])
+        with patch.object(app, "_load_service_exports"), patch.object(
+                app.getpass, "getpass", return_value="test-secret-only") as prompt, patch.object(
+                app, "run_flow", return_value={}) as flow, patch.object(
+                app, "run_max_clocking", side_effect=sweep):
+            app.main(args)
+        prompt.assert_called_once()
+        self.assertEqual(flow.call_count, 2)
+        for call in flow.call_args_list:
+            self.assertEqual(call.kwargs["ssh_config"]["password"], "test-secret-only")
+            self.assertNotIn("test-secret-only", json.dumps(call.kwargs["initial_state"]))
+        self.assertIsNone(args._ssh_password)
+
     def test_log_directory_reaches_backend_state(self):
         with tempfile.TemporaryDirectory() as temporary:
             state = self.run_app(["--log-dir", temporary])

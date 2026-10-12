@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from shared.top_orchestrator.contracts import RunConfig, StageResult, FailureReport
 from shared.top_orchestrator.mailbox import publish, verify
-from shared.top_orchestrator.nodes import backend_node
+from shared.top_orchestrator.nodes import backend_command, backend_node
 from shared.top_orchestrator.orchestrator import run
 
 
@@ -91,6 +91,16 @@ class MailboxBackendTests(unittest.TestCase):
                 "timing_target_clock_period_ns": 5.0, "timing_closure_enabled": True,
                 "timing_closure_status": "passed", "stage_status": dict.fromkeys(
                     ("rtl_prep", "netlist", "mapped_netlist", "gdsii"), "success")}
+
+    def test_backend_password_flag_is_forwarded(self):
+        config = replace(self.config(), ask_password=True)
+        self.assertIn("--ask-password", backend_command(config, self.mailbox))
+        self.assertNotIn("--ask-password", backend_command(self.config(), self.mailbox))
+        from shared.top_orchestrator.__main__ import main
+        with patch("sys.argv", ["orchestrator", "backend", "--mailbox", str(self.mailbox),
+                               "--target-mhz", "200", "--allow-unvalidated",
+                               "--ask-password", "--plan"]):
+            self.assertEqual(main(), 0)
 
     def test_backend_subprocess_and_result_checks(self):
         payload = self.payload()

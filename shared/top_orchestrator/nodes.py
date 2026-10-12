@@ -61,8 +61,11 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
     if config.target_mhz is None:
         raise ValueError("Choose a target frequency before starting backend.")
     target = positive_mhz(str(config.target_mhz))
-    return [config.backend_python or sys.executable, "-u", str(REPO_ROOT / "local/backend/app.py"),
-            "--mailbox", str(mailbox.expanduser().resolve()), "--target-mhz", str(target)]
+    command = [config.backend_python or sys.executable, "-u", str(REPO_ROOT / "local/backend/app.py"),
+               "--mailbox", str(mailbox.expanduser().resolve()), "--target-mhz", str(target)]
+    if config.ask_password:
+        command.append("--ask-password")
+    return command
 
 
 def stream_command(command: list[str], log: Path, *, cwd: Path | None = None) -> int:

@@ -1,8 +1,10 @@
 import argparse
+import getpass
 import json
 import math
 import os
 import re
+import warnings
 from pprint import pprint
 from pathlib import Path
 from services.build_names import full_flow_names
@@ -97,6 +99,8 @@ def _parse_args(argv=None):
     parser.add_argument("--log-dir", type=Path, help="Directory for this invocation's session and parsed logs.")
     parser.add_argument("--mailbox", type=Path,
                         help="Local mailbox revision containing rtl/; upload it for remote prep instead of MemoryController.zip.")
+    parser.add_argument("--ask-password", action="store_true",
+                        help="Prompt securely for the SSH password; reuse it for staging and backend execution.")
     parser.add_argument(
         "--target-mhz", type=_positive_mhz, metavar="MHZ",
         help="target frequency, e.g. 230; overrides the environment period and disables inherited overconstraint",
@@ -123,17 +127,24 @@ def main(args=None):
     args = args if args is not None else _parse_args([])
     # A sweep reuses one uploaded revision, even if the working tree changes.
     args._mailbox_staged = None
-    if args.max_clocking:
-        def run_target(mhz):
-            target_args = argparse.Namespace(**vars(args))
-            target_args.target_mhz = mhz
-            target_args.no_overconstraint = True
-            result = _run_single_target(target_args, require_timing_closure=True)
-            args._mailbox_staged = target_args._mailbox_staged
-            return result
+    args._ssh_password = None
+    try:
+        if args.max_clocking:
+            def run_target(mhz):
+                target_args = argparse.Namespace(**vars(args))
+                target_args.target_mhz = mhz
+                target_args.no_overconstraint = True
+                try:
+                    return _run_single_target(target_args, require_timing_closure=True)
+                finally:
+                    args._mailbox_staged = target_args._mailbox_staged
+                    args._ssh_password = target_args._ssh_password
+                    target_args._ssh_password = None
 
-        return run_max_clocking(run_target)
-    return _run_single_target(args)
+            return run_max_clocking(run_target)
+        return _run_single_target(args)
+    finally:
+        args._ssh_password = None
 
 
 def _run_single_target(args, *, require_timing_closure=False):
@@ -298,10 +309,10 @@ def _run_single_target(args, *, require_timing_closure=False):
             / "templates"
             / "universal_gdsii_instructions.md"
         ),
-        "ssh_host": "olympus.ece.tamu.edu",
-        "ssh_user": "antgamez1203",
-        "ssh_port": 22,
-        "ssh_key_file": "~/.ssh/id_ed25519",
+        "ssh_host": os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu",
+        "ssh_user": os.getenv("CAPSTONE_SSH_USER") or "antgamez1203",
+        "ssh_port": int(os.getenv("CAPSTONE_SSH_PORT") or "22"),
+        "ssh_key_file": os.getenv("CAPSTONE_SSH_KEY", "~/.ssh/id_ed25519") or None,
         "remote_project_root": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend",
     }
 
@@ -311,6 +322,16 @@ def _run_single_target(args, *, require_timing_closure=False):
         "port": initial_state["ssh_port"],
         "key_filename": initial_state["ssh_key_file"],
     }
+    if not 1 <= initial_state["ssh_port"] <= 65535:
+        raise ValueError("CAPSTONE_SSH_PORT must be between 1 and 65535")
+    if getattr(args, "ask_password", False):
+        if getattr(args, "_ssh_password", None) is None:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", getpass.GetPassWarning)
+                args._ssh_password = getpass.getpass(
+                    f"SSH password for {initial_state['ssh_user']}@{initial_state['ssh_host']}: "
+                )
+        ssh_config["password"] = args._ssh_password
 
     initial_state.update(full_flow_names(target_period))
     if getattr(args, "log_dir", None):
@@ -344,16 +365,27 @@ def run_cli(args) -> int:
     if result_path is not None:
         result_path.parent.mkdir(parents=True, exist_ok=True)
     result = None
+    def run_backend():
+        nonlocal result
+        try:
+            return main(args)
+        except (Exception, KeyboardInterrupt, SystemExit) as exc:
+            # The session logger converts exceptions to SystemExit after parsing logs.
+            # Preserve the original cause for the parent orchestrator.
+            result = {"current_stage": "failed", "last_error": f"{type(exc).__name__}: {exc}"}
+            raise
+
     try:
         result = run_with_session_logging(
-            lambda: main(args),
+            run_backend,
             log_path=log_dir / "full_session.log",
             parser_script_path=repo_root / "parse_full_session_log.py",
             parser_outdir=log_dir,
             result_printer=pprint,
         )
     except (Exception, KeyboardInterrupt, SystemExit) as exc:
-        result = {"current_stage": "failed", "last_error": f"{type(exc).__name__}: {exc}"}
+        if result is None:
+            result = {"current_stage": "failed", "last_error": f"{type(exc).__name__}: {exc}"}
         raise
     finally:
         if result_path is not None:
