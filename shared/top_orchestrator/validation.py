@@ -48,13 +48,27 @@ def check_complete(summary: dict) -> None:
         raise ValueError("Verification has failures, coverage gaps, or review requirements")
 
 
-def assess(summary: dict, expected: dict[str, str], remote_input: str) -> None:
+def assess(summary: dict, expected: dict[str, str], remote_input: str, mode: str = "modules",
+           top_module: str | None = None) -> None:
     check_complete(summary)
-    if summary.get("input_directory") != remote_input:
+    expected_directory = remote_input + "/rtl" if mode == "system" else remote_input
+    if summary.get("input_directory") != expected_directory:
         raise ValueError("Summary belongs to a different input directory")
-    if set(summary.get("inputs", [])) != {remote_input + "/rtl", remote_input + "/specs"}:
+    expected_inputs = ({remote_input + "/rtl/manifest.json"} if mode == "system" else
+                       {remote_input + "/rtl", remote_input + "/specs"})
+    if set(summary.get("inputs", [])) != expected_inputs:
         raise ValueError("Summary does not cover the requested RTL/spec directories")
-    if summary.get("kind") == "batch":
+    if mode == "system":
+        if summary.get("mode") != "system":
+            raise ValueError("Expected an explicit system verification summary")
+        if top_module is not None and summary.get("top_module") != top_module:
+            raise ValueError("System summary identifies a different controller top")
+        if summary.get("manifest_path") != remote_input + "/rtl/manifest.json":
+            raise ValueError("System summary belongs to a different controller manifest")
+        if summary.get("ready_for_backend") is not True:
+            raise ValueError("System verification did not establish backend readiness")
+        children = [summary]
+    elif summary.get("kind") == "batch":
         designs = summary.get("designs", [])
         if len(designs) != len(expected) or {d.get("module_name") for d in designs} != set(expected):
             raise ValueError("Batch summary is missing or duplicates requested designs")
@@ -81,12 +95,13 @@ def assess(summary: dict, expected: dict[str, str], remote_input: str) -> None:
                 raise ValueError(f"{name} has verification gaps")
 
 
-def unpack_reports(archive: Path, destination: Path) -> None:
+def unpack_reports(archive: Path, destination: Path, report_relative: str = "verification_reports") -> None:
     destination.mkdir()
     with zipfile.ZipFile(archive) as bundle:
         for entry in bundle.infolist():
             path = PurePosixPath(entry.filename)
-            if path.is_absolute() or ".." in path.parts or not path.parts or path.parts[0] != "verification_reports":
+            prefix = PurePosixPath(report_relative).parts
+            if path.is_absolute() or ".." in path.parts or path.parts[:len(prefix)] != prefix:
                 raise ValueError("Invalid report archive path")
             if (entry.external_attr >> 16) & 0o170000 == 0o120000:
                 raise ValueError("Report archive contains a symlink")
@@ -135,6 +150,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             shutil.copytree(config.mailbox, snapshot, symlinks=True)
             metadata = verify(snapshot)
             expected = expected_designs(snapshot)
+            top_module = json.loads((snapshot / "rtl/manifest.json").read_text())["top_module"]
             snapshot_digest = hashlib.sha256((snapshot / "snapshot.json").read_bytes()).hexdigest()
             token = uuid4().hex
             job_name = "capstone-verif-" + token
@@ -145,7 +161,8 @@ def validation_node(config, run_dir: Path) -> StageResult:
             if not pipeline.is_absolute():
                 pipeline = PurePosixPath(remote.project_dir) / pipeline
             request = {"invocation_id": token, "snapshot_digest": snapshot_digest,
-                       "pipeline": str(pipeline), "jobs": remote.validation_jobs}
+                       "pipeline": str(pipeline), "jobs": remote.validation_jobs,
+                       "validation_mode": remote.validation_mode}
             request_path = run_dir / "validation_request.json"
             request_path.write_text(json.dumps(request, indent=2) + "\n")
             record.update(request, remote_directory=str(invocation), expected_designs=expected,
@@ -239,31 +256,56 @@ def validation_node(config, run_dir: Path) -> StageResult:
             if hashlib.sha256(archive.read_bytes()).hexdigest() != payload.get("reports_digest"):
                 raise ValueError("Downloaded report archive digest mismatch")
             reports = run_dir / "reports"
-            unpack_reports(archive, reports)
+            report_relative = "rtl/verification_reports" if remote.validation_mode == "system" else "verification_reports"
+            unpack_reports(archive, reports, report_relative)
             artifacts["reports"] = str(reports)
             summary = payload.get("summary")
-            record["verification_scope"] = "Published module YAML specs; wrappers without specs are not individually verified."
+            record["verification_scope"] = (
+                "Controller system verification of the published RTL tree; module YAMLs are retained as snapshot evidence."
+                if remote.validation_mode == "system" else
+                "Published module YAML specs; wrappers without specs are not individually verified.")
             if payload.get("error") or payload.get("input_unchanged") is not True:
                 raise ValueError(payload.get("error") or "Input identity was not verified after validation")
             relative = PurePosixPath(payload.get("summary_file", ""))
-            if relative.is_absolute() or ".." in relative.parts or not relative.parts or relative.parts[0] != "verification_reports":
+            prefix = PurePosixPath(report_relative).parts
+            if relative.is_absolute() or ".." in relative.parts or relative.parts[:len(prefix)] != prefix:
                 raise ValueError("Invalid summary path")
             saved_summary = reports.joinpath(*relative.parts)
             if json.loads(saved_summary.read_text()) != summary:
                 raise ValueError("Retrieved summary differs from remote result")
             artifacts["summary"] = str(saved_summary)
             record["phase"] = "verification_evidence"
+            if remote.validation_mode == "system":
+                final_name = PurePosixPath(summary.get("final_system_report", "")) if isinstance(summary, dict) else PurePosixPath("")
+                if final_name.is_absolute() or len(final_name.parts) != 1 or final_name.name in (".", ".."):
+                    raise ValueError("Missing or invalid final system report path")
+                final_path = saved_summary.parent / final_name.name
+                final = json.loads(final_path.read_text())
+                artifacts["final_system_report"] = str(final_path)
+                record["system_result"] = final
+                if final.get("mode") != "system" or final.get("top_module") != top_module:
+                    raise ValueError("Final system report identifies a different controller")
+                if final.get("status") == "FAIL":
+                    status = "failed"
+                if (final.get("status") != "PASS" or final.get("ready_for_backend") is not True
+                        or final.get("functional_rtl") != "PASS" or final.get("protocol_timing_compliance") != "PASS"
+                        or final.get("coverage_limitations")):
+                    raise ValueError("System verification is {}; functional RTL={}, protocol timing={}; "
+                                     "complete PASS evidence is required".format(
+                                         final.get("status"), final.get("functional_rtl"), final.get("protocol_timing_compliance")))
             if isinstance(summary, dict) and summary.get("overall_status") == "FAIL":
                 status = "failed"
-            assess(summary, expected, str(invocation / "input"))
+            assess(summary, expected, str(invocation / "input"), remote.validation_mode, top_module)
             if code != 0 or payload.get("pipeline_returncode") != 0:
                 raise ValueError("Validation process did not exit successfully")
             verify(snapshot)
             status = "passed"
             record["phase"] = "complete"
-            message = f"Verification passed for {len(expected)} published YAML designs. Backend was not run."
+            message = ("Controller system verification passed for the published RTL snapshot. Backend was not run."
+                       if remote.validation_mode == "system" else
+                       f"Verification passed for {len(expected)} published YAML designs. Backend was not run.")
             missing = metadata.get("modules_without_specs", [])
-            if missing:
+            if missing and remote.validation_mode == "modules":
                 message += " No individual YAML verification for: " + ", ".join(missing) + "."
         except KeyboardInterrupt:
             message = "Validation interrupted."

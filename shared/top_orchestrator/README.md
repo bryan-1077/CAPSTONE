@@ -90,8 +90,8 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-By default, generation continues through remote validation and stops there. A pass requires
-complete structural and behavioral evidence for every published YAML design. Backend
+By default, generation continues through remote system validation and stops there. A pass requires
+complete structural and behavioral evidence for the controller RTL snapshot. Backend
 is not invoked after verification. Its gate for consuming validated evidence remains
 deferred; direct backend entry without
 `--allow-unvalidated` stops with `needs_attention`.
@@ -414,6 +414,41 @@ as `remote-check`. The default deployed pipeline path is
 already have the validation scripts, Python dependencies, simulator, and model
 configuration installed. This adapter does not deploy or edit that source folder.
 
+System verification is now the default remote mode. The uploaded wrapper runs:
+
+```text
+python3 server/validation/run_pipeline.py <invocation>/input/rtl --system
+```
+
+The RTL directory comes from the immutable mailbox revision. Matching YAMLs remain
+in `<invocation>/input/specs` as snapshot evidence, but system mode passes only the
+RTL directory to the pipeline. Reports are collected from
+`<invocation>/input/rtl/verification_reports`, preserving their paths in the archive.
+Snapshot hashes are checked before and after execution; generated reports are
+excluded from that comparison, while changes to RTL or other inputs are rejected.
+
+The adapter requires an explicit `mode: system` summary for the same RTL input
+directory and controller manifest, complete PASS execution, and passing
+agent1/agent2/agent3 evidence without coverage gaps. It also checks the published
+`final_system_report.json` for the same controller top, backend readiness, and
+functional/protocol timing PASS. `PASS_WITH_GAPS` remains incomplete even when
+the server reports `READY_FOR_BACKEND`. Unsupported or incomplete report formats stop with
+`needs_attention`; process exit zero alone never establishes a verification pass.
+
+The frontend writes controller manifest v2 using the shared discovery contract.
+After lint/BIST, including checks of existing RTL, the orchestrator refreshes
+metadata with `generate_wrapper.py --manifest-only` before publishing a new
+revision. That refresh writes the filelist, feature indexes, and manifest without
+rewriting RTL or the testbench. The mailbox includes every referenced config,
+expanded spec, IR, JEDEC dictionary, and testbench; discovery must still pass after
+relocation. Earlier published revisions remain unchanged.
+
+For the older module/YAML batch pipeline, set `CAPSTONE_VALIDATION_MODE=modules`
+or `validation_mode: "modules"` in the remote JSON configuration. That mode retains
+the RTL-plus-specs invocation, parallel `--jobs` option, and per-design evidence
+checks. System mode verifies the controller rather than claiming independent
+verification of every module YAML.
+
 Use the server interpreter that already runs the validation agents successfully.
 `CAPSTONE_REMOTE_PYTHON` (or the JSON `python` setting) defaults to `/usr/bin/python3`;
 the uploaded wrapper supports Python 3.6. The local orchestrator still requires
@@ -479,6 +514,7 @@ JSON overrides specific to validation:
 | Setting | Default | Environment override |
 | --- | --- | --- |
 | `validation_script` | `server/validation/run_pipeline.py` relative to remote project directory | `CAPSTONE_VALIDATION_SCRIPT` |
+| `validation_mode` | `system` (`system` or `modules`) | `CAPSTONE_VALIDATION_MODE` |
 | `validation_jobs` | `1` | `CAPSTONE_VALIDATION_JOBS` |
 | `validation_job_seconds` | `14400` (4 hours) | `CAPSTONE_VALIDATION_JOB_SECONDS` |
 | `validation_timeout_seconds` | `14490` | `CAPSTONE_VALIDATION_TIMEOUT_SECONDS` |

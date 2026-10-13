@@ -20,7 +20,11 @@ from shared.top_orchestrator.validation import validation_node, unpack_reports
 
 PIPELINE = '''
 import json, pathlib, sys
-rtl, specs = map(pathlib.Path, sys.argv[1:3])
+system = '--system' in sys.argv
+rtl = pathlib.Path(sys.argv[1])
+specs = rtl.parent / 'specs' if system else pathlib.Path(sys.argv[2])
+if system:
+    assert sys.argv[2:] == ['--system'], sys.argv
 root = rtl.parent
 mode = pathlib.Path(__file__).with_name('mode').read_text()
 def summary():
@@ -30,24 +34,47 @@ def summary():
 result = summary()
 result.update(input_directory=str(root), inputs=[str(rtl),str(specs)], run_id='this_run', kind='batch')
 result['designs'] = [dict(module_name=p.stem, yaml_file=str(p), result=summary()) for p in sorted(specs.glob('*.yaml'))]
+if system:
+    result.pop('kind')
+    result.update(mode='system', input_directory=str(rtl), inputs=[str(rtl / 'manifest.json')],
+                  manifest_path=str(rtl / 'manifest.json'), top_module='a', ready_for_backend=True,
+                  final_system_report='final_system_report.json')
+    result.pop('designs')
 if mode == 'gaps':
     result.update(overall_status='PASS_WITH_GAPS', verification_complete=False, needs_review=True)
 if mode == 'missing_stage':
-    result['designs'][0]['result']['requested_stages'] = ['agent1']
+    (result if system else result['designs'][0]['result'])['requested_stages'] = ['agent1']
 if mode == 'missing_design':
     result['designs'].pop()
 if mode == 'rtl_failure':
     result.update(overall_status='FAIL', verification_complete=False)
 if mode == 'wrong_input':
     result['input_directory'] = '/other/invocation'
+if mode == 'wrong_inputs':
+    result['inputs'] = [str(specs)]
+if mode == 'batch_in_system':
+    result['mode'] = 'batch'
 if mode == 'mutated_input':
     (rtl / 'a.sv').write_text('changed')
 if mode == 'single':
     result.pop('kind')
     result.pop('designs')
-out = root / 'verification_reports/this_run'
+out = (rtl if system else root) / 'verification_reports/this_run'
 out.mkdir(parents=True)
 (out / 'summary.json').write_text(json.dumps(result))
+if system:
+    final = dict(mode='system', top_module='a', status='PASS', ready_for_backend=True,
+                 functional_rtl='PASS', protocol_timing_compliance='PASS', coverage_limitations=[])
+    if mode == 'gaps':
+        final.update(status='PASS_WITH_GAPS', protocol_timing_compliance='PASS_WITH_GAPS',
+                     coverage_limitations=['unobservable protocol timing'])
+    if mode == 'final_gaps_only':
+        final.update(status='PASS_WITH_GAPS', protocol_timing_compliance='PASS_WITH_GAPS')
+    if mode == 'wrong_final_top':
+        final['top_module'] = 'other_controller'
+    if mode == 'not_ready':
+        final['ready_for_backend'] = False
+    (out / 'final_system_report.json').write_text(json.dumps(final))
 (out / 'details.log').write_text('verification evidence')
 if mode == 'report_symlink':
     (out / 'work').mkdir()
@@ -118,7 +145,7 @@ class ValidationTests(unittest.TestCase):
         self.remote_config = self.root / 'remote.json'
         self.remote_config.write_text(json.dumps(dict(host='fake', username='fake', project_dir=str(self.server),
             partition='fake', qos='fake', python=sys.executable, validation_script='pipeline.py',
-            allow_validation_output_dirs=True)))
+            allow_validation_output_dirs=True, validation_mode='modules')))
         self.prepare_workspace('initial')
         self.config = RunConfig('validation', mailbox=self.mailbox, remote_config=self.remote_config)
         LocalSSH.instances = []
@@ -131,6 +158,68 @@ class ValidationTests(unittest.TestCase):
         data['validation_workspace'] = str(workspace)
         self.remote_config.write_text(json.dumps(data))
         return workspace
+
+    def test_system_mode_runs_mailbox_rtl_and_collects_nested_reports(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        output = self.root / 'system_run'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        payload = json.loads((output / 'remote_validation_result.json').read_text())
+        self.assertEqual(payload['validation_mode'], 'system')
+        self.assertEqual(payload['command'][-1], '--system')
+        self.assertEqual(payload['command'][3], payload['input_directory'] + '/rtl')
+        self.assertNotIn(payload['input_directory'] + '/specs', payload['command'])
+        self.assertTrue(payload['input_unchanged'])
+        self.assertEqual(payload['summary_file'], 'rtl/verification_reports/this_run/summary.json')
+        self.assertTrue(Path(result.artifacts['summary']).is_file())
+        self.assertEqual(verify(self.mailbox), verify(output / 'validation_input'))
+        self.assertIn('Controller system verification passed', result.message)
+
+    def test_system_mode_rejects_gaps_missing_stages_wrong_scope_and_mutated_rtl(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        for mode in ('gaps', 'missing_stage', 'wrong_input', 'wrong_inputs', 'batch_in_system', 'mutated_input', 'input_symlink'):
+            with self.subTest(mode=mode):
+                self.prepare_workspace('system_' + mode)
+                (self.server / 'mode').write_text(mode)
+                output = self.root / ('system_' + mode)
+                output.mkdir()
+                with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+                    result = validation_node(self.config, output)
+                self.assertEqual(result.status, 'needs_attention', result.message)
+
+    def test_system_reports_allow_simulator_symlinks_without_mutating_inputs(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        (self.server / 'mode').write_text('report_symlink')
+        output = self.root / 'system_symlink_reports'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        with zipfile.ZipFile(output / 'reports.zip') as archive:
+            self.assertFalse(any(name.endswith('/simulator') for name in archive.namelist()))
+
+    def test_system_final_report_is_required_for_readiness_and_identity(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        for mode in ('final_gaps_only', 'wrong_final_top', 'not_ready'):
+            with self.subTest(mode=mode):
+                self.prepare_workspace(mode)
+                (self.server / 'mode').write_text(mode)
+                output = self.root / mode
+                output.mkdir()
+                with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+                    result = validation_node(self.config, output)
+                self.assertEqual(result.status, 'needs_attention', result.message)
+                self.assertTrue(Path(result.artifacts['final_system_report']).is_file())
 
     def test_validation_recovers_from_rejected_password(self):
         original = LocalSSH.run

@@ -20,6 +20,14 @@ Run `./start_flow.sh` from `local/frontend/`, or pass a config, basic YAML, or b
 
 `clear.sh` removes generated basic/expanded specs and IR outputs while preserving `microarch/jedec/`. `run_sim.sh` reads scheduler configuration from the new microarchitecture paths.
 
+Controller handoffs use manifest v2 for server system verification. Run
+`python3 generate_wrapper.py --manifest-only` from `local/frontend` to refresh
+metadata for existing RTL without rewriting RTL or the testbench. This adds
+feature master indexes for single-module designs as well as the bank design;
+the server uses those indexes to check enabled feature reachability. The top
+orchestrator performs this refresh after successful frontend checks and publishes
+all referenced configuration/spec/IR/timing/testbench inputs in the mailbox.
+
 ## Diagnosing dual-LLM generation failures
 
 The dual-LLM API helper logs the model, `finish_reason`, completion token usage,

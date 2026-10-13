@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 
+# Server checkout/reference files
+/server/
+
 # Flow/runtime logs
 *.log
 shared/mailbox/

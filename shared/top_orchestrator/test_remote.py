@@ -23,6 +23,15 @@ ENV = {"CAPSTONE_SSH_HOST": "example.test", "CAPSTONE_SSH_USER": "tester",
 
 
 class RemoteTests(unittest.TestCase):
+    def test_validation_mode_default_override_and_validation(self):
+        with patch.dict("os.environ", ENV, clear=True):
+            self.assertEqual(RemoteConfig.load().validation_mode, "system")
+            with patch.dict("os.environ", {"CAPSTONE_VALIDATION_MODE": "modules"}):
+                self.assertEqual(RemoteConfig.load().validation_mode, "modules")
+            with patch.dict("os.environ", {"CAPSTONE_VALIDATION_MODE": "unknown"}):
+                with self.assertRaisesRegex(ValueError, "validation_mode must be"):
+                    RemoteConfig.load()
+
     def test_noninteractive_job_supports_setup_alias_and_keeps_failures_fatal(self):
         with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", ENV, clear=True):
             root = Path(temporary)

@@ -1,0 +1,9 @@
+design_name: ddr4_request_queue
+design_type: top_level
+source_feature: request_queue
+jedec_profile: DDR4-3200
+submodules:
+- name: request_queue
+  spec: ddr4_request_queue_request_queue.yaml
+  design_name: ddr4_request_queue
+interfaces: []

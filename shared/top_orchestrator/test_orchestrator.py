@@ -43,8 +43,9 @@ class OrchestratorTests(unittest.TestCase):
             result = generate_node(RunConfig("generate", recheck_only=True, no_bist=True), Path(temporary))
         self.assertEqual(result.status, "passed")
         self.assertEqual(result.artifacts["bist"], "not_run")
-        command.assert_called_once()
-        self.assertIn("run_full_system_lint", command.call_args.args[0][-1])
+        self.assertEqual(command.call_count, 2)
+        self.assertIn("run_full_system_lint", command.call_args_list[0].args[0][-1])
+        self.assertIn("--manifest-only", command.call_args.args[0])
 
     def test_stage_skip_cli_aliases_do_not_load_remote_configuration(self):
         from shared.top_orchestrator.__main__ import main
@@ -261,8 +262,9 @@ class OrchestratorTests(unittest.TestCase):
             with patch("shared.top_orchestrator.nodes.stream_command",
                        side_effect=successful_command) as command:
                 state = run(RunConfig("generate", input_yaml=Path("/input.yaml")), run_dir)
-            self.assertEqual(command.call_count, 2)
-            self.assertTrue(command.call_args.args[0][1].endswith("run_sim.sh"))
+            self.assertEqual(command.call_count, 3)
+            self.assertTrue(command.call_args_list[1].args[0][1].endswith("run_sim.sh"))
+            self.assertIn("--manifest-only", command.call_args.args[0])
             self.assertEqual([r.stage for r in state.results], ["generate", "validation"])
             self.assertEqual(state.status, "needs_attention")
             saved = json.loads((run_dir / "state.json").read_text())
