@@ -77,6 +77,9 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(config.input_yaml.read_text(), source.read_text())
 
     def setUp(self):
+        credentials = patch("shared.top_orchestrator.orchestrator.prepare_password")
+        credentials.start()
+        self.addCleanup(credentials.stop)
         # Stage tests start after selection; its real boundary is tested separately.
         preparation = patch("shared.top_orchestrator.orchestrator.prepare_generation",
             side_effect=lambda config, directory: replace(config,

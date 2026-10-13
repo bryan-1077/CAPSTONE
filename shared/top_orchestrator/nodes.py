@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from .contracts import FailureReport, RunConfig, Stage, StageResult
 from .remote import remote_check_node
 from .validation import validation_node
 from .display import print_node_header
+from .auth import cached_password
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = REPO_ROOT / "local" / "frontend"
@@ -68,12 +70,14 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
     return command
 
 
-def stream_command(command: list[str], log: Path, *, cwd: Path | None = None) -> int:
+def stream_command(command: list[str], log: Path, *, cwd: Path | None = None,
+                   pass_fds: tuple[int, ...] = ()) -> int:
     """Inherit terminal input and tee output, including prompts without newlines."""
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     with log.open("w", encoding="utf-8") as handle:
         with subprocess.Popen(command, cwd=cwd or FRONTEND, env=env,
+                              pass_fds=pass_fds,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8", errors="replace") as process:
             assert process.stdout is not None
@@ -180,7 +184,19 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     artifacts = {"log": str(log), "reports": str(reports), "mailbox": str(mailbox),
                  "validation": "not_run"}
     try:
-        code = stream_command(command, log, cwd=REPO_ROOT / "local/backend")
+        password = cached_password(os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu",
+                                   os.getenv("CAPSTONE_SSH_USER") or "antgamez1203")
+        if password is None:
+            code = stream_command(command, log, cwd=REPO_ROOT / "local/backend")
+        else:
+            # An anonymous inherited descriptor keeps the secret out of argv,
+            # environment variables, and persistent run artifacts.
+            with tempfile.TemporaryFile() as credential:
+                credential.write(password.encode("utf-8"))
+                credential.seek(0)
+                code = stream_command(command + ["--ssh-password-fd", str(credential.fileno())],
+                                      log, cwd=REPO_ROOT / "local/backend",
+                                      pass_fds=(credential.fileno(),))
     except OSError as exc:
         artifacts["failure_category"] = "tool_environment"
         return StageResult("backend", "failed", f"Could not start backend: {exc}", artifacts)

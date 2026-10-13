@@ -13,7 +13,7 @@ from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 from shared.remote.ssh_executor import SSHExecutor
-from .auth import run_with_password_retries
+from .auth import cached_password, run_with_password_retries
 from .contracts import StageResult
 from .mailbox import verify
 from .remote import RemoteConfig, slurm_command
@@ -50,7 +50,10 @@ def check_complete(summary: dict) -> None:
 
 def assess(summary: dict, expected: dict[str, str], remote_input: str, mode: str = "modules",
            top_module: str | None = None) -> None:
-    check_complete(summary)
+    if not isinstance(summary, dict):
+        raise ValueError("Missing structured verification summary")
+    if mode != "system":
+        check_complete(summary)
     expected_directory = remote_input + "/rtl" if mode == "system" else remote_input
     if summary.get("input_directory") != expected_directory:
         raise ValueError("Summary belongs to a different input directory")
@@ -65,9 +68,8 @@ def assess(summary: dict, expected: dict[str, str], remote_input: str, mode: str
             raise ValueError("System summary identifies a different controller top")
         if summary.get("manifest_path") != remote_input + "/rtl/manifest.json":
             raise ValueError("System summary belongs to a different controller manifest")
-        if summary.get("ready_for_backend") is not True:
-            raise ValueError("System verification did not establish backend readiness")
-        children = [summary]
+        check_readiness(summary)
+        return
     elif summary.get("kind") == "batch":
         designs = summary.get("designs", [])
         if len(designs) != len(expected) or {d.get("module_name") for d in designs} != set(expected):
@@ -93,6 +95,13 @@ def assess(summary: dict, expected: dict[str, str], remote_input: str, mode: str
                 raise ValueError(f"{name} did not pass")
             if any(stage.get(field) for field in GAPS):
                 raise ValueError(f"{name} has verification gaps")
+
+
+def check_readiness(report: dict) -> None:
+    """Use the validator's Readiness decision instead of reclassifying its evidence."""
+    readiness = report.get("verification_readiness")
+    if readiness != "READY_FOR_BACKEND":
+        raise ValueError(f"System verification Readiness is {readiness or 'missing'}; READY_FOR_BACKEND is required")
 
 
 def unpack_reports(archive: Path, destination: Path, report_relative: str = "verification_reports") -> None:
@@ -169,7 +178,9 @@ def validation_node(config, run_dir: Path) -> StageResult:
                           modules_without_specs=metadata.get("modules_without_specs", []))
             ssh = SSHExecutor(remote.host, remote.username, remote.port, remote.key_filename)
             record["phase"] = "transfer"
-            if config.ask_password:
+            ssh.password = cached_password(remote.host, remote.username)
+            interactive_password = config.ask_password or ssh.password is not None
+            if config.ask_password and ssh.password is None:
                 with warnings.catch_warnings():
                     warnings.simplefilter("error", getpass.GetPassWarning)
                     ssh.password = getpass.getpass(f"SSH password for {remote.username}@{remote.host}: ")
@@ -177,7 +188,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             def checked(command):
                 nonlocal initial_login
                 if initial_login:
-                    result = run_with_password_retries(ssh, command, ask_password=config.ask_password,
+                    result = run_with_password_retries(ssh, command, ask_password=interactive_password,
                                                        timeout=60, on_output=output)
                     initial_login = False
                 else:
@@ -287,12 +298,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
                     raise ValueError("Final system report identifies a different controller")
                 if final.get("status") == "FAIL":
                     status = "failed"
-                if (final.get("status") != "PASS" or final.get("ready_for_backend") is not True
-                        or final.get("functional_rtl") != "PASS" or final.get("protocol_timing_compliance") != "PASS"
-                        or final.get("coverage_limitations")):
-                    raise ValueError("System verification is {}; functional RTL={}, protocol timing={}; "
-                                     "complete PASS evidence is required".format(
-                                         final.get("status"), final.get("functional_rtl"), final.get("protocol_timing_compliance")))
+                check_readiness(final)
             if isinstance(summary, dict) and summary.get("overall_status") == "FAIL":
                 status = "failed"
             assess(summary, expected, str(invocation / "input"), remote.validation_mode, top_module)
@@ -301,7 +307,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             verify(snapshot)
             status = "passed"
             record["phase"] = "complete"
-            message = ("Controller system verification passed for the published RTL snapshot. Backend was not run."
+            message = ("Controller system verification reports Readiness: READY_FOR_BACKEND for the published RTL snapshot. Backend was not run."
                        if remote.validation_mode == "system" else
                        f"Verification passed for {len(expected)} published YAML designs. Backend was not run.")
             missing = metadata.get("modules_without_specs", [])

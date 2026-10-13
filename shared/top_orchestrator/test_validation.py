@@ -38,10 +38,19 @@ if system:
     result.pop('kind')
     result.update(mode='system', input_directory=str(rtl), inputs=[str(rtl / 'manifest.json')],
                   manifest_path=str(rtl / 'manifest.json'), top_module='a', ready_for_backend=True,
+                  verification_readiness='READY_FOR_BACKEND',
                   final_system_report='final_system_report.json')
     result.pop('designs')
 if mode == 'gaps':
     result.update(overall_status='PASS_WITH_GAPS', verification_complete=False, needs_review=True)
+    result['stages']['agent3'].update(status='PASS_WITH_GAPS',
+                                    coverage_limitations=['unobservable protocol timing'])
+if mode == 'summary_not_ready':
+    result['verification_readiness'] = 'BLOCKED_SYSTEM_VALIDATION'
+if mode == 'summary_missing_readiness':
+    result.pop('verification_readiness')
+if mode == 'ready_boolean_false':
+    result['ready_for_backend'] = False
 if mode == 'missing_stage':
     (result if system else result['designs'][0]['result'])['requested_stages'] = ['agent1']
 if mode == 'missing_design':
@@ -64,6 +73,7 @@ out.mkdir(parents=True)
 (out / 'summary.json').write_text(json.dumps(result))
 if system:
     final = dict(mode='system', top_module='a', status='PASS', ready_for_backend=True,
+                 verification_readiness='READY_FOR_BACKEND',
                  functional_rtl='PASS', protocol_timing_compliance='PASS', coverage_limitations=[])
     if mode == 'gaps':
         final.update(status='PASS_WITH_GAPS', protocol_timing_compliance='PASS_WITH_GAPS',
@@ -73,6 +83,11 @@ if system:
     if mode == 'wrong_final_top':
         final['top_module'] = 'other_controller'
     if mode == 'not_ready':
+        final['ready_for_backend'] = False
+        final['verification_readiness'] = 'BLOCKED_SYSTEM_AGENT_3'
+    if mode == 'missing_readiness':
+        final.pop('verification_readiness')
+    if mode == 'ready_boolean_false':
         final['ready_for_backend'] = False
     (out / 'final_system_report.json').write_text(json.dumps(final))
 (out / 'details.log').write_text('verification evidence')
@@ -177,13 +192,32 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(payload['summary_file'], 'rtl/verification_reports/this_run/summary.json')
         self.assertTrue(Path(result.artifacts['summary']).is_file())
         self.assertEqual(verify(self.mailbox), verify(output / 'validation_input'))
-        self.assertIn('Controller system verification passed', result.message)
+        self.assertIn('Readiness: READY_FOR_BACKEND', result.message)
 
-    def test_system_mode_rejects_gaps_missing_stages_wrong_scope_and_mutated_rtl(self):
+    def test_system_mode_trusts_readiness_with_gaps_or_different_evidence(self):
         data = json.loads(self.remote_config.read_text())
         data['validation_mode'] = 'system'
         self.remote_config.write_text(json.dumps(data))
-        for mode in ('gaps', 'missing_stage', 'wrong_input', 'wrong_inputs', 'batch_in_system', 'mutated_input', 'input_symlink'):
+        for mode in ('gaps', 'final_gaps_only', 'missing_stage', 'ready_boolean_false'):
+            with self.subTest(mode=mode):
+                self.prepare_workspace('ready_' + mode)
+                (self.server / 'mode').write_text(mode)
+                output = self.root / ('ready_' + mode)
+                output.mkdir()
+                with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+                    result = validation_node(self.config, output)
+                self.assertEqual(result.status, 'passed', result.message)
+                final = json.loads(Path(result.artifacts['final_system_report']).read_text())
+                self.assertEqual(final['verification_readiness'], 'READY_FOR_BACKEND')
+                if mode == 'gaps':
+                    self.assertEqual(final['status'], 'PASS_WITH_GAPS')
+                    self.assertTrue(final['coverage_limitations'])
+
+    def test_system_mode_rejects_wrong_scope_and_mutated_rtl(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        for mode in ('wrong_input', 'wrong_inputs', 'batch_in_system', 'mutated_input', 'input_symlink'):
             with self.subTest(mode=mode):
                 self.prepare_workspace('system_' + mode)
                 (self.server / 'mode').write_text(mode)
@@ -210,7 +244,8 @@ class ValidationTests(unittest.TestCase):
         data = json.loads(self.remote_config.read_text())
         data['validation_mode'] = 'system'
         self.remote_config.write_text(json.dumps(data))
-        for mode in ('final_gaps_only', 'wrong_final_top', 'not_ready'):
+        for mode in ('wrong_final_top', 'not_ready', 'missing_readiness',
+                     'summary_not_ready', 'summary_missing_readiness'):
             with self.subTest(mode=mode):
                 self.prepare_workspace(mode)
                 (self.server / 'mode').write_text(mode)
@@ -329,13 +364,17 @@ class ValidationTests(unittest.TestCase):
         with patch('shared.top_orchestrator.orchestrator.prepare_generation', preparation), patch(
                 'shared.top_orchestrator.orchestrator.FRONTEND', self.frontend), patch(
                 'shared.top_orchestrator.orchestrator.REPO_ROOT', self.root), patch(
-                'shared.top_orchestrator.validation.SSHExecutor', LocalSSH), patch.dict(
+                'shared.top_orchestrator.validation.SSHExecutor', LocalSSH), patch(
+                'shared.top_orchestrator.auth.getpass.getpass', return_value='flow-test-password') as prompt, patch.dict(
                 'shared.top_orchestrator.orchestrator.NODES', {
                     'generate': lambda c, d: StageResult('generate','passed','frontend checked'),
                     'backend': lambda c, d: self.fail('Backend must not run')}):
             result = run(RunConfig('generate', remote_config=self.remote_config), self.root / 'flow')
         self.assertEqual(result.status, 'complete')
         self.assertEqual([r.stage for r in result.results], ['generate', 'validation'])
+        prompt.assert_called_once()
+        for path in (self.root / 'flow').rglob('*.json'):
+            self.assertNotIn('flow-test-password', path.read_text())
 
     def test_failed_transfer_never_launches_pipeline(self):
         class BrokenSSH(LocalSSH):

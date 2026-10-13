@@ -101,6 +101,7 @@ def _parse_args(argv=None):
                         help="Local mailbox revision containing rtl/; upload it for remote prep instead of MemoryController.zip.")
     parser.add_argument("--ask-password", action="store_true",
                         help="Prompt securely for the SSH password; reuse it for staging and backend execution.")
+    parser.add_argument("--ssh-password-fd", type=int, help=argparse.SUPPRESS)
     parser.add_argument(
         "--target-mhz", type=_positive_mhz, metavar="MHZ",
         help="target frequency, e.g. 230; overrides the environment period and disables inherited overconstraint",
@@ -129,6 +130,10 @@ def main(args=None):
     args._mailbox_staged = None
     args._ssh_password = None
     try:
+        if getattr(args, "ssh_password_fd", None) is not None:
+            with os.fdopen(args.ssh_password_fd, "r", encoding="utf-8") as credential:
+                args._ssh_password = credential.read()
+            args.ssh_password_fd = None
         if args.max_clocking:
             def run_target(mhz):
                 target_args = argparse.Namespace(**vars(args))
@@ -324,7 +329,7 @@ def _run_single_target(args, *, require_timing_closure=False):
     }
     if not 1 <= initial_state["ssh_port"] <= 65535:
         raise ValueError("CAPSTONE_SSH_PORT must be between 1 and 65535")
-    if getattr(args, "ask_password", False):
+    if getattr(args, "ask_password", False) or getattr(args, "_ssh_password", None) is not None:
         if getattr(args, "_ssh_password", None) is None:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", getpass.GetPassWarning)

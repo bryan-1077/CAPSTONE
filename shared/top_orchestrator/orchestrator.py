@@ -9,6 +9,7 @@ from .nodes import FRONTEND, NODES, REPO_ROOT
 from .frequency import prepare_generation
 from .mailbox import publish
 from .display import print_node_header
+from .auth import password_session, prepare_password
 
 
 def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | None:
@@ -30,6 +31,11 @@ def save_state(state: RunState, run_dir: Path) -> None:
 
 
 def run(config: RunConfig, run_dir: Path) -> RunState:
+    with password_session():
+        return _run(config, run_dir)
+
+
+def _run(config: RunConfig, run_dir: Path) -> RunState:
     # Never overwrite an earlier run's evidence.
     run_dir.mkdir(parents=True, exist_ok=False)
     state = RunState(config, current_stage=config.entry, status="running")
@@ -48,6 +54,16 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
             return state
         state.config = config
         save_state(state, run_dir)
+    try:
+        prepare_password(config)
+    except (Exception, KeyboardInterrupt) as exc:
+        state.status = "needs_attention"
+        state.current_stage = None
+        state.results.append(StageResult(config.entry, "needs_attention",
+            f"SSH password entry stopped: {type(exc).__name__}"))
+        save_state(state, run_dir)
+        print(state.results[-1].message, flush=True)
+        return state
     active_config = config
     while state.current_stage is not None:
         save_state(state, run_dir)

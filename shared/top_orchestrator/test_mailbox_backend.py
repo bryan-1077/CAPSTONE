@@ -1,6 +1,7 @@
 """Snapshot and subprocess boundaries, without SSH, models, or EDA tools."""
 
 import json
+import hashlib
 import io
 import sys
 import tempfile
@@ -17,6 +18,9 @@ from shared.top_orchestrator.orchestrator import run
 
 class MailboxBackendTests(unittest.TestCase):
     def setUp(self):
+        credentials = patch("shared.top_orchestrator.orchestrator.prepare_password")
+        credentials.start()
+        self.addCleanup(credentials.stop)
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
@@ -86,6 +90,27 @@ class MailboxBackendTests(unittest.TestCase):
 
     def config(self):
         return RunConfig("backend", mailbox=self.mailbox, target_mhz=200, allow_unvalidated=True)
+
+    def test_backend_receives_cached_password_via_inherited_descriptor(self):
+        secret = "backend-flow-secret-only"
+        digest = hashlib.sha256(secret.encode()).hexdigest()
+        script = ("import hashlib, os, pathlib, sys\n"
+                  "fd = int(sys.argv[sys.argv.index('--ssh-password-fd') + 1])\n"
+                  "with os.fdopen(fd, 'rb') as credential: password = credential.read()\n"
+                  f"assert hashlib.sha256(password).hexdigest() == {digest!r}\n"
+                  "path = pathlib.Path(sys.argv[sys.argv.index('--result-json') + 1])\n"
+                  f"path.write_text({json.dumps(self.payload())!r})\n"
+                  "print('password received')\n")
+        output = self.root / "cached_backend"
+        output.mkdir()
+        with patch("shared.top_orchestrator.nodes.cached_password", return_value=secret), patch(
+                "shared.top_orchestrator.nodes.backend_command", return_value=[sys.executable, "-c", script]):
+            result = backend_node(self.config(), output)
+        self.assertEqual(result.status, "passed", result.message)
+        self.assertIn("password received", (output / "backend.log").read_text())
+        for path in output.rglob('*'):
+            if path.is_file():
+                self.assertNotIn(secret, path.read_text())
 
     def payload(self):
         return {"current_stage": "done", "mailbox_revision": verify(self.mailbox)["rtl_revision"],

@@ -29,7 +29,7 @@ def main() -> int:
                         help="Skip BIST simulation; RTL lint still runs.")
     parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
     parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
-    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for SSH authentication, including backend entry.")
+    parser.add_argument("--ask-password", action="store_true", help="Prompt securely for remote-check SSH authentication; remote flow runs always request a password after selection.")
     parser.add_argument("--cache", action="store_true")
     parser.add_argument("--target-mhz", type=positive_mhz,
                         help="Backend clock target; bypass the frequency prompt.")

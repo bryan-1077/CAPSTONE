@@ -70,7 +70,7 @@ class FrequencyTests(unittest.TestCase):
             self.assertEqual(selected.target_mhz, 220)
 
     def test_selection_precedes_generation_and_survives_repair(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory() as temporary, patch("shared.top_orchestrator.orchestrator.prepare_password"):
             root = Path(temporary) / "run"
             events = []
             def specs(command, log):

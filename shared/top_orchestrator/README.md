@@ -90,8 +90,8 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-By default, generation continues through remote system validation and stops there. A pass requires
-complete structural and behavioral evidence for the controller RTL snapshot. Backend
+By default, generation continues through remote system validation and stops there. Validation succeeds
+when verification reports `Readiness: READY_FOR_BACKEND` for the controller RTL snapshot. Backend
 is not invoked after verification. Its gate for consuming validated evidence remains
 deferred; direct backend entry without
 `--allow-unvalidated` stops with `needs_attention`.
@@ -360,10 +360,18 @@ If your SSH account also requires a password, run:
 python -m shared.top_orchestrator remote-check --ask-password
 ```
 
+Runs that include verification or physical design require a hidden SSH password
+prompt after spec and frequency selection, before frontend execution:
+`Enter SSH password for 'user' for Verification and Physical Design portions of the flow:`
+The password is reused for remote stages during that run and is not saved in
+configuration or run artifacts. Frontend-only runs and `--plan` do not prompt.
+The backend receives it through an anonymous inherited descriptor.
+
 The hidden terminal prompt passes the password to the SSH connection alongside
 key/agent authentication. If the initial login rejects authentication, validation
 and remote-check re-prompt up to three times (four attempts total). Other failures
-are not retried, and retries require `--ask-password`. It is held in memory for this check (including any
+are not retried. Remote-check retries require `--ask-password`; flow validation
+retries use the password collected before execution. It is held in memory for this check (including any
 reconnection) and is not saved in configuration or run artifacts. `--plan` never
 prompts. This option handles an account password; it does not implement custom
 Duo/MFA challenge handling. A terminal capable of disabling echo is required.
@@ -428,12 +436,13 @@ Snapshot hashes are checked before and after execution; generated reports are
 excluded from that comparison, while changes to RTL or other inputs are rejected.
 
 The adapter requires an explicit `mode: system` summary for the same RTL input
-directory and controller manifest, complete PASS execution, and passing
-agent1/agent2/agent3 evidence without coverage gaps. It also checks the published
-`final_system_report.json` for the same controller top, backend readiness, and
-functional/protocol timing PASS. `PASS_WITH_GAPS` remains incomplete even when
-the server reports `READY_FOR_BACKEND`. Unsupported or incomplete report formats stop with
-`needs_attention`; process exit zero alone never establishes a verification pass.
+directory and controller manifest, successful process execution, and a published
+`final_system_report.json` for the same controller top. It uses verification's
+`Readiness` decision (`verification_readiness: READY_FOR_BACKEND`) in the summary
+and final report to accept system validation. `PASS_WITH_GAPS`, coverage limitations,
+and review flags are retained as evidence and do not override that decision.
+Blocked or missing readiness stops with `needs_attention`; process exit zero alone
+never establishes backend readiness.
 
 The frontend writes controller manifest v2 using the shared discovery contract.
 After lint/BIST, including checks of existing RTL, the orchestrator refreshes

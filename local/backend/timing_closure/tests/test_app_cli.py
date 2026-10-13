@@ -80,6 +80,27 @@ class AppCLITests(unittest.TestCase):
                 run.assert_not_called()
                 self.assertIsNone(args._ssh_password)
 
+    def test_inherited_password_is_reused_without_prompt_and_cleared(self):
+        secret = "inherited-secret-only"
+        with tempfile.TemporaryFile() as credential:
+            credential.write(secret.encode())
+            credential.seek(0)
+            # main owns the descriptor it receives, as in the backend subprocess.
+            descriptor = app.os.dup(credential.fileno())
+            args = app._parse_args(["--mailbox", "/unused", "--ask-password",
+                                    "--ssh-password-fd", str(descriptor)])
+            with patch.object(app, "_load_service_exports"), patch.object(
+                    app.getpass, "getpass") as prompt, patch.object(
+                    app, "stage_mailbox", return_value={}) as staging, patch.object(
+                    app, "run_flow", side_effect=lambda **kw: kw["initial_state"]) as run:
+                state = app.main(args)
+            prompt.assert_not_called()
+            self.assertEqual(run.call_args.kwargs["ssh_config"]["password"], secret)
+            self.assertEqual(staging.call_args.args[2]["password"], secret)
+            self.assertNotIn(secret, json.dumps(state))
+            self.assertIsNone(args._ssh_password)
+            self.assertIsNone(args.ssh_password_fd)
+
     def test_sweep_prompts_once_and_clears_cached_password(self):
         def sweep(run):
             run(230)
