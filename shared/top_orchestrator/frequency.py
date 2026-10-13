@@ -160,4 +160,7 @@ def prepare_generation(config: RunConfig, run_dir: Path) -> RunConfig:
             raise ValueError("Spec selection did not produce approved specs; generation stopped.")
     else:
         snapshot.write_bytes(config.input_yaml.read_bytes())
-    return select_frequency(replace(config, input_yaml=snapshot), run_dir)
+    selected = replace(config, input_yaml=snapshot)
+    if config.skip_verification and config.no_backend:
+        return selected
+    return select_frequency(selected, run_dir)

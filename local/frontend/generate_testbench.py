@@ -416,10 +416,11 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
         logic        is_write;
         logic [31:0] wdata;
     } sched_request_t;
-    sched_request_t sched_req_array [4];
-    logic sched_req_valid [4];
+    // Packed stimulus avoids stale unpacked-array port updates on Verilator 5.020.
+    sched_request_t [3:0] sched_req_array;
+    logic [3:0] sched_req_valid;
     logic [3:0] sched_bank_active;
-    logic [9:0] sched_bank_open_row [4];
+    logic [3:0][9:0] sched_bank_open_row;
     logic [203:0] sched_req_array_packed;
     logic [3:0] sched_req_valid_packed;
     logic [39:0] sched_bank_open_row_packed;
@@ -1387,6 +1388,8 @@ def build_phase1_row_buffer_testbench(top_module: str, design: DesignContext) ->
     if tRRD_coverage_line:
         coverage_goal_lines.append(tRRD_coverage_line.rstrip())
     coverage_goal_checks = "\n".join(coverage_goal_lines)
+    txn_bank_assignment = "            txn_bank = bank_sel[TXN_BANK_WIDTH-1:0];\n" if design.bank_count > 1 else ""
+    txn_bank_reset = "        txn_bank = '0;\n" if design.bank_count > 1 else ""
 
     return f"""`timescale 1ns/1ps
 
@@ -1805,7 +1808,7 @@ module {tb_module};
     );
         begin
             @(negedge clk);
-{("            txn_bank = bank_sel[TXN_BANK_WIDTH-1:0];\n" if design.bank_count > 1 else "")}            txn_addr = make_addr(row_sel, col_sel);
+{txn_bank_assignment}            txn_addr = make_addr(row_sel, col_sel);
             txn_is_write = 1'b0;
             txn_wdata = '0;
             #1;
@@ -1833,7 +1836,7 @@ module {tb_module};
             txn_id = txn_id + 1;
             request_id = txn_id;
             active_txn_id = request_id;
-{("            txn_bank = bank_sel[TXN_BANK_WIDTH-1:0];\n" if design.bank_count > 1 else "")}            txn_is_write = is_write;
+{txn_bank_assignment}            txn_is_write = is_write;
             txn_addr = make_addr(row_sel, col_sel);
             txn_wdata = data;
             txn_valid = 1'b1;
@@ -2142,7 +2145,7 @@ module {tb_module};
         txn_is_write = 1'b0;
         txn_addr = '0;
         txn_wdata = '0;
-{("        txn_bank = '0;\n" if design.bank_count > 1 else "")}        rst_n = 1'b0;
+{txn_bank_reset}        rst_n = 1'b0;
         txn_id = 0;
         active_txn_id = 0;
         detailed_log_budget = -1;
@@ -2262,10 +2265,11 @@ def build_testbench(top_module: str, design: DesignContext) -> str:
         logic        is_write;
         logic [31:0] wdata;
     } sched_request_t;
-    sched_request_t sched_req_array [4];
-    logic sched_req_valid [4];
+    // Packed stimulus avoids stale unpacked-array port updates on Verilator 5.020.
+    sched_request_t [3:0] sched_req_array;
+    logic [3:0] sched_req_valid;
     logic [3:0] sched_bank_active;
-    logic [9:0] sched_bank_open_row [4];
+    logic [3:0][9:0] sched_bank_open_row;
     logic [203:0] sched_req_array_packed;
     logic [3:0] sched_req_valid_packed;
     logic [39:0] sched_bank_open_row_packed;

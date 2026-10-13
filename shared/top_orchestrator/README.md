@@ -3,6 +3,29 @@
 Run from the repository root using Python 3.10+. Frequency selection uses PyYAML;
 frontend execution and optional frequency advice need the existing frontend dependencies.
 
+Generation accepts these stage controls:
+
+| Flag | Behavior |
+| --- | --- |
+| `--no-verif` | Skip remote verification; alias for `--skip-verification`. Continues to backend unless `--no-backend` is also set. |
+| `--no-backend` | Disable backend execution. Combine with `--no-verif` to stop after frontend checks and snapshot publication. |
+| `--no-rtlgen` | Check existing RTL without spec selection or generation; alias for `--checks-only`. Cannot be combined with `--input` or `--cache`. |
+| `--no-bist` | Skip BIST simulation while retaining RTL lint. Records BIST as `not_run`. |
+
+For frontend generation, lint, BIST, and automatic repair only:
+
+```bash
+python3 -m shared.top_orchestrator generate \
+  --input local/frontend/configs/user_input.yaml --no-verif --no-backend
+```
+
+To check existing RTL instead, omit `--input` and add `--no-rtlgen`.
+Add `--no-bist` to run only RTL lint. Frontend-only runs need no remote
+configuration or backend-frequency selection. Automatic repair preserves the
+selected stage controls and rechecks existing RTL after a successful repair.
+These controls apply to `generate` entry; existing default routing still stops
+after remote validation, and `--no-verif` alone retains the existing direct backend route.
+
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
 python -m shared.top_orchestrator
@@ -16,6 +39,9 @@ python -m shared.top_orchestrator generate --input local/frontend/configs/user_i
 
 # Bypass the frequency prompt with an explicit backend target.
 python -m shared.top_orchestrator --input local/frontend/configs/user_input.yaml --target-mhz 230
+
+# Generate fresh RTL, run frontend checks, then go straight to backend.
+python -m shared.top_orchestrator generate --skip-verification --target-mhz 200 --ask-password
 
 # Inspect an existing frontend failure workspace without model calls.
 python -m shared.top_orchestrator debug --failure-dir /absolute/path/to/failure_workspace --offline
@@ -64,8 +90,8 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-Generation now continues through remote validation and stops there. A pass requires
-complete structural and behavioral evidence for every published YAML design. Backend
+By default, generation continues through remote system validation and stops there. A pass requires
+complete structural and behavioral evidence for the controller RTL snapshot. Backend
 is not invoked after verification. Its gate for consuming validated evidence remains
 deferred; direct backend entry without
 `--allow-unvalidated` stops with `needs_attention`.
@@ -77,6 +103,22 @@ Exit codes: 0 = complete (or plan printed), 2 = incomplete/stopped or CLI misuse
 1 = run-artifact filesystem error. A specs-to-verification run completes when the
 required verification evidence passes. A direct unvalidated backend test can complete;
 its result explicitly records `validation: not_run`.
+
+For frontend-to-backend execution, use `generate --skip-verification`. This starts
+with the usual interactive spec selection and frequency selection, runs RTL
+generation and frontend lint/BIST, publishes a fresh mailbox revision in the
+current checkout, and passes that exact snapshot to the local backend app. It
+skips remote verification and records `validation: not_run`. No `--mailbox` or
+`--allow-unvalidated` argument is needed. Frontend failures still follow the
+existing bounded repair/recheck flow; failed checks or publication stop before
+backend execution. Backend failure stops with its logs and structured result.
+
+Use `--input local/frontend/configs/user_input.yaml` to reuse approved YAML;
+add `--cache` to reuse frontend RTL generation. For existing RTL, use
+`--checks-only --skip-verification --target-mhz 200`. The checks-only route
+requires an explicit frequency because it skips selection. Backend SSH settings
+and `--ask-password` apply to these routes, and `--backend-python` can select the
+backend environment. Validation's `--remote-config` is not used by this route.
 
 State files are diagnostic records, not resumable checkpoints. The frontend still
 writes into its existing shared output directories; run one workflow at a time.
@@ -228,7 +270,8 @@ Snapshots do not claim verification coverage. They are never updated by the
 orchestrator; input hash verification detects later edits before backend launch.
 The frontend remains a shared workspace, so run one workflow at a time.
 
-Normal generation stops at validation. To test only backend execution on a
+Default generation stops at validation; `--skip-verification` instead runs backend
+on its newly published snapshot. To test only backend execution on a
 published snapshot without functional validation:
 
 ```bash
@@ -371,6 +414,41 @@ as `remote-check`. The default deployed pipeline path is
 already have the validation scripts, Python dependencies, simulator, and model
 configuration installed. This adapter does not deploy or edit that source folder.
 
+System verification is now the default remote mode. The uploaded wrapper runs:
+
+```text
+python3 server/validation/run_pipeline.py <invocation>/input/rtl --system
+```
+
+The RTL directory comes from the immutable mailbox revision. Matching YAMLs remain
+in `<invocation>/input/specs` as snapshot evidence, but system mode passes only the
+RTL directory to the pipeline. Reports are collected from
+`<invocation>/input/rtl/verification_reports`, preserving their paths in the archive.
+Snapshot hashes are checked before and after execution; generated reports are
+excluded from that comparison, while changes to RTL or other inputs are rejected.
+
+The adapter requires an explicit `mode: system` summary for the same RTL input
+directory and controller manifest, complete PASS execution, and passing
+agent1/agent2/agent3 evidence without coverage gaps. It also checks the published
+`final_system_report.json` for the same controller top, backend readiness, and
+functional/protocol timing PASS. `PASS_WITH_GAPS` remains incomplete even when
+the server reports `READY_FOR_BACKEND`. Unsupported or incomplete report formats stop with
+`needs_attention`; process exit zero alone never establishes a verification pass.
+
+The frontend writes controller manifest v2 using the shared discovery contract.
+After lint/BIST, including checks of existing RTL, the orchestrator refreshes
+metadata with `generate_wrapper.py --manifest-only` before publishing a new
+revision. That refresh writes the filelist, feature indexes, and manifest without
+rewriting RTL or the testbench. The mailbox includes every referenced config,
+expanded spec, IR, JEDEC dictionary, and testbench; discovery must still pass after
+relocation. Earlier published revisions remain unchanged.
+
+For the older module/YAML batch pipeline, set `CAPSTONE_VALIDATION_MODE=modules`
+or `validation_mode: "modules"` in the remote JSON configuration. That mode retains
+the RTL-plus-specs invocation, parallel `--jobs` option, and per-design evidence
+checks. System mode verifies the controller rather than claiming independent
+verification of every module YAML.
+
 Use the server interpreter that already runs the validation agents successfully.
 `CAPSTONE_REMOTE_PYTHON` (or the JSON `python` setting) defaults to `/usr/bin/python3`;
 the uploaded wrapper supports Python 3.6. The local orchestrator still requires
@@ -436,6 +514,7 @@ JSON overrides specific to validation:
 | Setting | Default | Environment override |
 | --- | --- | --- |
 | `validation_script` | `server/validation/run_pipeline.py` relative to remote project directory | `CAPSTONE_VALIDATION_SCRIPT` |
+| `validation_mode` | `system` (`system` or `modules`) | `CAPSTONE_VALIDATION_MODE` |
 | `validation_jobs` | `1` | `CAPSTONE_VALIDATION_JOBS` |
 | `validation_job_seconds` | `14400` (4 hours) | `CAPSTONE_VALIDATION_JOB_SECONDS` |
 | `validation_timeout_seconds` | `14490` | `CAPSTONE_VALIDATION_TIMEOUT_SECONDS` |

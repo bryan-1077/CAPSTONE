@@ -39,6 +39,7 @@ class RemoteConfig:
     validation_job_seconds: int = 14400
     validation_timeout_seconds: int = 14490
     validation_jobs: int = 1
+    validation_mode: str = "system"
     validation_workspace: str | None = None
     allow_validation_output_dirs: bool = True
 
@@ -61,6 +62,7 @@ class RemoteConfig:
             "validation_job_seconds": "CAPSTONE_VALIDATION_JOB_SECONDS",
             "validation_timeout_seconds": "CAPSTONE_VALIDATION_TIMEOUT_SECONDS",
             "validation_jobs": "CAPSTONE_VALIDATION_JOBS",
+            "validation_mode": "CAPSTONE_VALIDATION_MODE",
             "validation_workspace": "CAPSTONE_VALIDATION_WORKSPACE",
         }
         integer_fields = {"port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds",
@@ -83,6 +85,8 @@ class RemoteConfig:
                     raise ValueError(f"{name} must be a list of nonempty strings")
                 data[name] = tuple(data[name])
         config = cls(**data)
+        if config.validation_mode not in ("system", "modules"):
+            raise ValueError("validation_mode must be system or modules")
         if not isinstance(config.allow_validation_output_dirs, bool):
             raise ValueError("allow_validation_output_dirs must be a boolean")
         for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script"):

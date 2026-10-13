@@ -1,0 +1,9 @@
+design_name: ddr4_scheduler
+design_type: top_level
+source_feature: scheduler
+jedec_profile: DDR4-3200
+submodules:
+- name: scheduler
+  spec: ddr4_scheduler_scheduler.yaml
+  design_name: ddr4_scheduler_scheduler
+interfaces: []

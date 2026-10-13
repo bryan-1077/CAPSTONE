@@ -39,7 +39,7 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def check_inputs(root, expected_digest):
+def check_inputs(root, expected_digest, report_relative="verification_reports"):
     manifest = root / "snapshot.json"
     if digest(manifest) != expected_digest:
         raise ValueError("Snapshot manifest digest mismatch")
@@ -49,7 +49,8 @@ def check_inputs(root, expected_digest):
         relative = path.relative_to(root)
         # Generated report workspaces may contain simulator symlinks. They are
         # not published inputs; still reject a symlink at the report root itself.
-        if relative.parts[0] == "verification_reports" and len(relative.parts) > 1:
+        report_parts = Path(report_relative).parts
+        if relative.parts[:len(report_parts)] == report_parts and len(relative.parts) > len(report_parts):
             continue
         if path.is_symlink():
             raise ValueError("Symlink in validation inputs")
@@ -64,13 +65,18 @@ def execute(invocation):
     invocation = Path(invocation).resolve()
     request = json.loads((invocation / "request.json").read_text())
     inputs = invocation / "input"
+    mode = request.get("validation_mode", "modules")
+    report_relative = "rtl/verification_reports" if mode == "system" else "verification_reports"
+    reports = inputs / report_relative
     result = {"schema_version": 1, "invocation_id": request["invocation_id"],
               "snapshot_digest": request["snapshot_digest"], "input_directory": str(inputs),
+              "validation_mode": mode,
               "python_executable": sys.executable,
               "pipeline_returncode": None, "summary": None, "input_unchanged": False}
     try:
-        check_inputs(inputs, request["snapshot_digest"])
-        reports = inputs / "verification_reports"
+        if mode not in ("system", "modules"):
+            raise ValueError("Unsupported validation mode")
+        check_inputs(inputs, request["snapshot_digest"], report_relative)
         if reports.exists():
             raise ValueError("Reports already exist before this invocation")
         pipeline = Path(request["pipeline"])
@@ -80,8 +86,11 @@ def execute(invocation):
         work = invocation / "work"
         if not work.is_dir():
             raise FileNotFoundError(f"Work directory must be prepared before running: {work}")
-        command = [sys.executable, "-u", str(pipeline), str(inputs / "rtl"), str(inputs / "specs"),
-                   "--jobs", str(request["jobs"])]
+        command = [sys.executable, "-u", str(pipeline), str(inputs / "rtl")]
+        if mode == "system":
+            command.append("--system")
+        else:
+            command.extend([str(inputs / "specs"), "--jobs", str(request["jobs"])])
         result["command"] = command
         environment = dict(os.environ)
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -108,7 +117,7 @@ def execute(invocation):
                 print(line, end="", file=sys.stderr, flush=True)
             result["pipeline_returncode"] = process.wait()
         result["pipeline_stderr_tail"] = "".join(stderr_tail)[-8000:]
-        check_inputs(inputs, request["snapshot_digest"])
+        check_inputs(inputs, request["snapshot_digest"], report_relative)
         result["input_unchanged"] = True
         # A fresh input directory has exactly one top-level run; never use global latest.
         summaries = list(reports.glob("*/summary.json"))
@@ -127,7 +136,6 @@ def execute(invocation):
         print(result["error"], file=sys.stderr, flush=True)
     finally:
         with zipfile.ZipFile(invocation / "reports.zip", "w", compression=zipfile.ZIP_DEFLATED) as archive:
-            reports = inputs / "verification_reports"
             if reports.is_dir():
                 for path in sorted(reports.rglob("*")):
                     if path.is_file() and not path.is_symlink():

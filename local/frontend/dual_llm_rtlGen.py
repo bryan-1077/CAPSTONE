@@ -23,7 +23,6 @@ import re
 import sys
 import json
 import argparse
-import hashlib
 import shutil
 import tempfile
 import subprocess
@@ -43,10 +42,10 @@ except AttributeError:
 # ---------------------------------------------------------------------------
 
 # LLM #1: generator / merger
-LLM1_MODEL = "protected.gpt-5.6-terra"
+LLM1_MODEL = "protected.Claude-Opus-5"
 
 # LLM #2: reviewer / fixer — different model for diverse critique
-LLM2_MODEL = "protected.Claude-Sonnet-5"
+LLM2_MODEL = "protected.gpt-5.6-terra"
 
 # Maximum full rounds before accepting best-so-far output
 MAX_ROUNDS = 3
@@ -73,16 +72,24 @@ DEFAULT_INTEGRATION_TOP_MODULE = os.environ.get(
 
 def _call_llm(model, system_prompt, user_message, label="LLM"):
     """
-    Single-shot call to the TAMU LLM API.
+    Call the TAMU LLM API, retrying token-limited responses with a larger budget.
     Returns the response text string, or raises RuntimeError on failure.
     """
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "")
     if not api_key:
         raise RuntimeError("TAMUS_AI_CHAT_API_KEY not set. Run: source ~/.bashrc")
 
+    try:
+        token_budget = int(os.environ.get("DUAL_LLM_MAX_TOKENS", "8192"))
+        token_ceiling = int(os.environ.get("DUAL_LLM_MAX_RETRY_TOKENS", "16384"))
+        if not 0 < token_budget <= token_ceiling:
+            raise ValueError("require 0 < initial budget <= retry ceiling")
+    except ValueError as e:
+        raise RuntimeError("Invalid DUAL_LLM_MAX_TOKENS/DUAL_LLM_MAX_RETRY_TOKENS: {}".format(e))
+
     payload = {
         "model": model,
-        "max_tokens": 4096,
+        "max_tokens": token_budget,
         "stream": False,
         "messages": [
             {"role": "system", "content": system_prompt},
@@ -90,40 +97,55 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
         ]
     }
 
-    try:
-        resp = requests.post(
-            ENDPOINT,
-            headers={
-                "Authorization": "Bearer " + api_key,
-                "Content-Type":  "application/json"
-            },
-            json=payload,
-            timeout=120
-        )
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError("[{}] Network error: {}".format(label, e))
-
-    if resp.status_code != 200:
-        key_fingerprint = hashlib.sha256(api_key.encode()).hexdigest()[:12]
-        raise RuntimeError(
-            "[{}] {} {} -> HTTP {}: {}; Allow={!r}; "
-            "API key length={}, sha256[:12]={}".format(
-                label,
-                resp.request.method,
-                resp.url,
-                resp.status_code,
-                resp.text[:300],
-                resp.headers.get("Allow"),
-                len(api_key),
-                key_fingerprint,
+    while True:
+        try:
+            resp = requests.post(
+                ENDPOINT,
+                headers={
+                    "Authorization": "Bearer " + api_key,
+                    "Content-Type":  "application/json"
+                },
+                json=dict(payload),
+                timeout=180
             )
-        )
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError("[{}] Network error: {}".format(label, e))
 
-    try:
-        data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
-    except (KeyError, ValueError) as e:
-        raise RuntimeError("[{}] Unexpected response shape: {}".format(label, e))
+        if resp.status_code != 200:
+            raise RuntimeError("[{}] model={} -> HTTP {}: {}".format(
+                label, model, resp.status_code, resp.text.replace(api_key, "[redacted]")[:300]))
+
+        try:
+            data = resp.json()
+            choice = data["choices"][0]
+            finish_reason = choice.get("finish_reason")
+            content = choice["message"]["content"]
+            usage = data.get("usage") or {}
+            completion_tokens = usage.get("completion_tokens", "unknown")
+        except (KeyError, ValueError, IndexError, TypeError, AttributeError) as e:
+            raise RuntimeError("[{}] Unexpected response shape: {}".format(label, e))
+
+        print("[dual_llm] {}: model={} finish_reason={} completion_tokens={} max_tokens={}".format(
+            label, model, finish_reason, completion_tokens, payload["max_tokens"]))
+        if finish_reason in ("length", "max_tokens"):
+            if payload["max_tokens"] >= token_ceiling:
+                raise RuntimeError(
+                    "[{}] Response truncated at token limit (model={}, max_tokens={}, "
+                    "completion_tokens={}); no complete JSON/RTL was received. "
+                    "Increase DUAL_LLM_MAX_RETRY_TOKENS if supported by the provider, "
+                    "or reduce the requested output.".format(
+                        label, model, payload["max_tokens"], completion_tokens))
+            payload["max_tokens"] = min(payload["max_tokens"] * 2, token_ceiling)
+            print("[dual_llm] {}: Response truncated; retrying with max_tokens={}.".format(
+                label, payload["max_tokens"]))
+            continue
+        if finish_reason not in (None, "stop", "end_turn"):
+            raise RuntimeError("[{}] No completed text response: finish_reason={}".format(
+                label, finish_reason))
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError("[{}] API returned empty or non-text content; "
+                               "finish_reason={}".format(label, finish_reason))
+        return content.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -1552,6 +1574,12 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
             round_record["llm1_status"] = llm1_payload["status"]
             round_record["llm1_issues"] = llm1_payload["issues"]
+
+        if not llm1_code.strip():
+            raise RuntimeError(
+                "[LLM1-Generate] No RTL produced for {}; response parsing or generation "
+                "failed before lint/review. Check the API completion diagnostics above.".format(
+                    design.design_name))
 
         # ── Step 2: Single-file lint; blocking repairs stay in this round ──
         if lint_enabled:

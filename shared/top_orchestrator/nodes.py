@@ -209,6 +209,18 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     return StageResult("backend", "passed" if passed else "failed", message, artifacts, code)
 
 
+def refresh_controller_manifest(result: StageResult, run_dir: Path) -> StageResult:
+    if result.status == "passed" and (FRONTEND / "rtl_output/ddr4_controller_top.sv").is_file():
+        log = run_dir / "manifest_refresh.log"
+        code = stream_command([sys.executable, "-u", str(FRONTEND / "generate_wrapper.py"), "--manifest-only"], log)
+        result.artifacts["manifest_refresh_log"] = str(log)
+        if code:
+            result.status = "failed"
+            result.returncode = code
+            result.message = "Controller manifest refresh failed; inspect manifest_refresh.log."
+    return result
+
+
 def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
     lint_command = [sys.executable, "-u", "-c",
                     "from run_flow import run_full_system_lint; run_full_system_lint()"]
@@ -228,6 +240,10 @@ def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
             attach_lint_report(result, run_dir, lint_command, previous_report)
     if result.status != "passed":
         return result
+    if config.no_bist:
+        result.artifacts["bist"] = "not_run"
+        result.message = "Frontend RTL lint completed; BIST skipped."
+        return refresh_controller_manifest(result, run_dir)
     print_node_header("bist")
     log = run_dir / "bist.log"
     result.artifacts["bist_log"] = str(log)
@@ -248,7 +264,7 @@ def generate_node(config: RunConfig, run_dir: Path) -> StageResult:
             shlex.join(["bash", str(FRONTEND / "run_sim.sh"), "--no-wave-prompt"]))
     else:
         result.message = "Generation and BIST completed; validation is still required."
-    return result
+    return refresh_controller_manifest(result, run_dir)
 
 
 def debug_node(config: RunConfig, run_dir: Path) -> StageResult:

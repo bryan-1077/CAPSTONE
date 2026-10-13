@@ -15,6 +15,67 @@ from shared.top_orchestrator.orchestrator import run
 
 
 class OrchestratorTests(unittest.TestCase):
+    def test_frontend_only_stops_after_repair_and_recheck(self):
+        seen = []
+        def generate(config, directory):
+            seen.append(("generate", config.no_bist, config.recheck_only))
+            if not config.recheck_only:
+                return StageResult("generate", "failed", "lint failure", failure=FailureReport("lint", directory / "lint.log"))
+            return StageResult("generate", "passed", "checked")
+        def debug(config, directory):
+            seen.append(("debug", config.no_bist, False))
+            return StageResult("debug", "passed", "repaired")
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+                "shared.top_orchestrator.orchestrator.NODES", {
+                    "generate": generate, "debug": debug,
+                    "validation": lambda *args: self.fail("Verification must not run"),
+                    "backend": lambda *args: self.fail("Backend must not run")}):
+            state = run(RunConfig("generate", skip_verification=True, no_backend=True, no_bist=True),
+                        Path(temporary) / "run")
+        self.assertEqual(state.status, "complete")
+        self.assertEqual(seen, [("generate", True, False), ("debug", True, False), ("generate", True, True)])
+        self.assertEqual(state.results[-1].artifacts["backend"], "not_run")
+        self.assertEqual(state.results[-1].artifacts["validation"], "not_run")
+
+    def test_no_bist_runs_lint_without_simulation(self):
+        with tempfile.TemporaryDirectory() as temporary, patch(
+                "shared.top_orchestrator.nodes.stream_command", return_value=0) as command:
+            result = generate_node(RunConfig("generate", recheck_only=True, no_bist=True), Path(temporary))
+        self.assertEqual(result.status, "passed")
+        self.assertEqual(result.artifacts["bist"], "not_run")
+        self.assertEqual(command.call_count, 2)
+        self.assertIn("run_full_system_lint", command.call_args_list[0].args[0][-1])
+        self.assertIn("--manifest-only", command.call_args.args[0])
+
+    def test_stage_skip_cli_aliases_do_not_load_remote_configuration(self):
+        from shared.top_orchestrator.__main__ import main
+        for flag in ("--no-verif", "--skip-verification"):
+            argv = ["orchestrator", flag, "--no-backend", "--no-rtlgen", "--no-bist"]
+            with self.subTest(flag=flag), patch("sys.argv", argv), patch(
+                    "shared.top_orchestrator.__main__.run") as execute, patch(
+                    "shared.top_orchestrator.remote.RemoteConfig.load", side_effect=AssertionError("Remote setup attempted")):
+                execute.return_value.status = "complete"
+                self.assertEqual(main(), 0)
+                config = execute.call_args.args[0]
+                self.assertTrue(config.skip_verification and config.no_backend and config.no_bist and config.recheck_only)
+            with patch("sys.argv", argv + ["--plan"]), patch("sys.stdout", io.StringIO()) as output:
+                self.assertEqual(main(), 0)
+                self.assertIn("verification and backend skipped", output.getvalue())
+                self.assertNotIn("Prompt for target", output.getvalue())
+                self.assertNotIn("Then: bash", output.getvalue())
+
+    def test_frontend_only_generation_does_not_prompt_for_frequency(self):
+        from shared.top_orchestrator.frequency import prepare_generation
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "config.yaml"
+            source.write_text("banks: 4\n")
+            with patch("shared.top_orchestrator.frequency.select_frequency",
+                       side_effect=AssertionError("Frontend-only frequency prompt")):
+                config = prepare_generation(RunConfig("generate", input_yaml=source,
+                    skip_verification=True, no_backend=True), root)
+            self.assertEqual(config.input_yaml.read_text(), source.read_text())
+
     def setUp(self):
         # Stage tests start after selection; its real boundary is tested separately.
         preparation = patch("shared.top_orchestrator.orchestrator.prepare_generation",
@@ -120,6 +181,43 @@ class OrchestratorTests(unittest.TestCase):
             self.assertEqual(state.status, "needs_attention")
             self.assertEqual(len(state.results), 3)
 
+    def test_skip_verification_preserves_frontend_repair_and_rechecks_before_backend(self):
+        attempts = []
+        def generate(config, directory):
+            attempts.append(config)
+            if len(attempts) == 1:
+                return StageResult("generate", "failed", "BIST failed",
+                    failure=FailureReport("bist", directory / "bist.log"))
+            self.assertTrue(config.recheck_only)
+            return StageResult("generate", "passed", "rechecked")
+        def backend(config, directory):
+            self.assertTrue(config.allow_unvalidated)
+            self.assertEqual(config.target_mhz, 200)
+            self.assertIsNotNone(config.mailbox)
+            return StageResult("backend", "passed", "done")
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+                "shared.top_orchestrator.orchestrator.NODES", {
+                    "generate": generate,
+                    "debug": lambda c, d: StageResult("debug", "passed", "repaired"),
+                    "backend": backend,
+                    "validation": lambda c, d: self.fail("Verification must be skipped"),
+                }):
+            state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
+        self.assertEqual(state.status, "complete")
+        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend"])
+
+    def test_skip_verification_stops_on_frontend_failure_or_publication_failure(self):
+        for failure in ("frontend", "publication"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary, patch.dict(
+                    "shared.top_orchestrator.orchestrator.NODES", {
+                        "generate": lambda c, d: StageResult("generate",
+                            "failed" if failure == "frontend" else "passed", "test"),
+                        "backend": lambda c, d: self.fail("Backend must not run on failed input"),
+                    }), patch("shared.top_orchestrator.orchestrator.publish", side_effect=OSError("publication failed")):
+                state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
+            self.assertEqual(state.status, "failed")
+            self.assertEqual(len(state.results), 1)
+
     def test_default_generation_selects_specs(self):
         command = spec_command(Path("/approved.yaml"))
         self.assertTrue(any(part.endswith("configure_from_text.py") for part in command))
@@ -164,8 +262,9 @@ class OrchestratorTests(unittest.TestCase):
             with patch("shared.top_orchestrator.nodes.stream_command",
                        side_effect=successful_command) as command:
                 state = run(RunConfig("generate", input_yaml=Path("/input.yaml")), run_dir)
-            self.assertEqual(command.call_count, 2)
-            self.assertTrue(command.call_args.args[0][1].endswith("run_sim.sh"))
+            self.assertEqual(command.call_count, 3)
+            self.assertTrue(command.call_args_list[1].args[0][1].endswith("run_sim.sh"))
+            self.assertIn("--manifest-only", command.call_args.args[0])
             self.assertEqual([r.stage for r in state.results], ["generate", "validation"])
             self.assertEqual(state.status, "needs_attention")
             saved = json.loads((run_dir / "state.json").read_text())

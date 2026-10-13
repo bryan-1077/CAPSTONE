@@ -64,10 +64,10 @@ def new_investigation(root: Path, failure_dir: Path, suspects: list, terms: list
                         "whole_file": True, "limit": max_chars // 2}
                        for name, kind in catalog.items() if kind == "rtl"][:1]
     inspections.append({"path": str((failure_dir / "intake" / "raw.log").relative_to(root)),
-                        "lines": [item["log_line"] for item in failures[:2] if item.get("log_line")],
-                        "terms": [item.get("message") or item.get("raw") for item in failures[:2]] or terms[:12], "limit": 1800})
-    inspections.extend({"path": name, "terms": [item.get("message", "") for item in failures[:2]] or terms[:12],
-                        "checker_blocks": True, "limit": min(12000, max_chars // 4)}
+                        "lines": [item["log_line"] for item in failures[:8] if item.get("log_line")],
+                        "terms": [item.get("message") or item.get("raw") for item in failures[:8]] or terms[:12], "limit": 3000})
+    inspections.extend({"path": name, "terms": [item.get("message", "") for item in failures[:8]] or terms[:12],
+                        "checker_blocks": True, "include_setup": True, "limit": min(16000, max_chars // 3)}
                        for name, kind in catalog.items() if kind == "checker"
                        and (name.startswith("tb/") or "/verif_run/" in name))
     verif_paths = [name for name in catalog if "/evidence/verif_run/" in name]
@@ -312,6 +312,9 @@ def inspect(record: dict, root: Path) -> None:
                 elif spec.get("checker_blocks"):
                     ranges = checker_ranges(lines, spec)
                     selection = "checker tasks/functions and caller context"
+                    if spec.get("include_setup"):
+                        ranges = [(1, min(160, len(lines)))] + ranges
+                        selection += " plus declarations and instance connections"
                 else:
                     ranges = focused_ranges(lines, spec)
                     selection = "focused excerpts (file exceeds allocation)" if spec.get("whole_file") else "focused excerpts"
@@ -383,6 +386,15 @@ Once one isolated repair has a supported causal explanation, choose sufficient_e
 other symptoms as unresolved_questions. A separate unexplained failure is not itself contradictory
 evidence. Do not speculate about unseen assignments in a file supplied completely. Validation must
 still pass before a repair is accepted; this decision only permits proposing and testing a patch.
+If an inspection could disprove the FIRST hypothesis, perform it before choosing sufficient_evidence.
+In particular, verify input connections, constant ties, initialization, packed-array ordering,
+and checker sampling relative to clock edges before blaming missing stimulus or scheduler behavior.
+For sufficient_evidence, next_actions must be empty and the FIRST hypothesis next_inspection empty.
+Use insufficient_evidence whenever you still request inspections. Other independent symptoms may
+remain unresolved, but uncertainty about the proposed cause itself must be investigated first.
+repair_feedback contains rejected proposals or checks against a temporary patched RTL revision.
+The patch has been rolled back. Compare remaining/new failures with the original observations,
+revise a disproven hypothesis, and gather more evidence before proposing another repair.
 Request focused additional reads/searches when evidence is incomplete. No shell commands are supported.
 The first triage action prefers the complete primary RTL file and matching checker tasks/functions,
 with helper definitions, caller context, and compact log excerpts, within the configured budget.
@@ -397,6 +409,7 @@ Overlapping lines are deduplicated. Non-RTL evidence is limited to 40% of the to
                    "remaining_characters": record["max_chars"] - record["chars_used"],
                    "compiler_errors": record.get("compiler_errors", []),
                    "assessment_feedback": record.get("assessment_feedback", ""),
+                   "repair_feedback": record.get("repair_feedback", []),
                    "evidence": [{k: v for k, v in item.items() if k != "text"} for item in record["evidence"]],
                    "source_context": source_context(record), "hypotheses": record["hypotheses"],
                    "actions": record["actions"], "omitted_context": record["omitted_context"]}, indent=2)
@@ -445,6 +458,12 @@ def accept_assessment(record: dict, response: str) -> None:
         raise ValueError("Invalid unresolved questions")
     if not isinstance(actions, list) or any(not isinstance(a, dict) for a in actions):
         raise ValueError("Invalid next actions")
+    if decision == "sufficient_evidence" and (
+            actions or (hypotheses and hypotheses[0]["next_inspection"].strip())):
+        # Keep the requested work instead of correcting the JSON by discarding it.
+        decision = "insufficient_evidence"
+        record["assessment_feedback"] = (
+            "Patch readiness deferred: complete requested inspections and resolve the primary hypothesis first.")
     record.update(decision=decision, hypotheses=hypotheses, unresolved_questions=questions)
     # Model-selected inspections take priority over the initial discovery queue.
     prior = [entry["request"] for entry in record["actions"]]

@@ -54,7 +54,16 @@ def publish(frontend: Path, destination: Path, approved_specs: Path | None = Non
         raise FileExistsError(destination)
     with tempfile.TemporaryDirectory(prefix=".publishing-", dir=destination.parent) as temporary:
         snapshot = Path(temporary) / "snapshot"
-        shutil.copytree(rtl, snapshot / "rtl", symlinks=True)
+        if manifest.get("schema_version") == 2:
+            from shared.controller_manifest import publish_snapshot, discover_system
+            publish_snapshot(rtl / "manifest.json", snapshot)
+            if not (snapshot / "rtl_output/manifest.json").is_file():
+                raise ValueError("Controller mailbox requires the frontend rtl_output layout")
+            (snapshot / "rtl_output").rename(snapshot / "rtl")
+            (snapshot / "snapshot.json").unlink()
+            discover_system(snapshot / "rtl/manifest.json")
+        else:
+            shutil.copytree(rtl, snapshot / "rtl", symlinks=True)
         for path, _ in specs:
             target = snapshot / "specs" / path.relative_to(expanded)
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -65,6 +74,8 @@ def publish(frontend: Path, destination: Path, approved_specs: Path | None = Non
         metadata = {"schema_version": 1, "files": files,
                     "rtl_revision": hashlib.sha256(json.dumps(file_hashes(snapshot / "rtl"), sort_keys=True).encode()).hexdigest(),
                     "modules_without_specs": sorted(modules - {name for _, name in specs})}
+        if manifest.get("schema_version") == 2:
+            metadata["system_manifest"] = "rtl/manifest.json"
         (snapshot / "snapshot.json").write_text(json.dumps(metadata, indent=2) + "\n")
         snapshot.rename(destination)
     return destination.resolve()

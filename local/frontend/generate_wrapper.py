@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import yaml
@@ -1321,15 +1322,41 @@ def write_filelist(rtl_output_dir: Path, rtl_files: list[Path]) -> Path:
     return filelist_path
 
 
+def refresh_feature_indexes() -> None:
+    """Index existing expanded specs without regenerating RTL or module specs."""
+    templates = load_yaml(SCRIPT_DIR / "microarch/jedec/feature_templates.yaml")
+    expanded = SCRIPT_DIR / "microarch/gen_exp"
+    for basic in sorted((SCRIPT_DIR / "microarch/gen_basic").glob("*.yaml")):
+        source = load_yaml(basic)
+        cfg = source["controller_config"]
+        for feature in cfg["features"]:
+            template = templates[feature]
+            children = []
+            for module in template["submodules"]:
+                spec_path = expanded / f"{source['design_name']}_{module['name']}.yaml"
+                spec = load_yaml(spec_path)
+                children.append({"name": module["name"], "spec": spec_path.name,
+                                 "design_name": spec["design_name"]})
+            master = {"design_name": source["design_name"], "design_type": "top_level",
+                      "source_feature": feature, "jedec_profile": cfg["jedec_profile"],
+                      "submodules": children, "interfaces": template.get("interfaces", [])}
+            (expanded / f"{source['design_name']}_master.yaml").write_text(yaml.safe_dump(master, sort_keys=False))
+
+
 def write_manifest(rtl_output_dir: Path, rtl_files: list[Path], filelist_path: Path) -> Path:
-    """Write a compact JSON manifest for the generated RTL package."""
+    """Write the shared controller v2 input contract for system verification."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from controller_manifest import build_manifest
+    refresh_feature_indexes()
     manifest_path = rtl_output_dir / "manifest.json"
-    manifest = {
-        "design_name": MODULE_NAME,
-        "top_module": MODULE_NAME,
-        "modules": sorted({path.stem for path in rtl_files}),
-        "filelist": filelist_path.relative_to(rtl_output_dir).as_posix(),
-    }
+    available = discover_available_modules()
+    manifest = build_manifest(SCRIPT_DIR, rtl_output_dir, rtl_files, filelist_path,
+                              MODULE_NAME, GENERATED_BANK_INPUT_PATH, {
+                                  "bank_count": load_bank_count(), "scheduler": load_scheduler_mode(),
+                                  "page_policy": load_page_policy(),
+                                  "refresh_enabled": OPTIONAL_MODULES["refresh"] in available,
+                                  "tfaw_enabled": OPTIONAL_MODULES["tfaw"] in available,
+                                  "trrd_enabled": OPTIONAL_MODULES["trrd"] in available})
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest_path
 
@@ -1473,6 +1500,10 @@ def parse_args() -> argparse.Namespace:
         help=f"Output SystemVerilog path (default: {DEFAULT_OUTPUT})",
     )
     parser.add_argument(
+        "--manifest-only", action="store_true",
+        help="Refresh filelist and v2 metadata for existing RTL without rewriting RTL or testbench.",
+    )
+    parser.add_argument(
         "--stdout",
         action="store_true",
         help="Print the generated RTL to stdout after writing the file.",
@@ -1483,6 +1514,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     output_path = args.output.expanduser().resolve()
+    if args.manifest_only:
+        directory = resolve_rtl_output_dir(output_path)
+        files = discover_rtl_files(directory)
+        filelist = write_filelist(directory, files)
+        manifest = write_manifest(directory, files, filelist)
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+        from controller_manifest import discover_system
+        discover_system(manifest)
+        print(f"[generate_wrapper] Refreshed controller manifest v2: {manifest}")
+        return 0
     bank_count = load_bank_count()
 
     available_modules = discover_available_modules()

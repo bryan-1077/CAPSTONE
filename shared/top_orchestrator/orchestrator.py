@@ -11,11 +11,13 @@ from .mailbox import publish
 from .display import print_node_header
 
 
-def next_stage(result: StageResult) -> Stage | None:
+def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | None:
     if result.status == "failed" and result.failure is not None:
         return "debug"
     if result.status != "passed":
         return None
+    if result.stage == "generate" and config is not None and config.skip_verification:
+        return None if config.no_backend else "backend"
     return {"generate": "validation", "debug": "generate",
             "validation": None, "backend": None, "remote-check": None}[result.stage]
 
@@ -64,14 +66,22 @@ def run(config: RunConfig, run_dir: Path) -> RunState:
                 revision = REPO_ROOT / "shared/mailbox" / run_dir.name / f"revision_{number:03d}"
                 mailbox = publish(FRONTEND, revision, config.input_yaml)
                 result.artifacts["mailbox"] = str(mailbox)
-                active_config = replace(active_config, mailbox=mailbox)
+                active_config = replace(active_config, mailbox=mailbox,
+                    allow_unvalidated=active_config.allow_unvalidated or config.skip_verification)
+                if config.skip_verification:
+                    result.message = ("Frontend completed; verification and backend skipped."
+                                      if config.no_backend else
+                                      "Frontend checks passed; remote verification skipped; continuing to backend.")
+                    result.artifacts["validation"] = "not_run"
+                if config.no_backend:
+                    result.artifacts["backend"] = "not_run"
                 state.config = active_config
             except Exception as exc:
                 result.status = "failed"
                 result.message = f"Mailbox publication failed: {type(exc).__name__}: {exc}"
                 result.failure = None
         state.results.append(result)
-        state.current_stage = next_stage(result)
+        state.current_stage = next_stage(result, active_config)
         if state.current_stage == "debug":
             if state.repair_cycles >= config.max_repair_cycles:
                 state.current_stage = None

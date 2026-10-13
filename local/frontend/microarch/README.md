@@ -24,3 +24,33 @@ Run `./start_flow.sh` from `local/frontend/`, or pass a config, basic YAML, or b
 `gen_basic/` and `gen_exp/` are flat directories. The bank master retains the submodule list and interface map for inspection and `check_interfaces.py`; `ddr4_bank_top.sv` generation uses module metadata directly. Master module paths are relative to the manifest directory. `ir/` contains JSON representations; `jedec/` contains the timing profiles and feature templates used by expansion.
 
 `clear.sh` removes generated basic/expanded specs and IR outputs while preserving `microarch/jedec/`. `run_sim.sh` reads scheduler configuration from the new microarchitecture paths.
+
+Controller handoffs use manifest v2 for server system verification. Run
+`python3 generate_wrapper.py --manifest-only` from `local/frontend` to refresh
+metadata for existing RTL without rewriting RTL or the testbench. This adds
+feature master indexes for single-module designs as well as the bank design;
+the server uses those indexes to check enabled feature reachability. The top
+orchestrator performs this refresh after successful frontend checks and publishes
+all referenced configuration/spec/IR/timing/testbench inputs in the mailbox.
+
+## Diagnosing dual-LLM generation failures
+
+The dual-LLM API helper logs the model, `finish_reason`, completion token usage,
+and requested output budget for each response. `finish_reason=length` means the
+provider cut off its response: incomplete JSON is a generation/API failure.
+The helper starts at 8,192 output tokens and retries a truncated response with
+up to 16,384 tokens before stopping with a clear error. Override the budgets
+with `DUAL_LLM_MAX_TOKENS` and `DUAL_LLM_MAX_RETRY_TOKENS`; both must be positive
+integers, and the retry ceiling must be at least the initial budget. Provider
+model limits still apply. Retries make additional API calls.
+
+HTTP errors, network failures, unexpected/empty API responses, and JSON parsing
+failures are distinct from Verilator diagnostics. Empty generated RTL stops
+before lint/review. A parsed, nonempty module can still fail lint or specification
+review; increasing the response budget does not fix RTL behavior errors.
+
+Run the API handling regressions without network calls from `local/frontend`:
+
+```bash
+python3 -m unittest test_dual_llm_api -v
+```

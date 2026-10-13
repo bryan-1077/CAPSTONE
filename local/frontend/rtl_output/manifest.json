@@ -1,6 +1,23 @@
 {
+  "schema_version": 2,
   "design_name": "ddr4_controller_top",
   "top_module": "ddr4_controller_top",
+  "path_base": "manifest_directory",
+  "run_root": "..",
+  "filelist": "filelist.f",
+  "rtl_files": [
+    "ddr4_bank_activate_fsm.sv",
+    "ddr4_bank_bank_sequencer.sv",
+    "ddr4_bank_precharge_fsm.sv",
+    "ddr4_bank_tRAS_fsm.sv",
+    "ddr4_bank_top.sv",
+    "ddr4_controller_top.sv",
+    "ddr4_refresh_refresh_controller.sv",
+    "ddr4_request_queue.sv",
+    "ddr4_scheduler_scheduler.sv",
+    "ddr4_tFAW_tFAW_tracker.sv",
+    "ddr4_tRRD_simple_tRRD.sv"
+  ],
   "modules": [
     "ddr4_bank_activate_fsm",
     "ddr4_bank_bank_sequencer",
@@ -14,5 +31,196 @@
     "ddr4_tFAW_tFAW_tracker",
     "ddr4_tRRD_simple_tRRD"
   ],
-  "filelist": "filelist.f"
+  "generated_modules": [
+    "ddr4_bank_activate_fsm",
+    "ddr4_bank_bank_sequencer",
+    "ddr4_bank_precharge_fsm",
+    "ddr4_bank_tRAS_fsm",
+    "ddr4_bank_top",
+    "ddr4_controller_top",
+    "ddr4_refresh_refresh_controller",
+    "ddr4_request_queue",
+    "ddr4_scheduler_scheduler",
+    "ddr4_tFAW_tFAW_tracker",
+    "ddr4_tRRD_simple_tRRD"
+  ],
+  "module_definitions": [
+    {
+      "name": "ddr4_bank_activate_fsm",
+      "file": "ddr4_bank_activate_fsm.sv"
+    },
+    {
+      "name": "ddr4_bank_bank_sequencer",
+      "file": "ddr4_bank_bank_sequencer.sv"
+    },
+    {
+      "name": "ddr4_bank_precharge_fsm",
+      "file": "ddr4_bank_precharge_fsm.sv"
+    },
+    {
+      "name": "ddr4_bank_tRAS_fsm",
+      "file": "ddr4_bank_tRAS_fsm.sv"
+    },
+    {
+      "name": "ddr4_bank_top",
+      "file": "ddr4_bank_top.sv"
+    },
+    {
+      "name": "ddr4_controller_top",
+      "file": "ddr4_controller_top.sv"
+    },
+    {
+      "name": "ddr4_refresh_refresh_controller",
+      "file": "ddr4_refresh_refresh_controller.sv"
+    },
+    {
+      "name": "ddr4_request_queue",
+      "file": "ddr4_request_queue.sv"
+    },
+    {
+      "name": "ddr4_scheduler_scheduler",
+      "file": "ddr4_scheduler_scheduler.sv"
+    },
+    {
+      "name": "ddr4_tFAW_tFAW_tracker",
+      "file": "ddr4_tFAW_tFAW_tracker.sv"
+    },
+    {
+      "name": "ddr4_tRRD_simple_tRRD",
+      "file": "ddr4_tRRD_simple_tRRD.sv"
+    }
+  ],
+  "hierarchy_analysis": "deferred_to_agent1",
+  "controller_config": "../microarch/gen_basic/ddr4_bank.yaml",
+  "primary_component_config": "../microarch/gen_basic/ddr4_bank.yaml",
+  "configuration_sources": [
+    "../microarch/gen_basic/ddr4_bank.yaml",
+    "../microarch/gen_basic/ddr4_refresh.yaml",
+    "../microarch/gen_basic/ddr4_request_queue.yaml",
+    "../microarch/gen_basic/ddr4_scheduler.yaml",
+    "../microarch/gen_basic/ddr4_tFAW.yaml",
+    "../microarch/gen_basic/ddr4_tRRD.yaml"
+  ],
+  "module_specs": [
+    {
+      "module_name": "ddr4_bank_activate_fsm",
+      "path": "../microarch/gen_exp/ddr4_bank_activate_fsm.yaml"
+    },
+    {
+      "module_name": "ddr4_bank_bank_sequencer",
+      "path": "../microarch/gen_exp/ddr4_bank_bank_sequencer.yaml"
+    },
+    {
+      "module_name": "ddr4_bank_precharge_fsm",
+      "path": "../microarch/gen_exp/ddr4_bank_precharge_fsm.yaml"
+    },
+    {
+      "module_name": "ddr4_bank_tRAS_fsm",
+      "path": "../microarch/gen_exp/ddr4_bank_tRAS_fsm.yaml"
+    },
+    {
+      "module_name": "ddr4_refresh_refresh_controller",
+      "path": "../microarch/gen_exp/ddr4_refresh_refresh_controller.yaml"
+    },
+    {
+      "module_name": "ddr4_request_queue",
+      "path": "../microarch/gen_exp/ddr4_request_queue_request_queue.yaml"
+    },
+    {
+      "module_name": "ddr4_scheduler_scheduler",
+      "path": "../microarch/gen_exp/ddr4_scheduler_scheduler.yaml"
+    },
+    {
+      "module_name": "ddr4_tFAW_tFAW_tracker",
+      "path": "../microarch/gen_exp/ddr4_tFAW_tFAW_tracker.yaml"
+    },
+    {
+      "module_name": "ddr4_tRRD_simple_tRRD",
+      "path": "../microarch/gen_exp/ddr4_tRRD_simple_tRRD.yaml"
+    }
+  ],
+  "modules_without_specs": [
+    "ddr4_bank_top",
+    "ddr4_controller_top"
+  ],
+  "spec_groups": [
+    "../microarch/gen_exp/ddr4_bank_master.yaml",
+    "../microarch/gen_exp/ddr4_refresh_master.yaml",
+    "../microarch/gen_exp/ddr4_request_queue_master.yaml",
+    "../microarch/gen_exp/ddr4_scheduler_master.yaml",
+    "../microarch/gen_exp/ddr4_tFAW_master.yaml",
+    "../microarch/gen_exp/ddr4_tRRD_master.yaml"
+  ],
+  "ir_files": [
+    "../microarch/ir/ddr4_bank_activate_fsm_ir.json",
+    "../microarch/ir/ddr4_bank_bank_sequencer_ir.json",
+    "../microarch/ir/ddr4_bank_precharge_fsm_ir.json",
+    "../microarch/ir/ddr4_bank_tRAS_fsm_ir.json",
+    "../microarch/ir/ddr4_refresh_refresh_controller_ir.json",
+    "../microarch/ir/ddr4_request_queue_ir.json",
+    "../microarch/ir/ddr4_scheduler_scheduler_ir.json",
+    "../microarch/ir/ddr4_tFAW_tFAW_tracker_ir.json",
+    "../microarch/ir/ddr4_tRRD_simple_tRRD_ir.json"
+  ],
+  "system_testbench": "../tb/tb_ddr4_controller_top.sv",
+  "clock": {
+    "name": "clk",
+    "edge": "posedge",
+    "profile_frequency_mhz": 1600
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": true
+  },
+  "configuration": {
+    "bank_count": 4,
+    "scheduler": "simple",
+    "page_policy": "open_page",
+    "refresh_enabled": true,
+    "tfaw_enabled": true,
+    "trrd_enabled": true,
+    "protocol": "DDR4",
+    "memory_speed": "3200"
+  },
+  "timing": {
+    "jedec_profile": "DDR4-3200",
+    "dictionary": "../microarch/jedec/jedec_dictionary.yaml",
+    "profile": {
+      "clock_frequency_mhz": 1600,
+      "tck_ns": 0.625,
+      "timing_ns": {
+        "tRCD": 13.75,
+        "tRP": 13.75,
+        "tRAS": 32.0,
+        "tRC": 45.75,
+        "tRRD": 3.333,
+        "tFAW": 25.0,
+        "tRFC1": 350.0,
+        "tREFI": 7800.0
+      },
+      "timing_cycles": {
+        "tRCD": 22,
+        "tRP": 22,
+        "tRAS": 52,
+        "tRC": 74,
+        "tRRD": 6,
+        "tFAW": 40,
+        "tRFC1": 560,
+        "tREFI": 12480
+      },
+      "cas_latency_options": [
+        22
+      ]
+    },
+    "module_parameters": {
+      "ddr4_tFAW_tFAW_tracker": {
+        "TFAW_CYCLES": 40,
+        "TFAW_LIMIT": 4
+      },
+      "ddr4_tRRD_simple_tRRD": {
+        "TRRD_CYCLES": 6
+      }
+    }
+  }
 }
