@@ -46,7 +46,7 @@ except AttributeError:
 LLM1_MODEL = "protected.gpt-5.6-terra"
 
 # LLM #2: reviewer / fixer — different model for diverse critique
-LLM2_MODEL = "protected.Claude Sonnet 5"
+LLM2_MODEL = "protected.Claude-Sonnet-5"
 
 # Maximum full rounds before accepting best-so-far output
 MAX_ROUNDS = 3

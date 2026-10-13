@@ -1,6 +1,7 @@
 # Documentation
 *.md
 !README.md
+!arch_ddr4_controller_implementation_plan.md
 !microarch/architecture_flow.md
 
 # Python runtime artifacts

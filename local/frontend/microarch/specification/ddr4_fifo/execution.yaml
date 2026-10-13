@@ -1,0 +1,128 @@
+slice_id: commands_banks_timing_memory_refresh
+rules:
+  CMD_COMMIT:
+    origin: plan.2B
+    owners: [command_engine, timing, row_state, memory, refresh]
+    statement: Use shared.types.command and shared.events.command_commit. The engine alone drives commit_valid and commit_command; commit_valid equals candidate_valid and candidate_ok with reset inactive, and commit_command equals candidate_command. NOP/reserved encodings never commit. Every consumer samples the same event/payload. Blocked candidates remain valid with identical payload until commit or reset, including when refresh becomes pending.
+    verification: [V_COMMIT]
+  CMD_SEQUENCE:
+    origin: plan.2B
+    owners: [command_engine, row_state]
+    statement: After dispatch, a closed target bank uses ACT then READ/WRITE; a row hit uses READ/WRITE; a conflict uses PRE then ACT then READ/WRITE. PRE/ACT only advance setup, never retire. Candidate creation may insert bubbles but cannot reorder commands or use host payload in place of the captured request.
+    verification: [V_SEQUENCE]
+  BANK_STATE:
+    origin: plan.2B_and_2C
+    owners: [row_state, command_engine]
+    statement: ACT commit sets only the target bank valid and row; PRE commit clears only target validity and zeros its row. REF commit clears all row validity/rows, which must already be closed by preparation. READ/WRITE do not alter open rows. Proposals, admissions, and dispatch do not alter row state.
+    verification: [V_BANKS]
+  CMD_TIMING:
+    origin: plan.2B_and_2C
+    owners: [timing]
+    statement: Enforce every shared.timing_rules constraint using the selected shared.timing_profile. ACT requires a closed bank, READ/WRITE require a matching open row, PRE requires an open bank, and REF requires all closed banks. Apply all relevant minima together. Use committed history only; permission cannot depend combinationally on commit_valid or commit_command.
+    verification: [V_TIMING, V_TFAW]
+  PAGE_CLEANUP:
+    origin: plan.2B
+    owners: [command_engine, row_state]
+    statement: Open-page retains the row after retirement. Close-page retires at final READ/WRITE and keeps a separate cleanup bank reservation until a timing-legal PRE commits. Block all new dispatch during cleanup. Refresh waits for that PRE, then waits remaining tRP through timing. Cleanup never repeats retirement or read delivery.
+    verification: [V_PAGES]
+  MEMORY_DATA:
+    origin: plan.2B
+    owners: [memory]
+    statement: Own DATA_WIDTH-bit words at MEMORY_WORDS_PER_BANK locations per bank. Index by {command.row[1:0],command.column[1:0]} for this host mapping. Only WRITE commit changes the addressed word. READ commit captures the pre-edge addressed word into response storage. Reset zeroes all words. ACT/PRE/REF and blocked candidates do not change data.
+    verification: [V_DATA]
+  RESPONSE_EDGE:
+    origin: plan.2A_and_2B
+    owners: [memory, host_adapter]
+    statement: READ at edge E loads the registered response data and asserts response valid after E; host delivery is at E+READ_RESPONSE_LATENCY. In the absence of a new READ, clear response valid after that delivery edge and retain response data until replacement/reset. Delivery and a new READ may share an edge; old data is delivered before new data replaces the slot. Writes produce no response. No rsp_ready or response backpressure exists.
+    verification: [V_RESPONSE_EDGE]
+  REFRESH_PERIOD:
+    origin: plan.2C
+    owners: [refresh, command_engine]
+    statement: Let E0 be the last rising edge sampled with reset asserted. First due is E0+tREFI. Subsequent deadlines advance by tREFI regardless of REF commit. Due sets registered pending, held until REF commit; during pending/service, later due events coalesce into one pending bit. If due and REF commit coincide, pending remains set for a later interval. No due event is lost to acknowledgment. This functional policy makes no physical refresh-debt guarantee.
+    verification: [V_REFRESH_PERIOD]
+  REFRESH_DRAIN:
+    origin: plan.2C
+    owners: [command_engine, refresh, timing, row_state]
+    statement: Once pending is visible, forbid new dispatch. Finish any active request, its blocked candidate, and required close-page cleanup; then PRE all remaining open banks in ascending bank order, waiting for legal commits. Propose one REF after all rows are closed. REF waits for every bank's tRP. Waiting requests remain stored; host admission may continue while capacity remains. A request dispatched on the edge that first sets pending is drained before refresh.
+    verification: [V_REFRESH_DRAIN]
+  REFRESH_INTERVAL:
+    origin: plan.2C
+    owners: [refresh, timing, command_engine]
+    statement: REF commit at E acknowledges once and excludes every further command at candidate edges strictly before E+tRFC. Both refresh.service_busy and timing permission use the same edge boundary; busy is false for edge E+tRFC. No candidate is emitted during service. Pending after service takes priority over new dispatch; otherwise FIFO traffic resumes. Existing captured responses can be delivered during service.
+    verification: [V_REFRESH_INTERVAL]
+  EXEC_RESET:
+    origin: plan.2A_2B_2C
+    owners: [host_adapter, command_engine, row_state, timing, memory, refresh]
+    statement: At an edge with rst_n low clear active validity, candidate, phase/cleanup reservation, row validity/data, timing history, memory, response validity/data, pending/service/deadline state. Rebase deadlines at that edge. Outputs representing valid/ready/commit/pending/busy are gated inactive while reset is low. Reset suppresses due, commit, dispatch, and response delivery.
+    verification: [V_EXEC_RESET]
+  HOST_VISIBILITY:
+    origin: plan.1B_and_2A
+    owners: [host_adapter, command_engine, timing]
+    statement: txn_ready follows waiting queue readiness only. cmd_ready is reset-gated diagnostic readiness for the first command needed by the incoming mapped request, computed from idle/cleanup/refresh exclusion, row state, and independent timing probe permission. It does not admit, dispatch, bypass FIFO, or reserve storage, and is meaningful without txn_valid. This is a proposed refinement of legacy execution visibility requiring compatibility review.
+    verification: [V_HOST_VISIBILITY]
+verification:
+  V_COMMIT:
+    rules: [CMD_COMMIT]
+    scenario: Hold each candidate blocked for multiple edges, raise refresh pending while stalled, then permit it; try NOP and reserved opcodes at the timing module boundary.
+    expected: Candidate remains stable; no history/data/row changes without commit; all consumers observe identical one-per-edge commits; invalid opcodes receive no permission.
+    status: planned_not_executed
+  V_SEQUENCE:
+    rules: [CMD_SEQUENCE]
+    scenario: Dispatch closed-bank, hit, and conflict reads/writes while host fields subsequently change.
+    expected: Commit trace is ACT-access, access, or PRE-ACT-access respectively; exactly one retirement per active request.
+    status: planned_not_executed
+  V_BANKS:
+    rules: [BANK_STATE]
+    scenario: Commit ACT/PRE in different banks, issue blocked proposals, and complete prepared REF.
+    expected: Only the committed target bank changes; REF leaves all banks closed; READ/WRITE leave row state unchanged.
+    status: planned_not_executed
+  V_TIMING:
+    rules: [CMD_TIMING]
+    scenario: For both profiles and every shared minimum, test T-1 and T candidate edges, same/different banks, and reset with no history. Test a timing probe independently of the live candidate.
+    expected: No early commit, permission at the exact boundary when other constraints are met, correct scope, no history from probes or stalls.
+    status: planned_not_executed
+  V_TFAW:
+    rules: [CMD_TIMING]
+    scenario: At the isolated timing boundary, inject four ACT commits to distinct banks respecting tRRD; stub row-state inputs as closed to probe a fifth before and at oldest age tFAW. Run beyond many windows. System tests additionally monitor the real commit trace.
+    expected: Four earlier unexpired ACT histories block the fifth; expiration allows it subject to other rules; finite counters cannot corrupt age across wrap. Stubbed row state isolates this rule and is not a legal system trace; with at most four banks and tRAS greater than tFAW, other constraints can prevent a fifth activation before expiration.
+    status: planned_not_executed
+  V_PAGES:
+    rules: [PAGE_CLEANUP]
+    scenario: Retire reads/writes under both page policies; raise refresh during close-page cleanup.
+    expected: Open-page retains row; close-page reserves bank and blocks dispatch until legal PRE; no duplicate retirement/response and no duplicate PRE during refresh preparation.
+    status: planned_not_executed
+  V_DATA:
+    rules: [MEMORY_DATA]
+    scenario: Write/read all compact addresses across banks with distinct values; try blocked WRITE proposals and reset.
+    expected: Independent data scoreboard matches committed writes, bank isolation, and reset zeros; non-WRITE events never mutate data.
+    status: planned_not_executed
+  V_RESPONSE_EDGE:
+    rules: [RESPONSE_EDGE]
+    scenario: At the memory boundary commit a READ at E, another at E+1, then WRITE; reset with a valid response.
+    expected: Pre-edge host samples at E+1 and E+2 return the respective captured words; no response for WRITE; reset cancels pending delivery.
+    status: planned_not_executed
+  V_REFRESH_PERIOD:
+    rules: [REFRESH_PERIOD]
+    scenario: Observe first due from reset, defer acknowledgment across deadlines, align due with REF commit, and generate due during service.
+    expected: Deadlines do not drift on commit; pending persists, coalesces as specified, and due wins over acknowledgment.
+    status: planned_not_executed
+  V_REFRESH_DRAIN:
+    rules: [REFRESH_DRAIN]
+    scenario: Raise pending idle, during blocked PRE/ACT/access, during cleanup, and on dispatch edge with a full queue and multiple open banks.
+    expected: Drain owned work, close remaining banks, honor last PRE-to-REF tRP, acknowledge once, retain every waiting payload and FIFO order.
+    status: planned_not_executed
+  V_REFRESH_INTERVAL:
+    rules: [REFRESH_INTERVAL]
+    scenario: Commit REF at E and test service/probes at E+tRFC-1 and E+tRFC; include pending response and later queued work.
+    expected: No command during exclusion; busy and permission agree at boundary; captured response survives; traffic progresses after service when no pending refresh remains.
+    status: planned_not_executed
+  V_EXEC_RESET:
+    rules: [EXEC_RESET]
+    scenario: Reset during every execution phase, timing stall, refresh pending/preparation/service, and response pulse, including simultaneous due and commit attempts.
+    expected: Specified state clears at reset edge, outputs/events are suppressed immediately while reset is low, and no old request resurfaces after release.
+    status: planned_not_executed
+  V_HOST_VISIBILITY:
+    rules: [HOST_VISIBILITY]
+    scenario: Independently vary queue fullness, incoming row, engine busy, refresh state, timing probe permission, and txn_valid.
+    expected: Admission depends only on txn_ready/valid; cmd_ready reports the defined probe condition without changing selection, storage, or timing history.
+    status: planned_not_executed

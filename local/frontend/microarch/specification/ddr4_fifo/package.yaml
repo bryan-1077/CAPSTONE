@@ -1,0 +1,97 @@
+specification_version: 1
+package_id: ddr4_fifo_controller
+design_name: ddr4_controller_top
+revision: draft_002
+status: draft_for_review
+scope:
+  plan: ../../../arch_ddr4_controller_implementation_plan.md
+  milestone: 1A
+  covered: [shared_vocabulary, request_lifecycle, all_module_contracts, execution_behavior, connection_graph]
+  pending: [user_review, compatibility_review]
+documents:
+  shared: shared.yaml
+  system: request_lifecycle.yaml
+  modules: module_contracts.yaml
+  execution: execution.yaml
+  graph: connections.yaml
+verification_strategy:
+  status: planned_not_executed
+  configurations:
+    banks: [1, 2, 4]
+    waiting_capacity: [1, 3, 4]
+    profiles: [DDR4-2400, DDR4-3200]
+    page_policies: [open_page, close_page]
+  module_checks: Exercise every system.verification and execution.verification obligation through the owning modules' ports, using stubs only for isolated boundary tests.
+  system_scenario: Run host writes/reads across all banks and addresses, consecutive admissions, full-queue reuse, same-address ordering, row hits/conflicts, both page policies, loaded refresh, post-refresh progress, and reset during queued/active/response work.
+  system_evidence: Independent admission/commit/response scoreboards and commit-edge protocol/timing monitors; compare accepted payloads and final data without copying queue/engine algorithms. Record per-rule passed/failed/unverified separately from schema, lint, compilation, and generation status.
+decisions:
+  D_HOST:
+    origin: requested_constraint
+    status: recorded
+    value: existing_simple_host_and_address_mapping
+    reason: Section 2A reuses the current host and functional banked memory.
+  D_FIFO:
+    origin: requested_constraint
+    status: recorded
+    value: global_acceptance_order
+    reason: Section 2A requires FIFO initially; legacy simple selection is different.
+  D_CAPACITY:
+    origin: requested_constraint
+    status: recorded
+    value: four_waiting_plus_one_active_default
+    reason: Section 1B allows explicit changes to waiting capacity.
+  D_NO_BYPASS:
+    origin: proposed_design_choice
+    status: proposed
+    value: dispatch_only_previously_stored_requests
+    reason: Avoids a host-to-active bypass and makes simultaneous events unambiguous.
+  D_ACTIVE_REPLACEMENT:
+    origin: proposed_design_choice
+    status: proposed
+    value: no_dispatch_on_the_retirement_edge
+    reason: Registered idle state determines readiness; final commit does not free active storage combinationally.
+  D_COMMAND_BUS:
+    origin: proposed_design_choice
+    status: proposed
+    value: registered_candidate_and_single_broadcast_commit
+    reason: Consumers share one accepted command event; permission is independent of commit feedback.
+  D_RESPONSE_EDGE:
+    origin: proposed_design_choice
+    status: proposed
+    value: READ_at_E_delivered_at_E_plus_one
+    reason: Captured registered response survives active release; host adapter adds no response stage. Matches the legacy post-completion register pulse convention, subject to compatibility review.
+  D_REFRESH:
+    origin: proposed_design_choice
+    status: proposed
+    value: fixed_period_sticky_pending_drain_then_ascending_bank_PRE_and_REF
+    reason: Defines row closure, acknowledgment, interval boundaries, and finite preparation without preemption or traffic loss.
+  D_RESET:
+    origin: proposed_design_choice
+    status: proposed
+    value: synchronous_active_low_state_reset_with_combinational_event_gating
+    reason: Provides one deterministic edge convention across the example; does not restrict future reusable blocks to the same assertion style.
+  D_CMD_READY:
+    origin: proposed_design_choice
+    status: proposed
+    value: incoming_first_command_probe_visibility
+    reason: Keeps diagnostic execution readiness distinct from admission and FIFO dispatch; refines legacy timing visibility and requires compatibility review.
+assumptions:
+  A_HOST:
+    statement: The host retains valid and every payload field until admission and samples every response pulse; there is no rsp_ready.
+    status: requires_review
+  A_PROGRESS:
+    statement: Eventually legal commands and finite refresh/cleanup intervals are required for eventual service; no latency bound is claimed here.
+    status: requires_review
+  A_REFRESH_MODEL:
+    statement: Periodic pending coalesces missed deadlines; this functional model is not a physical DDR4 refresh-debt implementation. The project profile selects the existing 8 Gb tRFC1 value.
+    status: requires_review
+  A_RESET_CLOCK:
+    statement: Reset is asserted across at least one rising clk edge; clock continues during reset. Event gating is immediate, but synchronous state cancellation requires a sampled reset edge.
+    status: requires_review
+open_questions:
+  Q_COMPATIBILITY:
+    blocks: compatibility_review
+    question: Approve FIFO replacing legacy simple policy and the first-command interpretation of cmd_ready; confirm the specified response sampling edge preserves the intended host contract. These are explicit proposed decisions, not proven equivalence.
+  Q_REVIEW:
+    blocks: generation_stages
+    question: Review the complete example and field vocabulary, including no-bypass/no-same-edge replacement, refresh coalescing, and synchronous example resets, before implementing elaboration and approval enforcement.

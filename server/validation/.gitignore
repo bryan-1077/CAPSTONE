@@ -1,0 +1,13 @@
+# Keep sources and the reviewed controller UVM templates; ignore runtime artifacts.
+*
+
+# Allow traversal into subdirectories so nested Python files can be tracked.
+
+!*.py
+!.gitignore
+!SYSTEM_VALIDATION.md
+!templates/
+!templates/controller_system/
+!templates/controller_system/dut_if.sv
+!templates/controller_system/dut_pkg.sv
+!templates/controller_system/dut_tb_top.sv
