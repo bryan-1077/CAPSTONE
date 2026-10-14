@@ -667,9 +667,9 @@ def build_timing_eco_tcl(plan, top, *, check_die_limit=True):
     if check_die_limit:
         lines.append('if {[eda_die_area_mm2] > 4.0} {error "Die footprint exceeds 4 mm^2; resizing stopped"}')
     seen = set()
-    # Restored checkpoints include this flow's FILL instances even when the
-    # recovery only remeasures a checkpoint without explicit resize actions.
-    lines.append("deleteFiller -prefix FILL")
+    # Validate the entire plan against the restored database before changing it.
+    preflight = []
+    changes = []
     for action in plan["actions"]:
         if isinstance(action, dict) and action.get("operation") == "insert_buffer":
             if (set(action) != {"operation", "pin", "cell", "reason"}
@@ -680,14 +680,19 @@ def build_timing_eco_tcl(plan, top, *, check_die_limit=True):
                 raise ValueError("Only unique data-sink insertions of non-inverting buffers are supported")
             pin, cell = action['pin'], action['cell']
             seen.add(pin)
-            lines.extend([
+            preflight.extend([
                 "set eco_inst [dbGetInstByName %s]" % word(pin.rsplit('/', 1)[0]),
-                'if {$eco_inst eq "0x0"} {error "Buffer sink instance missing from checkpoint"}',
-                'if {![string match "sky130_fd_sc_hd__df*" [dbGet $eco_inst.cell.name]]} {error "Buffer sink is not a sequential data input"}',
-                'if {[lsearch -exact [dbGet $eco_inst.instTerms.name] %s] < 0} {error "Buffer sink pin missing from checkpoint"}' % word(pin),
+                'if {[llength $eco_inst] != 1 || $eco_inst eq "0x0"} {error [format {Buffer sink instance missing or ambiguous in checkpoint: %%s} %s]}' % word(pin),
+                'if {![string match "sky130_fd_sc_hd__df*" [dbGet $eco_inst.cell.name]]} {error [format {Buffer sink is not a sequential data input: %%s} %s]}' % word(pin),
+                'if {[lsearch -exact [dbGet $eco_inst.instTerms.name] %s] < 0} {error [format {Buffer sink pin missing from checkpoint: %%s; available pins: %%s} %s [dbGet $eco_inst.instTerms.name]]}' % (word(pin), word(pin)),
                 'if {[lsearch -exact [dbGet head.libCells.name] %s] < 0} {error "Buffer cell is not loaded"}' % word(cell),
-                'set eco_term {}; foreach term [dbGet $eco_inst.instTerms] {if {[dbGet $term.name] eq %s} {lappend eco_term $term}}' % word(pin),
-                'if {[llength $eco_term] != 1 || $eco_term eq "0x0"} {error "Buffer sink is ambiguous or missing"}',
+                # dbGet returns Tcl lists, even for single names with brackets.
+                'set eco_term {}; foreach term [dbGet $eco_inst.instTerms] {if {$term eq "0x0"} {continue}; set eco_names [dbGet $term.name]; if {[llength $eco_names] == 1 && [lindex $eco_names 0] eq %s} {lappend eco_term $term}}' % word(pin),
+                'if {[llength $eco_term] != 1} {error [format {Buffer sink is ambiguous or missing: %%s; matched %%d terminals; available pins: %%s} %s [llength $eco_term] [dbGet $eco_inst.instTerms.name]]}' % word(pin),
+                'lappend eco_buffer_terms [lindex $eco_term 0]',
+            ])
+            changes.extend([
+                'set eco_term [lindex $eco_buffer_terms $eco_buffer_index]; incr eco_buffer_index',
                 'set eco_old_net [dbGet $eco_term.net.name]',
                 'puts {INFO: applying AI insert_buffer at %s using %s}' % (pin, cell),
                 "ecoAddRepeater -term %s -cell %s -relativeDistToSink 0.1" % (word(pin), word(cell)),
@@ -702,14 +707,22 @@ def build_timing_eco_tcl(plan, top, *, check_die_limit=True):
         if not old_family or not new_family or old_family[1] != new_family[1] or old == new or name in seen:
             raise ValueError("Resize must preserve the Boolean function and change the drive strength once")
         seen.add(name)
-        lines.extend([
+        preflight.extend([
             "set eco_inst [dbGetInstByName %s]" % word(name),
             'if {$eco_inst eq "0x0"} {error "Resize instance missing from checkpoint"}',
             "if {[dbGet $eco_inst.cell.name] ne %s} {error \"Resize source cell mismatch\"}" % word(old),
             "if {[lsearch -exact [dbGet head.libCells.name] %s] < 0} {error \"Replacement cell is not loaded\"}" % word(new),
+        ])
+        changes.extend([
+            "set eco_inst [dbGetInstByName %s]" % word(name),
             "ecoChangeCell -inst %s -cell %s" % (word(name), word(new)),
             "if {[dbGet $eco_inst.cell.name] ne %s} {error \"Requested resize was not applied\"}" % word(new),
         ])
+    lines.extend(['set eco_buffer_terms {}', 'set eco_buffer_index 0'])
+    lines.extend(preflight)
+    # Restored checkpoints include FILL instances even for remeasurement.
+    lines.append("deleteFiller -prefix FILL")
+    lines.extend(changes)
     if plan["actions"]:
         lines.extend(["refinePlace", "ecoRoute"])
     lines.extend(['} timing_eco_err]} {', 'puts "ERROR: timing ECO failed: $timing_eco_err"', 'exit 6', '}'])
