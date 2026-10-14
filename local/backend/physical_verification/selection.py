@@ -47,6 +47,8 @@ def build_selection_context(state, ssh, staging, attempts, candidates, target):
             setup_report = parse_timing_report(paths["setup"])
             setup_status, setup_message = evaluate_setup_report(setup_report, target)
             hold_report = parse_timing_report(paths["hold"])
+            if hold_report.wns is None or not math.isfinite(hold_report.wns) or not hold_report.paths:
+                raise ValueError("Fresh hold report contains no usable slack/paths.")
             hold_passed = (hold_report.wns is not None and math.isfinite(hold_report.wns)
                            and bool(hold_report.paths) and hold_report.wns >= 0
                            and not hold_report.violating_path_count
@@ -58,11 +60,11 @@ def build_selection_context(state, ssh, staging, attempts, candidates, target):
                 raise ValueError(setup_message)
             item["eligible"] = (entry["attempt"] in eligible_ids
                 and counts["drc_count"] == counts["antenna_count"] == 0
-                and hold_passed and item["limits"].get("within_limits", False))
+                and item["limits"].get("within_limits", False))
             if item["eligible"]:
                 context["eligible_attempts"].append(entry["attempt"])
             else:
-                item["rejection_reason"] = "Preset failed physical verification, hold timing, or area/power limits."
+                item["rejection_reason"] = "Preset failed physical verification or area/power limits."
         except ValueError as exc:
             item["rejection_reason"] = str(exc)
     return context

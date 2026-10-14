@@ -24,7 +24,9 @@ def excerpt(text, limit):
 def collect_build_reports(ssh, project_root, staging, entry):
     build = entry["outdir"]
     reports = {}
-    for kind, (filename, limit) in REPORTS.items():
+    report_specs = {"geometry": (f"reports/{entry['top_module']}.geom.rpt", 16000)} if entry.get("top_module") else {}
+    report_specs.update(REPORTS)
+    for kind, (filename, limit) in report_specs.items():
         remote = f"{build}/{filename}"
         record = {"source_build": build, "filename": filename, "report_path": remote}
         try:

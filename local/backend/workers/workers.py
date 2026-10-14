@@ -298,7 +298,7 @@ def extract_detected_macros(readme_text: str):
         if not stripped.startswith("- "):
             continue
         macro = stripped[2:].strip()
-        if macro and macro not in macros:
+        if macro and macro.lower() != "none" and macro not in macros:
             macros.append(macro)
     return macros
 
@@ -1833,7 +1833,7 @@ else:
             suggested_fixes.append(
                 f"Update run_genus_mc.tcl to read TOP from top_module.txt and call elaborate $TOP, or directly elaborate the inferred top module '{{top_module}}'."
             )
-        if "Preprocessor macros detected in source:" in readme_text and "set_db hdl_define" not in run_tcl_text:
+        if extract_detected_macros(readme_text) and "set_db hdl_define" not in run_tcl_text:
             errors.append(
                 "Prep bundle detects source macros but run_genus_mc.tcl does not apply any `define settings."
             )

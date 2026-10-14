@@ -35,13 +35,19 @@ After the preset attempts fail, the physical verification AI compares each prese
 geometry (`<top>.geom.rpt`), hold (`hold_postroute.rpt`), and routed setup
 (`timing_postroute.rpt`) reports. It chooses an eligible checkpoint based on setup
 recoverability, hold margin, and area/power headroom, and explains its choice.
-Only checkpoints with zero DRC/antenna violations, passing hold, valid setup
+Only checkpoints with zero DRC/antenna violations, valid setup and hold
 evidence at the requested period, and measurements within the configured limits
-can be selected. An already passing preset ends the run without selection or resizing.
+can be selected. Negative hold slack remains eligible for recovery. Selection
+prefers passing setup over failing setup, then higher setup slack, with hold margin
+and area/power headroom informing the choice. Final success requires both setup
+and hold to pass. An already passing preset ends the run without selection or resizing.
 
 The timing resizer receives that selection and reads the chosen checkpoint's
 critical paths, available drive strengths, measured limits, and experiment history,
-then proposes up to 16 gate/buffer resizes. Each experiment restores that checkpoint
+then proposes up to 16 gate/buffer resizes or non-inverting buffer insertions at
+reported sequential data sinks. Resize choices come from both setup and hold
+paths; insertion choices use only buffer cells in the loaded library. The agent
+also receives the selected build's `<top>.geom.rpt`. Each experiment restores that checkpoint
 into a new output directory, checks instance/master identities, applies
 `ecoChangeCell`, legalizes placement, reroutes, and reruns optimization and reporting.
 Unsuccessful experiments retain the selected source. An improved eligible resize
@@ -55,7 +61,13 @@ appears in the timing status/report and is passed to the resizer.
 
 Default recovery budget: **3 AI experiments** after the preset attempts. `EDA_TIMING_CLOSURE_AI_MAX_ATTEMPTS` accepts 1–10. `EDA_TIMING_CLOSURE_AI_ENABLED=0` disables AI recovery, but does not disable the area/power acceptance limits. AI uses the existing `OPENAI_API_KEY`, `OPENAI_MODEL`, and optional `OPENAI_BASE_URL` configuration. API failure, an invalid plan, repeated experiments, or no legal resize choices stop recovery explicitly.
 
-Plans and their input evidence are saved as `ai_plan_N.json` beside the attempt states. Status JSON records the source checkpoint, actions, measured WNS, hold slack for AI candidates, area, power, and best eligible attempt. The plan API uses [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs); execution still validates every proposed action locally.
+Plans and their input evidence are saved as `ai_plan_N.json` beside the attempt states.
+The full session transcript records the AI decision, each selected resize or
+buffer insertion, its target/cell, and the reason before implementation. Status
+JSON records the source checkpoint, actions, measured WNS, hold slack for AI
+candidates, area, power, and best eligible attempt. The plan API uses
+[OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs);
+execution still validates every proposed action locally.
 
 To recover an **existing failed run**, supply its full flow state (for max clocking, use the frequency's `.state.json`, not the sweep summary):
 
