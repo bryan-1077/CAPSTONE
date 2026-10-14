@@ -18,10 +18,15 @@ PLAN_SCHEMA = {
         "actions": {
             "type": "array", "maxItems": 16,
             "items": {
-                "type": "object",
-                "properties": {key: {"type": "string"} for key in ("instance", "from_cell", "to_cell", "reason")},
-                "required": ["instance", "from_cell", "to_cell", "reason"],
-                "additionalProperties": False,
+                "anyOf": [
+                    {"type": "object",
+                     "properties": {key: {"type": "string"} for key in ("instance", "from_cell", "to_cell", "reason")},
+                     "required": ["instance", "from_cell", "to_cell", "reason"], "additionalProperties": False},
+                    {"type": "object", "properties": {
+                        "operation": {"type": "string", "enum": ["insert_buffer"]},
+                        **{key: {"type": "string"} for key in ("pin", "cell", "reason")}},
+                     "required": ["operation", "pin", "cell", "reason"], "additionalProperties": False},
+                ],
             },
         },
     },
@@ -57,14 +62,45 @@ def resize_choices(timing_text, library_text):
     return choices
 
 
-def validate_plan(plan, choices):
+def buffer_choices(hold_text, library_text):
+    """Offer non-inverting buffers only at reported sequential data sinks."""
+    buffers = sorted({name.strip() for name in library_text.splitlines()
+                      if re.fullmatch(r'sky130_fd_sc_hd__buf_\d+', name.strip())})
+    choices = {}
+    if not buffers:
+        return choices
+    for line in hold_text.splitlines():
+        columns = [item.strip() for item in line.split('|')]
+        if len(columns) < 5:
+            continue
+        instance, arc, cell = columns[1:4]
+        if (re.fullmatch(r'[A-Za-z0-9_./\[\]-]+', instance)
+                and re.fullmatch(r'sky130_fd_sc_hd__df\w+_\d+', cell)
+                and re.fullmatch(r'D\s+[\^v]', arc)):
+            choices[instance + '/D'] = {"from_cell": cell, "allowed_cells": buffers}
+    return choices
+
+
+def validate_plan(plan, choices, buffers=None):
     if not isinstance(plan, dict) or set(plan) != {"summary", "actions"} or not isinstance(plan["summary"], str):
         raise ValueError("AI timing plan must contain only summary and actions.")
     actions = plan["actions"]
     if not isinstance(actions, list) or len(actions) > 16:
-        raise ValueError("AI timing plan is limited to 16 resizes per attempt.")
+        raise ValueError("AI timing plan is limited to 16 actions per attempt.")
     seen = set()
     for action in actions:
+        if isinstance(action, dict) and action.get("operation") == "insert_buffer":
+            if (set(action) != {"operation", "pin", "cell", "reason"}
+                    or not all(isinstance(value, str) for value in action.values())):
+                raise ValueError("Buffer action requires operation, pin, cell, and reason strings.")
+            pin = action["pin"]
+            choice = (buffers or {}).get(pin)
+            if (not choice or pin in seen or action["cell"] not in choice["allowed_cells"]
+                    or not re.fullmatch(r'[A-Za-z0-9_./\[\]-]+/D', pin)
+                    or not re.fullmatch(r'sky130_fd_sc_hd__buf_\d+', action["cell"])):
+                raise ValueError(f"Unverified or duplicate buffer insertion at {pin}.")
+            seen.add(pin)
+            continue
         if not isinstance(action, dict) or set(action) != {"instance", "from_cell", "to_cell", "reason"}:
             raise ValueError("Only explicit gate/buffer resize actions are allowed.")
         if not all(isinstance(value, str) for value in action.values()):
@@ -110,16 +146,32 @@ def plan_timing_recovery(context, *, diagnostics_path=None):
     model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
     prompt = (
         "You are the timing-closure optimization agent for a SKY130 HD memory controller. "
-        "Use the routed timing report and measured history to choose targeted gate and buffer resizes. "
+        "Review the geometry (geom.rpt), routed setup (timing_postroute.rpt), and hold "
+        "(hold_postroute.rpt) reports and measured history. Choose resizing, buffer insertion, "
+        "or a combination based on the failing paths and geometry. "
         "The source is the best measured eligible checkpoint; failed experiments are discarded. "
+        "The source may have negative hold slack even when setup passes. Repair negative hold slack "
+        "while preserving passing setup; both setup and hold must pass for final success. "
         "HARD LIMITS: die footprint <= 4 mm^2 and reported total power <= 2 watts. "
         "Never relax the clock period, timing uncertainty, hold checks, power activity, or these limits. "
         "Choose only instances and replacement cells in resize_choices. Preserve each cell's Boolean function. "
+        "For hold repair you may insert non-inverting buffers using operation=insert_buffer, pin, cell, "
+        "and reason, choosing only pins and cells in buffer_choices. These add delay at sequential "
+        "data sinks; do not buffer clock or reset pins. Resize actions use instance, from_cell, to_cell, "
+        "and reason. Explain each choice using the attributed reports. "
+        "Write summary as a readable decision narrative like the physical agent's checkpoint selection: "
+        "start with the selected repair and source attempt/build, explain the measured setup and hold "
+        "slack and relevant geometry evidence, and identify the paths/cells motivating your actions. "
+        "Then include a 'Why alternatives are less suitable:' paragraph with brief bullets comparing "
+        "resizing, buffer insertion, or their combination where applicable. Finish with the expected "
+        "setup/hold tradeoff and area/power impact to be checked after execution. Use newlines between "
+        "paragraphs. Cite only supplied measurements; distinguish expected effects from measured results. "
+        "If actions is empty, explain why no supported repair is appropriate in the same format. "
         "Prefer a small, evidence-based experiment. Consider upstream loading when upsizing; avoid repeating failed plans. "
         "Return an empty actions list with an explanation if no useful legal change remains. "
-        "The executor applies resizes, legalizes, reroutes, optimizes setup/hold, and measures all limits again. "
+        "The executor applies resizes and buffer insertions, legalizes, reroutes, optimizes setup/hold, and measures all limits again. "
         "You cannot declare success or edit RTL, constraints, scripts, reports, or library data. "
-        "Inspect report_evidence.best_build for setup AND hold paths, power, area, and optimization log excerpts. "
+        "Inspect report_evidence.best_build for geometry, setup AND hold paths, power, area, and optimization log excerpts. "
         "Compare rejected_candidates with attempt_history to understand measured regressions and avoid repeating plans. "
         "Reports identify their source build; do not attribute rejected-candidate measurements to the best checkpoint. "
         "Missing, empty, or truncated reports are incomplete evidence, never proof of passing checks. "
@@ -163,7 +215,7 @@ def plan_timing_recovery(context, *, diagnostics_path=None):
             text = request("chat_completions")
         if not text.strip():
             raise ValueError("AI timing recovery returned no text after Chat Completions fallback")
-        plan = validate_plan(json.loads(_extract_json_text(text)), context["resize_choices"])
+        plan = validate_plan(json.loads(_extract_json_text(text)), context["resize_choices"], context.get("buffer_choices"))
         diagnostics["status"] = "validated"
         return plan
     except Exception as exc:

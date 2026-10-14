@@ -11,12 +11,14 @@ by default.
 When DRC is zero, the repair planner and implementation are skipped. Remaining
 antenna violations still fail verification without launching the repair agent.
 
-The same physical agent has a separate checkpoint-selection role when setup timing
+The same physical agent has a separate checkpoint-selection role when setup or hold timing
 still fails after the backend presets. It compares all preset geometry, hold, and
 post-route setup reports and chooses a verified eligible source for the timing
 resizer. This comparison can run on clean DRC builds; it does not launch physical
-repair. Only clean DRC/antenna, passing hold, and area/power-compliant presets with
-valid setup evidence are selectable. Its choice and rationale are stored under the
+repair. Only clean DRC/antenna and area/power-compliant presets with
+valid setup and hold evidence are selectable, including negative hold slack.
+The timing resizer must repair hold while preserving passing setup; final success
+still requires both timing checks to pass. Its choice and rationale are stored under the
 timing run's `physical_selection*.json` artifacts. A passing preset needs neither
 selection nor resizing.
 

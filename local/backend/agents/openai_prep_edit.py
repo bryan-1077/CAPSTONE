@@ -359,7 +359,7 @@ def _extract_detected_macros(review_payload: Mapping[str, Any]) -> list[str]:
         if not stripped.startswith("- "):
             continue
         macro = stripped[2:].strip()
-        if macro and macro not in macros:
+        if macro and macro.lower() != "none" and macro not in macros:
             macros.append(macro)
     return macros
 
@@ -1349,6 +1349,9 @@ def run_openai_prep_edit(
         "You are a prep-editor agent for a Cadence Genus RTL prep flow. "
         "You do not decide pass/fail; the reviewer does that. "
         "Your job is to propose only safe, bounded edits to the prepared bundle so the reviewer can re-check it. "
+        "A macro list containing only 'none' means no required defines; never introduce a literal none macro. "
+        "Preserve valid top selection via top_module.txt using read or gets. A literal alias such as "
+        "DEFAULT_TOP is allowed when it names the verified top and TOP resolves to it before elaborate $TOP. "
         "Never invent missing RTL logic or fabricate source files to satisfy unresolved dependencies. "
         "Allowed edits are limited to removing stray files, removing stray lines, replacing text in generated Tcl, SDC, filelist, "
         "or metadata files that already exist in the prepared bundle, or appending clarifying text to those generated files. "

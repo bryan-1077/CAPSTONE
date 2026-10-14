@@ -19,14 +19,14 @@ module ddr4_scheduler_scheduler (
     // ------------------------------------------------------------------
     // Local parameters
     // ------------------------------------------------------------------
+    localparam int REQUEST_WIDTH = 51;
     localparam int DEPTH         = 4;
     localparam int NUM_BANKS     = 4;
-    localparam int REQUEST_WIDTH = 51;
     localparam int ROW_WIDTH     = 10;
     localparam int SEL_WIDTH     = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
 
     // ------------------------------------------------------------------
-    // Request payload type (51 bits)
+    // Request payload type (51 bits, no valid field)
     // ------------------------------------------------------------------
     typedef struct packed {
         logic [1:0]  bank;
@@ -37,121 +37,110 @@ module ddr4_scheduler_scheduler (
     } request_t;
 
     // ------------------------------------------------------------------
-    // Declarations
+    // Internal signals
     // ------------------------------------------------------------------
-    request_t                 req_unpacked [DEPTH];
+    request_t                 req_q [DEPTH];
     logic [DEPTH-1:0]         row_hit;
 
-    logic [SEL_WIDTH-1:0]     cand_idx;
-    logic                     cand_valid;
-
+    logic [SEL_WIDTH-1:0]     candidate_idx;
+    logic                     candidate_valid;
     logic                     candidate_success;
     logic                     candidate_blocked;
     logic                     successful_issue;
 
-    logic                     locked;
-    logic [SEL_WIDTH-1:0]     locked_idx;
+    logic                     locked_q;
+    logic [SEL_WIDTH-1:0]     locked_idx_q;
 
     // ------------------------------------------------------------------
     // Unpack packed vector port into request_t entries
     // ------------------------------------------------------------------
-    always_comb begin
-        for (int u = 0; u < DEPTH; u++) begin
-            req_unpacked[u] = request_t'(req_array[(u*REQUEST_WIDTH) +: REQUEST_WIDTH]);
+    always_comb begin : unpack_proc
+        for (int i = 0; i < DEPTH; i++) begin
+            req_q[i] = req_array[(i * REQUEST_WIDTH) +: REQUEST_WIDTH];
         end
     end
 
     // ------------------------------------------------------------------
     // Row-hit computation
     // ------------------------------------------------------------------
-    always_comb begin
-        for (int h = 0; h < DEPTH; h++) begin
-            row_hit[h] = req_valid[h]
-                         && bank_active[req_unpacked[h].bank]
-                         && (bank_open_row[(req_unpacked[h].bank)*ROW_WIDTH +: ROW_WIDTH]
-                             == req_unpacked[h].row);
+    always_comb begin : row_hit_proc
+        for (int j = 0; j < DEPTH; j++) begin
+            row_hit[j] = req_valid[j]
+                         && bank_active[req_q[j].bank]
+                         && (bank_open_row[(int'(req_q[j].bank) * ROW_WIDTH) +: ROW_WIDTH]
+                             == req_q[j].row);
         end
     end
 
     // ------------------------------------------------------------------
-    // Candidate selection: lowest-index row hit, else lowest-index valid
+    // Selection: locked index holds, else row-hit first then first valid
     // ------------------------------------------------------------------
-    always_comb begin
-        cand_idx   = {SEL_WIDTH{1'b0}};
-        cand_valid = 1'b0;
+    always_comb begin : select_proc
+        logic hit_found;
+        logic val_found;
 
-        for (int r = 0; r < DEPTH; r++) begin
-            if (!cand_valid && row_hit[r]) begin
-                cand_valid = 1'b1;
-                cand_idx   = SEL_WIDTH'(r);
-            end
+        hit_found       = 1'b0;
+        val_found       = 1'b0;
+        candidate_idx   = '0;
+        candidate_valid = 1'b0;
+
+        if (locked_q) begin
+            candidate_idx   = locked_idx_q;
+            candidate_valid = req_valid[locked_idx_q];
         end
-
-        if (!cand_valid) begin
-            for (int v = 0; v < DEPTH; v++) begin
-                if (!cand_valid && req_valid[v]) begin
-                    cand_valid = 1'b1;
-                    cand_idx   = SEL_WIDTH'(v);
+        else begin
+            for (int k = 0; k < DEPTH; k++) begin
+                if (!hit_found && row_hit[k]) begin
+                    hit_found     = 1'b1;
+                    candidate_idx = SEL_WIDTH'(k);
                 end
             end
+            for (int m = 0; m < DEPTH; m++) begin
+                if (!val_found && req_valid[m]) begin
+                    val_found = 1'b1;
+                    if (!hit_found) begin
+                        candidate_idx = SEL_WIDTH'(m);
+                    end
+                end
+            end
+            candidate_valid = hit_found || val_found;
         end
     end
 
     // ------------------------------------------------------------------
-    // Selected index / issue qualification
+    // Arbitration / issue outputs
     // ------------------------------------------------------------------
-    always_comb begin
-        if (locked) begin
-            sel_idx = {{(2-SEL_WIDTH){1'b0}}, locked_idx};
-        end else begin
-            sel_idx = {{(2-SEL_WIDTH){1'b0}}, cand_idx};
-        end
-    end
-
-    always_comb begin
-        if (locked) begin
-            issue_valid = req_valid[locked_idx];
-        end else begin
-            issue_valid = cand_valid;
-        end
-    end
-
-    always_comb begin
-        issue_ref        = ref_req && cmd_ready && timing_ok;
-        issue_txn        = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
-        successful_issue = issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+    always_comb begin : issue_proc
+        issue_valid       = candidate_valid;
+        sel_idx           = candidate_idx;
+        issue_ref         = ref_req && cmd_ready && timing_ok;
+        issue_txn         = candidate_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+        successful_issue  = candidate_valid && cmd_ready && timing_ok && !ref_req && !issue_ref;
+        candidate_success = candidate_valid && cmd_ready && timing_ok && !ref_req;
+        candidate_blocked = candidate_valid && !ref_req && !candidate_success;
     end
 
     // ------------------------------------------------------------------
-    // Lock acquisition qualification (unlocked candidate)
-    // ------------------------------------------------------------------
-    always_comb begin
-        candidate_success = cand_valid && cmd_ready && timing_ok && !ref_req;
-        candidate_blocked = cand_valid && !ref_req && !candidate_success;
-    end
-
-    // ------------------------------------------------------------------
-    // Lock state
+    // Lock state: acquire only on blocked candidate, clear only on
+    // successful transaction issue
     // ------------------------------------------------------------------
     always_ff @(posedge clk) begin
         if (!rst_n) begin
-            locked     <= 1'b0;
-            locked_idx <= {SEL_WIDTH{1'b0}};
-        end else begin
-            if (locked) begin
+            locked_q     <= 1'b0;
+            locked_idx_q <= '0;
+        end
+        else begin
+            if (locked_q) begin
                 if (successful_issue) begin
-                    locked     <= 1'b0;
-                    locked_idx <= {SEL_WIDTH{1'b0}};
-                end else begin
-                    locked     <= locked;
-                    locked_idx <= locked_idx;
+                    locked_q     <= 1'b0;
+                    locked_idx_q <= '0;
                 end
-            end else if (candidate_blocked) begin
-                locked     <= 1'b1;
-                locked_idx <= cand_idx;
-            end else begin
-                locked     <= 1'b0;
-                locked_idx <= {SEL_WIDTH{1'b0}};
+            end
+            else begin
+                if (candidate_blocked) begin
+                    locked_q     <= 1'b1;
+                    locked_idx_q <= candidate_idx;
+                end
             end
         end
     end

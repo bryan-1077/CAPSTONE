@@ -99,7 +99,7 @@ class AIClosureTests(unittest.TestCase):
         self.assertEqual(json.loads((folder / "physical_selection.json").read_text()), self.selector.return_value)
         self.assertEqual(result["physical_verification_source_selection"], self.selector.return_value)
 
-    def test_physical_agent_rejects_hold_failure_and_dirty_geometry(self):
+    def test_physical_agent_accepts_hold_failure_but_rejects_dirty_geometry(self):
         class UnsafePresetSSH(EvidenceSSH):
             def fetch_file(self, remote, local):
                 result = super().fetch_file(remote, local)
@@ -111,8 +111,49 @@ class AIClosureTests(unittest.TestCase):
         with patch.object(closure, "plan_timing_recovery", return_value=plan()):
             result = self.run_closure(UnsafePresetSSH([-0.3, -0.1, -0.2, 0.01]))
         self.assertEqual(result["timing_closure_status"], "passed")
-        self.assertEqual(self.selector.call_args.args[0]["eligible_attempts"], [1])
+        self.assertEqual(self.selector.call_args.args[0]["eligible_attempts"], [1, 2])
+        self.assertTrue(self.states[3]["timing_closure_eco_plan"]["checkpoint"].endswith("210MHz_02/db/06_final.enc"))
+
+    def test_all_presets_fail_hold_and_best_setup_triggers_recovery(self):
+        from physical_verification.closure_runner import run_physical_closure
+
+        class NegativePresetHoldSSH(EvidenceSSH):
+            def __init__(self, slacks):
+                super().__init__(slacks)
+                self.setup_reports = {}
+
+            def fetch_file(self, remote, local):
+                if remote in self.setup_reports:
+                    Path(local).parent.mkdir(parents=True, exist_ok=True)
+                    Path(local).write_text(self.setup_reports[remote])
+                    return {"ok": True, "remote_path": remote}
+                result = super().fetch_file(remote, local)
+                if remote.endswith("timing_postroute.rpt"):
+                    self.setup_reports[remote] = Path(local).read_text()
+                if "_ai_" not in remote and remote.endswith("hold_postroute.rpt"):
+                    Path(local).write_text(Path(local).read_text().replace("0.020", "-0.049"))
+                return result
+
+        ssh = NegativePresetHoldSSH([0.038, -0.059, -0.047, 0.01])
+        self.state["backend_log_dir"] = str(self.repo / "reports")
+
+        def implementation(state):
+            generated = fixtures.ClosureTests.implementation(self, state)
+            generated["gdsii_candidate_path"] = state["remote_gdsii_dir"]
+            return run_physical_closure(generated, ssh, lambda _: self.fail("Unexpected DRC repair"),
+                                       lambda state, updates: {**state, **updates}, require_setup_timing=False)
+
+        with patch.object(closure, "plan_timing_recovery", return_value=plan()) as ai:
+            result = closure.run_setup_closure(self.state, ssh, implementation,
+                                              lambda state, updates: {**state, **updates})
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertEqual([item["status"] for item in result["timing_closure_attempts"][:3]],
+                         ["hold_violated"] * 3)
+        self.assertEqual(self.selector.call_args.args[0]["eligible_attempts"], [1, 2, 3])
+        self.assertEqual(ai.call_args.args[0]["source_attempt"]["attempt"], 1)
+        self.assertEqual(ai.call_args.args[0]["source_attempt"]["hold_wns_ns"], -0.049)
         self.assertTrue(self.states[3]["timing_closure_eco_plan"]["checkpoint"].endswith("210MHz_01/db/06_final.enc"))
+        self.assertGreaterEqual(result["timing_closure_attempts"][-1]["hold_wns_ns"], 0)
 
     def test_invalid_selector_result_does_not_reach_resizer(self):
         self.selector.side_effect = None
@@ -143,12 +184,45 @@ class AIClosureTests(unittest.TestCase):
         context = ai.call_args.args[0]
         evidence = context["report_evidence"]["best_build"]
         self.assertEqual(evidence["source_build"], context["source_attempt"]["outdir"])
-        self.assertEqual(set(evidence["reports"]), {"setup", "hold", "power", "area", "optimization_log"})
+        self.assertEqual(set(evidence["reports"]), {"geometry", "setup", "hold", "power", "area", "optimization_log"})
         self.assertEqual(evidence["reports"]["hold"]["status"], "included")
         self.assertIn("content", evidence["reports"]["hold"])
         diagnostics = Path(ai.call_args.kwargs["diagnostics_path"])
         context_path = diagnostics.with_name(diagnostics.name.replace("ai_response_", "ai_context_"))
         self.assertEqual(json.loads(context_path.read_text())["report_evidence"], context["report_evidence"])
+
+    def test_buffer_only_plan_reaches_executor_and_full_session_log(self):
+        from session_log_utils import SessionLogCapture
+        from workers.orchestrator import _merge_state, _reset_live_history_prefix
+
+        class BufferSSH(EvidenceSSH):
+            def fetch_file(self, remote, local):
+                result = super().fetch_file(remote, local)
+                if remote.endswith('eco_library.rpt'):
+                    with Path(local).open('a') as handle:
+                        handle.write('sky130_fd_sc_hd__buf_1\n')
+                return result
+
+        action = {"operation": "insert_buffer", "pin": "rsp_rdata_q_reg[17]/D",
+                  "cell": "sky130_fd_sc_hd__buf_1", "reason": "Add delay at the hold data sink."}
+        decision = {"summary": "Insert a buffer to repair hold while preserving setup.\n\n"
+                    "Why alternatives are less suitable:\n- Resizing could reduce setup margin.\n\n"
+                    "Check setup, hold, geometry, area, and power after execution.", "actions": [action]}
+        log = self.repo / 'full_session.log'
+        _reset_live_history_prefix()
+        with SessionLogCapture(log), patch.object(closure, 'plan_timing_recovery', return_value=decision) as ai, \
+                patch.object(closure, 'resize_choices', return_value={}):
+            result = closure.run_setup_closure(self.state, BufferSSH([-0.3, -0.1, -0.2, 0.01]),
+                                              self.implementation, _merge_state)
+        self.assertEqual(result['timing_closure_status'], 'passed')
+        self.assertEqual(self.states[3]['timing_closure_eco_plan']['actions'], [action])
+        self.assertIn(action['pin'], ai.call_args.args[0]['buffer_choices'])
+        self.assertEqual(ai.call_args.args[0]['report_evidence']['best_build']['reports']['geometry']['status'], 'included')
+        transcript = log.read_text()
+        self.assertIn(decision['summary'], transcript)
+        self.assertIn('Timing agent selected buffer insertion for attempt 2 (build_GDSII_210MHz_02):', transcript)
+        self.assertIn('AI timing action selected: insert_buffer at rsp_rdata_q_reg[17]/D', transcript)
+        self.assertIn(action['reason'], transcript)
 
     def test_regression_restarts_from_best_and_feedback_reaches_ai(self):
         seen = []
@@ -280,6 +354,58 @@ class PlanTests(unittest.TestCase):
         unsafe["actions"][0]["instance"] = "other_gate"
         with self.assertRaises(ValueError):
             agent.validate_plan(unsafe, choices)
+
+    def test_buffer_choices_and_validation_reject_unobserved_pins_and_cells(self):
+        buffers = agent.buffer_choices(fixtures.FIXTURE.read_text(),
+                                       'sky130_fd_sc_hd__buf_1\nsky130_fd_sc_hd__inv_2\n')
+        self.assertEqual(set(buffers), {'rsp_rdata_q_reg[17]/D'})
+        action = {'operation': 'insert_buffer', 'pin': 'rsp_rdata_q_reg[17]/D',
+                  'cell': 'sky130_fd_sc_hd__buf_1', 'reason': 'Repair short hold path'}
+        decision = {'summary': 'Hold repair', 'actions': [action]}
+        self.assertEqual(agent.validate_plan(decision, {}, buffers), decision)
+        for field, value in (('pin', 'other/D'), ('pin', 'rsp_rdata_q_reg[17]/CLK'),
+                             ('cell', 'sky130_fd_sc_hd__inv_2'), ('cell', 'sky130_fd_sc_hd__buf_8')):
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                agent.validate_plan({'summary': 'Bad', 'actions': [{**action, field: value}]}, {}, buffers)
+        with self.assertRaises(ValueError):
+            agent.validate_plan({'summary': 'Duplicate', 'actions': [action, action]}, {}, buffers)
+
+    @unittest.skipUnless(shutil.which('tclsh'), 'Tcl interpreter required')
+    def test_buffer_tcl_inserts_legal_buffer_and_detects_noop(self):
+        with tempfile.TemporaryDirectory() as directory:
+            checkpoint = Path(directory) / '06_final.enc'
+            checkpoint.write_text('# checkpoint loader\n')
+            Path(str(checkpoint) + '.dat').mkdir()
+            action = {'operation': 'insert_buffer', 'pin': 'reg[0]/D',
+                      'cell': 'sky130_fd_sc_hd__buf_1', 'reason': 'Hold repair'}
+            script = '\n'.join(build_timing_eco_tcl({'checkpoint': str(checkpoint), 'actions': [action]}, 'top'))
+            stub = '''
+proc eda_die_area_mm2 {} {return 3.5}
+proc deleteFiller {args} {}
+proc dbGetInstByName {name} {return 0x1}
+set sink_net original
+proc dbGet {args} {
+    set name [lindex $args 0]
+    if {$name eq "-p"} {return 0x2}
+    if {$name eq "head.libCells.name"} {return sky130_fd_sc_hd__buf_1}
+    if {$name eq "0x1.cell.name"} {return sky130_fd_sc_hd__dfxtp_1}
+    if {$name eq "0x1.instTerms.name"} {return {reg[0]/D}}
+    if {$name eq "0x1.instTerms"} {return 0x2}
+    if {$name eq "0x2.name"} {return {reg[0]/D}}
+    if {$name eq "0x2.net.name"} {return $::sink_net}
+    error "Unexpected query $args"
+}
+proc ecoAddRepeater {args} {set ::sink_net buffered; puts INSERTED}
+proc refinePlace {} {puts LEGALIZED}
+proc ecoRoute {} {puts ROUTED}
+'''
+            result = subprocess.run(['tclsh'], input=stub + script, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('INSERTED\nLEGALIZED\nROUTED', result.stdout)
+            noop = subprocess.run(['tclsh'], input=stub.replace('set ::sink_net buffered', 'set ::sink_net original') + script,
+                                  capture_output=True, text=True)
+            self.assertEqual(noop.returncode, 6)
+            self.assertIn('Buffer insertion did not reconnect the sink', noop.stdout)
 
     def test_missing_key_is_explicit_failure(self):
         with patch.dict("os.environ", {}, clear=True), self.assertRaisesRegex(RuntimeError, "OPENAI_API_KEY"):

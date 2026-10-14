@@ -274,12 +274,19 @@ def choose_top(netlist, explicit_top=None):
     return modules[0]
 
 
+SHARED_SKY130_ROOT = "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/sky130A"
+
+
 def choose_sky130_root(explicit_root=None):
     if explicit_root:
         p = Path(explicit_root).expanduser().resolve()
         if not p.exists():
             raise SystemExit("PDK root does not exist: {0}".format(p))
         return p
+
+    shared_root = Path(SHARED_SKY130_ROOT)
+    if shared_root.is_dir() and (shared_root / "libs.ref").is_dir():
+        return shared_root.resolve()
 
     home = Path.home()
     candidates = []
@@ -664,6 +671,29 @@ def build_timing_eco_tcl(plan, top, *, check_die_limit=True):
     # recovery only remeasures a checkpoint without explicit resize actions.
     lines.append("deleteFiller -prefix FILL")
     for action in plan["actions"]:
+        if isinstance(action, dict) and action.get("operation") == "insert_buffer":
+            if (set(action) != {"operation", "pin", "cell", "reason"}
+                    or not all(isinstance(v, str) for v in action.values())
+                    or not re.fullmatch(r'[A-Za-z0-9_./\[\]-]+/D', action['pin'])
+                    or not re.fullmatch(r'sky130_fd_sc_hd__buf_\d+', action['cell'])
+                    or action['pin'] in seen):
+                raise ValueError("Only unique data-sink insertions of non-inverting buffers are supported")
+            pin, cell = action['pin'], action['cell']
+            seen.add(pin)
+            lines.extend([
+                "set eco_inst [dbGetInstByName %s]" % word(pin.rsplit('/', 1)[0]),
+                'if {$eco_inst eq "0x0"} {error "Buffer sink instance missing from checkpoint"}',
+                'if {![string match "sky130_fd_sc_hd__df*" [dbGet $eco_inst.cell.name]]} {error "Buffer sink is not a sequential data input"}',
+                'if {[lsearch -exact [dbGet $eco_inst.instTerms.name] %s] < 0} {error "Buffer sink pin missing from checkpoint"}' % word(pin),
+                'if {[lsearch -exact [dbGet head.libCells.name] %s] < 0} {error "Buffer cell is not loaded"}' % word(cell),
+                'set eco_term {}; foreach term [dbGet $eco_inst.instTerms] {if {[dbGet $term.name] eq %s} {lappend eco_term $term}}' % word(pin),
+                'if {[llength $eco_term] != 1 || $eco_term eq "0x0"} {error "Buffer sink is ambiguous or missing"}',
+                'set eco_old_net [dbGet $eco_term.net.name]',
+                'puts {INFO: applying AI insert_buffer at %s using %s}' % (pin, cell),
+                "ecoAddRepeater -term %s -cell %s -relativeDistToSink 0.1" % (word(pin), word(cell)),
+                'if {[dbGet $eco_term.net.name] eq $eco_old_net} {error "Buffer insertion did not reconnect the sink"}',
+            ])
+            continue
         if not isinstance(action, dict) or set(action) != {"instance", "from_cell", "to_cell", "reason"}:
             raise ValueError("Only gate/buffer resizing is supported")
         name, old, new = (action[key] for key in ("instance", "from_cell", "to_cell"))

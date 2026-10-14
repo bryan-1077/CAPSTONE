@@ -14,6 +14,7 @@ def tcl_selects_top(script: str, top_module: str) -> bool:
         return False
     paths = set()
     handles = set()
+    literal_tops = set()
     top_matches = False
     elaborated = False
 
@@ -30,6 +31,12 @@ def tcl_selects_top(script: str, top_module: str) -> bool:
         assignment = re.fullmatch(r'set\s+(\w+)\s+(.+)', line)
         if assignment:
             name, value = assignment.groups()
+            alias = re.fullmatch(r'\$(?:([A-Za-z_]\w*)|\{([A-Za-z_]\w*)\})', literal(value))
+            literal_matches = (literal(value) == top_module
+                               or bool(alias and (alias[1] or alias[2]) in literal_tops))
+            literal_tops.discard(name)
+            if literal_matches:
+                literal_tops.add(name)
             paths.discard(name)
             handles.discard(name)
             normalized = re.fullmatch(r'\[file normalize (.+)\]', value)
@@ -41,12 +48,12 @@ def tcl_selects_top(script: str, top_module: str) -> bool:
                            or opened[1] in {'$' + item for item in paths}):
                 handles.add(name)
             if name == 'TOP':
-                read = re.fullmatch(r'\[string trim \[read \$(\w+)\]\]', value)
+                read = re.fullmatch(r'\[string trim \[(?:read|gets) \$(\w+)\]\]', value)
                 if value == '[string trim $::env(TOP)]':
                     # The generator permits a runtime override, but must
                     # still provide a valid default from the prepared bundle.
                     continue
-                top_matches = (literal(value) == top_module
+                top_matches = (literal_matches
                                or bool(read and read[1] in handles))
         command = re.fullmatch(r'elaborate\s+(.+)', line)
         if command:

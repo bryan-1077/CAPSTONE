@@ -16,7 +16,7 @@ from services.path_naming import resolve_prepare_dir, resolve_netlist_dir_choice
 from services import mapped_snapshot
 from services.build_names import frequency_label
 from session_log_utils import SessionLogCapture
-from agents.openai_timing_closure import plan_timing_recovery, resize_choices, validate_plan
+from agents.openai_timing_closure import plan_timing_recovery, resize_choices, buffer_choices, validate_plan
 from timing_closure.constraints import evaluate_limits, MAX_DIE_AREA_MM2, MAX_POWER_W
 from physical_verification.selection import build_selection_context
 from agents.openai_physical_verification import select_resize_source, validate_selection
@@ -142,7 +142,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
         recovery_source = None
         if state.get("timing_closure_recover_best"):
             eligible = [entry for entry in state.get("timing_closure_attempts", [])
-                        if entry.get("status") in {"violated", "passed"}
+                        if entry.get("status") in {"violated", "passed", "hold_violated"}
                         and isinstance(entry.get("wns_ns"), (int, float)) and math.isfinite(entry["wns_ns"])
                         and abs(float(entry.get("target_period_ns", 0)) - target) <= 0.00051
                         and entry.get("outdir") and entry.get("mapped_snapshot")]
@@ -188,7 +188,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                     selection_context = build_selection_context(state, ssh, staging, attempts, candidates, target)
                     (run_log_dir / "physical_selection_context.json").write_text(json.dumps(selection_context, indent=2) + "\n")
                     if not selection_context["eligible_attempts"]:
-                        return fail("No preset has verified clean geometry/antenna, passing hold timing, valid setup evidence, and area/power within limits; AI resizing cannot start.")
+                        return fail("No preset has verified clean geometry/antenna, valid setup and hold evidence, and area/power within limits; AI resizing cannot start.")
                     record("selecting", "Physical verification AI: comparing preset geometry, hold, and post-route setup reports before resizing.")
                     source_selection = validate_selection(select_resize_source(selection_context,
                         diagnostics_path=run_log_dir / "physical_selection_response.json"),
@@ -209,14 +209,27 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 if len(library_paths) != 1:
                     return fail("The best checkpoint has no available-cell inventory; AI cannot guess cell sizes.")
                 timing_text = Path(source_entry["report"]).read_text()
-                choices = resize_choices(timing_text, library_paths[0].read_text())
-                if not choices:
-                    return fail("No supported gate/buffer resize choices were found on the reported critical paths.")
+                hold_paths, _ = fetch_remote_reports(
+                    ssh=ssh, remote_project_root=project_root,
+                    report_paths=[f"{source_entry['outdir']}/reports/hold_postroute.rpt"], local_staging_dir=staging)
+                if len(hold_paths) != 1:
+                    return fail("The recovery source has no fresh hold report.")
+                hold_text = hold_paths[0].read_text()
+                library_text = library_paths[0].read_text()
+                choices = resize_choices(timing_text + '\n' + hold_text, library_text)
+                buffers = buffer_choices(hold_text, library_text)
+                if not choices and not buffers:
+                    return fail("No supported resize or buffer insertion choices were found on the reported paths.")
+                evidence = build_recovery_evidence(ssh, project_root, staging, source_entry, attempts)
+                if any(evidence["best_build"]["reports"].get(kind, {}).get("status") != "included"
+                       for kind in ("geometry", "setup", "hold")):
+                    return fail("AI timing recovery requires fresh geometry, setup, and hold report evidence.")
                 context = {
                     "target_period_ns": target, "source_attempt": source_entry,
                     "limits": {"max_die_area_mm2": MAX_DIE_AREA_MM2, "max_power_w": MAX_POWER_W},
                     "timing_report": excerpt(timing_text, 16000), "resize_choices": choices,
-                    "report_evidence": build_recovery_evidence(ssh, project_root, staging, source_entry, attempts),
+                    "buffer_choices": buffers,
+                    "report_evidence": evidence,
                     "attempt_history": deepcopy(attempts),
                     "physical_source_selection": source_selection,
                 }
@@ -224,12 +237,24 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 (run_log_dir / f"ai_context_{run_id}_{attempt}.json").write_text(json.dumps(context, indent=2) + "\n")
                 plan = validate_plan(plan_timing_recovery(
                     context, diagnostics_path=run_log_dir / f"ai_response_{run_id}_{attempt}.json",
-                ), choices)
+                ), choices, buffers)
                 (run_log_dir / f"ai_plan_{attempt}.json").write_text(json.dumps({"context": context, "plan": plan}, indent=2) + "\n")
+                action_types = {"buffer insertion" if action.get("operation") == "insert_buffer" else "resizing"
+                                for action in plan["actions"]}
+                selected_repair = " and ".join(sorted(action_types)) if action_types else "no repair"
+                record("planning", f"Timing agent selected {selected_repair} for attempt {source_entry['attempt']} "
+                       f"({source_entry['outdir']}): {plan['summary']}")
+                for action in plan["actions"]:
+                    if action.get("operation") == "insert_buffer":
+                        detail = f"insert_buffer at {action['pin']} using {action['cell']}"
+                    else:
+                        detail = f"resize {action['instance']}: {action['from_cell']} -> {action['to_cell']}"
+                    record("planning", f"AI timing action selected: {detail}; reason: {action['reason']}")
                 if not plan["actions"]:
                     return fail(f"AI timing recovery stopped: {plan['summary']}")
                 signature = json.dumps([source_entry["outdir"], sorted(
-                    [(a["instance"], a["from_cell"], a["to_cell"]) for a in plan["actions"]])])
+                    json.dumps({k: v for k, v in action.items() if k != 'reason'}, sort_keys=True)
+                    for action in plan["actions"])])
                 if signature in tried_plans:
                     return fail("AI repeated an already measured resize plan; stopping without rerunning it.")
                 tried_plans.add(signature)
@@ -251,6 +276,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                       else f".timing_closure_runner_{frequency}_{attempt:02d}.py")
             ssh.upload_file(repo / "probes" / "run_innovus_GDSII_universal.py", f"{project_root}/{script}", exclusive=True)
             entry = {"attempt": attempt, "outdir": outdir, "mapped_snapshot": snapshot_dir, "target_period_ns": target, "settings": settings, "status": "running",
+                     "top_module": next((working.get(key) for key in ("mapped_resolved_top", "mapped_top_module", "top_module") if working.get(key)), ""),
                      "kind": "ai_resize" if is_ai else "restore_best" if recovery_source else "preset",
                      "source_outdir": source_entry["outdir"] if source_entry else None}
             if plan:
@@ -282,13 +308,30 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             (attempt_log_dir / f"attempt_{attempt}_state.json").write_text(json.dumps(working, indent=2) + "\n")
             if working.get("stage_status", {}).get("gdsii") != "success":
                 if working.get("physical_verification_status") == "failed":
-                    entry["status"] = "physical_verification_failed"
-                    entry["physical_verification_report_dir"] = working.get("physical_verification_report_dir")
-                    entry["error"] = working.get("last_error")
-                    record("running", f"Timing attempt {attempt} rejected by physical verification: {entry['error']}")
-                    continue
-                entry["status"] = "implementation_failed"
-                return fail(working.get("last_error") or "Backend implementation failed before timing validation.")
+                    physical_attempts = working.get("physical_verification_attempts") or []
+                    evidence = physical_attempts[-1] if physical_attempts else {}
+                    # A measured hold violation is a recovery input, not a
+                    # successful result. Keep geometry and measurement gates.
+                    hold_recoverable = (
+                        evidence.get("outdir") == outdir
+                        and evidence.get("drc_count") == 0
+                        and evidence.get("antenna_count") == 0
+                        and evidence.get("limits", {}).get("within_limits")
+                        and evidence.get("hold_passed") is False
+                        and all(isinstance(evidence.get(key), (int, float))
+                                and math.isfinite(evidence[key])
+                                for key in ("setup_wns_ns", "hold_wns_ns"))
+                    )
+                    if not hold_recoverable:
+                        entry["status"] = "physical_verification_failed"
+                        entry["physical_verification_report_dir"] = working.get("physical_verification_report_dir")
+                        entry["error"] = working.get("last_error")
+                        record("running", f"Timing attempt {attempt} rejected by physical verification: {entry['error']}")
+                        continue
+                    record("running", f"Timing attempt {attempt} has a measured hold violation; evaluating for AI recovery.")
+                else:
+                    entry["status"] = "implementation_failed"
+                    return fail(working.get("last_error") or "Backend implementation failed before timing validation.")
             # Physical repair may create a new build. Measure and recover from
             # that build rather than the unverified template's original output.
             if working.get("physical_verification_status") == "passed":
@@ -335,24 +378,23 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             if not entry["limits"]["within_limits"]:
                 status = "limits_exceeded"
                 message = f"Candidate rejected: die {entry['limits']['die_area_mm2']:.6f} mm², power {entry['limits']['total_power_w']:.6f} W; limits 4 mm² / 2 W."
-            if is_ai or recovery_source:
-                hold_paths, _ = fetch_remote_reports(
-                    ssh=ssh, remote_project_root=project_root,
-                    report_paths=[f"{outdir}/reports/hold_postroute.rpt"], local_staging_dir=staging,
-                )
-                if len(hold_paths) != 1:
-                    entry["status"] = "hold_missing"
-                    return fail("Recovery candidate has no fresh hold-timing report.")
-                hold = parse_timing_report(hold_paths[0])
-                if hold.wns is None or not math.isfinite(hold.wns) or not hold.paths:
-                    entry["status"] = "hold_missing"
-                    return fail("Recovery candidate hold timing cannot be verified.")
-                entry["hold_wns_ns"] = hold.wns
-                if hold.wns < 0 or (hold.tns is not None and hold.tns < 0) or hold.violating_path_count:
-                    status = "hold_violated"
-                    message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
+            hold_paths, _ = fetch_remote_reports(
+                ssh=ssh, remote_project_root=project_root,
+                report_paths=[f"{outdir}/reports/hold_postroute.rpt"], local_staging_dir=staging,
+            )
+            if len(hold_paths) != 1:
+                entry["status"] = "hold_missing"
+                return fail("Recovery candidate has no fresh hold-timing report.")
+            hold = parse_timing_report(hold_paths[0])
+            if hold.wns is None or not math.isfinite(hold.wns) or not hold.paths:
+                entry["status"] = "hold_missing"
+                return fail("Recovery candidate hold timing cannot be verified.")
+            entry["hold_wns_ns"] = hold.wns
+            if hold.wns < 0 or (hold.tns is not None and hold.tns < 0) or hold.violating_path_count:
+                status = "hold_violated"
+                message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
             entry["status"] = status
-            if status in {"passed", "violated"} and entry["limits"]["within_limits"]:
+            if (status in {"passed", "violated"} or (not is_ai and status == "hold_violated")) and entry["limits"]["within_limits"]:
                 candidates.append({"entry": dict(entry), "state": dict(working)})
                 working["timing_closure_best_attempt"] = max(candidates, key=lambda item: item["entry"]["wns_ns"])["entry"]
             record(status, message, analysis)
