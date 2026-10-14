@@ -97,7 +97,7 @@ class ClosureTests(unittest.TestCase):
         self.assertNotEqual(self.states[0]["innovus_utilization"], self.states[1]["innovus_utilization"])
         for state in self.states:
             self.assertEqual(state["mapped_candidate_path"], state["remote_mapped_dir"])
-            self.assertEqual(state["mapped_candidate_path"], "build_mapped_snapshot_210MHz_01")
+            self.assertEqual(state["mapped_candidate_path"], "build_mapped_snapshot_mc_lang")
             command = _build_gdsii_command(state)
             self.assertIn("--clock-period 4.762", command)
             self.assertIn("--final-postroute-setup-opt", command)

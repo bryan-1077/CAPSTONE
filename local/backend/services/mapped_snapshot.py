@@ -8,7 +8,16 @@ import hashlib
 import json
 import shutil
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+
+
+def snapshot_directory(source: str) -> str:
+    """Name a remote snapshot beside its selected mapped build."""
+    path = PurePosixPath(source)
+    prefix = "build_mapped_"
+    if not path.name.startswith(prefix) or not path.name[len(prefix):]:
+        raise ValueError(f"Mapped input directory must be named build_mapped_<suffix>: {source}")
+    return str(path.with_name("build_mapped_snapshot_" + path.name[len(prefix):]))
 
 
 def manifest(results: Path) -> dict:

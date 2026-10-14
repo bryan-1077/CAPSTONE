@@ -156,7 +156,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
         source_dir, _ = resolve_mapped_dir_choice(state.get("mapped_candidate_path") or state.get("remote_mapped_dir"), netlist_dir, prep_dir)
         naming_period = float(state.get("timing_target_clock_period_ns") or target)
         frequency = frequency_label(naming_period)
-        snapshot_dir = recovery_source["mapped_snapshot"] if recovery_source else f"build_mapped_snapshot_{frequency}_01"
+        snapshot_dir = recovery_source["mapped_snapshot"] if recovery_source else mapped_snapshot.snapshot_directory(source_dir)
         snapshot_code = Path(mapped_snapshot.__file__).read_text()
         snapshot_command = " ".join(shlex.quote(value) for value in (
             state.get("remote_python_cmd") or "python3", "-c", snapshot_code, source_dir, snapshot_dir,
