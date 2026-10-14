@@ -306,6 +306,10 @@ The adapter starts `local/backend/app.py` from `local/backend`, streams output,
 and saves `backend.log`, `backend_result.json`, and `backend_reports/` beneath
 this invocation's run directory. Backend retains its existing SSH configuration,
 remote build handling, internal retries, and timing-closure logic.
+`backend.log` contains progress and failure messages. Full backend state, including
+tool logs and AI responses, is saved in `backend_result.json` and
+`backend_reports/full_session.log.state.json` instead of being printed into the
+terminal transcript. Stage-specific diagnostic files remain in `backend_reports/`.
 
 Backend SSH settings can be overridden with `CAPSTONE_SSH_HOST`,
 `CAPSTONE_SSH_USER`, `CAPSTONE_SSH_PORT`, and `CAPSTONE_SSH_KEY`. They otherwise

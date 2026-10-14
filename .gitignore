@@ -18,5 +18,6 @@ obj_dir/
 # LLM/generated repair scratch space
 .llm_cache/
 local/frontend/microarch/builds/
+local/frontend/rtl_output/
 debug/failures/*
 !debug/failures/.gitkeep

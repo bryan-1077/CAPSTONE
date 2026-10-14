@@ -5,7 +5,6 @@ import math
 import os
 import re
 import warnings
-from pprint import pprint
 from pathlib import Path
 from services.build_names import full_flow_names
 
@@ -386,7 +385,6 @@ def run_cli(args) -> int:
             log_path=log_dir / "full_session.log",
             parser_script_path=repo_root / "parse_full_session_log.py",
             parser_outdir=log_dir,
-            result_printer=pprint,
         )
     except (Exception, KeyboardInterrupt, SystemExit) as exc:
         if result is None:
