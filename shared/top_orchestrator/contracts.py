@@ -38,6 +38,7 @@ class RunConfig:
     skip_verification: bool = False
     no_backend: bool = False
     no_bist: bool = False
+    validation_result: Path | None = None
 
 
 @dataclass

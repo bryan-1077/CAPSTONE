@@ -1,6 +1,7 @@
 """Run the real transfer adapter and remote wrapper against local fake tools."""
 
 import json
+import hashlib
 import shlex
 import shutil
 import subprocess
@@ -15,6 +16,7 @@ from unittest.mock import patch
 from shared.top_orchestrator.contracts import RunConfig, StageResult
 from shared.top_orchestrator.mailbox import publish, verify
 from shared.top_orchestrator.orchestrator import run
+from shared.top_orchestrator.nodes import backend_node
 from shared.top_orchestrator.validation import validation_node, unpack_reports
 
 
@@ -369,12 +371,86 @@ class ValidationTests(unittest.TestCase):
                 'shared.top_orchestrator.orchestrator.NODES', {
                     'generate': lambda c, d: StageResult('generate','passed','frontend checked'),
                     'backend': lambda c, d: self.fail('Backend must not run')}):
-            result = run(RunConfig('generate', remote_config=self.remote_config), self.root / 'flow')
+            result = run(RunConfig('generate', remote_config=self.remote_config, no_backend=True), self.root / 'flow')
         self.assertEqual(result.status, 'complete')
         self.assertEqual([r.stage for r in result.results], ['generate', 'validation'])
         prompt.assert_called_once()
         for path in (self.root / 'flow').rglob('*.json'):
             self.assertNotIn('flow-test-password', path.read_text())
+
+    def test_default_flow_runs_backend_on_ready_snapshot_with_shared_password(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        (self.server / 'mode').write_text('gaps')
+        secret = 'full-flow-test-password'
+        digest = hashlib.sha256(secret.encode()).hexdigest()
+        approved = self.root / 'approved.yaml'
+        approved.write_text('memory: {speed: 3200}')
+        seen = []
+        def backend(config, directory):
+            seen.append(config)
+            metadata = verify(config.mailbox)
+            payload = dict(current_stage='done', mailbox_revision=metadata['rtl_revision'],
+                           timing_target_clock_period_ns=5.0,
+                           stage_status=dict.fromkeys(('rtl_prep', 'netlist', 'mapped_netlist', 'gdsii'), 'success'))
+            script = ("import hashlib, os, pathlib, sys\n"
+                      "assert os.environ['CAPSTONE_SSH_USER'] == 'fake'\n"
+                      "assert os.environ['CAPSTONE_SSH_HOST'] == 'fake'\n"
+                      "fd = int(sys.argv[sys.argv.index('--ssh-password-fd') + 1])\n"
+                      "with os.fdopen(fd, 'rb') as credential: password = credential.read()\n"
+                      f"assert hashlib.sha256(password).hexdigest() == {digest!r}\n"
+                      "path = pathlib.Path(sys.argv[sys.argv.index('--result-json') + 1])\n"
+                      f"path.write_text({json.dumps(payload)!r})\n")
+            with patch('shared.top_orchestrator.nodes.backend_command', return_value=[sys.executable, '-c', script]):
+                return backend_node(config, directory)
+        with patch('shared.top_orchestrator.orchestrator.prepare_generation',
+                   side_effect=lambda config, directory: replace(config, input_yaml=approved, target_mhz=200)), patch(
+                'shared.top_orchestrator.orchestrator.FRONTEND', self.frontend), patch(
+                'shared.top_orchestrator.orchestrator.REPO_ROOT', self.root), patch(
+                'shared.top_orchestrator.validation.SSHExecutor', LocalSSH), patch(
+                'shared.top_orchestrator.auth.getpass.getpass', return_value=secret) as prompt, patch.dict(
+                'shared.top_orchestrator.orchestrator.NODES', {
+                    'generate': lambda c, d: StageResult('generate', 'passed', 'frontend checked'),
+                    'backend': backend}):
+            state = run(RunConfig('generate', remote_config=self.remote_config), self.root / 'full_flow')
+        self.assertEqual(state.status, 'complete', state.results[-1].message)
+        self.assertEqual([result.stage for result in state.results], ['generate', 'validation', 'backend'])
+        self.assertFalse(seen[0].allow_unvalidated)
+        self.assertEqual(seen[0].mailbox, state.config.mailbox)
+        self.assertEqual(seen[0].target_mhz, 200)
+        self.assertEqual(state.results[-1].artifacts['validation'], 'passed')
+        prompt.assert_called_once()
+        for path in (self.root / 'full_flow').rglob('*.json'):
+            self.assertNotIn(secret, path.read_text())
+
+    def test_backend_rejects_stale_or_blocked_validation_before_launch(self):
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        output = self.root / 'accepted_validation'
+        output.mkdir()
+        with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, output)
+        self.assertEqual(result.status, 'passed', result.message)
+        receipt = Path(result.artifacts['result'])
+        original = json.loads(receipt.read_text())
+        for mode in ('stopped', 'other_mailbox', 'other_revision', 'blocked'):
+            with self.subTest(mode=mode):
+                record = json.loads(json.dumps(original))
+                if mode == 'stopped':
+                    record['status'] = 'needs_attention'
+                elif mode == 'other_mailbox':
+                    record['mailbox'] = str(self.root / 'other')
+                elif mode == 'other_revision':
+                    record['snapshot_digest'] = 'stale'
+                else:
+                    record['system_result']['verification_readiness'] = 'BLOCKED_SYSTEM_AGENT_3'
+                receipt.write_text(json.dumps(record))
+                with patch('shared.top_orchestrator.nodes.stream_command') as command:
+                    outcome = backend_node(replace(self.config, target_mhz=200, validation_result=receipt), self.root)
+                self.assertEqual(outcome.status, 'needs_attention', outcome.message)
+                command.assert_not_called()
 
     def test_failed_transfer_never_launches_pipeline(self):
         class BrokenSSH(LocalSSH):
@@ -541,7 +617,7 @@ class ValidationTests(unittest.TestCase):
                     'shared.top_orchestrator.validation.SSHExecutor') as transport:
                 self.assertEqual(main(), 0)
                 transport.assert_not_called()
-                self.assertIn('no backend', output.getvalue())
+                self.assertIn('no backend' if entry[0] == 'validation' else 'remote validation -> backend', output.getvalue())
 
     def test_archive_cannot_escape_report_directory(self):
         archive = self.root / 'malicious.zip'

@@ -80,6 +80,10 @@ class OrchestratorTests(unittest.TestCase):
         credentials = patch("shared.top_orchestrator.orchestrator.prepare_password")
         credentials.start()
         self.addCleanup(credentials.stop)
+        frequency = patch("shared.top_orchestrator.orchestrator.select_frequency",
+                          side_effect=lambda config, directory: replace(config, target_mhz=200))
+        frequency.start()
+        self.addCleanup(frequency.stop)
         # Stage tests start after selection; its real boundary is tested separately.
         preparation = patch("shared.top_orchestrator.orchestrator.prepare_generation",
             side_effect=lambda config, directory: replace(config,
@@ -327,6 +331,16 @@ class OrchestratorTests(unittest.TestCase):
                 self.assertEqual([r.stage for r in state.results], ["validation"])
                 with self.assertRaises(FileExistsError):
                     run(RunConfig("validation"), root)
+
+    def test_default_plan_includes_backend_and_honors_no_backend(self):
+        from shared.top_orchestrator.__main__ import main
+        for flags, route in ((["--backend-python", "/backend/python"], "remote validation -> backend"),
+                             (["--no-backend"], "remote validation -> stop (no backend)")):
+            with self.subTest(flags=flags), patch("sys.argv", ["orchestrator", "--plan", *flags]), patch(
+                    "sys.stdout", io.StringIO()) as output, patch("getpass.getpass") as password:
+                self.assertEqual(main(), 0)
+                self.assertIn(route, output.getvalue())
+                password.assert_not_called()
 
 
 if __name__ == "__main__":

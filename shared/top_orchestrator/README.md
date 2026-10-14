@@ -23,8 +23,9 @@ To check existing RTL instead, omit `--input` and add `--no-rtlgen`.
 Add `--no-bist` to run only RTL lint. Frontend-only runs need no remote
 configuration or backend-frequency selection. Automatic repair preserves the
 selected stage controls and rechecks existing RTL after a successful repair.
-These controls apply to `generate` entry; existing default routing still stops
-after remote validation, and `--no-verif` alone retains the existing direct backend route.
+These controls apply to `generate` entry. Default routing continues from remote
+validation into backend when verification reports `READY_FOR_BACKEND`;
+`--no-backend` stops after verification and `--no-verif` goes directly to backend.
 
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
@@ -34,7 +35,7 @@ python -m shared.top_orchestrator
 # Inspect the generation command and route without writing files or calling models.
 python -m shared.top_orchestrator generate --input local/frontend/configs/user_input.yaml --cache --plan
 
-# Execute generation and remote verification (configure SSH first; add --ask-password if needed).
+# Execute generation, remote verification, and physical design (configure SSH first).
 python -m shared.top_orchestrator generate --input local/frontend/configs/user_input.yaml --cache
 
 # Bypass the frequency prompt with an explicit backend target.
@@ -90,11 +91,13 @@ success. BIST and system-lint failures automatically invoke `debug_agent.py auto
 with their evidence and rerun command. Other generation errors stop. The debug
 agent retains responsibility for classifying evidence and deciding whether to patch.
 
-By default, generation continues through remote system validation and stops there. Validation succeeds
-when verification reports `Readiness: READY_FOR_BACKEND` for the controller RTL snapshot. Backend
-is not invoked after verification. Its gate for consuming validated evidence remains
-deferred; direct backend entry without
-`--allow-unvalidated` stops with `needs_attention`.
+By default, generation continues through remote system validation into backend.
+Validation succeeds when verification reports `Readiness: READY_FOR_BACKEND` for
+the controller RTL snapshot. Backend checks that accepted validation evidence
+belongs to the same immutable mailbox revision, then runs at the selected frequency
+using the same SSH connection settings and password. `--no-backend` stops after
+verification. Direct `validation` entry runs verification only; direct backend
+testing still requires `--allow-unvalidated`.
 
 Each execution creates `runs/<id>/state.json` plus frontend subprocess logs. Later stages and retries get numbered
 subdirectories so earlier evidence is preserved.
@@ -135,8 +138,8 @@ intake normalization remains future work.
 
 **Validation node:** consume the design bundle and validation configuration;
 run the required structural and behavioral checks; return a structured report
-with per-check pass/fail/not-tested status and evidence. A pass must mean all
-required checks passed for that revision. Normalize repairable failures into the
+with per-check pass/fail/not-tested status and evidence. System acceptance follows
+verification's `READY_FOR_BACKEND` decision for that revision. Normalize repairable failures into the
 debug agent's intake contract (`lint`, `bist`, or `verif`). Static checks alone
 must not count as behavioral verification.
 
@@ -156,7 +159,7 @@ internal attempt budget separate from a bounded top-level repair-cycle budget.
 Persist revision fingerprints before adding resume or caching. Tool/environment
 errors should have bounded retries; ambiguous requirements should stop for input.
 
-Remaining integration: backend validation gate, failure normalization, live server
+Remaining integration: failure normalization, live server
 verification, then resume.
 
 ## Target frequency selection
@@ -202,8 +205,8 @@ are unchanged. Actual reports from previous runs can be connected later.
 
 The backend adapter uses `backend_command(config, mailbox_revision)` to pass the
 saved value as `app.py --mailbox <revision> --target-mhz <value>`. It rejects absent
-targets. Direct backend testing requires an explicit target; automatic backend
-execution after validation is deferred.
+targets. Direct backend testing requires an explicit target; normal generation
+passes the selected target into backend after accepted verification.
 
 ## Checks
 
@@ -270,8 +273,9 @@ Snapshots do not claim verification coverage. They are never updated by the
 orchestrator; input hash verification detects later edits before backend launch.
 The frontend remains a shared workspace, so run one workflow at a time.
 
-Default generation stops at validation; `--skip-verification` instead runs backend
-on its newly published snapshot. To test only backend execution on a
+Default generation runs verification and backend on the newly published snapshot.
+`--skip-verification` runs backend without remote verification, while `--no-backend`
+stops after verification. To test only backend execution on a
 published snapshot without functional validation:
 
 ```bash

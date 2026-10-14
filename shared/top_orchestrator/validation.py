@@ -104,6 +104,33 @@ def check_readiness(report: dict) -> None:
         raise ValueError(f"System verification Readiness is {readiness or 'missing'}; READY_FOR_BACKEND is required")
 
 
+def verify_backend_handoff(result_path: Path, mailbox: Path) -> dict:
+    """Bind the accepted verification decision to the snapshot sent to backend."""
+    verify(mailbox)
+    record = json.loads(result_path.read_text())
+    if record.get("status") != "passed" or record.get("phase") != "complete":
+        raise ValueError("Validation did not accept this snapshot for backend")
+    if Path(record.get("mailbox", "")).resolve() != mailbox.resolve():
+        raise ValueError("Validation belongs to a different mailbox")
+    digest = hashlib.sha256((mailbox / "snapshot.json").read_bytes()).hexdigest()
+    payload = record.get("remote_result", {})
+    if record.get("snapshot_digest") != digest or payload.get("snapshot_digest") != digest:
+        raise ValueError("Validation belongs to a different snapshot revision")
+    if payload.get("input_unchanged") is not True or payload.get("pipeline_returncode") != 0:
+        raise ValueError("Validation execution or input identity was not verified")
+    mode = record.get("validation_mode")
+    if mode not in ("system", "modules"):
+        raise ValueError("Validation mode is missing or unsupported")
+    top = json.loads((mailbox / "rtl/manifest.json").read_text())["top_module"]
+    assess(payload.get("summary"), expected_designs(mailbox), record["remote_directory"] + "/input", mode, top)
+    if mode == "system":
+        final = record.get("system_result", {})
+        if final.get("mode") != "system" or final.get("top_module") != top:
+            raise ValueError("Final system report identifies a different controller")
+        check_readiness(final)
+    return record
+
+
 def unpack_reports(archive: Path, destination: Path, report_relative: str = "verification_reports") -> None:
     destination.mkdir()
     with zipfile.ZipFile(archive) as bundle:

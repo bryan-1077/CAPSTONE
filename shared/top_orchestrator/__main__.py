@@ -49,20 +49,21 @@ def main() -> int:
         parser.error("--no-backend and --no-bist apply only to generate")
     if args.skip_verification and not args.no_backend and args.checks_only and args.target_mhz is None:
         parser.error("--checks-only with --skip-verification requires --target-mhz")
-    backend_route = args.entry == "backend" or (args.skip_verification and not args.no_backend)
+    direct_backend_route = args.entry == "backend" or (args.skip_verification and not args.no_backend)
+    backend_route = args.entry == "backend" or (args.entry in ("generate", "debug") and not args.no_backend)
     needs_remote = (args.entry in ("generate", "validation", "remote-check") and not args.skip_verification) or (args.entry == "debug" and args.repair)
-    if not backend_route and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
+    if not direct_backend_route and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
         from .remote import RemoteConfig, probe_command
         try:
             remote = RemoteConfig.load(args.remote_config)
         except (OSError, ValueError, TypeError) as exc:
             parser.error(str(exc))
-    if (backend_route or args.skip_verification) and args.remote_config is not None:
+    if (direct_backend_route or args.skip_verification) and args.remote_config is not None:
         parser.error("Backend entry uses CAPSTONE_SSH_* environment settings rather than --remote-config")
     if args.allow_unvalidated and args.entry != "backend":
         parser.error("--allow-unvalidated applies only to backend entry; use --skip-verification for generation")
     if args.backend_python and not backend_route:
-        parser.error("--backend-python requires backend entry or --skip-verification")
+        parser.error("--backend-python requires a flow that includes backend")
     if args.mailbox and args.entry not in ("validation", "backend"):
         parser.error("--mailbox applies to validation or backend entry")
     if args.entry == "validation" and args.mailbox is None:
@@ -131,19 +132,24 @@ def main() -> int:
         routes = {"generate": ("frontend -> publish snapshot -> stop (verification and backend skipped)"
                                if args.skip_verification and args.no_backend else
                                "generate -> lint/BIST -> publish new snapshot -> backend (remote verification skipped)"
-                               if args.skip_verification else "generate -> publish snapshot -> remote validation -> stop (no backend)"),
-                  "debug": "debug -> system lint + BIST -> publish snapshot -> remote validation -> stop",
+                               if args.skip_verification else
+                               "generate -> publish snapshot -> remote validation -> stop (no backend)"
+                               if args.no_backend else
+                               "generate -> lint/BIST -> publish snapshot -> remote validation -> backend"),
+                  "debug": "debug -> system lint + BIST -> publish snapshot -> remote validation -> backend",
                   "validation": "upload selected snapshot -> SSH/srun validation -> retrieve reports -> stop (no backend)",
                   "backend": ("backend on explicit UNVALIDATED snapshot -> inspect result" if args.allow_unvalidated
-                              else "backend blocked: validation gate is not connected")}
+                              else "backend requires accepted validation evidence")}
         print(routes[args.entry])
         print("Frontend failures with supported evidence -> debug -> recheck -> publish -> "
               + ("stop" if args.skip_verification and args.no_backend else
-                 "backend" if args.skip_verification else "validation"))
+                 "backend" if args.skip_verification else
+                 "validation" if args.no_backend else "validation -> backend"))
         if args.skip_verification and not args.no_backend:
             print("Backend completion records validation: not_run.")
         elif not args.skip_verification:
-            print("Remote validation failures stop with reports; automatic backend execution after validation is deferred.")
+            print("Remote validation failures stop with reports; backend runs after verification reports READY_FOR_BACKEND."
+                  if backend_route else "Remote validation failures stop with reports; no backend.")
         return 0
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
     run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()

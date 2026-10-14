@@ -78,7 +78,7 @@ def ask_advisor(spec_text: str, conversation: list[dict]) -> str:
 def select_frequency(config: RunConfig, run_dir: Path) -> RunConfig:
     import yaml
 
-    spec_text = config.input_yaml.read_text(encoding="utf-8")
+    spec_text = config.input_yaml.read_text(encoding="utf-8") if config.input_yaml is not None else "{}"
     spec = yaml.safe_load(spec_text)
     if not isinstance(spec, dict):
         raise ValueError("Approved specs must be a YAML mapping.")

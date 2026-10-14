@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .contracts import RunConfig, RunState, Stage, StageResult
 from .nodes import FRONTEND, NODES, REPO_ROOT
-from .frequency import prepare_generation
+from .frequency import prepare_generation, select_frequency
 from .mailbox import publish
 from .display import print_node_header
 from .auth import password_session, prepare_password
@@ -18,6 +18,8 @@ def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | 
     if result.status != "passed":
         return None
     if result.stage == "generate" and config is not None and config.skip_verification:
+        return None if config.no_backend else "backend"
+    if result.stage == "validation" and config is not None and config.entry in ("generate", "debug"):
         return None if config.no_backend else "backend"
     return {"generate": "validation", "debug": "generate",
             "validation": None, "backend": None, "remote-check": None}[result.stage]
@@ -55,6 +57,10 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
         state.config = config
         save_state(state, run_dir)
     try:
+        if config.entry in ("generate", "debug") and not config.no_backend and config.target_mhz is None:
+            config = select_frequency(config, run_dir)
+            state.config = config
+            save_state(state, run_dir)
         prepare_password(config)
     except (Exception, KeyboardInterrupt) as exc:
         state.status = "needs_attention"
@@ -83,7 +89,8 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
                 mailbox = publish(FRONTEND, revision, config.input_yaml)
                 result.artifacts["mailbox"] = str(mailbox)
                 active_config = replace(active_config, mailbox=mailbox,
-                    allow_unvalidated=active_config.allow_unvalidated or config.skip_verification)
+                    allow_unvalidated=active_config.allow_unvalidated or config.skip_verification,
+                    validation_result=None)
                 if config.skip_verification:
                     result.message = ("Frontend completed; verification and backend skipped."
                                       if config.no_backend else
@@ -96,6 +103,10 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
                 result.status = "failed"
                 result.message = f"Mailbox publication failed: {type(exc).__name__}: {exc}"
                 result.failure = None
+        if stage == "validation" and result.status == "passed":
+            receipt = result.artifacts.get("result")
+            active_config = replace(active_config, validation_result=Path(receipt) if receipt else None)
+            state.config = active_config
         state.results.append(result)
         state.current_stage = next_stage(result, active_config)
         if state.current_stage == "debug":

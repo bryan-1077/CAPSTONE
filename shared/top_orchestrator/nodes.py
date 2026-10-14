@@ -11,8 +11,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contracts import FailureReport, RunConfig, Stage, StageResult
-from .remote import remote_check_node
-from .validation import validation_node
+from .remote import RemoteConfig, remote_check_node
+from .validation import validation_node, verify_backend_handoff
 from .display import print_node_header
 from .auth import cached_password
 
@@ -58,7 +58,7 @@ def spec_command(output: Path) -> list[str]:
 
 
 def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
-    """Command for the future validated backend handoff; never resolve defaults late."""
+    """Pass the selected snapshot and frequency into backend."""
     from .frequency import positive_mhz
     if config.target_mhz is None:
         raise ValueError("Choose a target frequency before starting backend.")
@@ -71,10 +71,11 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
 
 
 def stream_command(command: list[str], log: Path, *, cwd: Path | None = None,
-                   pass_fds: tuple[int, ...] = ()) -> int:
+                   pass_fds: tuple[int, ...] = (), env_overrides: dict[str, str] | None = None) -> int:
     """Inherit terminal input and tee output, including prompts without newlines."""
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
+    env.update(env_overrides or {})
     with log.open("w", encoding="utf-8") as handle:
         with subprocess.Popen(command, cwd=cwd or FRONTEND, env=env,
                               pass_fds=pass_fds,
@@ -165,16 +166,22 @@ def attach_lint_report(result: StageResult, run_dir: Path, command: list[str], p
 
 
 def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
-    """Run the existing backend; validation integration remains deferred."""
+    """Run backend on the verified snapshot or an explicitly unvalidated test."""
     from .mailbox import verify
 
-    if not config.allow_unvalidated:
+    if config.validation_result is None and not config.allow_unvalidated:
         return StageResult("backend", "needs_attention",
-            "Validation gate is not connected. Explicit backend testing requires --allow-unvalidated.")
+            "Backend requires accepted validation evidence. Explicit backend testing requires --allow-unvalidated.")
     if config.mailbox is None:
         return StageResult("backend", "needs_attention", "Backend requires an explicit mailbox snapshot.")
     mailbox = config.mailbox.resolve()
     metadata = verify(mailbox)
+    validation_record = None
+    if config.validation_result is not None:
+        try:
+            validation_record = verify_backend_handoff(config.validation_result, mailbox)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            return StageResult("backend", "needs_attention", f"Backend validation handoff stopped: {exc}")
     result_path = run_dir / "backend_result.json"
     if result_path.exists():
         raise FileExistsError(result_path)
@@ -182,12 +189,22 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     reports = run_dir / "backend_reports"
     command = backend_command(config, mailbox) + ["--result-json", str(result_path), "--log-dir", str(reports)]
     artifacts = {"log": str(log), "reports": str(reports), "mailbox": str(mailbox),
-                 "validation": "not_run"}
+                 "validation": "passed" if validation_record is not None else "not_run"}
+    if validation_record is not None:
+        artifacts["validation_result"] = str(config.validation_result)
     try:
-        password = cached_password(os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu",
-                                   os.getenv("CAPSTONE_SSH_USER") or "antgamez1203")
+        env_overrides = None
+        if validation_record is not None:
+            remote = RemoteConfig.load(config.remote_config)
+            host, username = remote.host, remote.username
+            env_overrides = {"CAPSTONE_SSH_HOST": host, "CAPSTONE_SSH_USER": username,
+                             "CAPSTONE_SSH_PORT": str(remote.port), "CAPSTONE_SSH_KEY": remote.key_filename or ""}
+        else:
+            host = os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu"
+            username = os.getenv("CAPSTONE_SSH_USER") or "antgamez1203"
+        password = cached_password(host, username)
         if password is None:
-            code = stream_command(command, log, cwd=REPO_ROOT / "local/backend")
+            code = stream_command(command, log, cwd=REPO_ROOT / "local/backend", env_overrides=env_overrides)
         else:
             # An anonymous inherited descriptor keeps the secret out of argv,
             # environment variables, and persistent run artifacts.
@@ -196,7 +213,7 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
                 credential.seek(0)
                 code = stream_command(command + ["--ssh-password-fd", str(credential.fileno())],
                                       log, cwd=REPO_ROOT / "local/backend",
-                                      pass_fds=(credential.fileno(),))
+                                      pass_fds=(credential.fileno(),), env_overrides=env_overrides)
     except OSError as exc:
         artifacts["failure_category"] = "tool_environment"
         return StageResult("backend", "failed", f"Could not start backend: {exc}", artifacts)
@@ -217,7 +234,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
               and payload.get("timing_closure_status") in (None, "passed")
               and (not payload.get("timing_closure_enabled") or payload.get("timing_closure_status") == "passed")
               and (not payload.get("physical_verification_enabled") or payload.get("physical_verification_status") == "passed"))
-    message = "Backend completed on an unvalidated snapshot." if passed else str(
+    message = ("Backend completed on the verified snapshot." if validation_record is not None else
+               "Backend completed on an unvalidated snapshot.") if passed else str(
         payload.get("last_error") or "Backend incomplete, failed, or returned mismatched input/target evidence.")
     if not passed:
         artifacts["failure_category"] = str(payload.get("rtl_failure_category") or "unknown")
