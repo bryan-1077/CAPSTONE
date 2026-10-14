@@ -381,7 +381,7 @@ class PlanTests(unittest.TestCase):
             script = '\n'.join(build_timing_eco_tcl({'checkpoint': str(checkpoint), 'actions': [action]}, 'top'))
             stub = '''
 proc eda_die_area_mm2 {} {return 3.5}
-proc deleteFiller {args} {}
+proc deleteFiller {args} {puts FILLERS_DELETED}
 proc dbGetInstByName {name} {return 0x1}
 set sink_net original
 proc dbGet {args} {
@@ -406,6 +406,39 @@ proc ecoRoute {} {puts ROUTED}
                                   capture_output=True, text=True)
             self.assertEqual(noop.returncode, 6)
             self.assertIn('Buffer insertion did not reconnect the sink', noop.stdout)
+
+            # Innovus dbGet can return list-quoted scalar names. The old direct
+            # string comparison failed for bracketed register names in this form.
+            for pin in ('reg[0]/D', 'u_request_queue_entries_reg[1][wdata][30]/D'):
+                with self.subTest(pin=pin):
+                    quoted_stub = stub.replace('reg[0]/D', pin).replace(
+                        'return {' + pin + '}', 'return [list {' + pin + '}]')
+                    quoted_script = '\n'.join(build_timing_eco_tcl({
+                        'checkpoint': str(checkpoint), 'actions': [{**action, 'pin': pin}]}, 'top'))
+                    result = subprocess.run(['tclsh'], input=quoted_stub + quoted_script,
+                                            capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn('INSERTED\nLEGALIZED\nROUTED', result.stdout)
+
+            # A bad second target must be caught before the first ECO or filler
+            # deletion, rather than leaving a partially modified checkpoint.
+            invalid_script = '\n'.join(build_timing_eco_tcl({
+                'checkpoint': str(checkpoint),
+                'actions': [action, {**action, 'pin': 'reg[1]/D'}]}, 'top'))
+            result = subprocess.run(['tclsh'], input=stub + invalid_script,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 6)
+            self.assertIn('Buffer sink pin missing', result.stdout)
+            self.assertNotIn('INSERTED', result.stdout)
+            self.assertNotIn('FILLERS_DELETED', result.stdout)
+
+            ambiguous_stub = stub.replace('return 0x2}', 'return {0x2 0x2}}')
+            result = subprocess.run(['tclsh'], input=ambiguous_stub + script,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 6)
+            self.assertIn('reg[0]/D; matched 2 terminals', result.stdout)
+            self.assertNotIn('INSERTED', result.stdout)
+            self.assertNotIn('FILLERS_DELETED', result.stdout)
 
     def test_missing_key_is_explicit_failure(self):
         with patch.dict("os.environ", {}, clear=True), self.assertRaisesRegex(RuntimeError, "OPENAI_API_KEY"):
