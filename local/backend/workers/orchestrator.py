@@ -131,6 +131,14 @@ def _run_stage_with_retries(
         updates = runner(state)
         state = _merge_state(state, updates)
 
+        if (stage_name == "netlist"
+                and state.get("failure_class") == "netlist_environment_error"
+                and state["stage_status"].get(stage_name) == "failed"):
+            return _merge_state(state, {
+                "current_stage": "failed",
+                "retry_counts": {**state.get("retry_counts", {}), stage_name: attempt},
+            })
+
         if state.get("route_back_to_stage") and state.get("route_back_to_stage") != stage_name:
             state = _merge_state(
                 state,
@@ -526,6 +534,13 @@ def _netlist_run_environment_error(result: dict) -> str | None:
         line = raw_line.strip()
         if line.startswith(marker_prefix):
             return line[len(marker_prefix) :].strip() or "unknown_environment_error"
+
+    # Older server launchers report this prerequisite failure without an ENV marker.
+    if not result.get("ok"):
+        for raw_line in (stdout + "\n" + stderr).splitlines():
+            line = raw_line.strip()
+            if line.startswith("Could not find volare sky130 root:"):
+                return line
 
     return None
 
@@ -1331,6 +1346,7 @@ def _run_netlist_generation(
         **result,
         "run_completed": run_completed,
         "completion_code": completion_code,
+        "environment_error": environment_error,
         "builddir": builddir,
         "builddir_source": builddir_source,
         "outdir": candidate_path,
@@ -1796,6 +1812,17 @@ def _make_netlist_runner(ssh: SSHExecutor) -> Callable[[FlowState], dict]:
                 log_label=str(attempt),
             )
             working_state = _merge_state(working_state, generate_updates)
+
+            if generation_result.get("environment_error"):
+                return _merge_state(working_state, {
+                    "failure_stage_owner": "netlist",
+                    "failure_class": "netlist_environment_error",
+                    "route_back_to_stage": None,
+                    "stage_status": {**working_state["stage_status"], "netlist": "failed"},
+                    "history": working_state["history"] + [
+                        "netlist stopped on environment failure; review and edits skipped"
+                    ],
+                })
 
             if not generation_result.get("run_completed"):
                 return _merge_state(

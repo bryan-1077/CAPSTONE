@@ -128,6 +128,22 @@ writes into its existing shared output directories; run one workflow at a time.
 An interrupted process may leave state marked `running`. Frontend prompts and output appear live in the terminal and are also saved to
 the stage log. Terminal input is passed directly to the frontend.
 
+## Backend PDK prerequisite
+
+The server backend launchers must resolve an installed SKY130 PDK readable by
+the configured SSH account on the Slurm compute node. A PDK installed under a
+teammate's home directory is not automatically available under your account.
+For group use, place the agreed PDK version in a shared directory and configure
+the server's Genus and Innovus launchers to use it consistently, or install the
+same version for each account. Check the server launchers' supported arguments
+and environment settings before configuring a path; the canonical Genus scripts
+are maintained on the server and are not included in this checkout.
+
+`Could not find volare sky130 root: ...` indicates that the netlist launcher
+failed before Genus started. The backend preserves the launcher logs and stops
+with `failure_class: netlist_environment_error`, skipping synthesis review,
+edits, and retries. Correct the PDK installation/path before starting a new run.
+
 ## Planned integration contracts
 
 Run configuration now carries an explicit mailbox path. Snapshots contain the

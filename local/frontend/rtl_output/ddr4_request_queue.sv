@@ -3,15 +3,15 @@
 module ddr4_request_queue #(
     parameter int DEPTH = 4
 ) (
-    input  logic                                            clk,
-    input  logic                                            rst_n,
-    input  logic                                            enq_valid,
-    input  logic [50:0]                                     enq_req,
-    input  logic                                            deq_en,
-    input  logic [(((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1):0] sel_idx,
-    output logic                                            enq_ready,
-    output logic [(DEPTH*51)-1:0]                           req_array,
-    output logic [DEPTH-1:0]                                req_valid
+    input  logic                                                clk,
+    input  logic                                                rst_n,
+    input  logic                                                enq_valid,
+    input  logic [50:0]                                         enq_req,
+    output logic                                                enq_ready,
+    input  logic                                                deq_en,
+    input  logic [(((DEPTH <= 1) ? 1 : $clog2(DEPTH)) - 1):0]   sel_idx,
+    output logic [DEPTH*51-1:0]                                 req_array,
+    output logic [DEPTH-1:0]                                    req_valid
 );
 
     localparam int REQUEST_WIDTH = 51;
@@ -25,62 +25,65 @@ module ddr4_request_queue #(
         logic [31:0] wdata;
     } request_t;
 
-    request_t             entries [DEPTH];
-    request_t             enq_req_s;
-    logic                 any_free;
-    logic [SEL_WIDTH-1:0] first_free_idx;
-    logic [SEL_WIDTH-1:0] insert_idx;
-    logic                 reuse_slot;
+    request_t                entries [DEPTH-1:0];
+    request_t                enq_req_unpacked;
 
-    // Unpack packed vector port into request_t before policy logic
+    logic                    any_free;
+    logic [SEL_WIDTH-1:0]    first_free_idx;
+    logic [SEL_WIDTH-1:0]    insert_idx;
+    logic                    reuse_slot;
+    logic                    do_enq;
+
+    // Unpack packed vector port into request_t (widths match: 51 bits)
     always_comb begin
-        enq_req_s = request_t'(enq_req);
+        enq_req_unpacked = enq_req;
     end
 
-    // Lowest-index free slot search (descending scan leaves lowest index)
+    // Lowest-index free slot detection
     always_comb begin
         any_free       = 1'b0;
         first_free_idx = '0;
-        for (int j = DEPTH - 1; j >= 0; j--) begin
-            if (req_valid[j] == 1'b0) begin
+        for (int i = DEPTH-1; i >= 0; i--) begin
+            if (!req_valid[i]) begin
                 any_free       = 1'b1;
-                first_free_idx = SEL_WIDTH'(j);
+                first_free_idx = SEL_WIDTH'(i);
             end
         end
     end
 
-    // Insert index, reuse detection, readiness
+    // Insert index, readiness, same-cycle reuse detection
+    // sel_idx is SEL_WIDTH wide by construction of its port declaration.
     always_comb begin
         insert_idx = any_free ? first_free_idx : SEL_WIDTH'(sel_idx);
-        reuse_slot = deq_en && enq_valid && (insert_idx == SEL_WIDTH'(sel_idx));
         enq_ready  = any_free || deq_en;
+        do_enq     = enq_valid && enq_ready;
+        reuse_slot = deq_en && enq_valid && (insert_idx == SEL_WIDTH'(sel_idx));
     end
 
-    // Pack stored entries onto output vector
-    always_comb begin
-        req_array = '0;
-        for (int i = 0; i < DEPTH; i++) begin
-            req_array[i*REQUEST_WIDTH +: REQUEST_WIDTH] = entries[i];
-        end
-    end
-
-    // Sequential state: entries and req_valid
+    // Storage with explicit next-state ordering: enqueue wins on same index,
+    // and reuse_slot suppresses the dequeue clear entirely.
     always_ff @(posedge clk) begin
         if (!rst_n) begin
             req_valid <= '0;
-            for (int k = 0; k < DEPTH; k++) begin
-                entries[k] <= '0;
+            for (int j = 0; j < DEPTH; j++) begin
+                entries[j] <= '0;
             end
         end else begin
-            // Dequeue clear, explicitly suppressed on same-index enqueue reuse
             if (deq_en && !reuse_slot) begin
-                req_valid[SEL_WIDTH'(sel_idx)] <= 1'b0;
+                req_valid[sel_idx] <= 1'b0;
             end
-            // Enqueue write: wins the slot and keeps/sets validity
-            if (enq_valid && enq_ready) begin
-                entries[insert_idx]   <= enq_req_s;
+            if (do_enq) begin
+                entries[insert_idx]   <= enq_req_unpacked;
                 req_valid[insert_idx] <= 1'b1;
             end
+        end
+    end
+
+    // Pack stored entries back into packed vector output
+    always_comb begin
+        req_array = '0;
+        for (int k = 0; k < DEPTH; k++) begin
+            req_array[k*REQUEST_WIDTH +: REQUEST_WIDTH] = entries[k];
         end
     end
 
