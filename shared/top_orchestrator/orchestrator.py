@@ -116,7 +116,7 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
                 result.message += " Repair cycle budget exhausted."
             else:
                 state.repair_cycles += 1
-                active_config = replace(config, failure=result.failure, repair=True)
+                active_config = replace(active_config, failure=result.failure, repair=True)
         elif stage == "debug" and result.status == "passed":
             # Never regenerate after repair: doing so would overwrite the patch.
             active_config = replace(config, recheck_only=True)

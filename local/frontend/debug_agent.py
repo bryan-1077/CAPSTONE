@@ -205,8 +205,8 @@ def parse_args() -> argparse.Namespace:
             parser.add_argument("--keep-failed-patch", action="store_true")
             parser.add_argument("--demo-mode", action="store_true")
             parser.add_argument("--require-langgraph", action="store_true")
-            parser.add_argument("--investigation-steps", type=int, default=8)
-            parser.add_argument("--investigation-context-chars", type=int, default=64000)
+            parser.add_argument("--investigation-steps", type=int, default=investigation.DEFAULT_MAX_ACTIONS)
+            parser.add_argument("--investigation-context-chars", type=int, default=investigation.DEFAULT_MAX_CHARS)
             return parser.parse_args()
         if mode == "graph":
             parser = argparse.ArgumentParser(
@@ -299,10 +299,10 @@ def parse_args() -> argparse.Namespace:
                 action="store_true",
                 help="Fail instead of using the local fallback when LangGraph is not installed.",
             )
-            parser.add_argument("--investigation-steps", type=int, default=8,
-                                help="Maximum read/search actions per investigation (default: 8).")
-            parser.add_argument("--investigation-context-chars", type=int, default=64000,
-                                help="Maximum collected evidence characters (default: 64000).")
+            parser.add_argument("--investigation-steps", type=int, default=investigation.DEFAULT_MAX_ACTIONS,
+                                help="Maximum inspection/experiment actions per investigation (default: 12).")
+            parser.add_argument("--investigation-context-chars", type=int, default=investigation.DEFAULT_MAX_CHARS,
+                                help="Maximum collected evidence characters (default: 128000).")
             parser.add_argument("--investigate", action="store_true",
                                 help="Investigate and assess evidence without proposing or applying a patch.")
             return parser.parse_args()
@@ -700,7 +700,7 @@ def capture_intake(args: argparse.Namespace, failure_dir: Path) -> IntakeResult:
             raise ValueError("Verification run directories require source 'verif'.")
         from verif_debug_intake import capture_verif_run
         started_at = utc_now()
-        raw_log = capture_verif_run(Path(args.log), intake_path)
+        raw_log = capture_verif_run(Path(args.log), intake_path, RTL_OUTPUT_DIR)
         write_text(intake_path / "command.txt", f"# ingested verification run\n{args.log}\n")
         write_text(intake_path / "raw.log", raw_log)
         return IntakeResult(source=args.source, mode="verif_run", command=None,
@@ -1449,9 +1449,8 @@ def localize_rtl(raw_log: str, parsed: ParsedFailure) -> RTLLocalization:
         raw_paths: list[object] = []
         if error.get("file"):
             raw_paths.append(error.get("file"))
-        rtl_files_from_error = error.get("rtl_files")
-        if isinstance(rtl_files_from_error, list):
-            raw_paths.extend(rtl_files_from_error)
+        # rtl_files is the compilation inventory, not a fault location. Only an
+        # explicit diagnostic file is strong localization evidence.
 
         for raw_path in raw_paths:
             path = resolve_rtl_path(raw_path, rtl_files)
@@ -4213,8 +4212,8 @@ def investigation_record(state: DebugGraphState) -> dict:
     record = investigation.new_investigation(
         SCRIPT_DIR, failure_dir, state.get("suspects", []),
         parsed_failure_terms(parsed),
-        int(budgets.get("investigation_steps_max", 8)),
-        int(budgets.get("investigation_context_chars_max", 64000)),
+        int(budgets.get("investigation_steps_max", investigation.DEFAULT_MAX_ACTIONS)),
+        int(budgets.get("investigation_context_chars_max", investigation.DEFAULT_MAX_CHARS)),
         parsed=parsed,
     )
     investigation.configure_evidence_policy(record, parsed)
@@ -4230,7 +4229,8 @@ def save_investigation(state: DebugGraphState, record: dict, node: str) -> Debug
                    investigation_context_chars_used=record["chars_used"],
                    investigation_assessments_used=record["assessments"],
                    investigation_assessments_max=record["max_actions"] + 1,
-                   investigation_reruns_max=0, investigation_reruns_used=0)
+                   investigation_reruns_max=record.get("reruns_max", 0),
+                   investigation_reruns_used=record.get("reruns_used", 0))
     update = {
         "investigation": {"artifact": display_path(path), "decision": record["decision"]},
         "hypotheses": record["hypotheses"], "budgets": budgets,
@@ -4248,6 +4248,9 @@ def save_investigation(state: DebugGraphState, record: dict, node: str) -> Debug
               f"({len(record['actions'])}/{record['max_actions']} inspections; "
               f"{record['chars_used']}/{record['max_chars']} evidence characters)")
     if node == "investigate" and record["actions"]:
+        for action in record["actions"][record.get("last_batch_start", len(record["actions"]) - 1):]:
+            log_debug(failure_dir, f"Batch inspection: {action['request'].get('tool')} "
+                      f"{action['request'].get('path', '')}; {action['status']}; evidence {action['evidence_ids']}")
         action = record["actions"][-1]
         log_debug(failure_dir, f"Inspection request: {json.dumps(action['request'], sort_keys=True)}")
         added = [item for item in record["evidence"] if item["id"] in action["evidence_ids"]]
@@ -4292,7 +4295,7 @@ def graph_investigate_node(state: DebugGraphState) -> DebugGraphState:
         if investigation.can_inspect(record) and record["pending"]:
             log_debug(graph_failure_dir(state),
                       f"INVESTIGATION {len(record['actions']) + 1}/{record['max_actions']}", section=True)
-        investigation.inspect(record, SCRIPT_DIR)
+        investigation.inspect_batch(record, SCRIPT_DIR)
     return save_investigation(state, record, "investigate")
 
 
@@ -4311,6 +4314,10 @@ def graph_assess_evidence_node(state: DebugGraphState) -> DebugGraphState:
         summary = compact_parsed_failure(read_json(analysis_dir(failure_dir) / "parsed_failure.json"))
         while record["assessments"] < record["max_actions"] + 1:
             prompt = investigation.assessment_prompt(record, summary)
+            record['last_prompt_chars'] = len(prompt)
+            log_debug(failure_dir, f"Assessment working context: {record.get('prompt_source_chars',0)} "
+                      f"source characters; {len(prompt)} total prompt characters; "
+                      f"{len(record.get('presented_evidence_ids',[]))}/{len(record.get('evidence',[]))} excerpts presented")
             record["assessments"] += 1
             prefix = analysis_dir(failure_dir) / f"assessment_{record['assessments']:03d}"
             prefix.with_suffix(".prompt.md").write_text(prompt, encoding="utf-8")
@@ -4343,7 +4350,7 @@ def graph_assess_evidence_node(state: DebugGraphState) -> DebugGraphState:
     elif state.get("offline"):
         record["unresolved_questions"] = ["Offline inspection cannot establish a causal explanation; online evidence assessment is required."]
     if record["decision"] != "sufficient_evidence" and not record.get("stop_reason"):
-        if record["decision"] == "evidence_unavailable" or not record["pending"]:
+        if record["decision"] == "evidence_unavailable" or not (record["pending"] or record.get("discovery_pending")):
             record["stop_reason"] = "evidence_unavailable"
         elif not investigation.can_inspect(record):
             record["stop_reason"] = ("investigation_context_exhausted" if investigation.context_exhausted(record)
@@ -4507,6 +4514,7 @@ def graph_reassess_repair_node(state: DebugGraphState) -> DebugGraphState:
     failure_dir = graph_failure_dir(state)
     record = investigation_record(state)
     record["repair_feedback"] = collect_previous_attempts_context(failure_dir)
+    record['focus_review_required'] = True
     record["decision"] = "insufficient_evidence"
     record.pop("stop_reason", None)
     if len(numbered_attempt_dirs(failure_dir)) >= int(state.get("max_attempts", MAX_REPAIR_ATTEMPTS)):

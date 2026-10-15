@@ -3,6 +3,7 @@
 import json
 import hashlib
 import io
+import shutil
 import sys
 import tempfile
 import unittest
@@ -11,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from shared.top_orchestrator.contracts import RunConfig, StageResult, FailureReport
-from shared.top_orchestrator.mailbox import publish, verify
+from shared.top_orchestrator.mailbox import publish, verify, verify_frontend_revision
 from shared.top_orchestrator.nodes import backend_command, backend_node
 from shared.top_orchestrator.orchestrator import run
 
@@ -50,6 +51,32 @@ class MailboxBackendTests(unittest.TestCase):
         (self.mailbox / "specs/unit/top.yaml").write_text("changed")
         with self.assertRaisesRegex(ValueError, "changed"):
             verify(self.mailbox)
+
+    def test_controller_debug_identity_ignores_readme_but_checks_verification_inputs(self):
+        source = Path(__file__).resolve().parents[2] / 'local/frontend'
+        manifest = source / 'rtl_output/manifest.json'
+        if not manifest.is_file() or json.loads(manifest.read_text()).get('schema_version') != 2:
+            self.skipTest('Requires a generated controller fixture')
+        reference = publish(source, self.root / 'controller_snapshot')
+        frontend = self.root / 'controller_frontend'
+        shutil.copytree(reference, frontend)
+        (frontend / 'rtl').rename(frontend / 'rtl_output')
+        (frontend / 'rtl_output/README.md').write_text('Local documentation, excluded from publication')
+        verify_frontend_revision(frontend, reference)
+        schema = json.loads((frontend / 'rtl_output/manifest.json').read_text())
+        paths = [frontend / 'rtl_output' / schema['rtl_files'][0],
+                 frontend / 'rtl_output' / schema['module_specs'][0]['path'],
+                 frontend / 'rtl_output' / schema['system_testbench']]
+        for path in paths:
+            with self.subTest(path=path.name):
+                original = path.read_bytes()
+                comment = b'#' if path.suffix == '.yaml' else b'//'
+                path.write_bytes(original + b'\n' + comment + b' changed verification input\n')
+                try:
+                    with self.assertRaises(ValueError):
+                        verify_frontend_revision(frontend, reference)
+                finally:
+                    path.write_bytes(original)
 
     def test_symlinks_and_missing_matching_specs_are_rejected(self):
         link = self.frontend / "rtl_output/link.sv"

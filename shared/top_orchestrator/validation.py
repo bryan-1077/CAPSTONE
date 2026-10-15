@@ -14,8 +14,8 @@ from uuid import uuid4
 
 from shared.remote.ssh_executor import SSHExecutor
 from .auth import cached_password, run_with_password_retries
-from .contracts import StageResult
-from .mailbox import verify
+from .contracts import FailureReport, StageResult
+from .mailbox import verify, verify_frontend_revision
 from .remote import RemoteConfig, slurm_command
 
 
@@ -314,6 +314,13 @@ def validation_node(config, run_dir: Path) -> StageResult:
             artifacts["summary"] = str(saved_summary)
             record["phase"] = "verification_evidence"
             if remote.validation_mode == "system":
+                remote_rtl = str(invocation / "input/rtl")
+                if (not isinstance(summary, dict) or summary.get("mode") != "system"
+                        or summary.get("top_module") != top_module
+                        or summary.get("input_directory") != remote_rtl
+                        or summary.get("inputs") != [remote_rtl + "/manifest.json"]
+                        or summary.get("manifest_path") != remote_rtl + "/manifest.json"):
+                    raise ValueError("System summary does not identify the requested controller snapshot")
                 final_name = PurePosixPath(summary.get("final_system_report", "")) if isinstance(summary, dict) else PurePosixPath("")
                 if final_name.is_absolute() or len(final_name.parts) != 1 or final_name.name in (".", ".."):
                     raise ValueError("Missing or invalid final system report path")
@@ -353,4 +360,23 @@ def validation_node(config, run_dir: Path) -> StageResult:
             record.update(status=status, message=message)
             result_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
             log.write("\n" + message + "\n")
-    return StageResult("validation", status, message, artifacts, code)
+    result = StageResult("validation", status, message, artifacts, code)
+    # Only authenticated system behavioral failures can enter automatic repair.
+    # Debug edits the live frontend, so it must still be the verified revision.
+    if status == "failed" and record.get("phase") == "verification_evidence":
+        summary_path = artifacts.get("summary")
+        final = record.get("system_result", {})
+        if summary_path and final.get("status") == "FAIL":
+            try:
+                summary_path = Path(summary_path)
+                summary = json.loads(summary_path.read_text())
+                stages = summary.get("stages", {})
+                if (stages.get("agent1", {}).get("status") == "PASS"
+                        and any(stages.get(name, {}).get("status") == "FAIL"
+                                for name in ("agent2", "agent3"))):
+                    frontend = Path(__file__).resolve().parents[2] / "local/frontend"
+                    verify_frontend_revision(frontend, config.mailbox)
+                    result.failure = FailureReport("verif", summary_path.parent)
+            except (OSError, ValueError, TypeError, AttributeError) as exc:
+                result.message += f" Automatic debug handoff stopped: {exc}."
+    return result

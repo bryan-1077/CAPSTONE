@@ -59,6 +59,9 @@ if mode == 'missing_design':
     result['designs'].pop()
 if mode == 'rtl_failure':
     result.update(overall_status='FAIL', verification_complete=False)
+if mode in ('agent2_failure', 'agent3_failure'):
+    result.update(overall_status='FAIL', verification_complete=False)
+    result['stages'][mode.split('_')[0]]['status'] = 'FAIL'
 if mode == 'wrong_input':
     result['input_directory'] = '/other/invocation'
 if mode == 'wrong_inputs':
@@ -91,6 +94,9 @@ if system:
         final.pop('verification_readiness')
     if mode == 'ready_boolean_false':
         final['ready_for_backend'] = False
+    if mode in ('agent2_failure', 'agent3_failure'):
+        final.update(status='FAIL', ready_for_backend=False,
+                     verification_readiness='BLOCKED_SYSTEM_' + mode.split('_')[0].upper())
     (out / 'final_system_report.json').write_text(json.dumps(final))
 (out / 'details.log').write_text('verification evidence')
 if mode == 'report_symlink':
@@ -195,6 +201,36 @@ class ValidationTests(unittest.TestCase):
         self.assertTrue(Path(result.artifacts['summary']).is_file())
         self.assertEqual(verify(self.mailbox), verify(output / 'validation_input'))
         self.assertIn('Readiness: READY_FOR_BACKEND', result.message)
+
+    def test_behavioral_failure_routes_to_debug_only_for_matching_live_rtl(self):
+        from shared.top_orchestrator.mailbox import verify_frontend_revision
+        from shared.top_orchestrator.orchestrator import next_stage
+        data = json.loads(self.remote_config.read_text())
+        data['validation_mode'] = 'system'
+        self.remote_config.write_text(json.dumps(data))
+        for mode, changed in (('agent2_failure', False), ('agent3_failure', False),
+                              ('agent3_failure', True)):
+            with self.subTest(mode=mode, changed=changed):
+                name = mode + str(changed)
+                self.prepare_workspace(name)
+                (self.server / 'mode').write_text(mode)
+                output = self.root / name
+                output.mkdir()
+                if changed:
+                    (self.frontend / 'rtl_output/a.sv').write_text('module a; wire changed; endmodule')
+                def verify_live(frontend, mailbox):
+                    verify_frontend_revision(self.frontend, mailbox)
+                with patch('shared.top_orchestrator.validation.SSHExecutor', LocalSSH), \
+                     patch('shared.top_orchestrator.validation.verify_frontend_revision', side_effect=verify_live):
+                    result = validation_node(self.config, output)
+                self.assertEqual(result.status, 'failed', result.message)
+                if changed:
+                    self.assertIsNone(result.failure)
+                    self.assertIsNone(next_stage(result, self.config))
+                else:
+                    self.assertEqual(result.failure.source, 'verif')
+                    self.assertTrue((result.failure.log / 'summary.json').is_file())
+                    self.assertEqual(next_stage(result, self.config), 'debug')
 
     def test_system_mode_trusts_readiness_with_gaps_or_different_evidence(self):
         data = json.loads(self.remote_config.read_text())

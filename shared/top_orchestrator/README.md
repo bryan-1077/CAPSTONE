@@ -166,8 +166,8 @@ constraint/configuration issues, tool/environment failures, or unmet implementat
 targets. Only supported RTL defects should feed frontend debug (`pd` intake).
 
 **Routing and lifecycle:** validation/backend -> debug edges are implemented for
-failed results carrying a `FailureReport`. The adapters still need to produce those
-repair-intake reports from real tools; backend currently retains native triage
+failed results carrying a `FailureReport`. System Agent 2/3 failures after Agent 1
+PASS now supply verification run intake; backend currently retains native triage
 in its JSON result and stops on failure. After any RTL repair, invalidate earlier
 validation/backend results and run validation again before backend. Reject stale
 or absent validation evidence, including for direct backend entry. Keep debug's
@@ -254,10 +254,12 @@ directory for external tools. Adapters must not use raw untrusted report text as
 shell commands. Without a target command, debug may only perform its local checks;
 the orchestrator still reruns frontend checks and validation after repair.
 
-Remote validation is connected, but its failures currently stop with downloaded
-evidence. Translation into frontend debug intake remains separate work. Backend
-failures also stop without automatic PD repair. Neither adapter supplies an
-automatic repair command from raw remote report text.
+Remote system validation hands an Agent 2 or Agent 3 FAIL to automatic debug when
+Agent 1 passed and the current frontend RTL still matches the verified snapshot.
+Debug imports the downloaded verification run directory. Transport failures,
+incomplete evidence, and a changed frontend stop without automatic repair.
+Backend failures also stop without automatic PD repair. Neither adapter supplies
+an automatic repair command from raw remote report text.
 
 `--max-repair-cycles` defaults to 2 across the whole run; set it to 0 to stop at
 failures. Each debug call separately retains its internal repair-attempt budget.
@@ -594,8 +596,9 @@ remote inputs and reports are retained for diagnosis.
 Success requires matching invocation/snapshot provenance, unchanged input hashes,
 a complete report archive, and `PASS` evidence for agents 1, 2, and 3 across every
 published design. Exit zero alone, `PASS_WITH_GAPS`, skipped stages, missing designs,
-and untested requirements cannot produce success. Verification failures stop with
-reports; they do not automatically invoke debug or backend.
+and untested requirements cannot produce success. Module verification failures
+stop with reports. System Agent 2/3 failures after Agent 1 PASS enter debug when
+the current frontend RTL matches the verified snapshot; repaired RTL is verified again.
 
 **Scope:** verification covers the published expanded YAML designs. Generated
 wrappers without matching YAMLs are listed in `modules_without_specs` and the final

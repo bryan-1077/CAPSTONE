@@ -148,8 +148,8 @@ def main() -> int:
         if args.skip_verification and not args.no_backend:
             print("Backend completion records validation: not_run.")
         elif not args.skip_verification:
-            print("Remote validation failures stop with reports; backend runs after verification reports READY_FOR_BACKEND."
-                  if backend_route else "Remote validation failures stop with reports; no backend.")
+            print("System Agent 2/3 failures after Agent 1 PASS -> debug -> recheck -> validation; "
+                  + ("backend runs after READY_FOR_BACKEND." if backend_route else "no backend."))
         return 0
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
     run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()

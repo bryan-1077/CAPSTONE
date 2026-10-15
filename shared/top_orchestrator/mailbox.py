@@ -92,3 +92,19 @@ def verify(mailbox: Path) -> dict:
     if rtl_revision != metadata["rtl_revision"]:
         raise ValueError("Mailbox RTL revision does not match snapshot metadata")
     return metadata
+
+
+def verify_frontend_revision(frontend: Path, mailbox: Path) -> None:
+    """Compare the publisher's input projection, including specs and testbench.
+
+    Controller publication intentionally excludes unrelated files such as README.md.
+    Republish into scratch so identity uses exactly the same rules as verification.
+    """
+    expected = verify(mailbox)
+    approved = mailbox / "approved_specs.yaml"
+    with tempfile.TemporaryDirectory(prefix="capstone-debug-revision-") as directory:
+        current = publish(frontend, Path(directory) / "snapshot",
+                          approved if approved.is_file() else None)
+        actual = verify(current)
+    if actual != expected:
+        raise ValueError("Current frontend verification inputs differ from the verified snapshot")
