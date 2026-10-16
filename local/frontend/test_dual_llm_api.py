@@ -2,6 +2,9 @@
 import contextlib
 import io
 import json
+import os
+from pathlib import Path
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -9,6 +12,7 @@ from unittest.mock import patch
 import requests
 
 import dual_llm_rtlGen as generator
+from token_usage import ModuleUsage
 
 
 def response(content="{}", finish_reason="stop", status=200, data=None):
@@ -45,6 +49,35 @@ class DualLlmApiTests(unittest.TestCase):
         self.assertIn("finish_reason=stop", self.output.getvalue())
         self.assertIn("completion_tokens=4096", self.output.getvalue())
         self.assertNotIn("test-secret", self.output.getvalue())
+
+    def test_default_budgets_distinguish_code_generation_from_review(self):
+        with patch.dict(os.environ):
+            os.environ.pop('DUAL_LLM_MAX_TOKENS', None)
+            for label, budget in [('LLM1-Generate', 16384), ('LLM1-Merge', 16384), ('LLM2-Review', 8192)]:
+                with self.subTest(label=label), patch.object(generator.requests, 'post', return_value=response()) as post:
+                    generator._call_llm('test-model', 'system', 'user', label)
+                    self.assertEqual(post.call_args.kwargs['json']['max_tokens'], budget)
+
+    def test_custom_ceiling_caps_default_generation_budget(self):
+        with patch.dict(os.environ, {'DUAL_LLM_MAX_RETRY_TOKENS': '10000'}):
+            os.environ.pop('DUAL_LLM_MAX_TOKENS', None)
+            with patch.object(generator.requests, 'post', return_value=response()) as post:
+                self.call()
+            self.assertEqual(post.call_args.kwargs['json']['max_tokens'], 10000)
+
+    def test_truncation_saves_partial_response_and_never_accepts_it(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ):
+            os.environ.pop('DUAL_LLM_MAX_TOKENS', None)
+            with self.assertRaisesRegex(RuntimeError, 'Response truncated at token limit'):
+                with ModuleUsage('large_module', directory):
+                    with patch.object(generator.requests, 'post', return_value=response('partial RTL', 'length')) as post:
+                        self.call()
+            post.assert_called_once()
+            report = json.loads(next(Path(directory).rglob('truncated_*.json')).read_text())
+            self.assertEqual(report['content'], 'partial RTL')
+            self.assertEqual(report['max_tokens'], 16384)
+            self.assertEqual(report['usage']['completion_tokens'], 4096)
+            self.assertFalse(report['accepted'])
 
     def test_truncation_retries_same_prompt_with_larger_budget(self):
         for reason in ("length", "max_tokens"):

@@ -159,6 +159,20 @@ def build_llm_context(design):
             for p in sorted(design.ports, key=lambda x: x.name)
         ]
     }
+    # Clock/reset are implicit in module YAML ports, but are public RTL ports.
+    # Present one complete interface to generators and reviewers alike.
+    interface = {p['name']: p for p in ctx['module']['ports']}
+    implicit = []
+    for signal in (design.clock, design.reset):
+        if signal:
+            name = signal.name
+            expected = {'name': name, 'direction': 'input', 'width': 1}
+            if name in interface and interface[name] != expected:
+                raise ValueError(f'Clock/reset port {name} must be a one-bit input')
+            interface[name] = expected
+            implicit.append(name)
+    ctx['module']['ports'] = [interface[name] for name in sorted(interface)]
+    ctx['module']['clock_reset_ports'] = implicit
 
     # ------------------------------------------------------------------
     # 2. Clock / Reset
@@ -324,8 +338,11 @@ def build_llm_context(design):
         if text not in invariants:
             invariants.append(text)
 
-    add_invariant("no signals may be used unless declared in ports or inferred signals")
-    add_invariant("no additional states or signals may be introduced")
+    add_invariant("public ports must match the complete module interface, including declared clock/reset inputs")
+    add_invariant("internal helper signals and state representations may be introduced within the specified owned behavior; declare every signal before use")
+    add_invariant("declared clock/reset ports may remain unused in a stateless module; do not add dummy logic solely to consume unused ports")
+    if design.fsm:
+        add_invariant("architectural FSM states must match the declared FSM; internal helper signals must not change its behavior")
     add_invariant("all signals must have a single driver")
     add_invariant("all sequential registers must have explicit reset behavior")
     add_invariant("signals representing stored values must not be driven by combinational logic")

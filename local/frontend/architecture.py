@@ -23,7 +23,7 @@ from controller_baseline import controller_baseline, validate_baseline
 ROOT = Path(__file__).resolve().parent
 LIBRARY = ROOT / "microarch/jedec"
 VERSION = 1
-COMPILER_REVISION = 3
+COMPILER_REVISION = 5
 
 
 class ArchitectureError(ValueError):
@@ -323,6 +323,11 @@ def validate_architecture(manifest, library=None):
             validate_baseline(manifest, manifest['baseline_contract'])
         except ValueError as exc:
             raise ArchitectureError(str(exc)) from exc
+    from specification_lowering import validate_specification_manifest
+    try:
+        validate_specification_manifest(manifest)
+    except ValueError as exc:
+        raise ArchitectureError(str(exc)) from exc
     return modules
 
 
@@ -439,8 +444,10 @@ def emit_verification_specs(manifest, proposal_path):
     return paths
 
 
-def lower_architecture(manifest, output_dir):
+def lower_architecture(manifest, output_dir, *, specification_approval=None):
     modules = validate_architecture(manifest)
+    from specification_lowering import require_approval
+    approval = require_approval(manifest, specification_approval)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     spec_dir = output / "microarch/gen_exp"
@@ -451,5 +458,12 @@ def lower_architecture(manifest, output_dir):
     (output / "architecture.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False))
     (rtl_dir / (manifest["design_name"] + ".sv")).write_text(emit_wrapper(manifest, modules))
     (rtl_dir / "filelist.f").write_text("\n".join([path.stem + ".sv" for path in spec_paths] + [manifest["design_name"] + ".sv"]) + "\n")
-    (output / "verification_plan.json").write_text(json.dumps({"status": "planned_not_executed", "requirements": manifest["requirements"]}, indent=2) + "\n")
+    verification = {"status": "planned_not_executed", "requirements": manifest["requirements"]}
+    if approval is not None:
+        (output / 'specification_approval.json').write_text(json.dumps(approval, indent=2) + '\n')
+        verification['requirement_results'] = [{'id': r['id'], 'result': 'unverified'} for r in manifest['requirements']]
+        verification['obligations'] = {ref: dict(obligation, result='unverified')
+            for module in manifest['modules']
+            for ref, obligation in module['spec']['behavior']['verification_obligations'].items()}
+    (output / "verification_plan.json").write_text(json.dumps(verification, indent=2) + "\n")
     return spec_paths

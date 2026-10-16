@@ -305,6 +305,48 @@ class ArchitectureTests(unittest.TestCase):
             ports = {p['name']:p['width'] for p in controller_baseline(config)['host_ports']}
             self.assertEqual(ports.get('txn_bank'), width)
 
+    def test_compatibility_preset_allows_fifo_and_configurable_waiting_capacity(self):
+        config = read_mapping(ROOT/'configs/user_input.yaml')
+        config['features']['scheduler'] = 'fifo'
+        config['microarchitecture'] = {'baseline': 'current_controller'}
+        for capacity in (1, 3, 4):
+            config['microarchitecture']['waiting_capacity'] = capacity
+            baseline = build_request(config)['baseline_contract']
+            requirements = {r['id']: r['text'] for r in baseline['requirements']}
+            self.assertEqual(baseline['id'], 'current_controller_v2')
+            self.assertIn(f'{capacity} WAITING', requirements['BASE_QUEUE'])
+            self.assertIn('PLUS one separately stored', requirements['BASE_QUEUE'])
+            self.assertIn('scheduler policy fifo', requirements['BASE_POLICY'])
+            self.assertNotIn('lowest-index', requirements['BASE_POLICY'])
+            self.assertIn('tRCD, tRAS and tRP', requirements['BASE_TIMING'])
+        del config['microarchitecture']['waiting_capacity']
+        requirements = {r['id']: r['text'] for r in controller_baseline(config)['requirements']}
+        self.assertIn('4 WAITING', requirements['BASE_QUEUE'])
+        # The preset can also be selected by a generic request, without legacy features.
+        del config['profile']
+        del config['features']
+        baseline = build_request(config)['baseline_contract']
+        self.assertTrue(any('does not select one' in r['text'] for r in baseline['requirements']))
+        config['microarchitecture'] = {'baseline': 'none'}
+        self.assertNotIn('baseline_contract', build_request(config))
+
+    def test_compatibility_capacity_cannot_be_invalid_or_silently_ignored(self):
+        config = read_mapping(ROOT/'configs/user_input.yaml')
+        for value in (0, -1, True, 1.5, '4'):
+            config['microarchitecture'] = {'baseline': 'current_controller', 'waiting_capacity': value}
+            with self.subTest(value=value), self.assertRaisesRegex(ArchitectureError, 'positive integer'):
+                build_request(config)
+        config['microarchitecture'] = {'baseline': 'none', 'waiting_capacity': 3}
+        with self.assertRaisesRegex(ArchitectureError, 'requires the current_controller preset'):
+            build_request(config)
+
+    def test_compatibility_capacity_contract_cannot_be_tampered_with(self):
+        request, manifest = self.baseline_fixture()
+        manifest['baseline_contract'] = request['baseline_contract']
+        manifest['baseline_contract']['config']['microarchitecture'] = {'waiting_capacity': 3}
+        with self.assertRaisesRegex(ArchitectureError, 'edited controller baseline'):
+            validate_architecture(manifest)
+
     def test_monolithic_controller_and_dummy_role_split_are_rejected(self):
         request, m = self.baseline_fixture()
         m['baseline_contract'] = request['baseline_contract']

@@ -1,0 +1,30 @@
+# Input for the staged request -> system specification -> contracts/graph route.
+# This is a request, not approval of any model-generated package.
+design_name: ddr4_controller_top
+design_type: memory_controller
+memory:
+  protocol: DDR4
+  speed: '3200'
+topology:
+  banks: 4
+features:
+  scheduler: fifo
+  page_policy: open_page
+  refresh: true
+  tRRD: true
+  tFAW: true
+microarchitecture:
+  baseline: current_controller
+  waiting_capacity: 4
+requirements:
+  - Implement global FIFO service in acceptance order, including same-address writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently of command readiness.
+  - Provide four waiting entries plus one separately stored active request. Dispatch only previously stored requests, capture the complete pre-edge head before releasing its slot, and permit full-queue simultaneous dispatch/admission including capacity one. No empty-queue bypass or same-edge active replacement at retirement.
+  - Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP never committed and at most one command commit per edge. Sequence closed banks with ACT-access, row hits with access, and row conflicts with PRE-ACT-access. PRE/ACT never retire the active request. Keep blocked candidates stable through stalls and newly pending refresh.
+  - Keep separate owners for host mapping, waiting storage, scheduling, command sequencing, row state, timing, functional memory/responses, and refresh control. The top must contain structural connections only.
+  - Update bank state and timing history only from committed commands. Enforce tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile. A trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits with age strictly less than its window. Reset creates no synthetic timing history.
+  - Preserve functional banked 32-bit memory and compact host address mapping. WRITE commit updates storage; READ commit at E captures pre-edge data and registers valid/data for host sampling at E+1, with no extra adapter response register. Responses survive active release, cleanup and refresh; writes produce no response.
+  - Open-page retains rows. Support close-page as a configurable alternative, retaining a separate cleanup bank reservation after retirement until a legal PRE commits; block new dispatch during cleanup.
+  - Generate periodic refresh deadlines from the last sampled reset edge using tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining open banks in ascending order, respect all-bank tRP, commit REF once, and exclude commands strictly before REF-edge+tRFC. Retain queued traffic and resume service afterward.
+  - cmd_ready is reset-gated diagnostic readiness for the incoming request's first needed command, using independent row/timing probe queries while the engine is idle and cleanup/refresh permit. It is meaningful without txn_valid and must not admit, dispatch, bypass FIFO, mutate history or reserve storage.
+  - Use synchronous active-low reset for state, with immediate valid/ready/event gating. Reset clears queued/active/cleanup work, row state, timing history, memory, responses and refresh state; it wins over every simultaneous event. The host holds payload while stalled and samples every response; no response backpressure is provided.
+  - Generate architecture-specific module isolation and system verification intent with exact requirement IDs, independent scenarios/expected results, and declared port/event bindings. Export it alongside RTL for the external UVM/vector stage. Do not execute downstream verification or backend stages in this frontend flow.

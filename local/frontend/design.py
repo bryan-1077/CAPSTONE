@@ -66,7 +66,6 @@ def print_module_start_banner(module_name: str, label: str):
 
 def print_module_end_banner(module_name: str):
     filename = module_name + ".sv"
-    print("")
     print("--- FINISHED --- {} file ------- SUCCESS".format(filename))
     print("=" * 80)
     print("")
@@ -256,7 +255,15 @@ def parse_args():
 
 # ---------- main ----------
 def main():
+    from token_usage import ModuleUsage
     args = parse_args()
+    root = args.output_root or os.path.dirname(os.path.abspath(__file__))
+    with ModuleUsage(os.path.splitext(os.path.basename(args.yaml_path))[0], root,
+                     on_completed=print_module_end_banner):
+        return _run_design(args)
+
+
+def _run_design(args):
     yaml_path = args.yaml_path
     root_dir = os.path.dirname(os.path.abspath(__file__))
     output_root = os.path.abspath(args.output_root) if args.output_root else root_dir
@@ -295,6 +302,8 @@ def main():
     if not spec:
         print("Validation failed. Aborting RTL generation.")
         sys.exit(2)
+    from token_usage import set_module_name
+    set_module_name(spec.design_name)
     # Ensure IR output directory exists
     ir_dir = os.path.join(output_root, "microarch", "ir")
     os.makedirs(ir_dir, exist_ok=True)
@@ -333,7 +342,6 @@ def main():
         sv_path = os.path.join(work_dir, module_name + ".sv")
         with open(sv_path, "w") as f:
             f.write(rtl)
-        print_module_end_banner(module_name)
         result = {"passed": True, "rtl_path": sv_path, "retries_used": 0}
     elif route == ROUTE_DETERMINISTIC_TIMING_HARDENED:
         print(f"[FLOW] Using DETERMINISTIC TIMING HARDENED generator for {module_name}")
@@ -347,7 +355,6 @@ def main():
         sv_path = os.path.join(work_dir, module_name + ".sv")
         with open(sv_path, "w") as f:
             f.write(rtl)
-        print_module_end_banner(module_name)
         result = {"passed": True, "rtl_path": sv_path, "retries_used": 0}
     elif route == ROUTE_FSM_GENERATOR:
         print(f"[FLOW] Using FSM GENERATOR for {module_name}")
@@ -361,10 +368,10 @@ def main():
         sv_path = os.path.join(work_dir, module_name + ".sv")
         with open(sv_path, "w") as f:
             f.write(rtl)
-        print_module_end_banner(module_name)
         result = {"passed": True, "rtl_path": sv_path, "retries_used": 0}
     else:
         raise RuntimeError("Unknown generation route {} for {}".format(route, module_name))
+    return result
 
 if __name__ == "__main__":
     main()

@@ -90,7 +90,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run config expansion, expand_spec, design generation, and wrapper generation."
     )
-    parser.add_argument("input_yaml", help="Path to a legacy input YAML or user config YAML.")
+    parser.add_argument("input_yaml", help="Path to a user config, architecture manifest, or system-specification package.")
     parser.add_argument(
         "--interactive",
         action="store_true",
@@ -107,6 +107,11 @@ def parse_args() -> argparse.Namespace:
         help="Use cached dual-LLM RTL for cache-backed modules and avoid LLM calls.",
     )
     parser.add_argument("--microarch", action="store_true", help="Propose an LLM architecture before generation.")
+    parser.add_argument("--specification", action="store_true",
+                        help="Generate system behavior first, then contracts/graph/intent; requires review before RTL.")
+    parser.add_argument("--specification-output", type=Path, help="Fresh directory for generated specification source files.")
+    parser.add_argument("--specification-response", type=Path,
+                        help="Replay system and architecture stage responses from one JSON file, without model calls.")
     parser.add_argument("--microarch-only", action="store_true", help="Save/validate the architecture and stop before RTL.")
     parser.add_argument("--requirements-file", type=Path, help="Additional free-form architecture requirements.")
     parser.add_argument("--architecture-output", type=Path, default=SCRIPT_DIR / "microarch/proposals/architecture.yaml")
@@ -114,6 +119,10 @@ def parse_args() -> argparse.Namespace:
                         help="Architecture model (defaults to generate_microarch.DEFAULT_MODEL).")
     parser.add_argument("--microarch-response", type=Path, help="Replay a saved JSON architecture without calling the LLM.")
     parser.add_argument("--build-dir", type=Path, help="Architecture build directory (defaults to content-addressed microarch/builds/).")
+    parser.add_argument("--spec-set", action="append", default=[], metavar="NAME=VALUE",
+                        help="Override a configurable system-package parameter (repeatable).")
+    parser.add_argument("--spec-profile", help="Select a system-package timing profile.")
+    parser.add_argument("--spec-approval", type=Path, help="Recorded approval of this exact specification-derived architecture.")
     return parser.parse_args()
 
 
@@ -566,21 +575,78 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     """Lower the proposed graph directly, bypassing fixed controller integration."""
     from architecture import fingerprint, lower_architecture, validate_architecture, emit_verification_specs
     from generate_microarch import build_request, propose
+    from specification_lowering import (compile_package, emit_review, is_specification_manifest,
+                                        parse_overrides)
+    from specification import read_document
 
-    source = load_yaml(input_path)
-    if "architecture_version" in source:
+    source = read_document(input_path)
+    if args.spec_approval and args.microarch_only:
+        raise ValueError('--spec-approval is used for RTL builds, not proposal-only exports')
+    package_input = 'specification_version' in source
+    generated_input = args.specification
+    if generated_input and (package_input or 'architecture_version' in source or args.microarch or args.microarch_response):
+        raise ValueError('--specification takes a request, not a package, manifest or legacy architecture-proposal options')
+    if not generated_input and (args.specification_output or args.specification_response):
+        raise ValueError('--specification-output/--specification-response require --specification')
+    if generated_input:
+        if args.spec_set or args.spec_profile:
+            raise ValueError('Configure a generated design in its request; --spec-set/--spec-profile apply to supplied packages')
+        from generate_specification import propose_specification
+        from specification_request import build_specification_request
+        request = build_specification_request(source, args.requirements_file.read_text() if args.requirements_file else '')
+        generated_path = propose_specification(request, output_dir=args.specification_output,
+                            model=args.microarch_model, cache=args.cache, response_path=args.specification_response)
+        manifest = compile_package(generated_path)
+    elif package_input:
+        if args.requirements_file or args.microarch_response or args.cache:
+            raise ValueError('System packages use deterministic lowering; request/response proposal and proposal-cache options do not apply. Use --cache on the exported approved manifest for RTL caching.')
+        manifest = compile_package(input_path, parse_overrides(args.spec_set), args.spec_profile)
+    elif "architecture_version" in source:
+        if args.spec_set or args.spec_profile:
+            raise ValueError('Configuration overrides require a system package; regenerate the manifest instead')
         if args.requirements_file or args.microarch_response:
             raise ValueError("Proposal inputs cannot be combined with an already-authored architecture")
         manifest = source
         validate_architecture(manifest)
     else:
+        if args.spec_set or args.spec_profile or args.spec_approval:
+            raise ValueError('Specification options require a system package or a specification-derived manifest')
         request = build_request(source, args.requirements_file.read_text() if args.requirements_file else "")
         if request.get('baseline_contract'):
             print(f'[MICROARCH] Preserving baseline: {request["baseline_contract"]["id"]} (host, data, queue and timing contracts)')
         manifest = propose(request, output=args.architecture_output, model=args.microarch_model,
                            cache=args.cache, response_path=args.microarch_response)
     print(f'[MICROARCH] Validated architecture: {manifest["design_name"]}')
+    if generated_input:
+        proposal_path = args.architecture_output
+        if proposal_path == SCRIPT_DIR / 'microarch/proposals/architecture.yaml':
+            digest = manifest['provenance']['specification']['package_fingerprint']
+            proposal_path = SCRIPT_DIR / 'microarch/proposals/specification' / digest[:16] / 'architecture.yaml'
+        protected = {input_path.resolve(), *(p.resolve() for p in generated_path.parent.iterdir() if p.is_file())}
+        if proposal_path.resolve() in protected:
+            raise ValueError('Architecture export must not overwrite the request or generated specification source')
+        emit_review(manifest, proposal_path)
+        print(f'[MICROARCH] Generated specification review export: {proposal_path}')
+        if args.microarch_only:
+            print('[MICROARCH] Review required; RTL generation and behavioral verification have not run.')
+            return 0
     if args.microarch_only:
+        if is_specification_manifest(manifest):
+            proposal_path = input_path if not package_input else args.architecture_output
+            if package_input and proposal_path == SCRIPT_DIR / 'microarch/proposals/architecture.yaml':
+                digest = manifest['provenance']['specification']['package_fingerprint']
+                proposal_path = SCRIPT_DIR / 'microarch/proposals/specification' / digest[:16] / 'architecture.yaml'
+            if package_input:
+                snapshot = manifest['provenance']['specification']['snapshot']
+                source_files = {input_path.resolve()}
+                source_files.update((input_path.parent / p).resolve() for p in snapshot['package']['documents'].values())
+                if proposal_path.resolve() in source_files:
+                    raise ValueError('Architecture export must not overwrite source package documents')
+            specs = emit_review(manifest, proposal_path)
+            print(f'[MICROARCH] Specification review export: {proposal_path}')
+            print(f'[MICROARCH] Module YAMLs for verification: {specs[0].parent} ({len(specs)} definitions)')
+            print('[MICROARCH] Revision-bound approval is required before RTL generation. Behavioral verification has not run.')
+            return 0
         proposal_path = input_path if 'architecture_version' in source else args.architecture_output
         specs = emit_verification_specs(manifest, proposal_path)
         print(f'[MICROARCH] Module YAMLs for verification: {specs[0].parent} ({len(specs)} definitions)')
@@ -590,12 +656,22 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     build_dir = (args.build_dir or SCRIPT_DIR / "microarch/builds" / fingerprint(manifest)[:16]).resolve()
     if build_dir == SCRIPT_DIR:
         raise ValueError("Architecture builds must use a separate directory")
-    specs = lower_architecture(manifest, build_dir)
+    specs = lower_architecture(manifest, build_dir, specification_approval=args.spec_approval)
     status = {"structural_validation": "passed", "declared_dependency_validation": "passed", "rtl_generation": "in_progress",
               "integration_lint": "not_run", "behavioral_verification": "not_run"}
+    if is_specification_manifest(manifest):
+        status.update(specification_validation='passed', specification_approval='approved',
+                      specification_fingerprint=manifest['provenance']['specification']['package_fingerprint'],
+                      verification_handoff='not_run')
+    from token_usage import report_path
+    if report_path():
+        status['token_usage_report'] = report_path()
     status_path = build_dir / "build_status.json"
     status_path.write_text(json.dumps(status, indent=2) + "\n")
     try:
+        if is_specification_manifest(manifest):
+            # A failed rebuild must not leave a prior handoff looking current.
+            (build_dir / 'verification_handoff.json').unlink(missing_ok=True)
         for spec in specs:
             run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache) +
                         ["--output-root", str(build_dir)])
@@ -611,11 +687,21 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
             status["integration_lint"] = "passed"
         else:
             status["integration_lint"] = "skipped"
+        if is_specification_manifest(manifest):
+            from verification_handoff import emit_handoff
+            status['verification_handoff'] = 'in_progress'
+            handoff = emit_handoff(manifest, build_dir / 'architecture.yaml', specs,
+                                   phase='rtl', output=build_dir / 'verification_handoff.json')
+            status['verification_handoff'] = 'exported'
+            status['verification_handoff_file'] = handoff.name
+            status['verification_consumer'] = 'adapter_required'
     except (subprocess.CalledProcessError, ValueError, OSError):
         if status["rtl_generation"] == "in_progress":
             status["rtl_generation"] = "failed"
         elif status["integration_lint"] == "not_run":
             status["integration_lint"] = "failed"
+        if status.get('verification_handoff') == 'in_progress':
+            status['verification_handoff'] = 'failed'
         status["result"] = "failed"
         status_path.write_text(json.dumps(status, indent=2) + "\n")
         raise
@@ -629,12 +715,22 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
         'requirements and scenarios; build_status.json records generation/lint results. '
         'The legacy controller testbench is not applicable to arbitrary architectures.\n')
     print(f"[MICROARCH] Generated build: {build_dir}")
+    if is_specification_manifest(manifest):
+        print('[MICROARCH] Verification handoff exported; the existing UVM/vector system consumer requires an adapter.')
     print("[MICROARCH] Behavioral verification remains pending; see verification_plan.json.")
     return 0
 
 
 def main() -> int:
+    from token_usage import UsageRun
     args = parse_args()
+    with UsageRun(SCRIPT_DIR / 'microarch/usage') as usage:
+        result = _run_flow(args)
+        usage.status = 'completed' if result == 0 else 'failed'
+        return result
+
+
+def _run_flow(args) -> int:
     start_time = time.time()
     validated_user_config: ValidatedUserConfig | None = None
     input_path = Path(args.input_yaml).expanduser()
@@ -644,9 +740,9 @@ def main() -> int:
         input_path = input_path.resolve()
 
     try:
-        if args.microarch or args.microarch_only or (input_path.is_file() and "architecture_version" in load_yaml(input_path)):
+        if args.specification or args.microarch or args.microarch_only or (input_path.is_file() and ({'architecture_version', 'specification_version'} & load_yaml(input_path).keys())):
             return run_architecture_flow(input_path, args)
-        if args.requirements_file or args.microarch_response or args.build_dir:
+        if args.requirements_file or args.microarch_response or args.build_dir or args.spec_set or args.spec_profile or args.spec_approval or args.specification_output or args.specification_response:
             raise ValueError("Architecture options require --microarch or an architecture manifest input")
         input_path, validated_user_config = maybe_expand_user_config(input_path)
         source_yamls, design_names = discover_targets(input_path)

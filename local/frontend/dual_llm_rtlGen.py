@@ -27,8 +27,11 @@ import shutil
 import tempfile
 import subprocess
 import requests
+import token_usage
+import uuid
 
-from ir_to_llm_context import build_llm_context, llm_context_to_string
+from ir_to_llm_context import build_llm_context
+from prompt_context import serialize_context
 from width_safety import enforce_width_safety
 
 try:
@@ -80,8 +83,9 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
         raise RuntimeError("TAMUS_AI_CHAT_API_KEY not set. Run: source ~/.bashrc")
 
     try:
-        token_budget = int(os.environ.get("DUAL_LLM_MAX_TOKENS", "8192"))
         token_ceiling = int(os.environ.get("DUAL_LLM_MAX_RETRY_TOKENS", "16384"))
+        default_budget = 16384 if label in ("LLM1-Generate", "LLM1-Merge") else 8192
+        token_budget = int(os.environ.get("DUAL_LLM_MAX_TOKENS", str(min(default_budget, token_ceiling))))
         if not 0 < token_budget <= token_ceiling:
             raise ValueError("require 0 < initial budget <= retry ceiling")
     except ValueError as e:
@@ -96,6 +100,8 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
             {"role": "user",   "content": user_message}
         ]
     }
+    request_characters = len(system_prompt) + len(user_message)
+    print(f'[dual_llm] {label}: request_characters={request_characters} (system + user text; not tokens)')
 
     while True:
         try:
@@ -109,8 +115,11 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
                 timeout=180
             )
         except requests.exceptions.RequestException as e:
+            token_usage.record_usage(model, label, outcome="network_error",
+                                     request_characters=request_characters)
             raise RuntimeError("[{}] Network error: {}".format(label, e))
 
+        token_usage.record_response(model, label, resp, request_characters=request_characters)
         if resp.status_code != 200:
             raise RuntimeError("[{}] model={} -> HTTP {}: {}".format(
                 label, model, resp.status_code, resp.text.replace(api_key, "[redacted]")[:300]))
@@ -128,6 +137,16 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
         print("[dual_llm] {}: model={} finish_reason={} completion_tokens={} max_tokens={}".format(
             label, model, finish_reason, completion_tokens, payload["max_tokens"]))
         if finish_reason in ("length", "max_tokens"):
+            directory = token_usage.current_module_directory()
+            if directory is not None:
+                path = directory / ('truncated_' + uuid.uuid4().hex + '.json')
+                path.write_text(json.dumps({
+                    'model': model, 'label': label, 'finish_reason': finish_reason,
+                    'max_tokens': payload['max_tokens'], 'usage': usage,
+                    'request_characters': request_characters, 'content': content,
+                    'accepted': False,
+                }, indent=2) + '\n')
+                print(f'[dual_llm] Truncated response saved (not accepted as RTL): {path}')
             if payload["max_tokens"] >= token_ceiling:
                 raise RuntimeError(
                     "[{}] Response truncated at token limit (model={}, max_tokens={}, "
@@ -631,7 +650,7 @@ def _reviewer_failed_fallback(module_name, lint_enabled=True):
     print("[dual_llm] ERROR: Reviewer failed and no cache exists for {}".format(
         module_name))
     raise RuntimeError(
-        "dual_llm_rtlgen: reviewer unavailable and no cached reviewed RTL exists for {}".format(
+        "dual_llm_rtlgen: reviewer did not approve RTL and no cached reviewed RTL exists for {}".format(
             module_name)
     )
 
@@ -726,7 +745,7 @@ def _parse_llm_json_payload(response_text, fallback_rtl, label, fallback_invaria
             fallback_rtl,
             str(data.get("status", "AMBIGUOUS")).strip().upper(),
             data.get("issues", []),
-            data.get("invariants", fallback_invariants)
+            fallback_invariants if fallback_invariants is not None else data.get("invariants")
         )
 
         corrected_rtl = _strip_code_fences(data.get("corrected_rtl", ""))
@@ -788,7 +807,7 @@ def _parse_review_json_payload(response_text, fallback_rtl, label,
             fallback_rtl,
             str(data.get("status", "AMBIGUOUS")).strip().upper(),
             data.get("issues", []),
-            data.get("invariants", fallback_invariants),
+            fallback_invariants if fallback_invariants is not None else data.get("invariants"),
             data.get("corrected_rtl", "")
         )
 
@@ -1011,7 +1030,7 @@ def _design_context_bundle(design):
     """Return authoritative context plus convenient prompt fragments."""
 
     ctx = build_llm_context(design)
-    ctx_str = llm_context_to_string(ctx)
+    ctx_str = serialize_context(ctx)
     invariants = _string_list(ctx.get("invariants"))
     implementation_constraints = _string_list(
         ctx.get("implementation_constraints")
@@ -1023,36 +1042,15 @@ def _design_context_bundle(design):
         must_not_assume = _string_list(validator_alignment.get("must_not_assume"))
 
     lines = [
-        "Design name:  {}".format(design.design_name),
-        "Design type:  {}".format(design.design_type),
+        "STRUCTURED LLM CONTEXT (authoritative):",
+        "The context contains the complete public interface, including clock/reset inputs. "
+        'When context_format is shared_definitions_v1, each {"$ref":"#/definitions/C..."} '
+        "means the exact value stored at that definition (including nested references). "
+        "Definitions are normative wherever referenced. Field names and list order are preserved. "
+        "Use all contract, shared behavior, timing, dependency and verification fields; "
+        "do not echo context or invariants in your response.",
+        ctx_str,
     ]
-
-    if design.clock:
-        lines.append("Clock: {} @ {} MHz".format(
-            design.clock.name,
-            design.clock.frequency_mhz or "unspecified"
-        ))
-
-    if design.reset:
-        lines.append("Reset: {} | active_{} | {}".format(
-            design.reset.name,
-            "low" if design.reset.active_low else "high",
-            "synchronous" if design.reset.synchronous else "asynchronous"
-        ))
-
-    lines.append("\nSTRUCTURED LLM CONTEXT (authoritative):")
-    lines.append(ctx_str)
-    lines.append("")
-    lines.append(_format_string_block("AUTHORITATIVE INVARIANTS:", invariants))
-    lines.append("")
-    lines.append(_format_string_block(
-        "IMPLEMENTATION CONSTRAINTS:", implementation_constraints))
-    lines.append("")
-    lines.append(_format_string_block(
-        "FORBIDDEN PATTERNS:", forbidden_patterns))
-    lines.append("")
-    lines.append(_format_string_block(
-        "MUST NOT ASSUME:", must_not_assume))
 
     return {
         "ctx": ctx,
@@ -1066,29 +1064,13 @@ def _design_context_bundle(design):
 
 
 def _compact_review_context(design):
-    ctx = build_llm_context(design)
-    compact_keys = [
-        "module",
-        "clock",
-        "reset",
-        "request_payload",
-        "scheduler_policy",
-        "invariants",
-        "implementation_constraints",
-        "forbidden_patterns",
-        "validator_alignment",
-    ]
-    compact = {
-        key: ctx[key]
-        for key in compact_keys
-        if key in ctx
-    }
-    return json.dumps(compact, indent=2, sort_keys=True)
+    # The fallback changes the response schema/history, never the normative facts.
+    return _design_context_bundle(design)["prompt_text"]
 
 
-def _history_block(history, current_round):
+def _history_block(history, current_round, include_latest_rtl=False):
     """
-    Format the sliding 2-round window (rounds N-1 and N) as a readable block.
+    Keep two rounds of diagnostics; optionally include one latest RTL snapshot.
     """
     if not history:
         return "(No previous rounds - this is round 1)"
@@ -1110,18 +1092,19 @@ def _history_block(history, current_round):
                     h.get("llm1_lint_issues", []),
                     h.get("llm1_lint_fail_count", 0)
                 ))
-        parts.append("--- LLM #1 output ---\n" + h.get("llm1_code", "(none)"))
         parts.append("LLM #2 status: {}".format(h.get("llm2_status", "(none)")))
         parts.append(_format_issue_block(
             "LLM #2 issues:", h.get("llm2_report", [])))
-        parts.append("--- LLM #2 corrected code ---\n" + h.get("llm2_code", "(none)"))
         if h.get("merged_status"):
             parts.append("Merge status: {}".format(h["merged_status"]))
         if h.get("merged_issues") is not None:
             parts.append(_format_issue_block(
                 "Merge issues:", h.get("merged_issues", [])))
-        if h.get("merged_code"):
-            parts.append("--- Merged output accepted for this round ---\n" + h["merged_code"])
+    if include_latest_rtl:
+        last = window[-1]
+        latest = last.get("merged_code") or last.get("llm2_code") or last.get("llm1_code")
+        if latest:
+            parts.append("--- Latest candidate RTL (not yet approved) ---\n" + latest)
     return "\n\n".join(parts)
 
 
@@ -1132,7 +1115,6 @@ Your job is to generate correct, spec-locked SystemVerilog from a validated desi
 
 Return ONLY valid JSON in this exact shape:
 {
-  "invariants": ["..."],
   "status": "VALID | INVALID | AMBIGUOUS",
   "issues": [
     {
@@ -1167,7 +1149,7 @@ Rules:
 - Loop variables used only inside procedural blocks are not architectural signals.
 - Every module must end with endmodule.
 - Do not reference Python dataclasses or IR objects in the RTL.
-- "invariants" must echo the authoritative invariants you applied.
+- Do not echo invariants or context; the compiler retains them independently.
 - "status" must be VALID if corrected_rtl fully satisfies context, INVALID if you know it violates context,
   or AMBIGUOUS if the context itself is insufficient to decide.
 - "issues" should usually be empty for generation unless the spec is ambiguous or conflicting.
@@ -1253,7 +1235,6 @@ You will receive two versions of a SystemVerilog module plus a typed review repo
 
 Return ONLY valid JSON in this exact format:
 {
-  "invariants": ["..."],
   "status": "VALID | INVALID | AMBIGUOUS",
   "issues": [
     {
@@ -1288,7 +1269,7 @@ Rules:
 - Do not reuse the same loop variable across multiple always_comb/always_ff blocks.
 - Loop variables used only inside procedural blocks are not architectural signals.
 - Reset behavior must remain exactly aligned to STRUCTURED LLM CONTEXT.
-- "invariants" must echo the authoritative invariants preserved by the merge.
+- Do not echo invariants or context; the compiler retains them independently.
 - "corrected_rtl" must contain the full merged SystemVerilog module only, with no markdown fences.
 """
 
@@ -1305,7 +1286,7 @@ def _llm1_generate(design, yaml_text, history, lint_issues=None,
     Returns parsed JSON payload.
     """
     bundle = _design_context_bundle(design)
-    hist = _history_block(history, len(history) + 1)
+    hist = _history_block(history, len(history) + 1, include_latest_rtl=not bool(previous_rtl))
 
     if lint_result and lint_result.get("blocking"):
         user_msg = (
@@ -1491,7 +1472,8 @@ def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
         ctx=bundle["prompt_text"],
         issues_text=issues_text,
         previous_rtl=llm1_code,
-        reviewer_rtl=llm2_code,
+        reviewer_rtl=(llm2_code if llm2_code.strip() != llm1_code.strip()
+                      else "Identical to Previous RTL; no separate corrected version."),
         hist=hist
     )
 
@@ -1518,6 +1500,23 @@ def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
 # ---------------------------------------------------------------------------
 
 def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
+    trace = {"module": design.design_name, "max_rounds": MAX_ROUNDS, "rounds": [], "outcome": "failed"}
+    try:
+        rtl = _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace)
+        trace["outcome"] = "accepted_or_reviewed_cache"
+        return rtl
+    except Exception as exc:
+        trace["error"] = str(exc)
+        raise
+    finally:
+        directory = token_usage.current_module_directory()
+        if directory is not None:
+            path = directory / "rtl_review.json"
+            path.write_text(json.dumps(trace, indent=2) + "\n")
+            print(f"[dual_llm] Round report: {path}", flush=True)
+
+
+def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace):
     """
     Run the dual-LLM RTL generation loop.
 
@@ -1558,6 +1557,7 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             round_num, MAX_ROUNDS))
 
         round_record = {"round": round_num}
+        trace["rounds"].append(round_record)
 
         # ── Step 1: LLM #1 generates (or continues from merge context) ──
         if carryover_rtl:
@@ -1737,6 +1737,16 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
         if repeated_issue:
             print("[dual_llm] Repeated issue detected — escalation mode enabled")
 
+        if ambiguities or review_payload["status"] == "AMBIGUOUS":
+            trace["outcome"] = "needs_spec_clarification"
+            raise RuntimeError(
+                "dual_llm_rtlgen: specification clarification required for {}: {}. "
+                "Stopping before another paid round.".format(
+                    design.design_name, " | ".join(i.get("description", "") for i in review_issues)))
+        if not reviewer_valid and round_num == MAX_ROUNDS:
+            round_record["merged_status"] = "SKIPPED_NO_REVIEW_ROUND_REMAINING"
+            break
+
         # ── Step 4: If issues, LLM #1 merges both versions ──
         if reviewer_valid:
             # Reviewer is happy — use LLM #1's lint-checked code
@@ -1877,7 +1887,12 @@ def main():
         help="Use cached reviewed RTL and avoid LLM calls.",
     )
     args = parser.parse_args()
+    with token_usage.ModuleUsage(os.path.splitext(os.path.basename(args.spec_yaml))[0],
+                                 os.path.dirname(os.path.abspath(__file__))):
+        return _run_cli(args)
 
+
+def _run_cli(args):
     yaml_path = args.spec_yaml
     out_path = args.output_sv
 
@@ -1894,6 +1909,7 @@ def main():
 
     print("[dual_llm] Validating spec: {}".format(yaml_path))
     design = validate_spec(yaml_path)
+    token_usage.set_module_name(design.design_name)
     print("[dual_llm] IR validated: {} ({})".format(
         design.design_name, design.design_type))
 

@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 
+import token_usage
 import requests
 import yaml
 
@@ -21,6 +22,8 @@ API_URL = "https://chat-api.tamu.ai/openai/chat/completions"
 
 
 def build_request(config, requirements_text=""):
+    if 'specification_version' in config:
+        raise ArchitectureError('System-specification packages use run_flow.py --microarch-only or specification_lowering.py; they are not free-form architecture requests')
     constraints = dict(config)
     requirements = constraints.pop("requirements", [])
     if not isinstance(requirements, list) or any(not isinstance(r, str) or not r.strip() for r in requirements):
@@ -168,32 +171,37 @@ def http_error_detail(response, api_key):
     return detail[:600] + ('...' if len(detail) > 600 else '')
 
 
-def call_llm(prompt, model):
+def call_llm(prompt, model, *, max_tokens=14000, label='Architecture'):
     key = os.environ.get("TAMUS_AI_CHAT_API_KEY")
     if not key:
         raise ArchitectureError("TAMUS_AI_CHAT_API_KEY is not set")
+    recorded = False
     try:
         response = requests.post(API_URL, headers={"Authorization": f"Bearer {key}"},
                                  json={"model": model, "messages": [{"role": "user", "content": prompt}],
-                                       "max_tokens": 14000, "stream": False}, timeout=180)
+                                       "max_tokens": max_tokens, "stream": False}, timeout=180)
+        token_usage.record_response(model, label, response)
+        recorded = True
         response.raise_for_status()
         result = response.json()["choices"][0]
         if result.get("finish_reason") == "length":
-            raise ArchitectureError("Architecture response exceeded token limit")
+            raise ArchitectureError(f"{label} response exceeded token limit ({max_tokens})")
         content = result["message"]["content"]
         if not isinstance(content, str) or not content.strip():
-            raise ArchitectureError('Architecture LLM returned no text content')
+            raise ArchitectureError(f'{label} LLM returned no text content')
         return content
     except ArchitectureError:
         raise
     except requests.HTTPError as exc:
         error_response = exc.response if exc.response is not None else response
-        raise ArchitectureError(f'Architecture LLM call failed for {model}: '
+        raise ArchitectureError(f'{label} LLM call failed for {model}: '
                                 f'HTTP {error_response.status_code}: '
                                 f'{http_error_detail(error_response, key)}') from exc
     except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
+        if not recorded and isinstance(exc, requests.RequestException):
+            token_usage.record_usage(model, label, outcome="network_error")
         # Avoid logging request headers or server bodies containing credentials.
-        raise ArchitectureError(f"Architecture LLM call failed ({type(exc).__name__})") from exc
+        raise ArchitectureError(f"{label} LLM call failed ({type(exc).__name__})") from exc
 
 
 def parse_response(text):
@@ -203,7 +211,14 @@ def parse_response(text):
         if match:
             text = match.group(1)
     try:
-        result = json.loads(text)
+        def unique(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError(f'Duplicate JSON key: {key}')
+                result[key] = value
+            return result
+        result = json.loads(text, object_pairs_hook=unique)
     except (ValueError, TypeError) as exc:
         raise ArchitectureError(f"Invalid architecture JSON: {exc}") from exc
     if not isinstance(result, dict):

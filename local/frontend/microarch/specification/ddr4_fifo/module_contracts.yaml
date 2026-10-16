@@ -27,7 +27,7 @@ contracts:
       take_when_empty: No dispatch or removal; head_take alone cannot create an event.
       reset_and_events: Reset wins and no event fires.
     invariants: [system.rules.REQ_ADMIT, system.rules.REQ_CAPACITY, system.rules.REQ_DISPATCH, system.rules.REQ_FIFO, system.rules.REQ_RESET]
-    verification: [system.verification.V_ADMIT, system.verification.V_STALL, system.verification.V_CAPACITY, system.verification.V_SIMULTANEOUS, system.verification.V_FIFO, system.verification.V_RESET]
+    verification: [system.verification.V_ADMIT, system.verification.V_STALL, system.verification.V_CAPACITY, system.verification.V_SIMULTANEOUS, system.verification.V_FIFO, system.verification.V_ACTIVE, system.verification.V_RESET]
     combinational_dependencies:
       enq_ready: [head_take]
       head_valid: []
@@ -55,7 +55,7 @@ contracts:
       retirement_and_dispatch: The engine keeps dispatch_ready low on a retirement edge under D_ACTIVE_REPLACEMENT.
       reset_and_events: Suppress dispatch.
     invariants: [system.rules.REQ_DISPATCH, system.rules.REQ_FIFO, system.rules.REQ_RESET]
-    verification: [system.verification.V_SIMULTANEOUS, system.verification.V_FIFO, system.verification.V_RESET]
+    verification: [system.verification.V_SIMULTANEOUS, system.verification.V_FIFO, system.verification.V_ACTIVE, system.verification.V_RESET]
     combinational_dependencies:
       head_take: [dispatch_ready]
       dispatch_valid: [head_valid]
@@ -135,7 +135,7 @@ contracts:
     update_events:
       shared.events.dispatch: Capture complete request, reserve active bank, and begin sequence using row state.
       shared.events.command_commit: Advance phase after PRE/ACT; retire after final access and, for close-page, retain cleanup bank; release cleanup after its PRE; leave preparation after REF.
-      shared.events.refresh_due: Once pending is visible, enter preparation after draining active/cleanup state; never replace an already blocked candidate.
+      every_clock: With no candidate outstanding and refresh service inactive, use registered active/cleanup/preparation ownership and current row state to form the next registered candidate. Observe the refresh_pending input as a level; once it is visible, enter preparation only after draining active work and cleanup. The engine does not observe the refresh module's private due event. An existing candidate is held or committed before another is formed; a commit clears that candidate and the next candidate is formed on a later edge. Dispatch captures active storage before candidate formation on a later edge. Reset takes priority over all progress.
     stalls: Registered candidate and active request stay constant while blocked. Form the next candidate in a later cycle after each commit using updated row state; bubbles are permitted. No candidate or dispatch during refresh service.
     simultaneous_events:
       retirement_and_dispatch: No replacement dispatch; active was occupied before the edge.

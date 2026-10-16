@@ -47,11 +47,13 @@ ENABLE_SYNTAX_CHECK = False         # Set to True when syntax checker is working
 def call_llm(prompt: str, max_tokens: int = 1000, temperature: float = 0.0) -> str:
     """Call TAMU AI Chat API. Requires TAMUS_AI_CHAT_API_KEY env var."""
     import requests
+    import token_usage
 
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY")
     if not api_key:
         return "Error: TAMUS_AI_CHAT_API_KEY not set"
 
+    recorded = False
     try:
         response = requests.post(
             TAMU_API_URL,
@@ -69,12 +71,16 @@ def call_llm(prompt: str, max_tokens: int = 1000, temperature: float = 0.0) -> s
             timeout=30,
         )
 
+        token_usage.record_response(LLM_MODEL, "RTL", response)
+        recorded = True
         if response.status_code != 200:
             return f"Error: HTTP {response.status_code} — {response.text[:200]}"
 
         return response.json()["choices"][0]["message"]["content"]
 
     except Exception as e:
+        if not recorded and isinstance(e, requests.RequestException):
+            token_usage.record_usage(LLM_MODEL, "RTL", outcome="network_error")
         return f"Error: {str(e)}"
 
 

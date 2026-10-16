@@ -1,0 +1,164 @@
+binding_version: 1
+sampling: {phase: pre_edge, reset_gates_events: true}
+events:
+  admission:
+    status: bound
+    when:
+      all: [{endpoint: top.txn_valid, equals: 1}, {endpoint: top.txn_ready, equals: 1}]
+    payload: {request: {endpoint: host_adapter.enq_request}}
+  dispatch:
+    status: bound
+    when:
+      all: [{endpoint: fifo_scheduler.dispatch_valid, equals: 1}, {endpoint: command_engine.dispatch_ready, equals: 1}]
+    payload: {request: {endpoint: fifo_scheduler.dispatch_request}}
+  command_commit:
+    status: bound
+    when: {endpoint: command_engine.commit_valid, equals: 1}
+    payload: {command: {endpoint: command_engine.commit_command}}
+  retirement:
+    status: bound
+    when:
+      all:
+        - {endpoint: command_engine.commit_valid, equals: 1}
+        - any:
+            - {endpoint: command_engine.commit_command, field: opcode, equals: READ}
+            - {endpoint: command_engine.commit_command, field: opcode, equals: WRITE}
+    payload: {command: {endpoint: command_engine.commit_command}}
+  response_delivery:
+    status: bound
+    when: {endpoint: top.rsp_valid, equals: 1}
+    payload: {data: {endpoint: top.rsp_rdata}}
+  refresh_start:
+    status: bound
+    when:
+      all:
+        - {endpoint: command_engine.commit_valid, equals: 1}
+        - {endpoint: command_engine.commit_command, field: opcode, equals: REF}
+    payload: {command: {endpoint: command_engine.commit_command}}
+  refresh_due:
+    status: unbound
+    reason: The deadline is internal to refresh. Check periodic pending behavior from reset/clock/profile and the pending port; do not equate a pending transition with every due deadline.
+  refresh_end:
+    status: unbound
+    reason: No end pulse is exposed. Check service_busy and independent REF-edge elapsed-time expectations at the specified tRFC boundary.
+observations:
+  incoming_request: {endpoint: host_adapter.enq_request}
+  host_ready: {endpoint: top.txn_ready}
+  execution_ready: {endpoint: top.cmd_ready}
+  dispatch_ready: {endpoint: command_engine.dispatch_ready}
+  candidate_valid: {endpoint: command_engine.candidate_valid}
+  candidate_command: {endpoint: command_engine.candidate_command}
+  candidate_ok: {endpoint: timing.candidate_ok}
+  probe_valid: {endpoint: command_engine.probe_valid}
+  probe_command: {endpoint: command_engine.probe_command}
+  probe_ok: {endpoint: timing.probe_ok}
+  open_valid: {endpoint: row_state.open_valid}
+  open_rows: {endpoint: row_state.open_rows}
+  refresh_pending: {endpoint: refresh.pending}
+  refresh_busy: {endpoint: refresh.service_busy}
+checks:
+  system.verification.V_ADMIT:
+    scope: both
+    events: [admission, dispatch]
+    observations: [incoming_request]
+    note: Record distinct pre-edge accepted payloads independently of later selection.
+  system.verification.V_STALL:
+    scope: both
+    events: [admission, dispatch]
+    observations: [host_ready, incoming_request]
+    note: The driver retains host fields while backpressured; queue tests hold dispatch blocked.
+  system.verification.V_CAPACITY:
+    scope: both
+    events: [admission, dispatch, retirement]
+    observations: [host_ready, dispatch_ready]
+    note: Reconstruct occupancy from admissions minus dispatches; never read private queue counters.
+  system.verification.V_SIMULTANEOUS:
+    scope: both
+    events: [admission, dispatch, retirement]
+    observations: [host_ready]
+    note: Compare old-head payload capture and tail insertion, including capacity one and full reuse.
+  system.verification.V_FIFO:
+    scope: both
+    events: [admission, dispatch, retirement]
+    observations: []
+    note: Compare accepted and dispatched complete payload sequences, including repeated identical tuples and reset epochs.
+  system.verification.V_ACTIVE:
+    scope: both
+    events: [dispatch, command_commit, retirement]
+    observations: [candidate_valid, candidate_command, candidate_ok, dispatch_ready]
+    note: Retain an independent active request until final access; PRE and ACT do not release it.
+  system.verification.V_RESPONSE:
+    scope: both
+    events: [command_commit, retirement, response_delivery]
+    observations: []
+    note: Derive expected memory from accepted payloads and committed writes; no DUT memory supplies expected data.
+  system.verification.V_RESET:
+    scope: both
+    events: [admission, dispatch, retirement, response_delivery]
+    observations: [host_ready]
+    note: Use the shared reset edge/gating contract to cancel independent outstanding state.
+  execution.verification.V_COMMIT:
+    scope: both
+    events: [command_commit]
+    observations: [candidate_valid, candidate_command, candidate_ok, open_valid, open_rows]
+    note: Check stable blocked proposals, one shared commit per edge, and no row updates from proposals alone.
+  execution.verification.V_SEQUENCE:
+    scope: both
+    events: [dispatch, command_commit, retirement]
+    observations: [open_valid, open_rows]
+    note: Use request and bank history to predict allowed setup/access sequences independently.
+  execution.verification.V_BANKS:
+    scope: both
+    events: [command_commit]
+    observations: [open_valid, open_rows]
+    note: Compare next-edge architectural row outputs to committed ACT/PRE/REF history.
+  execution.verification.V_TIMING:
+    scope: both
+    events: [command_commit]
+    observations: [candidate_valid, candidate_command, candidate_ok, probe_valid, probe_command, probe_ok, open_valid, open_rows]
+    note: Use shared numeric minima and commit timestamps; isolated timing tests drive its contract inputs directly.
+  execution.verification.V_TFAW:
+    scope: both
+    events: [command_commit]
+    observations: [candidate_command, candidate_ok]
+    note: Use the specified isolated timing-boundary scenario with row-state stubs; do not claim it is a legal four-bank system trace.
+  execution.verification.V_PAGES:
+    scope: both
+    events: [retirement, command_commit, dispatch]
+    observations: [open_valid, open_rows, dispatch_ready, refresh_pending]
+    note: Check the selected page policy and separate post-retirement cleanup ownership.
+  execution.verification.V_DATA:
+    scope: both
+    events: [admission, command_commit, response_delivery]
+    observations: []
+    note: Maintain stimulus-derived reference words indexed by the shared address mapping.
+  execution.verification.V_RESPONSE_EDGE:
+    scope: both
+    events: [command_commit, response_delivery]
+    observations: []
+    note: Check delivery at the shared response latency; isolated memory tests may drive consecutive READ commits.
+  execution.verification.V_REFRESH_PERIOD:
+    scope: both
+    events: [refresh_start]
+    observations: [refresh_pending, refresh_busy]
+    note: Predict deadlines independently from reset and tREFI; observe registered pending at the following sampling edge.
+  execution.verification.V_REFRESH_DRAIN:
+    scope: both
+    events: [admission, dispatch, command_commit, retirement, refresh_start]
+    observations: [refresh_pending, refresh_busy, open_valid, open_rows]
+    note: Pending blocks later dispatch while owned work drains; verify PRE preparation and preserved waiting traffic.
+  execution.verification.V_REFRESH_INTERVAL:
+    scope: both
+    events: [refresh_start, command_commit, response_delivery]
+    observations: [refresh_busy, candidate_valid, candidate_ok]
+    note: Compare tRFC candidate-edge exclusion and busy boundaries; captured responses may still be delivered.
+  execution.verification.V_EXEC_RESET:
+    scope: both
+    events: [admission, dispatch, command_commit, retirement, response_delivery, refresh_start]
+    observations: [open_valid, open_rows, refresh_pending, refresh_busy]
+    note: Test reset in every execution/refresh phase with independent cancellation accounting.
+  execution.verification.V_HOST_VISIBILITY:
+    scope: both
+    events: [admission]
+    observations: [incoming_request, host_ready, execution_ready, dispatch_ready, probe_command, probe_ok, refresh_pending, refresh_busy]
+    note: Vary the diagnostic probe independently of admission and queue fullness.

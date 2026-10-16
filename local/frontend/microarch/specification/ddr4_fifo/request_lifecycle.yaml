@@ -18,7 +18,7 @@ rules:
   REQ_ACTIVE:
     origin: plan.2A
     owners: [command_engine]
-    statement: Hold active payload through PRE, ACT, and all stalls. Only final READ/WRITE commit retires it. Read data/response state is captured before release. Dispatch readiness is false while active, during cleanup, or during refresh exclusion; retirement cannot enable same-edge replacement in this draft.
+    statement: Hold active payload through PRE, ACT, and all stalls. Only final READ/WRITE commit retires it. Read data/response state is captured before release. Dispatch readiness is false while active, during cleanup, or during refresh exclusion; retirement cannot enable same-edge replacement for this target.
     verification: [V_ACTIVE]
   REQ_FIFO:
     origin: plan.2A

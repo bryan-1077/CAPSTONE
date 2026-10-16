@@ -58,7 +58,7 @@ rules:
   HOST_VISIBILITY:
     origin: plan.1B_and_2A
     owners: [host_adapter, command_engine, timing]
-    statement: txn_ready follows waiting queue readiness only. cmd_ready is reset-gated diagnostic readiness for the first command needed by the incoming mapped request, computed from idle/cleanup/refresh exclusion, row state, and independent timing probe permission. It does not admit, dispatch, bypass FIFO, or reserve storage, and is meaningful without txn_valid. This is a proposed refinement of legacy execution visibility requiring compatibility review.
+    statement: txn_ready follows waiting queue readiness only. cmd_ready is reset-gated diagnostic readiness for the first command needed by the incoming mapped request, computed from idle/cleanup/refresh exclusion, row state, and independent timing probe permission. It does not admit, dispatch, bypass FIFO, or reserve storage, and is meaningful without txn_valid. This accepted refinement intentionally changes the legacy coarse execution diagnostic; it does not promise immediate service or bounded request latency.
     verification: [V_HOST_VISIBILITY]
 verification:
   V_COMMIT:
