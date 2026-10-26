@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-Stage = Literal["generate", "debug", "validation", "backend", "remote-check"]
+Stage = Literal["generate", "debug", "validation", "backend", "gdsii-validation", "remote-check"]
 Status = Literal["passed", "failed", "needs_attention", "not_implemented"]
 
 
@@ -39,6 +39,7 @@ class RunConfig:
     no_backend: bool = False
     no_bist: bool = False
     validation_result: Path | None = None
+    backend_result: Path | None = None
 
 
 @dataclass

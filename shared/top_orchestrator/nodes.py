@@ -15,6 +15,7 @@ from .remote import RemoteConfig, remote_check_node
 from .validation import validation_node, verify_backend_handoff
 from .display import print_node_header
 from .auth import cached_password
+from .gdsii_validation import gdsii_validation_node
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = REPO_ROOT / "local" / "frontend"
@@ -306,4 +307,5 @@ def debug_node(config: RunConfig, run_dir: Path) -> StageResult:
 
 
 NODES = {"generate": generate_node, "debug": debug_node,
-         "validation": validation_node, "backend": backend_node, "remote-check": remote_check_node}
+         "validation": validation_node, "backend": backend_node,
+         "gdsii-validation": gdsii_validation_node, "remote-check": remote_check_node}

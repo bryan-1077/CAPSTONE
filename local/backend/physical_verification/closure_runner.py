@@ -138,7 +138,7 @@ def _run(state, ssh, implementation_runner, merge, repo, log_root, log_dir, *, r
             tried.add(signature)
             project = state["remote_project_root"]
             outdir = f"{source_dir}_physical_{log_dir.name[:8]}_{attempt + 1:02d}"
-            reservation = ssh.run(f"mkdir -- {shlex.quote(outdir)}", cwd=project)
+            reservation = ssh.run(f"mkdir -- {shlex.quote(outdir)}", cwd=project, timeout=300)
             if not reservation["ok"]:
                 return fail("Cannot reserve a fresh physical repair output directory.")
             script = f".physical_verification_runner_{log_dir.name}_{attempt + 1}.py"

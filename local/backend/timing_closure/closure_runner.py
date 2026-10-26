@@ -162,7 +162,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             state.get("remote_python_cmd") or "python3", "-c", snapshot_code, source_dir, snapshot_dir,
         ))
         if not recovery_source:
-            snapshot_result = ssh.run(snapshot_command, cwd=project_root, timeout=120)
+            snapshot_result = ssh.run(snapshot_command, cwd=project_root, timeout=300)
             if not snapshot_result["ok"]:
                 return fail(f"Cannot isolate mapped inputs: {snapshot_result.get('stderr', '')}")
         working = merge(working, {
@@ -269,7 +269,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 settings = backend_settings(state, attempt)
             outdir = (f"{base_dir}_{frequency}_ai_{run_id[:8]}_{attempt - limit:02d}" if is_ai
                       else f"{base_dir}_{frequency}_{attempt:02d}")
-            reservation = ssh.run(f"mkdir -- {shlex.quote(outdir)}", cwd=project_root)
+            reservation = ssh.run(f"mkdir -- {shlex.quote(outdir)}", cwd=project_root, timeout=300)
             if not reservation["ok"]:
                 return fail(f"Cannot reserve fresh timing output directory {outdir}; existing builds are never overwritten: {reservation['stderr']}")
             script = (f".timing_closure_runner_{frequency}_{run_id[:8]}_{attempt:02d}.py" if is_ai or recovery_source

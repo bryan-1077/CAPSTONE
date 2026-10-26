@@ -207,11 +207,12 @@ class OrchestratorTests(unittest.TestCase):
                     "generate": generate,
                     "debug": lambda c, d: StageResult("debug", "passed", "repaired"),
                     "backend": backend,
+                    "gdsii-validation": lambda c, d: StageResult("gdsii-validation", "needs_attention", "review required"),
                     "validation": lambda c, d: self.fail("Verification must be skipped"),
                 }):
             state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
-        self.assertEqual(state.status, "complete")
-        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend"])
+        self.assertEqual(state.status, "needs_attention")
+        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend", "gdsii-validation"])
 
     def test_skip_verification_stops_on_frontend_failure_or_publication_failure(self):
         for failure in ("frontend", "publication"):

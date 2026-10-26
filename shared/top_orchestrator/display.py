@@ -6,6 +6,7 @@ NODE_LABELS = {
     "bist": "BIST",
     "validation": "VERIFICATION",
     "backend": "PHYSICAL DESIGN",
+    "gdsii-validation": "GDSII VALIDATION",
     "debug": "DEBUG MODE",
     "lec": "LOGICAL EQUIVALENCE CHECK (LEC)",
     "remote-check": "SSH / SLURM PREFLIGHT",

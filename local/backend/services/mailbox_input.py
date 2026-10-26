@@ -54,11 +54,11 @@ def stage_mailbox(mailbox: Path, project_root: str, ssh_config: dict) -> dict:
         with SSHExecutor(**ssh_config) as ssh:
             command = (f"mkdir -p -- {shlex.quote(str(remote.parent))} && "
                        f"mkdir -- {shlex.quote(str(remote))}")
-            result = ssh.run(command)
+            result = ssh.run(command, timeout=300)
             if not result["ok"]:
                 raise RuntimeError("Could not create remote mailbox staging directory: " + result.get("stderr", ""))
             directories = sorted({str(remote / Path(name).parent.as_posix()) for name in hashes})
-            result = ssh.run("mkdir -p -- " + " ".join(shlex.quote(path) for path in directories))
+            result = ssh.run("mkdir -p -- " + " ".join(shlex.quote(path) for path in directories), timeout=300)
             if not result["ok"]:
                 raise RuntimeError("Could not create remote RTL subdirectories: " + result.get("stderr", ""))
             for name in hashes:
