@@ -258,7 +258,8 @@ class OrchestratorTests(unittest.TestCase):
             with patch("sys.stdout", terminal):
                 code = stream_command([sys.executable, "-u", "-c", script, str(marker)], root / "log")
             self.assertEqual(code, 0)
-            self.assertEqual(terminal.getvalue(), "Choose specs: ")
+            self.assertRegex(terminal.getvalue(),
+                             r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [^\]]+\] Choose specs: $")
             self.assertEqual((root / "log").read_text(), terminal.getvalue())
 
     def test_generation_hands_off_to_validation_and_persists_state(self):
