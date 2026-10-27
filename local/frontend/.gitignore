@@ -3,6 +3,7 @@
 !README.md
 !arch_ddr4_controller_implementation_plan.md
 !microarch/architecture_flow.md
+!microarch/rtl_response_recovery.md
 !microarch/specification/ddr4_fifo/review.md
 !microarch/specification/generation_contract.md
 
@@ -27,3 +28,6 @@ microarch/usage/
 microarch/proposals/system/*.failure.json
 debug/failures/*
 !debug/failures/.gitkeep
+
+# Prepared design campaigns and paid-run evidence (source definitions live in campaigns/)
+microarch/campaigns/

@@ -253,9 +253,22 @@ def parse_args():
     cache_mode.add_argument('--resume', action='store_true',
                             help='Reuse matching reviewed RTL, generating on cache miss; requires --output-root.')
     parser.add_argument("--output-root", help="Isolated build root for IR, RTL and reviewed cache.")
+    recovery_flags = parser.add_mutually_exclusive_group()
+    recovery_flags.add_argument('--rtl-recovery', dest='rtl_recovery', action='store_true',
+                                help='Enable bounded RTL recovery; requires --output-root and lint.')
+    recovery_flags.add_argument('--no-rtl-recovery', dest='rtl_recovery', action='store_false',
+                                help='Disable bounded RTL response recovery.')
+    parser.set_defaults(rtl_recovery=False)
+    parser.add_argument('--rtl-generator-model', help='Override dual-LLM generation/merge in an isolated architecture build.')
     args = parser.parse_args()
+    if args.rtl_recovery and (not args.output_root or args.no_lint):
+        parser.error('--rtl-recovery requires --output-root and lint')
     if args.resume and not args.output_root:
         parser.error('--resume requires --output-root for specification-keyed caches')
+    if args.rtl_generator_model is not None:
+        if not args.output_root or not args.rtl_generator_model.strip():
+            parser.error('--rtl-generator-model requires --output-root and a nonempty model name')
+        args.rtl_generator_model = args.rtl_generator_model.strip()
     return args
 
 
@@ -346,6 +359,8 @@ def _run_design(args):
             lint_enabled=not args.no_lint,
             use_cache=args.cache,
             resume=args.resume,
+            **({'recovery': True} if getattr(args, 'rtl_recovery', False) else {}),
+            **({'generator_model': args.rtl_generator_model} if args.rtl_generator_model is not None else {}),
         )
         rtl = enforce_width_safety(rtl, module_name)
         sv_path = os.path.join(work_dir, module_name + ".sv")

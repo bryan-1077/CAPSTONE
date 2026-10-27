@@ -1,0 +1,172 @@
+{
+  "description": "Projection of the saved 20261027T065112Z controller observation repair. Exact before/after check bindings and unrelated source contract/wiring evidence; not a compilable architecture or semantic approval.",
+  "check_id": "execution.verification.V_EXEC_COMMAND_COMMIT",
+  "architecture_projection": {
+    "status": "supported",
+    "modules": {
+      "contracts": {
+        "command_engine": {
+          "reset": "Clear active request, candidate, and refresh preparation state. Suppress dispatch_ready, candidate_valid, and commit_valid while reset is asserted. Invalid command payload is canonical NOP.",
+          "update_events": {
+            "shared.events.dispatch": "Capture the complete dispatch request into active ownership. Candidate generation begins only on a later edge.",
+            "shared.events.command_commit": "After ACT or PRE, retain active ownership and form a later candidate from updated state. After final READ or WRITE, retire active ownership. During refresh preparation, committed PRE advances ascending bank preparation and committed REF completes one refresh acknowledgment.",
+            "every_clock": "When no candidate is outstanding, refresh is not in service, and reset is inactive, derive the next registered candidate from active ownership, bank state, and refresh preparation. A visible refresh pending level blocks new dispatch and is serviced only after active work drains."
+          },
+          "simultaneous_events": {
+            "refresh_due_and_final_commit": "The final active command may commit using pre-edge refresh state; pending becomes visible afterward and blocks later dispatch.",
+            "retirement_and_dispatch": "Retirement does not permit same-edge replacement dispatch.",
+            "reset_and_events": "Reset wins.",
+            "refresh_pending_and_dispatch": "A pre-edge visible pending refresh prevents dispatch."
+          }
+        },
+        "refresh": {
+          "reset": "Clear deadline, pending, and service state synchronously. pending and service_busy are reset-gated low.",
+          "update_events": {
+            "shared.events.refresh_due": "Set pending and advance the periodic deadline by tREFI.",
+            "shared.events.refresh_start": "Start tRFC service and clear pending unless refresh_due also occurs on the same edge.",
+            "shared.events.refresh_end": "End service exclusion while preserving independently accumulated pending state."
+          },
+          "simultaneous_events": {
+            "due_and_refresh_start": "Due wins pending-state update; REF starts service and another pending refresh remains.",
+            "due_and_refresh_end": "Service ends but pending remains set.",
+            "reset_and_events": "Reset wins."
+          }
+        }
+      }
+    },
+    "graph": {
+      "connections": {
+        "top.txn_valid": [
+          "host_adapter.txn_valid"
+        ],
+        "top.txn_bank": [
+          "host_adapter.txn_bank"
+        ],
+        "top.txn_addr": [
+          "host_adapter.txn_addr"
+        ],
+        "top.txn_is_write": [
+          "host_adapter.txn_is_write"
+        ],
+        "top.txn_wdata": [
+          "host_adapter.txn_wdata"
+        ],
+        "host_adapter.txn_ready": [
+          "top.txn_ready"
+        ],
+        "host_adapter.enq_valid": [
+          "waiting_queue.enq_valid"
+        ],
+        "host_adapter.enq_request": [
+          "waiting_queue.enq_request"
+        ],
+        "waiting_queue.enq_ready": [
+          "host_adapter.enq_ready"
+        ],
+        "waiting_queue.head_valid": [
+          "fifo_scheduler.head_valid"
+        ],
+        "waiting_queue.head_request": [
+          "fifo_scheduler.head_request"
+        ],
+        "fifo_scheduler.head_take": [
+          "waiting_queue.head_take"
+        ],
+        "fifo_scheduler.dispatch_valid": [
+          "command_engine.dispatch_valid"
+        ],
+        "fifo_scheduler.dispatch_request": [
+          "command_engine.dispatch_request"
+        ],
+        "command_engine.dispatch_ready": [
+          "fifo_scheduler.dispatch_ready"
+        ],
+        "bank_state.open_valid": [
+          "command_engine.open_valid",
+          "timing.open_valid"
+        ],
+        "bank_state.open_rows": [
+          "command_engine.open_rows",
+          "timing.open_rows"
+        ],
+        "refresh.pending": [
+          "command_engine.refresh_pending"
+        ],
+        "refresh.service_busy": [
+          "command_engine.refresh_busy"
+        ],
+        "command_engine.candidate_valid": [
+          "timing.candidate_valid"
+        ],
+        "command_engine.candidate_command": [
+          "timing.candidate_command"
+        ],
+        "timing.candidate_ok": [
+          "command_engine.candidate_ok"
+        ],
+        "command_engine.commit_valid": [
+          "timing.commit_valid",
+          "bank_state.commit_valid",
+          "refresh.commit_valid",
+          "memory.commit_valid"
+        ],
+        "command_engine.commit_command": [
+          "timing.commit_command",
+          "bank_state.commit_command",
+          "refresh.commit_command",
+          "memory.commit_command"
+        ],
+        "memory.rsp_valid": [
+          "host_adapter.memory_rsp_valid"
+        ],
+        "memory.rsp_data": [
+          "host_adapter.memory_rsp_data"
+        ],
+        "host_adapter.rsp_valid": [
+          "top.rsp_valid"
+        ],
+        "host_adapter.rsp_rdata": [
+          "top.rsp_rdata"
+        ]
+      }
+    },
+    "verification": {
+      "checks": {
+        "execution.verification.V_EXEC_COMMAND_COMMIT": {
+          "scope": "both",
+          "events": [
+            "command_commit"
+          ],
+          "observations": [
+            "candidate_valid",
+            "candidate_command",
+            "candidate_ok",
+            "open_valid",
+            "open_rows"
+          ],
+          "note": "Verify only a legal permitted candidate commits and blocked candidates have no observable effect."
+        }
+      }
+    }
+  },
+  "after_check": {
+    "scope": "both",
+    "events": [
+      "command_commit",
+      "response_delivery",
+      "refresh_start"
+    ],
+    "observations": [
+      "candidate_valid",
+      "candidate_command",
+      "candidate_ok",
+      "open_valid",
+      "open_rows",
+      "refresh_pending",
+      "refresh_busy",
+      "host_response_valid",
+      "host_response_data"
+    ],
+    "note": "Probe candidate signals as the indirect timing-history check. For blocked WRITE cases, retain attempted address/data in an independent memory scoreboard and subsequently issue/read back the affected location to prove no mutation. Observe refresh pending/service state and response outputs to prove blocked proposals produce no refresh or response side effect."
+  }
+}

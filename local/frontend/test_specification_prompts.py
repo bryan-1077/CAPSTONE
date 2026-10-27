@@ -61,9 +61,10 @@ class SpecificationPromptTests(unittest.TestCase):
             decoded = repair_context(prompt)
             self.assertEqual(decoded['request'], self.request)
             self.assertEqual(decoded['locked_system'], locked)
-            capabilities = {k: v for k, v in self.context.items() if k != 'format_example'}
+            capabilities = {k: v for k, v in self.context.items() if k not in ('format_example', 'local_library_catalog')}
             self.assertEqual(decoded['capabilities'], capabilities)
             self.assertNotIn('format_example', decoded['capabilities'])
+            self.assertNotIn('local_library_catalog', decoded['capabilities'])
             self.assertEqual(json.loads(prompt.split(CANDIDATE_MARKER, 1)[1]), candidate)
             self.assertEqual(prompt.count(CANDIDATE_MARKER), 1)
             self.assertIn('COMPLETE corrected stage response', prompt)
@@ -75,6 +76,7 @@ class SpecificationPromptTests(unittest.TestCase):
                               fresh_decomposition=True)
         decoded = repair_context(prompt)
         self.assertIn('format_example', decoded['capabilities'])
+        self.assertIn('local_library_catalog', decoded['capabilities'])
         self.assertEqual(set(decoded['capabilities']['format_example']['modules']), {'contracts'})
         self.assertEqual(decoded['locked_system'], self.locked)
         self.assertIn('FRESH DECOMPOSITION:', prompt)

@@ -1,5 +1,18 @@
 # Microarchitecture flow
 
+For plain-text user specifications, run `bash local/frontend/start_flow.sh
+--specification --from-text` from the repository root. It prompts for a description,
+shows request YAML for confirmation, and runs the staged specification/architecture
+and RTL flow in an isolated directory. See [plain_text_input.md](plain_text_input.md)
+for options and limits. The default legacy text/extraction/expand-spec route is
+unchanged.
+
+Completed specification-derived RTL builds can now run the standalone local
+[simulation runner](../simulation/README.md). It consumes the isolated build's
+`verification_handoff.json`, runs an explicit FIFO-controller profile with
+Verilator, and preserves separate behavioral evidence without changing the
+legacy `run_sim.sh` flow or marking whole source requirements verified.
+
 The new **LLM architecture proposal + deterministic graph compiler** path is
 available through `run_flow.py --microarch` or `--microarch-only`. It supports
 reusable and custom module specs, generates integration from the proposed graph,

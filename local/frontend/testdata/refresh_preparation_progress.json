@@ -1,0 +1,431 @@
+{
+  "description": "Verbatim projection for manual refresh progress checks. Not a compilable specification or target RTL proof. The state model explicitly chooses interpretations of ambiguous prose; it does not parse prose.",
+  "source_manifest_fingerprint": "8210afd2609509aeb47838e99fd70af756ff25f9f91557f6b7e344aa5b02b7d4",
+  "profile": "DDR4-3200",
+  "timing_cycles": {
+    "tRCD": 22,
+    "tRP": 22,
+    "tRAS": 52,
+    "tRC": 74,
+    "tRRD": 6,
+    "tFAW": 40,
+    "tRFC1": 560,
+    "tREFI": 12480
+  },
+  "contracts": {
+    "command_engine": {
+      "status": "draft",
+      "role": "command_sequencing",
+      "owned_state": {
+        "active_request": "Validity and complete dispatched request retained until final committed READ or WRITE.",
+        "candidate": "Registered non-NOP command proposal and validity.",
+        "refresh_preparation": "Ascending-bank close preparation state after refresh pending becomes visible."
+      },
+      "interfaces": {
+        "dispatch_request": {
+          "direction": "input",
+          "type": "shared.types.request"
+        },
+        "dispatch_valid": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "dispatch_ready": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        },
+        "open_rows": {
+          "direction": "input",
+          "type": "shared.types.bank_rows"
+        },
+        "open_valid": {
+          "direction": "input",
+          "type": "shared.types.bank_valid"
+        },
+        "refresh_pending": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "refresh_busy": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "candidate_command": {
+          "direction": "output",
+          "type": "shared.types.command"
+        },
+        "candidate_valid": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        },
+        "candidate_ok": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "commit_command": {
+          "direction": "output",
+          "type": "shared.types.command"
+        },
+        "commit_valid": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        }
+      },
+      "handshakes": {
+        "dispatch": "shared.events.dispatch captures the pre-edge FIFO head only when no active request exists and refresh is neither pending nor in service.",
+        "candidate": "Candidate formation uses registered active ownership and pre-edge bank state. A blocked candidate remains unchanged and has no architectural effect.",
+        "commit": "shared.events.command_commit occurs only for a valid timing-permitted candidate. The committed command is broadcast unchanged."
+      },
+      "reset": "Clear active request, candidate, and refresh-preparation state. Suppress dispatch_ready, candidate_valid, and commit_valid during reset. Invalid command payload is NOP.",
+      "update_events": {
+        "shared.events.dispatch": "Capture the complete dispatched request into active ownership. Candidate generation starts only on a later edge.",
+        "shared.events.command_commit": "ACT and PRE retain active ownership. Final READ or WRITE retires it. During refresh preparation, PRE advances bank closure and REF completes an acknowledgment.",
+        "every_clock": "When no candidate is outstanding, refresh is inactive, and reset is inactive, form the next registered candidate from active ownership, bank state, and refresh preparation."
+      },
+      "stalls": "Candidate and active payload remain stable across timing stalls. No same-edge replacement dispatch follows retirement. Visible refresh pending blocks dispatch.",
+      "simultaneous_events": {
+        "refresh_due_and_final_commit": "The final active command may commit using pre-edge refresh state; pending becomes visible afterward.",
+        "refresh_pending_and_dispatch": "Pre-edge visible pending prevents dispatch.",
+        "retirement_and_dispatch": "Retirement does not permit same-edge replacement dispatch.",
+        "reset_and_events": "Reset wins."
+      },
+      "combinational_dependencies": {
+        "dispatch_ready": [
+          "refresh_pending",
+          "refresh_busy"
+        ],
+        "candidate_command": [],
+        "candidate_valid": [],
+        "commit_command": [],
+        "commit_valid": [
+          "candidate_ok"
+        ]
+      },
+      "invariants": [
+        "execution.rules.EXEC_COMMAND_COMMIT",
+        "execution.rules.EXEC_REFRESH_EXCLUSION",
+        "system.rules.CONSTRAINT_2",
+        "system.rules.R1",
+        "system.rules.SYS_ACTIVE_LIFECYCLE",
+        "system.rules.SYS_BANK_STATE",
+        "system.rules.SYS_COMMAND_SEQUENCE",
+        "system.rules.SYS_FIFO_ORDER",
+        "system.rules.SYS_MEMORY_AND_RESPONSE",
+        "system.rules.SYS_REFRESH",
+        "system.rules.SYS_RESET",
+        "system.rules.SYS_SIMULTANEOUS_EVENTS",
+        "system.rules.SYS_TIMING_PROTECTION"
+      ],
+      "verification": [
+        "execution.verification.V_EXEC_COMMAND_COMMIT",
+        "execution.verification.V_EXEC_REFRESH_EXCLUSION",
+        "system.verification.V_ACTIVE_LIFECYCLE",
+        "system.verification.V_BANK_STATE",
+        "system.verification.V_COMMAND_SEQUENCE",
+        "system.verification.V_CONSTRAINT_DESIGN_TYPE",
+        "system.verification.V_FIFO_ORDER",
+        "system.verification.V_MEMORY_RESPONSE",
+        "system.verification.V_R1_TIMING_REFRESH_FIFO",
+        "system.verification.V_REFRESH",
+        "system.verification.V_RESET",
+        "system.verification.V_SIMULTANEOUS",
+        "system.verification.V_TIMING_PROTECTION"
+      ]
+    },
+    "refresh": {
+      "status": "draft",
+      "role": "refresh_control",
+      "owned_state": {
+        "deadline": "Periodic tREFI deadline referenced to the most recent reset edge.",
+        "pending_state": "Sticky coalescing refresh-pending state.",
+        "service_state": "Committed REF age and validity representing tRFC service exclusion."
+      },
+      "interfaces": {
+        "commit_command": {
+          "direction": "input",
+          "type": "shared.types.command"
+        },
+        "commit_valid": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "pending": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        },
+        "service_busy": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        }
+      },
+      "handshakes": {
+        "request": "shared.events.refresh_due sets sticky pending state. Pending persists until REF acknowledgment except when simultaneous due retains it.",
+        "acknowledgment": "shared.events.refresh_start is exactly a committed REF command."
+      },
+      "reset": "Clear deadline, pending, and service state synchronously. pending and service_busy are low during reset.",
+      "update_events": {
+        "shared.events.refresh_due": "Set pending and advance periodic deadline by tREFI.",
+        "shared.events.refresh_start": "Start tRFC service and clear pending unless refresh_due also occurs.",
+        "shared.events.refresh_end": "End service exclusion while preserving independently accumulated pending state.",
+        "every_clock": "After reset release, initialize the first deadline so refresh_due occurs at E0+tREFI, where E0 is the last rising edge sampled with reset asserted. On every subsequent reset-inactive edge, advance the periodic deadline timebase independently of REF commit; when the pre-edge deadline is reached, refresh_due sets pending and advances the deadline by exactly tREFI, including while pending or service is active. While service_state is valid, advance its committed-REF age every reset-inactive edge; refresh_end occurs at the edge whose pre-edge REF age reaches tRFC and clears service_state after that edge. Reset has priority. Otherwise evaluate due and service-expiry from pre-edge state, then apply refresh_start from a committed REF; simultaneous refresh_due and refresh_start leaves pending set, and simultaneous refresh_due and refresh_end preserves the newly pending refresh."
+      },
+      "stalls": "Deadlines continue while waiting for active completion, bank closure, or service completion. Refresh does not own FIFO requests.",
+      "simultaneous_events": {
+        "due_and_refresh_start": "Due wins pending update; REF starts service and another pending refresh remains.",
+        "due_and_refresh_end": "Service ends but pending remains set.",
+        "reset_and_events": "Reset wins."
+      },
+      "combinational_dependencies": {
+        "pending": [],
+        "service_busy": []
+      },
+      "invariants": [
+        "execution.rules.EXEC_COMMAND_COMMIT",
+        "execution.rules.EXEC_REFRESH_EXCLUSION",
+        "system.rules.R1",
+        "system.rules.SYS_REFRESH",
+        "system.rules.SYS_RESET",
+        "system.rules.SYS_SIMULTANEOUS_EVENTS"
+      ],
+      "verification": [
+        "execution.verification.V_EXEC_COMMAND_COMMIT",
+        "execution.verification.V_EXEC_REFRESH_EXCLUSION",
+        "system.verification.V_R1_TIMING_REFRESH_FIFO",
+        "system.verification.V_REFRESH",
+        "system.verification.V_RESET",
+        "system.verification.V_SIMULTANEOUS"
+      ]
+    },
+    "bank_state": {
+      "status": "draft",
+      "role": "bank_state",
+      "owned_state": {
+        "rows": "Per-bank row values and open/closed validity for shared.parameters.BANK_COUNT banks."
+      },
+      "interfaces": {
+        "commit_command": {
+          "direction": "input",
+          "type": "shared.types.command"
+        },
+        "commit_valid": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "open_rows": {
+          "direction": "output",
+          "type": "shared.types.bank_rows"
+        },
+        "open_valid": {
+          "direction": "output",
+          "type": "shared.types.bank_valid"
+        }
+      },
+      "handshakes": {
+        "commit": "Samples shared.events.command_commit and changes row state only for legal committed ACT, PRE, or REF."
+      },
+      "reset": "Clear all open validity and row values synchronously; open_valid is low during reset.",
+      "update_events": {
+        "shared.events.command_commit": "ACT opens target bank at command row; PRE closes target bank; REF leaves all banks closed; READ and WRITE preserve state."
+      },
+      "stalls": "Retain bank state without a relevant committed command.",
+      "simultaneous_events": {
+        "ref_and_bank_update": "Only one command commits per edge; REF clears all open validity.",
+        "reset_and_commit": "Reset wins."
+      },
+      "combinational_dependencies": {
+        "open_rows": [],
+        "open_valid": []
+      },
+      "invariants": [
+        "execution.rules.EXEC_COMMAND_COMMIT",
+        "system.rules.R1",
+        "system.rules.SYS_BANK_STATE",
+        "system.rules.SYS_COMMAND_SEQUENCE",
+        "system.rules.SYS_REFRESH",
+        "system.rules.SYS_RESET"
+      ],
+      "verification": [
+        "execution.verification.V_EXEC_COMMAND_COMMIT",
+        "system.verification.V_BANK_STATE",
+        "system.verification.V_COMMAND_SEQUENCE",
+        "system.verification.V_R1_TIMING_REFRESH_FIFO",
+        "system.verification.V_REFRESH",
+        "system.verification.V_RESET"
+      ]
+    },
+    "timing": {
+      "status": "draft",
+      "role": "timing_enforcement",
+      "owned_state": {
+        "bank_history": "Per-bank committed ACT and PRE history sufficient for tRCD and tRAS.",
+        "global_history": "Committed ACT window history for tFAW and REF history for tRFC exclusion."
+      },
+      "interfaces": {
+        "candidate_command": {
+          "direction": "input",
+          "type": "shared.types.command"
+        },
+        "candidate_valid": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "candidate_ok": {
+          "direction": "output",
+          "type": "shared.types.bit"
+        },
+        "commit_command": {
+          "direction": "input",
+          "type": "shared.types.command"
+        },
+        "commit_valid": {
+          "direction": "input",
+          "type": "shared.types.bit"
+        },
+        "open_rows": {
+          "direction": "input",
+          "type": "shared.types.bank_rows"
+        },
+        "open_valid": {
+          "direction": "input",
+          "type": "shared.types.bank_valid"
+        }
+      },
+      "handshakes": {
+        "permission": "candidate_ok is high only for valid supported non-NOP commands meeting pre-edge bank legality and every applicable timing rule.",
+        "history": "Only shared.events.command_commit updates histories. Invalid, blocked, and absent candidates never update history."
+      },
+      "reset": "Clear timing history validity and age state synchronously. candidate_ok is low during reset.",
+      "update_events": {
+        "every_clock": "Age and expire committed timing histories using the shared edge convention.",
+        "shared.events.command_commit": "Insert ACT, PRE, and REF history only after permission for the candidate edge was evaluated."
+      },
+      "stalls": "Elapsed time advances during blocked proposals, but blocked proposals do not create history.",
+      "simultaneous_events": {
+        "expiration_and_command_commit": "Permission uses earlier committed history; histories reaching the exact minimum boundary no longer block that edge.",
+        "reset_and_commit": "Reset wins."
+      },
+      "combinational_dependencies": {
+        "candidate_ok": [
+          "candidate_valid",
+          "candidate_command",
+          "open_rows",
+          "open_valid"
+        ]
+      },
+      "invariants": [
+        "execution.rules.EXEC_COMMAND_COMMIT",
+        "execution.rules.EXEC_REFRESH_EXCLUSION",
+        "execution.rules.EXEC_TFAW_WINDOW",
+        "system.rules.CONSTRAINT_2",
+        "system.rules.R1",
+        "system.rules.SYS_BANK_STATE",
+        "system.rules.SYS_COMMAND_SEQUENCE",
+        "system.rules.SYS_REFRESH",
+        "system.rules.SYS_RESET",
+        "system.rules.SYS_TIMING_PROTECTION"
+      ],
+      "verification": [
+        "execution.verification.V_EXEC_COMMAND_COMMIT",
+        "execution.verification.V_EXEC_REFRESH_EXCLUSION",
+        "execution.verification.V_EXEC_TFAW_WINDOW",
+        "system.verification.V_BANK_STATE",
+        "system.verification.V_COMMAND_SEQUENCE",
+        "system.verification.V_CONSTRAINT_DESIGN_TYPE",
+        "system.verification.V_R1_TIMING_REFRESH_FIFO",
+        "system.verification.V_REFRESH",
+        "system.verification.V_RESET",
+        "system.verification.V_TIMING_PROTECTION"
+      ]
+    }
+  },
+  "system_rules": {
+    "SYS_REFRESH": {
+      "origin": "model.refinement.refresh",
+      "statement": "The first refresh due edge after reset is E0+tREFI, where E0 is the last rising edge sampled with reset asserted. Later due deadlines advance by tREFI independent of REF commit. Due sets sticky pending state; due events during pending or service coalesce. Once pending is visible before an edge, no new dispatch occurs. Any already active request may finish, then all open banks are closed in ascending bank order before REF commits. REF starts tRFC command exclusion. If refresh_due and REF commit occur on the same edge, pending remains set for a later refresh.",
+      "verification": [
+        "V_REFRESH"
+      ],
+      "owners": [
+        "refresh",
+        "command_engine",
+        "bank_state",
+        "timing"
+      ]
+    },
+    "SYS_ACTIVE_LIFECYCLE": {
+      "origin": "model.refinement.active_lifecycle",
+      "statement": "Only dispatch creates an active request. The active request payload remains unchanged through all command proposals, blocked cycles, ACT, PRE, refresh preparation, and timing stalls. Only its final committed READ or WRITE retires it. Retirement does not permit replacement dispatch on the same edge.",
+      "verification": [
+        "V_ACTIVE_LIFECYCLE"
+      ],
+      "owners": [
+        "command_engine"
+      ]
+    },
+    "SYS_COMMAND_SEQUENCE": {
+      "origin": "model.refinement.command_sequence",
+      "statement": "For the active FIFO-selected request, a closed target bank is prepared by ACT before READ or WRITE, an open matching row permits READ or WRITE, and an open mismatched row is prepared by PRE followed by ACT before READ or WRITE. Setup commands never retire the request. NOP and reserved opcode values never commit.",
+      "verification": [
+        "V_COMMAND_SEQUENCE"
+      ],
+      "owners": [
+        "command_engine",
+        "bank_state",
+        "timing"
+      ]
+    },
+    "SYS_TIMING_PROTECTION": {
+      "origin": "model.refinement.timing",
+      "statement": "Command commit enforces all applicable shared.timing_rules from committed command history only. ACT-to-READ and ACT-to-WRITE satisfy tRCD for the same bank; ACT-to-PRE satisfies tRAS for the same bank; and no fifth ACT commits while four earlier ACT commits remain within the tFAW window. A stalled proposal, invalid proposal, or timing probe does not update timing history.",
+      "verification": [
+        "V_TIMING_PROTECTION"
+      ],
+      "owners": [
+        "timing",
+        "command_engine"
+      ]
+    }
+  },
+  "execution_rules": {
+    "EXEC_COMMAND_COMMIT": {
+      "origin": "model.refinement.command_commit",
+      "statement": "At most one non-NOP command commits at each rising edge. Command legality and timing permission are evaluated from pre-edge state and committed history, so a command cannot use its own commit to satisfy a prerequisite. A blocked command has no bank-state, timing-history, refresh, memory, request-lifecycle, or response effect.",
+      "verification": [
+        "V_EXEC_COMMAND_COMMIT"
+      ],
+      "owners": [
+        "command_engine",
+        "timing",
+        "bank_state",
+        "refresh",
+        "memory"
+      ]
+    },
+    "EXEC_REFRESH_EXCLUSION": {
+      "origin": "model.refinement.refresh_exclusion",
+      "statement": "REF committed at edge E blocks every command commit at candidate edges strictly before E+tRFC. At E+tRFC, the exclusion ends and a command may commit if all other conditions permit. Existing captured responses may still be delivered during refresh service.",
+      "verification": [
+        "V_EXEC_REFRESH_EXCLUSION"
+      ],
+      "owners": [
+        "timing",
+        "refresh",
+        "command_engine"
+      ]
+    }
+  },
+  "finding": {
+    "id": "F_REFRESH_PREPARATION_CANDIDATE_DEADLOCK",
+    "scope": "architecture",
+    "resolution": "design_repair",
+    "message": "Obligation: once refresh pending is visible, an already active request may finish, then the controller must close all open banks in ascending order and commit REF. Conflict: command_engine permits every-clock formation of the next registered candidate only when \"refresh is inactive,\" while refresh preparation requires PRE and REF candidates after refresh pending is visible. Its declared commit updates only advance preparation after a PRE or REF has already committed and do not provide a path to create the initial preparation candidate. Consequently, after pending becomes visible and any outstanding candidate retires, no PRE or REF candidate can be formed; open banks cannot be closed, REF cannot commit, and sticky pending blocks all later dispatch indefinitely. Correct command_engine candidate-generation rules to explicitly generate ascending-bank PRE and final REF preparation candidates while refresh is pending and service is not active, including entry into preparation after pending becomes visible.",
+    "references": [
+      "/documents/modules/contracts/command_engine",
+      "/documents/system/rules/R1",
+      "/documents/shared/events/refresh_due"
+    ],
+    "requirement_ids": [
+      "R1"
+    ]
+  }
+}

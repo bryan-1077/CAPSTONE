@@ -31,7 +31,15 @@ import requests
 from tpm_pacing import paced_post
 import token_usage
 import uuid
+from rtl_recovery import active_recovery, RecoveryBudget, transport_retry
+from rtl_lowering_context import scoped_system_prompt
+from llm_diagnostics import (FailureKind, LlmFailure, CallDiagnostics, DiagnosticText,
+                             record_parse, redact, write_json, _failure_events)
 
+from rtl_response_payload import (json_input, decode_json, validate_payload,
+                                  ALLOWED_STATUS as _ALLOWED_STATUS,
+                                  ALLOWED_ISSUE_TYPES as _ALLOWED_ISSUE_TYPES,
+                                  STATUS_ALIASES as _STATUS_ALIASES)
 from ir_to_llm_context import build_llm_context
 from prompt_context import serialize_context
 from width_safety import enforce_width_safety
@@ -82,7 +90,8 @@ def request_timeout_seconds(value=None):
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError()
     except (TypeError, ValueError):
-        raise RuntimeError('DUAL_LLM_TIMEOUT_SECONDS/--timeout must be a positive finite number') from None
+        raise LlmFailure(FailureKind.CONFIGURATION, 'configuration',
+                         'DUAL_LLM_TIMEOUT_SECONDS/--timeout must be a positive finite number') from None
     return timeout
 
 
@@ -93,16 +102,17 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
     """
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "")
     if not api_key:
-        raise RuntimeError("TAMUS_AI_CHAT_API_KEY not set. Run: source ~/.bashrc")
+        raise LlmFailure(FailureKind.CONFIGURATION, label, "TAMUS_AI_CHAT_API_KEY not set. Run: source ~/.bashrc")
 
     try:
         token_ceiling = int(os.environ.get("DUAL_LLM_MAX_RETRY_TOKENS", "16384"))
-        default_budget = 16384 if label in ("LLM1-Generate", "LLM1-Merge") else 8192
+        default_budget = 16384 if label.startswith(("LLM1-Generate", "LLM1-Merge")) else 8192
         token_budget = int(os.environ.get("DUAL_LLM_MAX_TOKENS", str(min(default_budget, token_ceiling))))
         if not 0 < token_budget <= token_ceiling:
             raise ValueError("require 0 < initial budget <= retry ceiling")
     except ValueError as e:
-        raise RuntimeError("Invalid DUAL_LLM_MAX_TOKENS/DUAL_LLM_MAX_RETRY_TOKENS: {}".format(e))
+        raise LlmFailure(FailureKind.CONFIGURATION, label,
+                         "Invalid DUAL_LLM_MAX_TOKENS/DUAL_LLM_MAX_RETRY_TOKENS: {}".format(e)) from None
 
     timeout = request_timeout_seconds()
     payload = {
@@ -118,7 +128,15 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
     print(f'[dual_llm] {label}: request_characters={request_characters} (system + user text; not tokens)')
     print(f'[dual_llm] {label}: client_timeout_seconds={timeout:g}')
 
+    diagnostics = CallDiagnostics(model, label, system_prompt, user_message, timeout)
+    attempt_number = 0
     while True:
+        attempt_number += 1
+        attempt = diagnostics.attempt(attempt_number, payload['max_tokens'])
+        budget = active_recovery.get()
+        if budget is not None:
+            attempt.record['recovery'] = budget.report()
+            attempt.save()
         try:
             resp = paced_post(ENDPOINT, pacing_label=label,
                 headers={
@@ -131,54 +149,83 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
         except requests.exceptions.RequestException as e:
             token_usage.record_usage(model, label, outcome="network_error",
                                      request_characters=request_characters)
-            raise RuntimeError("[{}] Network error: {}".format(label, e))
+            kind = (FailureKind.NETWORK_TIMEOUT if isinstance(e, requests.exceptions.Timeout) else
+                    FailureKind.NETWORK_CONNECTION if isinstance(e, requests.exceptions.ConnectionError) else
+                    FailureKind.NETWORK_ERROR)
+            message = "[{}] Network error: {}".format(label, e)
+            event = attempt.fail(kind, message)
+            transient = isinstance(e, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)) and not isinstance(e, requests.exceptions.SSLError)
+            if transient and transport_retry(label, event):
+                continue
+            raise LlmFailure(kind, label, message, event=event) from None
 
+        attempt.response(resp)
         token_usage.record_response(model, label, resp, request_characters=request_characters)
         if resp.status_code != 200:
-            raise RuntimeError("[{}] model={} -> HTTP {}: {}".format(
-                label, model, resp.status_code, resp.text.replace(api_key, "[redacted]")[:300]))
+            message = "[{}] model={} -> HTTP {}: {}".format(label, model, resp.status_code, redact(resp.text)[:300])
+            event = attempt.fail(FailureKind.HTTP_ERROR, message, http_status=resp.status_code)
+            if resp.status_code in (408, 429, 500, 502, 503, 504, 524) and transport_retry(
+                    label, event, retry_after=resp.headers.get('Retry-After')):
+                continue
+            raise LlmFailure(FailureKind.HTTP_ERROR, label, message, event=event)
 
         try:
             data = resp.json()
             choice = data["choices"][0]
             finish_reason = choice.get("finish_reason")
-            content = choice["message"]["content"]
+            refusal = choice["message"].get("refusal")
+            content = choice["message"].get("content") if refusal else choice["message"]["content"]
             usage = data.get("usage") or {}
             completion_tokens = usage.get("completion_tokens", "unknown")
         except (KeyError, ValueError, IndexError, TypeError, AttributeError) as e:
-            raise RuntimeError("[{}] Unexpected response shape: {}".format(label, e))
+            message = "[{}] Unexpected response shape: {}".format(label, e)
+            event = attempt.fail(FailureKind.PROVIDER_RESPONSE, message)
+            raise LlmFailure(FailureKind.PROVIDER_RESPONSE, label, message, event=event) from None
 
-        print("[dual_llm] {}: model={} finish_reason={} completion_tokens={} max_tokens={}".format(
-            label, model, finish_reason, completion_tokens, payload["max_tokens"]))
+        print(redact("[dual_llm] {}: model={} finish_reason={} completion_tokens={} max_tokens={}".format(
+            label, model, finish_reason, completion_tokens, payload["max_tokens"])))
+        if refusal:
+            event = attempt.fail(FailureKind.REFUSED_RESPONSE, 'Provider returned a refusal')
+            raise LlmFailure(FailureKind.REFUSED_RESPONSE, label, 'Provider returned a refusal', event=event)
         if finish_reason in ("length", "max_tokens"):
+            event = attempt.fail(FailureKind.TRUNCATED_RESPONSE, 'Response truncated at token limit')
             directory = token_usage.current_module_directory()
             if directory is not None:
                 path = directory / ('truncated_' + uuid.uuid4().hex + '.json')
-                path.write_text(json.dumps({
+                write_json(path, {
                     'model': model, 'label': label, 'finish_reason': finish_reason,
                     'max_tokens': payload['max_tokens'], 'usage': usage,
                     'request_characters': request_characters, 'content': content,
                     'accepted': False,
-                }, indent=2) + '\n')
+                })
                 print(f'[dual_llm] Truncated response saved (not accepted as RTL): {path}')
             if payload["max_tokens"] >= token_ceiling:
-                raise RuntimeError(
+                if budget is not None:
+                    budget.deny('truncation', label, event, 'output_ceiling')
+                raise LlmFailure(FailureKind.TRUNCATED_RESPONSE, label,
                     "[{}] Response truncated at token limit (model={}, max_tokens={}, "
                     "completion_tokens={}); no complete JSON/RTL was received. "
                     "Increase DUAL_LLM_MAX_RETRY_TOKENS if supported by the provider, "
                     "or reduce the requested output.".format(
-                        label, model, payload["max_tokens"], completion_tokens))
+                        label, model, payload["max_tokens"], completion_tokens), event=event)
+            if budget is not None and not budget.claim('truncation', label, event):
+                raise LlmFailure(FailureKind.TRUNCATED_RESPONSE, label,
+                                 'Truncation recovery budget exhausted', event=event)
             payload["max_tokens"] = min(payload["max_tokens"] * 2, token_ceiling)
             print("[dual_llm] {}: Response truncated; retrying with max_tokens={}.".format(
                 label, payload["max_tokens"]))
             continue
         if finish_reason not in (None, "stop", "end_turn"):
-            raise RuntimeError("[{}] No completed text response: finish_reason={}".format(
-                label, finish_reason))
+            kind = FailureKind.FILTERED_RESPONSE if finish_reason == 'content_filter' else FailureKind.UNFINISHED_RESPONSE
+            message = "[{}] No completed text response: finish_reason={}".format(label, finish_reason)
+            event = attempt.fail(kind, message)
+            raise LlmFailure(kind, label, message, event=event)
         if not isinstance(content, str) or not content.strip():
-            raise RuntimeError("[{}] API returned empty or non-text content; "
-                               "finish_reason={}".format(label, finish_reason))
-        return content.strip()
+            kind = FailureKind.NON_TEXT_RESPONSE if content is not None and not isinstance(content, str) else FailureKind.EMPTY_RESPONSE
+            message = "[{}] API returned empty or non-text content; finish_reason={}".format(label, finish_reason)
+            event = attempt.fail(kind, message)
+            raise LlmFailure(kind, label, message, event=event)
+        return DiagnosticText(content.strip(), attempt)
 
 
 # ---------------------------------------------------------------------------
@@ -663,7 +710,7 @@ def _reviewer_failed_fallback(module_name, lint_enabled=True):
 
     print("[dual_llm] ERROR: Reviewer failed and no cache exists for {}".format(
         module_name))
-    raise RuntimeError(
+    raise LlmFailure(FailureKind.REVIEW_UNAVAILABLE, 'LLM2-Review',
         "dual_llm_rtlgen: reviewer did not approve RTL and no cached reviewed RTL exists for {}".format(
             module_name)
     )
@@ -673,19 +720,12 @@ def _reviewer_failed_fallback(module_name, lint_enabled=True):
 # Structured-response helpers
 # ---------------------------------------------------------------------------
 
-_ALLOWED_STATUS = {"VALID", "INVALID", "AMBIGUOUS"}
-_ALLOWED_ISSUE_TYPES = {"SPEC_VIOLATION", "NON_ISSUE", "AMBIGUITY"}
-_STATUS_ALIASES = {
-    "CLEAN": "VALID",
-}
-
-
 def _strip_code_fences(text):
     """Best-effort cleanup if a model wraps RTL in markdown fences."""
     if not text:
         return ""
     text = text.strip()
-    match = re.search(r"```(?:systemverilog|verilog|sv)?\s*(.*?)```", text,
+    match = re.fullmatch(r"```(?:systemverilog|verilog|sv)?\s*(.*?)```", text,
                       re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
@@ -744,56 +784,40 @@ def _make_payload(fallback_rtl, status, issues, invariants=None):
     }
 
 
-def _parse_llm_json_payload(response_text, fallback_rtl, label, fallback_invariants=None):
+def _response_payload(response_text, label, stage):
+    original = response_text
     try:
-        response_text = (response_text or "").strip()
-        json_match = re.search(r"\{[\s\S]*\}", response_text)
-        if json_match:
-            response_text = json_match.group(0)
-
-        data = json.loads(response_text)
-        if not isinstance(data, dict):
-            raise ValueError("top-level JSON value must be an object")
-
-        payload = _make_payload(
-            fallback_rtl,
-            str(data.get("status", "AMBIGUOUS")).strip().upper(),
-            data.get("issues", []),
-            fallback_invariants if fallback_invariants is not None else data.get("invariants")
-        )
-
-        corrected_rtl = _strip_code_fences(data.get("corrected_rtl", ""))
-        if corrected_rtl:
-            payload["corrected_rtl"] = corrected_rtl
-        else:
-            payload["issues"].append({
-                "type": "AMBIGUITY",
-                "description": "{} returned empty corrected_rtl; using fallback RTL".format(label),
-                "location": "response.corrected_rtl"
-            })
-
-        payload["parse_failed"] = False
-        return payload
-
-    except Exception as e:
-        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
-        if response_text:
-            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
+        response_text = json_input(response_text)
+        data = validate_payload(decode_json(response_text), stage)
+        record_parse(original, response_text, label)
+        return data, None
+    except (ValueError, TypeError) as error:
+        event = record_parse(original, response_text, label, error)
+        print(redact("[dual_llm] Invalid {} response ({}): {}".format(label, event['kind'], error)))
+        if isinstance(response_text, str) and response_text:
+            preview = redact(response_text)[:RAW_RESPONSE_PREVIEW_CHARS]
             suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
-            print("Raw response (first {} chars):\n{}{}".format(
-                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
-        payload = _make_payload(
-            fallback_rtl,
-            "AMBIGUOUS",
-            [{
-                "type": "AMBIGUITY",
-                "description": "{} returned invalid JSON".format(label),
-                "location": "response"
-            }],
-            fallback_invariants
-        )
-        payload["parse_failed"] = True
-        return payload
+            print("Raw response (first {} chars):\n{}{}".format(RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
+        return None, event
+
+
+def _failed_response_payload(fallback_rtl, label, event, fallback_invariants=None):
+    payload = _make_payload(fallback_rtl, 'AMBIGUOUS', [{
+        'type': 'AMBIGUITY', 'description': label + ' returned an invalid response payload',
+        'location': event.get('schema_path') or 'response'}], fallback_invariants)
+    payload.update(parse_failed=True, failure=event)
+    return payload
+
+
+def _parse_llm_json_payload(response_text, fallback_rtl, label, fallback_invariants=None):
+    stage = 'merger' if label == 'LLM1-Merge' else 'generator'
+    data, event = _response_payload(response_text, label, stage)
+    if event:
+        return _failed_response_payload(fallback_rtl, label, event, fallback_invariants)
+    payload = _make_payload(fallback_rtl, data['status'], data['issues'],
+        fallback_invariants if fallback_invariants is not None else data.get('invariants'))
+    payload.update(corrected_rtl=data['corrected_rtl'], parse_failed=False)
+    return payload
 
 
 def _make_review_payload(fallback_rtl, status, issues, invariants=None,
@@ -807,90 +831,31 @@ def _make_review_payload(fallback_rtl, status, issues, invariants=None,
 
 def _parse_review_json_payload(response_text, fallback_rtl, label,
                                fallback_invariants=None):
-    try:
-        response_text = (response_text or "").strip()
-        json_match = re.search(r"\{[\s\S]*\}", response_text)
-        if json_match:
-            response_text = json_match.group(0)
-
-        data = json.loads(response_text)
-        if not isinstance(data, dict):
-            raise ValueError("top-level JSON value must be an object")
-
-        return _make_review_payload(
-            fallback_rtl,
-            str(data.get("status", "AMBIGUOUS")).strip().upper(),
-            data.get("issues", []),
-            fallback_invariants if fallback_invariants is not None else data.get("invariants"),
-            data.get("corrected_rtl", "")
-        )
-
-    except Exception as e:
-        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
-        if response_text:
-            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
-            suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
-            print("Raw response (first {} chars):\n{}{}".format(
-                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
-        payload = _make_review_payload(
-            fallback_rtl,
-            "AMBIGUOUS",
-            [{
-                "type": "AMBIGUITY",
-                "description": "{} returned invalid JSON".format(label),
-                "location": "response"
-            }],
-            fallback_invariants
-        )
-        payload["parse_failed"] = True
-        return payload
+    data, event = _response_payload(response_text, label, 'reviewer')
+    if event:
+        return _failed_response_payload(fallback_rtl, label, event, fallback_invariants)
+    payload = _make_review_payload(fallback_rtl, data['status'], data['issues'],
+        fallback_invariants if fallback_invariants is not None else data.get('invariants'))
+    if data.get('corrected_rtl'):
+        payload['corrected_rtl'] = data['corrected_rtl']
+    return payload
 
 
 def _parse_review_json_compact(response_text, label):
-    try:
-        response_text = (response_text or "").strip()
-        json_match = re.search(r"\{[\s\S]*\}", response_text)
-        if json_match:
-            response_text = json_match.group(0)
+    data, event = _response_payload(response_text, label, 'compact_reviewer')
+    if event:
+        payload = _failed_response_payload('', label, event)
+        return {key: payload[key] for key in ('status', 'issues', 'parse_failed', 'failure')}
+    return {'status': data['status'], 'issues': data['issues'], 'parse_failed': False}
 
-        data = json.loads(response_text)
-        if not isinstance(data, dict):
-            raise ValueError("top-level JSON value must be an object")
 
-        status = str(data.get("status", "AMBIGUOUS")).strip().upper()
-        status = _STATUS_ALIASES.get(status, status)
-        if status not in _ALLOWED_STATUS:
-            status = "AMBIGUOUS"
-
-        issues = []
-        for issue in (data.get("issues", []) or [])[:5]:
-            normalized = _normalize_issue(issue)
-            if normalized["type"] != "SPEC_VIOLATION":
-                normalized["type"] = "AMBIGUITY"
-            issues.append(normalized)
-
-        return {
-            "status": status,
-            "issues": issues,
-            "parse_failed": False
-        }
-
-    except Exception as e:
-        print("[dual_llm] Failed to parse {} JSON: {}".format(label, e))
-        if response_text:
-            preview = response_text[:RAW_RESPONSE_PREVIEW_CHARS]
-            suffix = "\n... [truncated]" if len(response_text) > RAW_RESPONSE_PREVIEW_CHARS else ""
-            print("Raw response (first {} chars):\n{}{}".format(
-                RAW_RESPONSE_PREVIEW_CHARS, preview, suffix))
-        return {
-            "status": "AMBIGUOUS",
-            "issues": [{
-                "type": "AMBIGUITY",
-                "description": "{} returned invalid JSON".format(label),
-                "location": "response"
-            }],
-            "parse_failed": True
-        }
+def _require_valid_payload(payload, label):
+    # A previous candidate may be retained as diagnostic context, but a rejected
+    # response cannot turn that fallback into newly generated/merged RTL.
+    if payload.get('parse_failed'):
+        event = payload.get('failure')
+        raise LlmFailure(event['kind'] if event else FailureKind.INVALID_PAYLOAD, label,
+            '[{}] Invalid response payload; failed before lint/review acceptance.'.format(label), event=event)
 
 
 def _filter_issues(issues, issue_type):
@@ -1166,6 +1131,8 @@ Rules:
 - Do not echo invariants or context; the compiler retains them independently.
 - "status" must be VALID if corrected_rtl fully satisfies context, INVALID if you know it violates context,
   or AMBIGUOUS if the context itself is insufficient to decide.
+- VALID must have no SPEC_VIOLATION or AMBIGUITY issues; INVALID must include a SPEC_VIOLATION,
+  and AMBIGUOUS must include an AMBIGUITY explaining the missing/conflicting context.
 - "issues" should usually be empty for generation unless the spec is ambiguous or conflicting.
 - "corrected_rtl" must contain the full SystemVerilog module only, with no markdown fences.
 - Do not use localparams in ANSI port declarations. Any symbol used in a port width must be a literal, a package-visible type/constant, or a parameter declared in the module parameter list.
@@ -1206,7 +1173,8 @@ Rules:
 - Do not echo all invariants.
 - List at most 5 issues.
 - Each issue description must be one sentence.
-- If there are no SPEC_VIOLATION issues, return status VALID and issues [].
+- If context is ambiguous, return AMBIGUOUS with an AMBIGUITY issue. Otherwise return INVALID
+  with at least one SPEC_VIOLATION, or VALID with issues [] when no violations remain.
 - Flag use of localparams in ANSI port widths as a SPEC_VIOLATION unless the symbol is declared as a module parameter before the port list.
 - If a LOCAL VERILATOR LINT REPORT is provided and it reports FAIL, treat each actionable lint diagnostic as a SPEC_VIOLATION implementation blocker.
 """
@@ -1239,7 +1207,8 @@ Rules:
 - Do not echo invariants or context.
 - List at most 5 issues.
 - Each issue description must be one sentence.
-- If there are no SPEC_VIOLATION issues, return status VALID and issues [].
+- If context is ambiguous, return AMBIGUOUS with an AMBIGUITY issue. Otherwise return INVALID
+  with at least one SPEC_VIOLATION, or VALID with issues [] when no violations remain.
 - If a LOCAL VERILATOR LINT REPORT is provided and it reports FAIL, treat each actionable lint diagnostic as a SPEC_VIOLATION implementation blocker.
 """
 
@@ -1263,6 +1232,8 @@ Return ONLY valid JSON in this exact format:
 Rules:
 - Treat STRUCTURED LLM CONTEXT as the ONLY source of truth.
 - You MUST fix ALL reviewer issues that are grounded in STRUCTURED LLM CONTEXT.
+- VALID must have no SPEC_VIOLATION or AMBIGUITY issues; INVALID must include a SPEC_VIOLATION,
+  and AMBIGUOUS must include an AMBIGUITY explaining the missing/conflicting context.
 - If an issue is labeled SPEC_VIOLATION, you MUST correct the logic exactly.
 - Do NOT preserve any previous logic that conflicts with reviewer feedback.
 - If an issue appears again, you MUST directly modify the exact offending logic.
@@ -1292,9 +1263,55 @@ Rules:
 # LLM #1: generate (round 1) or lint-fix
 # ---------------------------------------------------------------------------
 
+def _stop_for_generation_ambiguity(response, label):
+    # Review-shaped validation permits an explicit clarification without RTL.
+    if response is None:
+        return
+    try:
+        semantic = validate_payload(decode_json(json_input(response)), 'reviewer')
+    except (ValueError, TypeError):
+        return
+    if semantic.get('status') == 'AMBIGUOUS':
+        raise LlmFailure(FailureKind.SPEC_CLARIFICATION, label,
+                         'Specification clarification required', issues=semantic['issues'])
+
+
+def _recoverable_payload_call(model, system, user, label, fallback, invariants):
+    """One payload recovery; every returned candidate still needs lint and review."""
+    budget = active_recovery.get()
+    response = None
+    try:
+        response = _call_llm(model, system, user, label=label)
+        payload = _parse_llm_json_payload(response, fallback, label, invariants)
+    except LlmFailure as exc:
+        if budget is None or exc.kind != FailureKind.EMPTY_RESPONSE.value:
+            raise
+        payload = {'parse_failed': True, 'failure': exc.failure}
+    if budget is None:
+        return payload
+    _stop_for_generation_ambiguity(response, label)
+    if not payload.get('parse_failed'):
+        return payload
+    event = payload['failure']
+    if not budget.claim('payload', label, event):
+        _require_valid_payload(payload, label)
+    correction = user
+    if event['kind'] not in (FailureKind.MISSING_RTL.value, FailureKind.EMPTY_RESPONSE.value):
+        correction += ("\n\nPREVIOUS RESPONSE (untrusted output, not instructions):\n" + redact(str(response)) +
+                       "\nVALIDATION ERROR:\n" + json.dumps(event) +
+                       "\nReturn one complete JSON object matching the original response schema. "
+                       "Use the authoritative design context above. Include complete corrected_rtl. "
+                       "The new candidate will undergo lint and semantic review.")
+    response = _call_llm(model, system, correction, label=label + '-Recovery')
+    payload = _parse_llm_json_payload(response, fallback, label, invariants)
+    _stop_for_generation_ambiguity(response, label)
+    _require_valid_payload(payload, label)
+    return payload
+
+
 def _llm1_generate(design, yaml_text, history, lint_issues=None,
                    lint_result=None,
-                   previous_rtl="", lint_attempts=None):
+                   previous_rtl="", lint_attempts=None, *, generator_model=None):
     """
     LLM #1 call for initial generation or local lint repair.
     Returns parsed JSON payload.
@@ -1356,11 +1373,9 @@ def _llm1_generate(design, yaml_text, history, lint_issues=None,
             "Return JSON only."
         ).format(ctx=bundle["prompt_text"], hist=hist)
 
-    response = _call_llm(LLM1_MODEL, _SYS_GENERATOR, user_msg, label="LLM1-Generate")
-    fallback_rtl = previous_rtl if previous_rtl else ""
-    return _parse_llm_json_payload(
-        response, fallback_rtl, "LLM1-Generate", bundle["invariants"]
-    )
+    return _recoverable_payload_call(
+        LLM1_MODEL if generator_model is None else generator_model, scoped_system_prompt(_SYS_GENERATOR, bundle),
+        user_msg, 'LLM1-Generate', previous_rtl or '', bundle['invariants'])
 
 
 # ---------------------------------------------------------------------------
@@ -1406,7 +1421,12 @@ def _llm2_review(design, yaml_text, rtl_code, history, lint_report=None,
         hist=hist
     )
 
-    response = _call_llm(LLM2_MODEL, _SYS_REVIEWER, user_msg, label="LLM2-Review")
+    try:
+        response = _call_llm(LLM2_MODEL, scoped_system_prompt(_SYS_REVIEWER, bundle), user_msg, label="LLM2-Review")
+    except LlmFailure as exc:
+        if active_recovery.get() is None or exc.kind != FailureKind.EMPTY_RESPONSE.value:
+            raise
+        return _failed_response_payload(rtl_code, 'LLM2-Review', exc.failure, bundle['invariants'])
     return _parse_review_json_payload(
         response, rtl_code, "LLM2-Review", bundle["invariants"]
     )
@@ -1416,6 +1436,7 @@ def _llm2_review_compact(design, rtl_code, lint_report=None, lint_result=None):
     """
     Retry reviewer with a smaller prompt and a smaller response schema.
     """
+    bundle = _design_context_bundle(design)
     lint_section = ""
     if lint_result:
         lint_section = (
@@ -1436,14 +1457,14 @@ def _llm2_review_compact(design, rtl_code, lint_report=None, lint_result=None):
         "RTL:\n{code}\n\n"
         "Return only the compact JSON object. At most 5 issues."
     ).format(
-        ctx=_compact_review_context(design),
+        ctx=bundle['prompt_text'],
         lint_section=lint_section,
         code=rtl_code
     )
 
     response = _call_llm(
         LLM2_MODEL,
-        _SYS_REVIEWER_COMPACT,
+        scoped_system_prompt(_SYS_REVIEWER_COMPACT, bundle),
         user_msg,
         label="LLM2-Review-Compact"
     )
@@ -1456,7 +1477,7 @@ def _llm2_review_compact(design, rtl_code, lint_report=None, lint_result=None):
 # ---------------------------------------------------------------------------
 
 def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
-                repeated_issue=False):
+                repeated_issue=False, *, generator_model=None):
     """
     LLM #1 merger call: receives both code versions + report, produces merged RTL.
     """
@@ -1503,34 +1524,55 @@ def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
             "You are REQUIRED to change the structure of the logic, not just small edits.\n"
         )
 
-    response = _call_llm(LLM1_MODEL, _SYS_MERGER, merge_prompt, label="LLM1-Merge")
-    return _parse_llm_json_payload(
-        response, llm1_code, "LLM1-Merge", bundle["invariants"]
-    )
+    return _recoverable_payload_call(
+        LLM1_MODEL if generator_model is None else generator_model, scoped_system_prompt(_SYS_MERGER, bundle),
+        merge_prompt, 'LLM1-Merge', llm1_code, bundle['invariants'])
 
 
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 
-def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False, resume=False):
-    trace = {"module": design.design_name, "max_rounds": MAX_ROUNDS, "rounds": [], "outcome": "failed"}
+def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False, resume=False, *, generator_model=None, recovery=False):
+    if recovery and not lint_enabled:
+        raise ValueError("RTL recovery requires lint")
+    if generator_model is not None:
+        if not isinstance(generator_model, str) or not generator_model.strip():
+            raise ValueError('Generator model must be nonempty text')
+        generator_model = generator_model.strip()
+    trace = {"module": design.design_name, "max_rounds": MAX_ROUNDS, "rounds": [], "outcome": "failed",
+             "requested_generator_model": LLM1_MODEL if generator_model is None else generator_model,
+             "reviewer_model": LLM2_MODEL}
+    trace['failure_events'] = []
+    diagnostic_context = _failure_events.set(trace['failure_events'])
+    budget = RecoveryBudget() if recovery else None
+    recovery_context = active_recovery.set(budget)
     try:
-        rtl = _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=resume)
+        rtl = _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=resume,
+                                  generator_model=generator_model)
         trace["outcome"] = "accepted_or_reviewed_cache"
         return rtl
     except Exception as exc:
-        trace["error"] = str(exc)
+        trace["error"] = redact(str(exc))
+        if isinstance(exc, LlmFailure):
+            trace['failure'] = exc.failure
         raise
     finally:
-        directory = token_usage.current_module_directory()
-        if directory is not None:
-            path = directory / "rtl_review.json"
-            path.write_text(json.dumps(trace, indent=2) + "\n")
-            print(f"[dual_llm] Round report: {path}", flush=True)
+        if budget is not None:
+            trace['recovery'] = budget.report()
+        active_recovery.reset(recovery_context)
+        _failure_events.reset(diagnostic_context)
+        try:
+            directory = token_usage.current_module_directory()
+            if directory is not None:
+                path = directory / "rtl_review.json"
+                if write_json(path, trace):
+                    print(f"[dual_llm] Round report: {path}", flush=True)
+        except OSError as exc:
+            print('[dual_llm] Round report unavailable: ' + redact(str(exc)), flush=True)
 
 
-def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=False):
+def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=False, *, generator_model=None):
     """
     Run the dual-LLM RTL generation loop.
 
@@ -1549,6 +1591,7 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
     carryover_rtl = ""
     carryover_status = ""
     carryover_issues = []
+    model_options = {} if generator_model is None else {'generator_model': generator_model}
 
     if use_cache and resume:
         raise ValueError('--cache and --resume are mutually exclusive')
@@ -1570,7 +1613,7 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
         print('[dual_llm] Resume: no usable matching reviewed cache; generating {}.'.format(design.design_name))
 
     print("[dual_llm] Starting dual-LLM loop | max_rounds={} | LLM1={} | LLM2={} | lint={}".format(
-        MAX_ROUNDS, LLM1_MODEL, LLM2_MODEL, "on" if lint_enabled else "off"))
+        MAX_ROUNDS, LLM1_MODEL if generator_model is None else generator_model, LLM2_MODEL, "on" if lint_enabled else "off"))
 
     for round_num in range(1, MAX_ROUNDS + 1):
         print("\n[dual_llm] ── Round {}/{} ──────────────────────────────".format(
@@ -1590,16 +1633,18 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
             carryover_issues = []
         else:
             print("[dual_llm] Step 1: LLM #1 generating...")
-            llm1_payload = _llm1_generate(design, yaml_text, history)
+            llm1_payload = _llm1_generate(design, yaml_text, history, **model_options)
+            _require_valid_payload(llm1_payload, 'LLM1-Generate')
             llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
             round_record["llm1_status"] = llm1_payload["status"]
             round_record["llm1_issues"] = llm1_payload["issues"]
 
         if not llm1_code.strip():
-            raise RuntimeError(
+            event = llm1_payload.get('failure')
+            raise LlmFailure(event['kind'] if event else FailureKind.MISSING_RTL, 'LLM1-Generate',
                 "[LLM1-Generate] No RTL produced for {}; response parsing or generation "
                 "failed before lint/review. Check the API completion diagnostics above.".format(
-                    design.design_name))
+                    design.design_name), event=event)
 
         # ── Step 2: Single-file lint; blocking repairs stay in this round ──
         if lint_enabled:
@@ -1623,8 +1668,9 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
                     lint_issues=lint_issues,
                     lint_result=lint_result,
                     previous_rtl=llm1_code,
-                    lint_attempts=lint_attempts
+                    lint_attempts=lint_attempts, **model_options
                 )
+                _require_valid_payload(llm1_payload, 'LLM1-Generate')
                 llm1_code = enforce_width_safety(llm1_payload["corrected_rtl"], design.design_name)
                 round_record["llm1_status"] = llm1_payload["status"]
                 round_record["llm1_issues"] = llm1_payload["issues"]
@@ -1684,11 +1730,16 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
                 lint_result=lint_result
             )
         except RuntimeError as e:
+            if active_recovery.get() is not None:
+                raise
             print("[dual_llm] Reviewer failed: {}".format(e))
             print("[dual_llm] Reviewer unavailable; using cached fallback...")
             return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
 
         if review_payload.get("parse_failed"):
+            budget = active_recovery.get()
+            if budget is not None and not budget.claim('payload', 'LLM2-Review', review_payload.get('failure')):
+                _require_valid_payload(review_payload, 'LLM2-Review')
             print("[dual_llm] Reviewer JSON invalid; retrying compact review...")
             try:
                 compact_review = _llm2_review_compact(
@@ -1698,12 +1749,16 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
                         lint_result=lint_result
                     )
             except RuntimeError as e:
+                if active_recovery.get() is not None:
+                    raise
                 print("[dual_llm] Compact reviewer failed: {}".format(e))
                 print("[dual_llm] Reviewer unavailable; using cached fallback...")
                 return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
             print("[dual_llm] Compact review status = {}".format(
                 compact_review["status"]))
             if compact_review.get("parse_failed"):
+                if active_recovery.get() is not None:
+                    _require_valid_payload(compact_review, 'LLM2-Review-Compact')
                 print("[dual_llm] Reviewer unavailable; using cached fallback...")
                 return _reviewer_failed_fallback(design.design_name, lint_enabled=lint_enabled)
             review_payload = _make_review_payload(
@@ -1759,7 +1814,7 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
 
         if ambiguities or review_payload["status"] == "AMBIGUOUS":
             trace["outcome"] = "needs_spec_clarification"
-            raise RuntimeError(
+            raise LlmFailure(FailureKind.SPEC_CLARIFICATION, 'LLM2-Review',
                 "dual_llm_rtlgen: specification clarification required for {}: {}. "
                 "Stopping before another paid round.".format(
                     design.design_name, " | ".join(i.get("description", "") for i in review_issues)))
@@ -1824,8 +1879,9 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resu
                 design, yaml_text,
                 llm1_code, llm2_corrected,
                 review_payload, history,
-                repeated_issue=repeated_issue
+                repeated_issue=repeated_issue, **model_options
             )
+            _require_valid_payload(merge_payload, 'LLM1-Merge')
             merged = enforce_width_safety(merge_payload["corrected_rtl"], design.design_name)
             round_record["merged_status"] = merge_payload["status"]
             round_record["merged_issues"] = merge_payload["issues"]

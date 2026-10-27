@@ -240,6 +240,12 @@ pending; structural validation does not establish semantic request satisfaction.
 
 ## Downstream verification boundary
 
+A standalone local [simulation runner](../../simulation/README.md) now consumes
+RTL-phase handoffs for the explicit compact-host FIFO-controller profile. It
+executes directed scenarios with an independent scoreboard and produces separate
+behavioral evidence. It leaves source requirements unverified and does not
+implement the existing external UVM/vector consumer adapter described below.
+
 After RTL generation, the existing verification stage performs UVM and vector
 testing outside `local/frontend/`; implementing that stage is outside this task.
 The frontend should dynamically generate verification intent from the reviewed

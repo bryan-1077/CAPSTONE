@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from architecture import ArchitectureError
+from architecture import ArchitectureError, fingerprint
 from generate_microarch import parse_response
 from generate_specification import parse_specification_response, propose_specification
 from specification import SpecificationError, read_document
@@ -66,8 +66,12 @@ class SpecificationJSONTests(unittest.TestCase):
         malformed = copy.deepcopy(nested)
         for key in ('graph', 'verification', 'rule_owners'):
             malformed['modules'][key] = malformed.pop(key)
+        # Once valid JSON supplies a complete candidate, compiler repair uses
+        # the existing edit protocol rather than another complete response.
+        edits = {'base_fingerprint': fingerprint(nested),
+                 'edits': [{'op': 'remove', 'path': '/modules/internal_types'}]}
         raw = [json.dumps(responses['system']), json.dumps(malformed)[:-1],
-               json.dumps(nested), json.dumps(responses['architecture'])]
+               json.dumps(nested), json.dumps(edits)]
         replies, prompts = iter(raw), []
         def caller(prompt, model):
             prompts.append(prompt)
@@ -81,6 +85,9 @@ class SpecificationJSONTests(unittest.TestCase):
                              ['accepted', 'rejected', 'rejected', 'accepted'])
             self.assertIn('Check object closures', prompts[2])
             self.assertIn('modules.internal_types belongs at the response root', prompts[3])
+            self.assertIn('ARCHITECTURE EDIT MODE', prompts[3])
+            self.assertEqual(journal['attempts'][-1]['repair_base_fingerprint'], fingerprint(nested))
+            self.assertEqual(journal['attempts'][-1]['applied_response'], responses['architecture'])
             self.assertTrue(all('parse_recovery' not in a for a in journal['attempts']))
             self.assertFalse(list(root.rglob('*.sv')))
             self.assertFalse(list(root.rglob('*approval*')))

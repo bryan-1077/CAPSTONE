@@ -1,0 +1,252 @@
+{
+  "description": "Verbatim projection of the saved repaired controller and step-3 refresh allegation. Incomplete specification, not an approved design or executable behavioral proof. Edge exercises interpret selected clauses manually; they do not parse prose or run target RTL.",
+  "snapshot": {
+    "package": {
+      "decisions": {
+        "D_BANK_COUNT": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "4",
+          "reason": "The requested controller exposes four logical DDR4 banks."
+        },
+        "D_DDR4_PROFILE": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "DDR4-3200",
+          "reason": "The requested 3200 speed selects the DDR4-3200 timing profile."
+        },
+        "D_DESIGN_NAME": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "ddr4_controller_top",
+          "reason": "Records the requested design name."
+        },
+        "D_DESIGN_TYPE": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "memory_controller",
+          "reason": "Records the requested design type."
+        },
+        "D_FIFO_ORDERING": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "global_acceptance_order",
+          "reason": "FIFO behavior is interpreted as ordered service by request-admission order without row-hit bypass."
+        },
+        "D_HOST_TRANSACTION_MODEL": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "single_request_ready_valid_with_read_response_pulse",
+          "reason": "A request/response interface is derived for the requested memory-controller behavior; writes have no response and reads return one captured response."
+        },
+        "D_MEMORY_MODEL": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "functional_banked_word_memory",
+          "reason": "A functional banked memory model provides independently verifiable read/write behavior for the controller specification."
+        },
+        "D_REFRESH_POLICY": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "periodic_sticky_pending_then_close_all_banks_and_commit_REF",
+          "reason": "Defines deterministic refresh behavior while preserving FIFO contents and preventing new dispatch after pending refresh becomes visible."
+        },
+        "D_RESET_STYLE": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "active_low_synchronous_reset_with_immediate_event_gating",
+          "reason": "The supported lowering convention uses one rising-edge clock, active-low synchronous state reset, reset priority, and suppressed protocol events while reset is asserted."
+        },
+        "D_RESPONSE_LATENCY": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "one_cycle_after_READ_commit",
+          "reason": "A committed READ captures pre-edge memory data and presents one response for host sampling at the following rising edge."
+        }
+      },
+      "assumptions": {
+        "A_ADDRESS_MAPPING": {
+          "statement": "The derived host mapping uses txn_bank as the bank index, txn_addr[15:8] as row, and txn_addr[7:0] as column. The functional memory model indexes one DATA_WIDTH-bit word per bank/row/column combination.",
+          "status": "documented"
+        },
+        "A_CLOCK_DURING_RESET": {
+          "statement": "clk continues during reset and rst_n is asserted across at least one rising clk edge when state cancellation is required.",
+          "status": "documented"
+        },
+        "A_HOST_STABILITY": {
+          "statement": "When txn_valid is high and txn_ready is low, the host holds txn_bank, txn_addr, txn_is_write, and txn_wdata stable until admission or reset.",
+          "status": "documented"
+        },
+        "A_RESPONSE_CONSUMPTION": {
+          "statement": "The host samples rsp_rdata when rsp_valid is high at a rising edge. There is no response-ready signal and no response backpressure.",
+          "status": "documented"
+        },
+        "A_TIMING_SCOPE": {
+          "statement": "This specification enforces the explicitly requested DDR4 timing protections tFAW, tRAS, and tRCD, plus refresh interval exclusion tRFC. It does not claim complete JEDEC DDR4 command-timing coverage beyond those documented constraints.",
+          "status": "documented"
+        }
+      },
+      "open_questions": {}
+    },
+    "documents": {
+      "shared": {
+        "clock_reset": {
+          "clock": "clk",
+          "edge": "rising",
+          "reset": "rst_n",
+          "active_level": 0,
+          "priority": "reset_before_all_events",
+          "assertion_style": "synchronous",
+          "handshake_gating": "Suppress all valid, ready, command-commit, dispatch, admission, refresh, and response-delivery events while reset is asserted."
+        },
+        "events": {
+          "refresh_due": {
+            "condition": "At a rising edge, rst_n is high and the periodic refresh deadline is reached.",
+            "effect": "Set sticky refresh-pending state. A due event does not discard waiting requests and does not cancel an already active request."
+          },
+          "refresh_end": {
+            "condition": "At a rising edge, rst_n is high and the edge is at least tRFC cycles after the committed REF edge.",
+            "effect": "End refresh command exclusion. A later pending refresh, if any, remains pending."
+          },
+          "refresh_start": {
+            "condition": "shared.events.command_commit commits REF.",
+            "effect": "Acknowledge one pending refresh and begin tRFC command exclusion."
+          }
+        }
+      },
+      "modules": {
+        "contracts": {
+          "refresh": {
+            "status": "draft",
+            "role": "refresh_control",
+            "owned_state": {
+              "deadline": "Periodic tREFI deadline referenced to the most recent reset edge.",
+              "pending_state": "Sticky coalescing refresh-pending state.",
+              "service_state": "Committed REF age and validity representing tRFC service exclusion."
+            },
+            "interfaces": {
+              "commit_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "pending": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "service_busy": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "request": "shared.events.refresh_due sets sticky pending state. Pending persists until REF acknowledgment except when simultaneous due retains it.",
+              "acknowledgment": "shared.events.refresh_start is exactly a committed REF command."
+            },
+            "reset": "Clear deadline, pending, and service state synchronously. pending and service_busy are low during reset.",
+            "update_events": {
+              "shared.events.refresh_due": "Set pending and advance periodic deadline by tREFI.",
+              "shared.events.refresh_start": "Start tRFC service and clear pending unless refresh_due also occurs.",
+              "shared.events.refresh_end": "End service exclusion while preserving independently accumulated pending state."
+            },
+            "stalls": "Deadlines continue while waiting for active completion, bank closure, or service completion. Refresh does not own FIFO requests.",
+            "simultaneous_events": {
+              "due_and_refresh_start": "Due wins pending update; REF starts service and another pending refresh remains.",
+              "due_and_refresh_end": "Service ends but pending remains set.",
+              "reset_and_events": "Reset wins."
+            },
+            "combinational_dependencies": {
+              "pending": [],
+              "service_busy": []
+            },
+            "invariants": [
+              "execution.rules.EXEC_COMMAND_COMMIT",
+              "execution.rules.EXEC_REFRESH_EXCLUSION",
+              "system.rules.R1",
+              "system.rules.SYS_REFRESH",
+              "system.rules.SYS_RESET",
+              "system.rules.SYS_SIMULTANEOUS_EVENTS"
+            ],
+            "verification": [
+              "execution.verification.V_EXEC_COMMAND_COMMIT",
+              "execution.verification.V_EXEC_REFRESH_EXCLUSION",
+              "system.verification.V_R1_TIMING_REFRESH_FIFO",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET",
+              "system.verification.V_SIMULTANEOUS"
+            ]
+          }
+        }
+      },
+      "system": {
+        "rules": {
+          "SYS_REFRESH": {
+            "origin": "model.refinement.refresh",
+            "statement": "The first refresh due edge after reset is E0+tREFI, where E0 is the last rising edge sampled with reset asserted. Later due deadlines advance by tREFI independent of REF commit. Due sets sticky pending state; due events during pending or service coalesce. Once pending is visible before an edge, no new dispatch occurs. Any already active request may finish, then all open banks are closed in ascending bank order before REF commits. REF starts tRFC command exclusion. If refresh_due and REF commit occur on the same edge, pending remains set for a later refresh.",
+            "verification": [
+              "V_REFRESH"
+            ],
+            "owners": [
+              "refresh",
+              "command_engine",
+              "bank_state",
+              "timing"
+            ]
+          }
+        },
+        "verification": {
+          "V_REFRESH": {
+            "scenario": "Observe first and repeated refresh deadlines, defer refresh while an active request completes, leave multiple banks open, and align a due edge with REF commit.",
+            "expected": "Pending refresh persists and coalesces correctly, blocks new dispatch once visible, closes open banks before REF, excludes commands through tRFC, and retains pending state when due and REF commit coincide.",
+            "status": "planned_not_executed",
+            "rules": [
+              "SYS_REFRESH"
+            ]
+          }
+        }
+      },
+      "execution": {
+        "rules": {
+          "EXEC_REFRESH_EXCLUSION": {
+            "origin": "model.refinement.refresh_exclusion",
+            "statement": "REF committed at edge E blocks every command commit at candidate edges strictly before E+tRFC. At E+tRFC, the exclusion ends and a command may commit if all other conditions permit. Existing captured responses may still be delivered during refresh service.",
+            "verification": [
+              "V_EXEC_REFRESH_EXCLUSION"
+            ],
+            "owners": [
+              "timing",
+              "refresh",
+              "command_engine"
+            ]
+          }
+        },
+        "verification": {
+          "V_EXEC_REFRESH_EXCLUSION": {
+            "scenario": "Commit REF at edge E and attempt each command type at E+tRFC-1 and E+tRFC while observing a previously captured response.",
+            "expected": "No command commits before E+tRFC; normal command eligibility may resume at E+tRFC; the captured response remains deliverable during exclusion.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_REFRESH_EXCLUSION"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "finding": {
+    "id": "F_REFRESH_TIMEBASE_AND_SERVICE_MAINTENANCE",
+    "scope": "system",
+    "resolution": "design_repair",
+    "message": "Refresh owns a periodic deadline and committed-REF service age, but declares no every-clock evolution for either state. Its only updates occur on refresh_due, refresh_start, and refresh_end, while refresh_due and refresh_end themselves depend on the deadline or elapsed service age reaching a boundary. Therefore the current definitions do not establish a realizable path from the last reset-sampled edge to the first due edge, or from REF commit to service_busy deassertion at tRFC. Refresh may never become pending, or service_busy may remain asserted indefinitely and prevent later command progress. Define every-clock initialization, counting/comparison, deadline advancement, REF-service aging and expiration, with explicit priority versus reset, due, refresh_start, and refresh_end.",
+    "references": [
+      "/documents/modules/contracts/refresh",
+      "/documents/system/rules/SYS_REFRESH"
+    ],
+    "requirement_ids": [
+      "R1"
+    ]
+  }
+}

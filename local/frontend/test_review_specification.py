@@ -16,6 +16,13 @@ from review_specification import (ASPECTS, REVIEW_REVISION, build_review_prompt,
 from specification import SpecificationError, SpecificationErrors, read_document
 from specification_lowering import _compile_snapshot, compile_package, require_approval
 from test_generate_specification import register_fixture
+from review_references import expand_reference_view, reference_index
+
+
+def prompt_snapshot(prompt, manifest):
+    from prompt_context import expand_context
+    wire = json.loads(prompt.split("SNAPSHOT AND SELECTED CONFIGURATION:\n")[1])
+    return expand_reference_view(expand_context(wire), reference_index(review_snapshot(manifest)))
 
 
 class ReviewSpecificationTests(unittest.TestCase):
@@ -60,6 +67,49 @@ class ReviewSpecificationTests(unittest.TestCase):
         return {'id': 'F1', 'scope': 'system', 'resolution': 'design_repair', 'message': 'The event and expected result conflict.',
                 'references': ['/documents/shared/events/capture'],
                 'requirement_ids': [self.manifest['requirements'][0]['id']]}
+
+    def test_saved_response_case_keeps_contract_evidence_and_requests_reachable_failures(self):
+        fixture = read_document(ROOT / 'testdata/review_reachability_context.json')
+        original = copy.deepcopy(fixture)
+        parent, target = [fixture[key]['documents'] for key in ('parent', 'target')]
+        self.assertEqual(parent['system']['rules']['SYS_MEMORY_AND_RESPONSE'],
+                         target['system']['rules']['SYS_MEMORY_AND_RESPONSE'])
+        self.assertEqual(parent['modules']['contracts']['command_engine']['interfaces'],
+                         target['modules']['contracts']['command_engine']['interfaces'])
+        for docs in (parent, target):
+            engine = docs['modules']['contracts']['command_engine']
+            self.assertIn('only on a later edge', engine['update_events']['shared.events.dispatch'])
+            self.assertEqual(engine['simultaneous_events']['retirement_and_dispatch'],
+                             'Retirement does not permit same-edge replacement dispatch.')
+            self.assertIn('E+1', docs['execution']['rules']['EXEC_RESPONSE_EDGE']['statement'])
+        prompt = build_review_prompt({'provenance': {'specification': {'snapshot': fixture['target']}}})
+        self.assertIn('reachable edge sequences', prompt)
+        self.assertIn('Scheduling can enforce safety without feedback wiring', prompt)
+        self.assertIn('only defects introduced by the repair', prompt)
+        self.assertIn('No read may retire while a prior response is valid', prompt)
+        self.assertEqual(fixture, original)
+
+    def test_manual_serialized_response_abstraction_excludes_claimed_collision(self):
+        # Manually interpret the saved clauses: one active request, no dispatch
+        # on retirement, later registered candidate formation, one-cycle response.
+        # This is NOT execution of prose/RTL or automatic approval of the package.
+        states = {(False, False, True)}  # immediately after a READ: active,candidate,response
+        saw_next_read = False
+        for _ in range(8):
+            following = set()
+            for active, candidate, response in states:
+                for dispatch in (False, True):
+                    for form in (False, True):
+                        for commit in (False, True):
+                            if dispatch and active or form and (not active or candidate) or commit and not candidate:
+                                continue
+                            if commit:
+                                self.assertFalse(response, 'a second READ overlaps the prior response')
+                                saw_next_read = True
+                            following.add(((active or dispatch) and not commit,
+                                           (candidate or form) and not commit, commit))
+            states = following
+        self.assertTrue(saw_next_read)  # the abstraction permits progress, not just indefinite stalls
 
     def test_pass_approval_is_distinct_revision_bound_and_allows_lowering(self):
         original = copy.deepcopy(self.manifest)
@@ -218,10 +268,10 @@ class ReviewSpecificationTests(unittest.TestCase):
         self.assertEqual(wire['context_format'], 'shared_definitions_v1')
         expected = copy.deepcopy(snapshot)
         expected['package']['generation'].pop('validation_repairs')
-        self.assertEqual(expand_context(wire), expected)
+        self.assertEqual(prompt_snapshot(prompt, manifest), expected)
         self.assertIn('validation_repairs', snapshot['package']['generation'])
         for phrase in ('EXPANDED SNAPSHOT', 'Never prefix returned pointers with /context',
-                       '/timing_library are sibling snapshot roots', 'use system scope'):
+                       '/timing_library are sibling snapshot roots', 'REPAIR SCOPE'):
             self.assertIn(phrase, prompt)
 
     def test_only_repair_history_is_excluded_without_mutating_artifact(self):
@@ -230,7 +280,7 @@ class ReviewSpecificationTests(unittest.TestCase):
             {'stage': 'architecture', 'attempt': 2, 'error': 'STALE_UNDRIVEN_RESPONSE_SENTINEL'}))
         before = copy.deepcopy(changed)
         prompt = build_review_prompt(changed)
-        view = expand_context(json.loads(prompt.split('SNAPSHOT AND SELECTED CONFIGURATION:\n')[1]))
+        view = prompt_snapshot(prompt, changed)
         expected = copy.deepcopy(changed['provenance']['specification']['snapshot'])
         del expected['package']['generation']['validation_repairs']
         self.assertEqual(view, expected)
@@ -280,7 +330,7 @@ class ReviewSpecificationTests(unittest.TestCase):
         manifest = {'provenance': {'specification': {'snapshot': fixture['snapshot']}}, 'requirements': []}
         before = copy.deepcopy(manifest)
         prompt = build_review_prompt(manifest)
-        view = expand_context(json.loads(prompt.split('SNAPSHOT AND SELECTED CONFIGURATION:\n')[1]))
+        view = prompt_snapshot(prompt, manifest)
         connections = view['documents']['graph']['connections']
         self.assertEqual(connections['host_adapter.rsp_valid'], ['top.rsp_valid'])
         self.assertEqual(connections['host_adapter.rsp_rdata'], ['top.rsp_rdata'])
@@ -341,9 +391,10 @@ class ReviewSpecificationTests(unittest.TestCase):
         prompt = build_review_prompt(manifest)
         self.assertIn('do not require separate external approval before this review can pass', prompt)
         self.assertIn('absence of that approval as a design defect or external_agreement finding', prompt)
-        allowed = json.loads(prompt.split('Eligible external blocker paths (or their fields) are: ')[1].split('. Separate external agreement', 1)[0])
-        self.assertEqual(set(allowed), {'/package/assumptions/A_PROFILE', '/package/open_questions/Q_PROFILE_PROVENANCE'})
-        view = expand_context(json.loads(prompt.split('SNAPSHOT AND SELECTED CONFIGURATION:\n')[1]))
+        allowed = json.loads(prompt.split('Eligible external blocker reference IDs are: ')[1].split('. Separate external agreement', 1)[0])
+        self.assertEqual({reference_index(review_snapshot(manifest))['targets'][ref] for ref in allowed},
+                         {'/package/assumptions/A_PROFILE', '/package/open_questions/Q_PROFILE_PROVENANCE'})
+        view = prompt_snapshot(prompt, manifest)
         self.assertEqual(view, fixture['snapshot'])
         self.assertEqual(view['package']['open_questions']['Q_RTL_APPROVAL']['blocks'], 'rtl_generation')
         profile, approval = fixture['findings']
@@ -369,7 +420,7 @@ class ReviewSpecificationTests(unittest.TestCase):
             snapshot['package']['open_questions']['NORMAL'] = {'blocks': 'rtl_generation', 'question': 'Approve export.'}
         changed = self.changed_manifest(change)
         prompt = build_review_prompt(changed)
-        self.assertIn('Eligible external blocker paths (or their fields) are: [].', prompt)
+        self.assertIn('Eligible external blocker reference IDs are: [].', prompt)
 
     def test_legacy_explicit_approvals_still_work(self):
         from specification_lowering import create_approval

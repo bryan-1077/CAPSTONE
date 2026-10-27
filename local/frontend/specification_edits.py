@@ -9,15 +9,20 @@ from specification import SpecificationError
 ROOTS = {'modules', 'internal_types', 'graph', 'verification', 'rule_owners'}
 
 
-def apply_architecture_edits(base, response):
-    return _apply_edits(base, response, ROOTS, 'Architecture')
+def apply_architecture_edits(base, response, *, narrow=False):
+    """Semantic repairs edit fields inside the accepted architecture.
+
+    Ordinary compiler repairs retain their existing broader shape-repair mode.
+    """
+    return _apply_edits(base, response, ROOTS, 'Architecture', narrow=narrow,
+                        allow_object_removal=not narrow)
 
 
 def apply_system_edits(base, response):
     return _apply_edits(base, response, {'package', 'shared', 'system', 'execution'}, 'System', narrow=True)
 
 
-def _apply_edits(base, response, roots, label, *, narrow=False):
+def _apply_edits(base, response, roots, label, *, narrow=False, allow_object_removal=True):
     if not isinstance(response, dict) or set(response) != {'base_fingerprint', 'edits'}:
         raise SpecificationError(f'{label} repair requires base_fingerprint and edits only')
     if response['base_fingerprint'] != fingerprint(base):
@@ -46,12 +51,13 @@ def _apply_edits(base, response, roots, label, *, narrow=False):
         if not isinstance(parent, dict):
             raise SpecificationError(f'{label} edits address object fields; replace lists as a whole')
         key = parts[-1]
+        if (narrow and isinstance(parent.get(key), dict) and parent[key]
+                and (edit['op'] == 'set' or not allow_object_removal)):
+            raise SpecificationError(f'{label} edit must address fields within an existing object: {path}')
         if edit['op'] == 'remove':
             if key not in parent:
                 raise SpecificationError(f'{label} edit cannot remove absent field: {path}')
             del parent[key]
         else:
-            if narrow and isinstance(parent.get(key), dict) and parent[key]:
-                raise SpecificationError(f'{label} edit must address fields within an existing object: {path}')
             parent[key] = copy.deepcopy(edit['value'])
     return result

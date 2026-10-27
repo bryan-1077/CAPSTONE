@@ -109,6 +109,14 @@ def parse_args() -> argparse.Namespace:
     )
     cache_mode.add_argument('--resume', action='store_true',
                             help='On an architecture manifest, reuse matching reviewed RTL and generate missing modules.')
+    recovery_flags = parser.add_mutually_exclusive_group()
+    recovery_flags.add_argument('--rtl-recovery', dest='rtl_recovery', action='store_true',
+                                help='Enable bounded RTL recovery; architecture RTL builds with lint enable it by default.')
+    recovery_flags.add_argument('--no-rtl-recovery', dest='rtl_recovery', action='store_false',
+                                help='Disable bounded RTL response recovery.')
+    parser.set_defaults(rtl_recovery=None)
+    parser.add_argument('--rtl-generator-model', type=nonempty_model,
+                        help='Architecture builds only: override the dual-LLM generator/merger model; reviewer is unchanged.')
     parser.add_argument("--microarch", action="store_true", help="Propose an LLM architecture before generation.")
     parser.add_argument("--specification", action="store_true",
                         help="Generate system behavior first, then contracts/graph/intent; requires review before RTL.")
@@ -132,6 +140,8 @@ def parse_args() -> argparse.Namespace:
                         help='Offline reviewer verdict replay; requires --automated-spec-review.')
     parser.add_argument('--spec-review-output', type=Path,
                         help='Fresh directory for the automated review report and approval.')
+    parser.add_argument('--prior-spec-review-report', type=Path, action='append', default=[],
+                        help='Carry findings from an earlier review of this exact artifact (repeatable).')
     parser.add_argument('--auto-spec-repair', action='store_true',
                         help='With automated review, allow one semantic repair cycle then review the new revision.')
     parser.add_argument('--spec-repair-output', type=Path,
@@ -165,7 +175,14 @@ def run_command(command: list[str]) -> None:
     subprocess.run(command, check=True, cwd=SCRIPT_DIR, env=env)
 
 
-def design_command(yaml_path: Path, *, no_lint: bool, cache: bool, resume: bool = False) -> list[str]:
+def nonempty_model(value: str) -> str:
+    if not value.strip():
+        raise argparse.ArgumentTypeError('Model name must be nonempty')
+    return value.strip()
+
+
+def design_command(yaml_path: Path, *, no_lint: bool, cache: bool, resume: bool = False,
+                   rtl_generator_model: str | None = None, rtl_recovery: bool | None = None) -> list[str]:
     """Build the design.py command with generation-flow flags."""
     command = [sys.executable, "design.py", str(yaml_path)]
     if no_lint:
@@ -174,6 +191,10 @@ def design_command(yaml_path: Path, *, no_lint: bool, cache: bool, resume: bool 
         command.append("--cache")
     if resume:
         command.append('--resume')
+    if rtl_recovery is not None:
+        command.append('--rtl-recovery' if rtl_recovery else '--no-rtl-recovery')
+    if rtl_generator_model is not None:
+        command += ['--rtl-generator-model', rtl_generator_model]
     return command
 
 
@@ -586,6 +607,15 @@ def should_run_expand_spec(interactive: bool, source_count: int, source_path: Pa
     return prompt_yes_no(f"Run expand_spec for {display_path(source_path)}? (y/n): ")
 
 
+def architecture_rtl_recovery(args: argparse.Namespace) -> bool:
+    """Resolve the architecture default after routing, preserving legacy defaults."""
+    selected = getattr(args, 'rtl_recovery', None)
+    eligible = not args.microarch_only and not args.no_lint
+    if selected is True and not eligible:
+        raise ValueError('--rtl-recovery requires an RTL build with lint')
+    return eligible if selected is None else selected
+
+
 def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     """Lower the proposed graph directly, bypassing fixed controller integration."""
     from architecture import fingerprint, lower_architecture, validate_architecture, emit_verification_specs
@@ -595,6 +625,12 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     from specification import read_document
 
     source = read_document(input_path)
+    prior_reports = getattr(args, 'prior_spec_review_report', [])
+    if prior_reports and not args.automated_spec_review:
+        raise ValueError('--prior-spec-review-report requires --automated-spec-review')
+    rtl_recovery = architecture_rtl_recovery(args)
+    if args.rtl_generator_model is not None and args.microarch_only:
+        raise ValueError('--rtl-generator-model applies to RTL builds, not --microarch-only exports')
     if args.auto_spec_repair and not args.automated_spec_review:
         raise ValueError('--auto-spec-repair requires --automated-spec-review')
     if args.spec_repair_output and not args.auto_spec_repair:
@@ -668,7 +704,8 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
         try:
             args.spec_approval = review_specification(manifest, output_dir=args.spec_review_output,
                                                     model=args.microarch_model,
-                                                    response_path=args.spec_review_response)
+                                                    response_path=args.spec_review_response,
+                                                    prior_review_reports=[read_document(p) for p in prior_reports])
         except ReviewChangesRequired as exc:
             if not args.auto_spec_repair:
                 raise
@@ -715,6 +752,9 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     specs = lower_architecture(manifest, build_dir, specification_approval=args.spec_approval)
     status = {"structural_validation": "passed", "declared_dependency_validation": "passed", "rtl_generation": "in_progress",
               "integration_lint": "not_run", "behavioral_verification": "not_run"}
+    if args.rtl_generator_model is not None:
+        status['requested_rtl_generator_model'] = args.rtl_generator_model
+    status['rtl_recovery'] = rtl_recovery
     if is_specification_manifest(manifest):
         status.update(specification_validation='passed', specification_approval='approved',
                       specification_fingerprint=manifest['provenance']['specification']['package_fingerprint'],
@@ -729,7 +769,9 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
             # A failed rebuild must not leave a prior handoff looking current.
             (build_dir / 'verification_handoff.json').unlink(missing_ok=True)
         for spec in specs:
-            run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache, resume=args.resume) +
+            run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache, resume=args.resume,
+                                       rtl_generator_model=args.rtl_generator_model,
+                                       rtl_recovery=rtl_recovery) +
                         ["--output-root", str(build_dir)])
         status["rtl_generation"] = "passed"
         if not args.no_lint:
@@ -802,8 +844,12 @@ def _run_flow(args) -> int:
         input_path = input_path.resolve()
 
     try:
-        if args.auto_spec_repair or args.spec_repair_output or args.automated_spec_review or args.spec_review_response or args.spec_review_output or args.resume or args.specification or args.microarch or args.microarch_only or (input_path.is_file() and ({'architecture_version', 'specification_version'} & load_yaml(input_path).keys())):
+        if args.auto_spec_repair or args.spec_repair_output or args.automated_spec_review or args.spec_review_response or args.spec_review_output or args.prior_spec_review_report or args.resume or args.specification or args.microarch or args.microarch_only or (input_path.is_file() and ({'architecture_version', 'specification_version'} & load_yaml(input_path).keys())):
             return run_architecture_flow(input_path, args)
+        if getattr(args, 'rtl_recovery', False):
+            raise ValueError('--rtl-recovery requires an architecture build')
+        if args.rtl_generator_model is not None:
+            raise ValueError('--rtl-generator-model requires an architecture build; legacy generation keeps its existing models')
         if args.requirements_file or args.microarch_response or args.build_dir or args.spec_set or args.spec_profile or args.spec_approval or args.specification_output or args.specification_response:
             raise ValueError("Architecture options require --microarch or an architecture manifest input")
         input_path, validated_user_config = maybe_expand_user_config(input_path)

@@ -13,16 +13,19 @@ def build_repair_context(parent, repaired, plan):
         # also do not describe behavior; the full artifacts remain fingerprinted.
         snapshot['package'].pop('generation', None)
         return snapshot
-    return {'version': 1, 'parent_manifest_fingerprint': fingerprint(parent),
+    result = {'version': 1, 'parent_manifest_fingerprint': fingerprint(parent),
             'parent_report_fingerprint': plan['report_fingerprint'],
             'target_manifest_fingerprint': fingerprint(repaired),
             'findings': copy.deepcopy(plan['findings']),
             'changes': audit_changes(evidence(parent), evidence(repaired))}
+    if 'finding_history' in plan:
+        result['finding_history'] = copy.deepcopy(plan['finding_history'])
+    return result
 
 
 def validate_repair_context(context, manifest):
     fields(context, ('version', 'parent_manifest_fingerprint', 'parent_report_fingerprint',
-                     'target_manifest_fingerprint', 'findings', 'changes'), (), 'repair context')
+                     'target_manifest_fingerprint', 'findings', 'changes'), ('finding_history',), 'repair context')
     if type(context['version']) is not int or context['version'] != 1:
         raise SpecificationError('Unsupported repair context version')
     for key in ('parent_manifest_fingerprint', 'parent_report_fingerprint', 'target_manifest_fingerprint'):
@@ -41,6 +44,9 @@ def validate_repair_context(context, manifest):
     names(ids, 'original finding ids')
     if not isinstance(context['changes'], list):
         raise SpecificationError('Repair changes must be a list')
+    if 'finding_history' in context:
+        from finding_ledger import validate_sources
+        validate_sources(context['finding_history'], fingerprint(manifest), context)
 
 
 def validate_repair_assessments(verdict, context, snapshot, resolve):

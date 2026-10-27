@@ -823,6 +823,49 @@ positive finite validation, and a simulated stream lasting beyond 180 seconds
 with a 600-second setting. Compilation and whitespace checks passed. No live
 model calls ran during this change; the longer-timeout experiment is pending.
 
+### Optional RTL generator model for architecture builds
+
+`run_flow.py --rtl-generator-model MODEL` selects the generator and merger for
+dual-LLM modules in an architecture build, including local lint repairs. The
+reviewer, specification/proposal models, lint/review acceptance checks and attempt
+limits retain their existing settings. Without the flag, generation still uses
+`protected.Claude-Opus-5`; the reviewer remains `protected.gpt-5.6-terra`.
+This is an explicit per-invocation argument, not a global/environment override.
+
+Legacy config/basic expansion rejects the flag; the normal expand-spec route
+retains its models and routing. The internal design CLI requires an isolated
+`--output-root` for the override. Deterministic FSM/timing emitters ignore model
+selection and continue through their existing routes. Proposal-only exports
+reject the flag because they do not generate RTL. `start_flow.sh` forwards it
+when an architecture mode or input is explicitly selected.
+
+Resume keeps exact-specification reviewed cache entries regardless of the newly
+requested generator. Only missing/unusable cache entries generate with that model.
+Build status records `requested_rtl_generator_model` when supplied; module traces
+record `requested_generator_model`, `reviewer_model` and cache-hit state. Existing
+usage ledgers record the model actually called. A cache hit does not claim that
+the newly selected model produced the cached RTL. Model selection does not edit
+the approved manifest or change its approval/specification/cache identities.
+
+For the saved interrupted build, test an alternate generator without regenerating
+the five reviewed modules:
+
+```sh
+python3 -u local/frontend/run_flow.py \
+  /tmp/capstone-live-sjSE8O/repair/architecture.yaml \
+  --spec-approval /tmp/capstone-review-tig6mI/review/approval.json \
+  --build-dir /tmp/capstone-live-sjSE8O/build --resume \
+  --rtl-generator-model protected.gpt-5.6-terra
+```
+
+This experiment uses the same model for both generator and reviewer. It is not
+evidence that the alternate provider path avoids HTTP 524. No live calls were
+made while implementing the override. Offline tests exercise defaults, CLI
+guards, explicit propagation through generation/lint repair/merge, unchanged
+reviewer selection, FSM routing and cache reuse. A network-disabled cache-only
+check on a copy of the saved build reused all five modules, then stopped at the
+missing timing RTL with zero calls; the original build was not changed.
+
 ## Clarify control contracts before another complete RTL attempt
 
 Following the repeated command-engine 524 responses, generation guidance now
@@ -1547,3 +1590,666 @@ fix may be assessed resolved while a preservation regression still blocks the
 verdict; this is protocol/evidence testing, not an executed controller model or a
 live model-recognition test. Compilation and whitespace checks pass. No paid API
 calls, source/export edits or target RTL generation ran during this segment.
+
+### Repair-review prompt budget (October 27, 2026)
+
+The live run `/tmp/capstone-live-sjSE8O` completed generation and one semantic
+repair, but its final review was blocked locally: the estimated reservation was
+97,133 tokens against the 80,000 limit. That final review made no API call.
+The accepted repair and its 237-change audit remain available for standalone
+review; restarting generation is unnecessary.
+
+Repair prompts now use lossless `snapshot_after_v1` change rows. A replace/remove
+row contains `[op,path,before]`; an add row contains `[add,path]`. For additions
+and replacements, the exact after value is already at that path in the current
+expanded snapshot. Whole before values, including lists, remain literal data.
+Entries whose after value does not exactly match the snapshot, or whose shape
+cannot be represented, remain complete objects. Instructions explain reconstruction
+and independent expansion of the two shared-definition contexts. Saved audit
+contexts, report/approval schemas, fingerprints and review obligations are unchanged.
+No evidence is summarized, dropped or treated as behavioral verification.
+
+The actual saved prompt now reserves 79,512 tokens, including the unchanged 6,000
+output allowance. Offline reconstruction recovers every saved change and original
+finding exactly. All 69 focused repair-review, standard review, semantic repair
+and context-sharing tests pass. Future larger inputs may still exceed the limit;
+the pacing gate remains active. No paid calls, approvals or controller RTL builds
+were performed for this change.
+
+Retry only the final review, retaining the original repair obligations:
+
+```sh
+RUN_DIR=/tmp/capstone-live-sjSE8O
+REVIEW_DIR="$(mktemp -d /tmp/capstone-review-XXXXXX)/review"
+python3 -u local/frontend/review_specification.py "$RUN_DIR/repair/architecture.yaml" \
+  --repair-context "$RUN_DIR/repair/repair_review_context.json" \
+  --output-dir "$REVIEW_DIR"
+# Only after this produces approval.json:
+python3 -u local/frontend/run_flow.py "$RUN_DIR/repair/architecture.yaml" \
+  --spec-approval "$REVIEW_DIR/approval.json" --build-dir "$RUN_DIR/build"
+```
+
+### Live frontend completion with alternate RTL generator (October 27, 2026)
+
+The user-run resume of `/tmp/capstone-live-sjSE8O/build` with
+`--rtl-generator-model protected.gpt-5.6-terra` completed. Five earlier reviewed
+modules were reused with zero calls. GPT generated timing, memory and refresh;
+timing/memory passed the first review, and refresh passed after the existing merge
+and second-review path corrected immediate reset gating of pending. The existing
+reviewer remained GPT. This is a mixed-generator build, not regeneration of all
+eight modules with GPT.
+
+All eight modules now have reviewed RTL, integration Verilator lint passed, and
+the RTL verification handoff was exported. A separate local invocation of
+`verification_handoff.py` validated the exported handoff and its identities.
+The user-run usage ledger is `20261027T060845Z_021d298c1a6f`: eight calls,
+131,402 input tokens, 11,608 output tokens, estimated cost $0.402100 for that
+resume only. Earlier generation/review/probe costs are additional.
+
+No 524 occurred in this resume. This establishes a successful alternative for
+this build, not a root-cause diagnosis or a guarantee against future gateway
+timeouts. The final-review approval is at
+`/tmp/capstone-review-tig6mI/review/approval.json`; build status records RTL and
+integration lint passed, behavioral verification not_run and consumer
+adapter_required. Behavioral/UVM/vector verification and backend execution did
+not run. The assistant's follow-up validation made no LLM/network calls.
+
+### Local executable simulation runner (October 27, 2026)
+
+`simulate_handoff.py` now consumes authenticated RTL-phase handoffs in a
+standalone local Verilator flow. See the [runner documentation](../simulation/README.md)
+for its explicit `ddr4-fifo-v1` profile, supported configurations, commands,
+evidence format and limits. It freezes validated inputs, generates a declared-port
+testbench and evaluates pre-edge traces using an independent Python FIFO,
+ownership, memory, row and timing scoreboard. It neither modifies the approved
+RTL nor invokes legacy simulation/orchestration, LLMs, remote verification or
+backend execution.
+
+The saved completed build passed five scenarios: reset-zero reads, FIFO/memory,
+queue pressure, traffic through refresh, and reset with outstanding work.
+`/tmp/capstone-simulation-validated/simulation_report.json` records 70,843 total
+cycles, 222 checked responses, three REF services, pending-refresh active drain,
+post-refresh admissions, and five requests canceled by reset. Simulation evidence
+is tied to the original handoff/manifest/RTL identities; original build status
+and the legacy consumer's adapter-required metadata remain unchanged.
+
+All 24 runner/handoff regressions pass, including a real compiled Verilator
+driver test, hand-written independent traces, corrupted read/dispatch data,
+early timing commands, row/candidate/reset faults, unsupported/private bindings,
+input integrity rejection and nonvacuous scenario coverage. The executed smoke
+scenarios are behavioral evidence for those checks, not exhaustive verification,
+isolated module testing, all-configuration coverage or requirement closure.
+Reports retain every source requirement/obligation as unverified and separate
+scenario results. No on-chip BIST hardware is inserted and no network calls ran.
+
+### Review reachability and regression attribution (October 27, 2026)
+
+The first live plain-text run `20261027T065112Z_0766bc80` stopped after its one
+semantic repair. Initial review requested broader declared observations and
+readback instrumentation for the blocked-command check. Final review assessed
+that finding resolved, but then alleged that missing response-slot feedback to
+the engine permits a READ to retire while the previous response is valid.
+Readiness passed; this was a schema-valid semantic rejection, not transport,
+formatting or token-budget failure. No RTL was generated for that run.
+
+The saved contracts forbid same-edge replacement dispatch, require candidate
+formation on a later edge, and deliver/clear a READ response at E+1. A manual
+edge analysis therefore places replacement dispatch no earlier than E+1,
+candidate formation at E+2, and its commit at E+3. The missing wire alone does
+not demonstrate an occupied-slot READ. The cited system response rule and engine
+interfaces were already present before repair, so labeling that concern an
+introduced preservation regression is also unsupported by those differences.
+This is a contract interpretation, not executed target RTL or automatic approval.
+
+The generic review prompt now requests reachable edge sequences accounting for
+latency, ownership and bubbles, recognizes schedule-enforced safety, and asks for
+the precise ambiguity when reachability is unspecified. Pre-existing current
+defects still block approval but are distinguished from introduced regressions.
+No findings are filtered, no guard wires are automatically added, no verdict or
+approval is rewritten, and no schemas, protocol revision or retry limits change.
+A fresh standalone review can consume the saved repaired manifest and original
+repair-review context without regenerating the design.
+
+`testdata/review_reachability_context.json` preserves the relevant parent/current
+contracts and both findings as an explicitly incomplete projection. Tests retain
+the current safety rule in the prompt, confirm the pre-existing rule/interface,
+and exhaust a manually encoded small serialized-response abstraction with stalls
+and progress. The abstraction does not parse arbitrary prose or certify the
+actual controller. Existing review/repair gate regressions remain applicable.
+The saved large repair prompt still fits at 79,719/80,000 estimated tokens;
+this run's repaired review reserves 48,027. No paid calls or source-export edits
+were performed while investigating this rejection. Architecture-only semantic
+repair still starts with a complete decomposition: this run produced 69 audit
+changes for its narrow observation finding. Reducing that rewrite churn is
+separate from the reachability clarification above.
+
+### Review reference reliability — change 1 (October 27, 2026)
+
+Semantic review now labels current snapshot evidence with deterministic reference
+IDs. IDs identify paths; the index fingerprint also binds the snapshot values.
+The lossless prompt view includes labels at rules, events, contracts, verification
+entries and package decisions. Repair change locations can use an ID plus a
+path suffix to keep the complete before/after evidence within the token budget.
+Source snapshots and saved repair contexts are not edited by this transport.
+
+Reports retain canonical JSON pointers and review revision 4. Existing pointer
+responses, approvals and handoffs remain supported. New reports record the raw
+verdict, index fingerprint and any reference corrections. Approval validation and
+repair admission replay that evidence and reject substantive disagreement with
+the canonical verdict.
+
+Validation collects invalid references across findings, repair assessments and
+preservation assessments. An otherwise valid verdict may receive **one**
+reference-only correction attempt. Its response must replace exactly the invalid
+individual entries with supplied IDs. It cannot edit findings, scope, messages,
+verdict, explanations, links or list lengths. The corrected verdict must pass all
+normal checks, including external-blocker eligibility. Semantic/schema/transport
+failures do not trigger this attempt; more than 100 invalid entries also stop.
+Failed correction preserves the original verdict and all reference diagnostics.
+There is no semantic reconsideration or approval override.
+
+Review directories include `reference_index.json`; correction attempts also save
+`reference_errors.json`, the correction prompt/raw response and its result.
+Offline `--response` replay never silently makes a correction call. An explicit
+offline correction can be supplied with `--reference-response corrections.json`,
+whose exact format is `{"corrections":{"/findings/0/references/0":"R..."}}`.
+Keys select invalid verdict entries; values must exist in the current reference
+index. The correction is rejected if it changes valid entries or leaves any
+reference unresolved. Initial review and correction have separate usage labels
+and output caps of 6,000 and 4,000 tokens respectively.
+
+Offline replay of the saved refresh-review failure collected all three invalid
+paths, corrected them to the existing system/execution rules, and retained
+`F_REFRESH_TIMEBASE_MAINTENANCE` with `changes_required`. No approval or RTL was
+created. This demonstrates protocol recovery, not adjudication of that finding.
+The previous completed controller's approval and RTL handoff still validate.
+The saved large/current repaired prompts reserve 79,177/48,900 estimated tokens
+respectively, including the 6,000-token review output cap. These are local
+measurements, not guarantees about provider accounting or future prompt sizes.
+
+`test_review_references.py` covers the saved failure, all reference sections,
+stable IDs and lossless transport, escaped/Unicode/null/list values, bounded and
+adversarial correction, offline replay, external blockers, approval/repair audit
+tampering and token-call labels. Live reviewer convergence has not been tested
+for this change. Narrow semantic architecture repairs and cross-review finding
+carry-forward remain separate subsequent changes.
+
+Final offline validation: all **440 frontend tests passed**, including 21 new
+reference regressions, legacy FSM/dual-LLM routing, review/repair admission,
+lowering, handoff and local simulation checks. Network connections were blocked
+in the test runner. The first broad run exposed one stale JSON-recovery fixture
+that supplied a full architecture response after compiler repair had entered
+its existing edit mode. The fixture now supplies the required fingerprinted
+remove edit and asserts the exact reconstructed response; generator behavior
+was not changed. The complete suite then passed. The focused review suite also
+passed all 53 tests. No live LLM calls ran during implementation or validation.
+
+### Narrow semantic architecture repair — change 2 (October 27, 2026)
+
+Architecture-scoped semantic repair now starts with the complete accepted
+architecture as a fingerprint-bound edit base. Its first call and all compiler
+retries must return `{"base_fingerprint":"...","edits":[...]}`. It reuses the
+existing object-field edit engine rather than generating a new decomposition.
+The prompt asks for only the reported corrections and necessary dependent fields,
+preserving unrelated contract prose, module identities, types, wiring, rule
+ownership and verification declarations. No worked decomposition example is
+included when the accepted architecture already supplies the structure.
+
+This route rejects entire stage-root edits and replacement/removal of existing
+nonempty objects: change the fields inside those objects instead. New fields,
+including structured fields, can be added; lists remain whole-field replacements.
+The existing 1..100-edit limit, atomic application, exact base fingerprint and
+full compiler/configuration-matrix validation still apply. Malformed responses
+and stale fingerprints leave the base unchanged. A syntactically applied but
+compiler-invalid candidate becomes the complete base for the next bounded
+attempt, retaining prior edits for inspection and correction. There is no
+fallback to full architecture regeneration or an additional semantic cycle.
+
+Each applied architecture attempt now journals `repair_base_fingerprint`, raw
+`response`, `applied_response` and exact before/after `applied_changes`, including
+compiler-rejected candidates. The existing final parent/target repair context
+still records the net changes and findings for semantic review. Edit validation
+does not prove that a selected field is semantically related to a finding;
+the change audit and independent review remain necessary. Unedited values stay
+unchanged rather than being paraphrased by a complete replacement response.
+
+System-scoped semantic repair still edits the system first, invalidates the old
+architecture and generates a fresh decomposition against that new system.
+Ordinary compiler architecture retries retain their broader shape-repair mode.
+Initial proposals, legacy expand-spec/FSM/dual-LLM selection, RTL generation and
+approval gates have not been rerouted by this change. Finding carry-forward is
+still a later change.
+
+The saved observability failure was exercised locally through real compilation
+and export, using mocked generation for the three known check-binding edits.
+Its net changes were exactly `events`, `note` and `observations` under
+`execution.verification.V_EXEC_COMMAND_COMMIT`, compared with 69 changes in the
+previous full replacement. Every other document value, locked system fact,
+library, request and selected configuration stayed unchanged. A deliberately
+rejecting mocked review retained the original finding, so no approval or RTL
+was created. The first repair prompt reserves 65,001 estimated tokens including
+the existing 24,000-token output cap. This is an offline scope/compilation audit,
+not a live-model repair or behavioral verification result.
+
+`test_semantic_architecture_edits.py` adds 14 regressions covering field scope,
+escaped keys, list and structured additions, atomic rejection, whole-object and
+locked-system edits, source preservation, exact journals, malformed/stale
+responses, compiler rejection and subsequent correction, final review rejection,
+transport failure, prompt budget and the recorded controller observation case.
+The 62 focused existing edit, system-repair, semantic-repair/review, prompt and
+JSON-recovery tests also pass.
+
+A live check can revisit the original observability rejection in a fresh output
+directory without regenerating its user/system specification:
+
+```sh
+RUN_DIR="$PWD/local/frontend/microarch/builds/text_runs/20261027T065112Z_0766bc80"
+REPAIR_DIR="$(mktemp -d /tmp/capstone-step2-live-XXXXXX)/repair"
+python3 -u local/frontend/repair_specification.py \
+  "$RUN_DIR/architecture.yaml" \
+  --review-report "$RUN_DIR/review/report.json" \
+  --output-dir "$REPAIR_DIR" \
+  --model protected.gpt-5.6-terra
+```
+
+Inspect `source/attempts.json` (or `source.attempts.json` if generation stopped),
+`repair_review_context.json`, `repair_status.json` and `review/report.json`.
+The question is whether the model returns focused edits, preserves unrelated
+fields, passes the compiler, and receives a valid semantic disposition. A new
+current finding can still legitimately stop the flow. This command has not been
+run against the live model by the assistant.
+
+Final validation: all **454 frontend tests passed** with network connections
+blocked in the runner, including the 14 new narrow semantic architecture checks
+and legacy FSM/dual-LLM routing regressions. The saved completed controller's
+existing approval and RTL handoff also still validate. No live LLM calls or
+behavioral verification of the newly repaired controller ran for this change.
+
+### Finding carry-forward — change 3 (October 27, 2026)
+
+New semantic review reports embed `finding_ledger` and write the same data to
+`finding_ledger.json`. Each entry retains its original finding verbatim, an
+identity derived from the originating manifest and complete finding, and a
+history of open/resolved dispositions with explanations, evidence and links.
+Display IDs alone do not identify a ledger entry: reused IDs or changed claims
+cannot overwrite earlier allegations. Renamed current findings can be linked
+while the original allegation remains open. A resolved finding reported again
+on the same artifact is explicitly reopened. Closed entries remain in the audit.
+
+Semantic repair automatically forwards its selected report's ledger through
+the repair context. On the first repair, an original finding already covered
+by `repair_assessments` uses that assessment to update the ledger; the reviewer
+does not answer the same obligation twice. Other open entries require
+`finding_assessments`, with exactly one `{ledger_key,status,explanation,references,
+remaining_finding_ids}` for each outstanding key shown in the prompt. Unresolved
+entries link nonempty current finding IDs of the same resolution kind and keep
+the verdict blocking. Resolved entries require an explicit explanation, current
+evidence and no remaining links. A reviewer can explain that a prior allegation
+was unsupported or already prevented by the existing design, without demanding
+a gratuitous architecture change. This is recorded review evidence, not a
+deterministic proof that the explanation is correct. Independent external
+agreement/readiness checks still gate approval.
+
+Standalone rereview selects its history explicitly with repeatable
+`review_specification.py --prior-review-report REPORT`. Pass the latest report
+from the selected ledger chain; its entries include the earlier history. Multiple
+earlier reports can seed a legacy chain. Reports must belong to the exact current
+manifest/configuration. A repair-parent report is forwarded only through its
+matching parent manifest/report fingerprints in the target-bound repair context.
+Reports from unrelated revisions or configurations fail before an output
+directory or model call is created. History is not inferred by searching `/tmp`
+or other review directories. Omitting prior history starts a new review chain;
+it cannot establish closure of allegations in an unselected chain.
+
+`run_flow.py` exposes the same selection as repeatable
+`--prior-spec-review-report REPORT`, requiring `--automated-spec-review`.
+The legacy expand-spec/FSM route is unchanged. Existing canonical reports and
+approvals without a ledger remain readable; this does not retroactively resolve
+or revoke any historical findings/approvals. New approval validation and repair
+admission recompute the ledger transition from the selected source entries and
+the canonical verdict. Missing assessments, dropped entries, changed identities,
+unexplained closure, inconsistent dispositions or omitted repair-parent history
+are rejected. Compatible older/longer histories merge without resetting closure;
+divergent dispositions for the same entry require selection of an explicit
+review chain rather than silently choosing one branch.
+
+An otherwise valid reference-only failed report can contribute its new findings,
+including historically misspelled paths. Those references remain historical
+data; dispositions must cite current evidence. A failed review cannot close its
+incoming obligations. Provider/parse failures before a verdict retain the input
+ledger and can be selected on retry solely to recover that history. Malformed
+substantive verdicts are not accepted as new evidence. The one bounded reference
+correction also covers `finding_assessments`, and cannot change their statuses,
+messages or links. Raw source/report history is kept outside the prompt except
+for the open claims the reviewer must assess, limiting repeated context growth.
+
+Offline replay imported both saved allegations
+`F_READ_RETIREMENT_RESPONSE_SLOT_GUARD` and
+`F_REFRESH_TIMEBASE_MAINTENANCE`, alongside a later clean legacy report. A mocked
+clean verdict omitting their dispositions was rejected. An explicitly unresolved
+mocked verdict retained both, and a subsequent silent-drop attempt was rejected
+again. Correcting the refresh finding's historical reference spelling produced
+a separate current finding entry, preserving the earlier allegation and its
+explicit link rather than silently coalescing claims. No semantic adjudication,
+approval, RTL generation or live LLM call occurred in this audit. The prompt
+reserves 50,715 estimated tokens including the existing review output cap, and
+the previous completed controller's approval/handoff still validate.
+
+`test_finding_ledger.py` adds 19 offline tests for multiple reviews and repairs,
+aliases and reused IDs, explicit false-positive disposition, reopened findings,
+missing/duplicate/unknown assessments, stale configuration, divergent histories,
+reference correction/failure, transport recovery, external readiness, metadata
+tampering and both CLI entry points.
+
+For a live ledger check, revisit the original repaired artifact with both earlier
+reports. This intentionally uses the old repaired manifest to which those reports
+belong, rather than the different step-2 repair branch:
+
+```sh
+RUN_DIR="$PWD/local/frontend/microarch/builds/text_runs/20261027T065112Z_0766bc80"
+REVIEW_DIR="$(mktemp -d /tmp/capstone-step3-live-XXXXXX)/review"
+python3 -u local/frontend/review_specification.py \
+  "$RUN_DIR/repair/architecture.yaml" \
+  --repair-context "$RUN_DIR/repair/repair_review_context.json" \
+  --prior-review-report "$RUN_DIR/repair/review/report.json" \
+  --prior-review-report /tmp/capstone-rereview-0c2fNf/review/report.json \
+  --model protected.gpt-5.6-terra \
+  --output-dir "$REVIEW_DIR"
+```
+
+Both older allegations must receive explicit current dispositions, even if the
+new findings list would otherwise be empty. A pass is not required for this
+check: an unresolved finding with valid links is a legitimate blocking result.
+Inspect the new report's `finding_assessments` and ledger history. Subsequent
+rereview should select this new `report.json` with `--prior-review-report`.
+
+Final validation: **473 frontend tests passed** with network connections blocked
+in the runner. All 19 focused ledger tests also pass with transport-history
+recovery enabled. Legacy FSM/dual-LLM routing, targeted architecture repair,
+system repair, review reference recovery, lowering, handoff and local simulation
+regressions remain covered. Python compilation and whitespace checks pass.
+Live reviewer handling of the new ledger obligations remains for the user-run
+command above; no live LLM call was made by the assistant.
+
+### Blocking criteria and correction scope — change 4 (October 27, 2026)
+
+The semantic review prompt now includes a generic blocking/completeness policy
+and classifies repair scope by the necessary correction rather than the location
+of cited evidence. See [review_policy.md](review_policy.md) for the criteria,
+examples, saved refresh analysis and limits. A finding must identify a concrete
+contradiction, impossible contract or missing behavioral decision; an ambiguity
+must leave materially different behaviors permitted by all existing clauses.
+A violating implementation is not evidence of an unspecified rule. Missing
+duplicated prose or a preferred register, algorithm, wire or `every_clock` entry
+alone does not justify a blocker when the required behavior is determinate and
+implementable. Explicit update restrictions that prevent progress remain valid
+blocking evidence. Essential reset, timing, ownership and priority choices still
+must be specified.
+
+Architecture corrections may cite locked system/execution rules as requirements
+they must obey. System scope requires naming a locked behavior, event condition
+or expected result that must change or be completed, and explaining why a local
+architecture correction cannot suffice. The conflicting earlier instruction to
+assign scope by evidence location was removed. No finding, scope, ledger entry
+or approval is rewritten automatically. Review schemas, protocol revision,
+repair limits and legacy generation routes are unchanged.
+
+For the saved refresh allegation, the current evidence already fixes first and
+repeated deadline edges and the tRFC release boundary. The absence of a separate
+clock-update clause does not by itself demonstrate the alleged deadlock.
+The reviewer must assess whether any other contradiction or missing essential
+choice remains. A candidate explanatory `every_clock` contract addition was
+compiled locally with exactly one document change and an unchanged locked system;
+this demonstrates that a local clarification can be expressed, not that it is
+necessary or semantically sufficient. Original source artifacts were unchanged,
+and no approval or RTL was created. Both open refresh ledger entries remain
+obligations; a mocked clean response omitting their assessments was rejected.
+
+The new guidance is intentionally prompt-only: it does not attempt to decide
+arbitrary prose semantics by keywords, infer a desired verdict, or bypass the
+gate. Existing reachability and regression attribution checks remain in the
+prompt. Reference guidance was shortened without removing evidence to accommodate
+the new criteria. The saved large review reserves 79,731/80,000 estimated tokens
+including its 6,000-token output allowance; the latest ledger review reserves
+51,279. Both prompt snapshots reconstruct losslessly, and the earlier completed
+controller's approval and handoff still validate.
+
+`test_review_policy.py` adds ten checks using the saved refresh projection,
+independently encoded absolute/elapsed time representations, reset and release
+boundaries, a deliberately impossible update restriction, a genuinely unspecified
+first phase, lossless evidence, repair routing and explicit ledger disposition.
+These are manual abstractions and mocked review results, not automatic prose
+classification or execution of target RTL. All 126 focused review/repair/ledger
+tests pass. No live model call or semantic repair was run for this change.
+
+For the next live check, rereview the unchanged repaired artifact with the latest
+step-3 report so that both outstanding refresh entries require explicit answers:
+
+```sh
+RUN_DIR="$PWD/local/frontend/microarch/builds/text_runs/20261027T065112Z_0766bc80"
+REVIEW_DIR="$(mktemp -d /tmp/capstone-step4-live-XXXXXX)/review"
+python3 -u local/frontend/review_specification.py \
+  "$RUN_DIR/repair/architecture.yaml" \
+  --repair-context "$RUN_DIR/repair/repair_review_context.json" \
+  --prior-review-report /tmp/capstone-step3-live-YWP0hz/review/report.json \
+  --model protected.gpt-5.6-terra \
+  --output-dir "$REVIEW_DIR"
+```
+
+Inspect the assessments and any remaining finding's concrete basis and correction
+scope before starting a repair. A valid unresolved result is acceptable; a clean
+verdict requires explicit dispositions and the normal readiness checks. The
+assistant has not executed this command against the live model.
+
+Final validation for change 4: **483 frontend tests passed**, including the ten
+new policy/evidence checks, with network connections blocked in the runner.
+The 126 focused review, repair and ledger checks also passed. Python compilation
+and whitespace checks pass. These checks preserve the gate and evidence
+transport; live semantic-review consistency remains to be evaluated with the
+user-run command above.
+
+### Local refresh preparation progress checks (October 27, 2026)
+
+The live refresh-timebase repair added exactly one `refresh.update_events.every_clock`
+entry and preserved the locked system. Its review explicitly resolved every carried
+timebase entry but opened `F_REFRESH_PREPARATION_CANDIDATE_DEADLOCK`. The saved
+command-engine clause forms candidates when "refresh is inactive"; dispatch is
+separately forbidden while pending or in service. The phrase does not identify
+whether pending itself blocks candidate formation, and initial PRE/REF selection
+without an active request is not spelled out in that clock-update clause.
+
+`testdata/refresh_preparation_progress.json` preserves the relevant contracts,
+rules, finding, selected timing cycles and source manifest fingerprint from
+`/tmp/capstone-refresh-repair-H1z1fV/repair/architecture.yaml`.
+`test_refresh_progress.py` explicitly models three interpretations rather than
+parsing the prose or simulating generated RTL:
+
+| Initial path | Pending blocks formation | Busy-only gate, no idle preparation selection | Busy-only gate plus active-first drain and explicit idle preparation |
+| --- | --- | --- | --- |
+| Active request needs more commands | Stalls before its next candidate | Drains the request, then stalls | Drains, closes remaining banks in ascending order, commits REF |
+| Idle with open banks | Stalls | Stalls | PRE for ascending open banks, then REF |
+| Idle with all banks closed | Stalls | Stalls | Creates REF directly |
+
+The strict model treats the source's "when" condition as an exclusive gate; the
+source does not literally say "only when." Its stalled executions violate the
+locked refresh progress requirement. They demonstrate the consequence of that
+reading, not that every valid implementation of the complete specification must
+deadlock. The progressing interpretation supplies its active-first and idle
+PRE/REF selection explicitly. Consequently its success shows feasibility of the
+proposed clarification, not that an algorithm was inferred or proven from prose.
+
+Using the selected DDR4-3200 tRCD=22 and tRAS=52 cycle values, the first sample
+progresses through PRE[0] at E1, ACT[0] at E3, READ[0] at E25, preparation PRE[0]
+at E55, PRE[2] at E57, and REF at E59. The initially idle open-bank sample commits
+PRE[0], PRE[2], PRE[3], REF at E1/E3/E5/E7. The all-closed sample commits REF at
+E1. These edges are relative to the start of each manually chosen initial state,
+not the reset epoch or an actual RTL trace.
+
+Fourteen new checks also exercise a 256-state active READ/WRITE and bank-mask
+matrix with finite stalls, one/four-bank cleanup masks, held candidate payload
+and active ownership, an already outstanding setup candidate, due coinciding
+with final retirement or REF, reset priority, service exclusion/release and
+timeout under an environment that never grants a candidate. The tests distinguish
+active-request setup PRE commands from the ascending cleanup order required only
+after that request drains. All 70 focused progress, policy, ledger, repair-review
+and targeted-architecture-edit tests pass with network connections blocked.
+
+The model observes dispatch permission but does not execute a FIFO, functional
+memory or response delivery. It uses selected timing guards, not complete DDR4
+timing coverage or arbitrary-interleaving verification. Initial open-bank timing
+histories are mature; no new host work is injected into the primary traces.
+The earlier 483-test full frontend suite was not rerun for these test/document
+additions; production flow code was unchanged.
+
+The recommended correction is confined to
+`command_engine.update_events.every_clock`: distinguish pending from service
+busy, continue an already active request while pending, enter preparation directly
+when idle and pending, choose the lowest open bank for PRE or choose REF when all
+banks are closed, and retain existing candidate stability, timing permission,
+registered-candidate bubbles and reset priority. Pending still blocks new dispatch.
+A proposed one-field edit compiled locally with the locked system unchanged.
+It was saved separately under `/tmp/capstone-refresh-progress-pzrgqzoi/`, with
+`report.md`, `report.json`, edge traces, `proposed_architecture_edits.json`,
+`proposed_clause.txt` and a deterministic candidate export under `proposal/`.
+The original design was not edited, the ledger finding remains open, and no
+approval, target RTL run or LLM/network call was made.
+
+To reproduce the checked-in model regressions:
+
+```sh
+python3 -m unittest discover -s local/frontend -p test_refresh_progress.py -v
+```
+
+### RTL response recovery: checkpoint 1 (October 27, 2026)
+
+The fresh text run `20261027T182419Z_27739196` passed semantic review and completed
+three RTL modules before command-engine generation returned malformed inner JSON.
+Its provider reported a normal stop, but parsing failed beyond the first
+1,000-character logged preview. The original full malformed text was not retained.
+The recorded estimate for the entire attempt was $0.491334 across 12 calls;
+this was not a completed RTL/simulation flow.
+
+Checkpoint 1 now captures full decoded provider responses and model content,
+request metadata, usage and finish reason before runtime parsing. Parser input
+and exact error coordinates are retained separately. Distinct response/parser
+failure categories propagate to round reports, including the difference between
+malformed JSON and genuine specification clarification. See
+[rtl_response_recovery.md](rtl_response_recovery.md) for file locations, redaction,
+category definitions, scope and verification details.
+
+This is diagnostic groundwork only: no new retry, schema restriction, model
+selection, cache fallback, FSM behavior, approval or RTL acceptance path was added.
+Eighteen new evidence tests and 84 focused existing regressions pass. A synthetic
+offline example preserves and reproduces a parser error at character 7,573 from
+a 7,610-character response, with a single mocked HTTP attempt and no accepted RTL.
+No LLM/network call or replay of the paid failed run was performed.
+
+Final checkpoint-1 validation: all **515 frontend tests passed** with network
+connections blocked in the runner. This includes the 18 new diagnostics tests,
+legacy FSM/dual-LLM routing, resume/cache, review/repair gates, lowering, handoff
+and local simulation regressions. Python compilation and whitespace checks pass.
+Malformed generation still stops at this checkpoint, with its complete evidence
+and category now retained; bounded recovery remains a later checkpoint.
+
+### RTL response recovery: checkpoint 2 (October 27, 2026)
+
+Generation, lint-repair generation, merger and reviewer parsers now share a strict
+decoder and stage-specific payload validator. See
+[rtl_response_recovery.md](rtl_response_recovery.md) for the exact required and
+optional fields, explicit legacy compatibility, failure categories and scope.
+Duplicate keys, unknown/missing fields, wrong types, status/issue contradictions,
+array wrappers and arbitrary prose around responses no longer become plausible
+normalized payloads. Compiler invariants remain authoritative. Reviewer RTL stays
+optional; generator/merger RTL must be nonempty text. Whole-response/code fences
+and the `CLEAN` alias remain supported, with internal RTL text preserved.
+
+Rejected generator/merger replies cannot silently promote a retained older RTL
+fallback into newly generated code. Schema paths and complete response evidence
+are retained, and the ordinary lint/reviewer gate still checks valid candidates.
+Reviewer prompts were aligned with the status/issue consistency rules. Compact
+review preserves typed `NON_ISSUE` entries and does not drop a sixth issue.
+No recovery calls or model/routing changes were introduced; existing compact
+review, truncation, reviewed-cache fallback, resume and convergence bounds remain.
+
+All 21 new payload tests and 123 focused regressions pass. An offline audit at
+`/tmp/capstone-rtl-payload-checkpoint2-egdjww79/audit.json` confirms five invalid
+reply classes stop after one mocked request before lint/review/cache, while a
+valid fenced/CLEAN reply traverses real HDL lint and the ordinary mocked review
+and cache path. No live LLM call or replay/modification of the user's failed
+build was performed. Payload validity is not target RTL behavioral verification.
+
+Final checkpoint-2 validation: **536 frontend tests passed** with network
+connections blocked, including 21 new payload tests and the existing FSM/dual-LLM,
+cache/resume, review/repair, handoff and local simulation checks. All 123 focused
+regressions, Python compilation and whitespace checks pass. Bounded response
+recovery remains checkpoint 3; no new paid run was started.
+
+### RTL response recovery
+
+Bounded RTL response recovery is on by default for architecture RTL builds with
+lint, including the text intake and resume routes. Add `--no-rtl-recovery` to
+disable it; `--rtl-recovery` explicitly enables it. Export-only and no-lint runs
+do not automatically enable recovery. A module invocation shares a maximum of
+two extra HTTP attempts across stages/rounds, with at most one per recovery
+category. Recovered RTL still requires lint and semantic review. Legacy
+expand-spec/FSM defaults, standalone generator defaults and model selection
+remain unchanged. See
+[RTL response recovery](rtl_response_recovery.md#checkpoint-3-bounded-recovery)
+for exact limits, terminal failures and evidence paths.
+
+Checkpoint 4 validates recovery through real isolated module/cache output,
+Verilator module/integration lint, build status and handoff export using mocked
+provider responses. See the
+[gate audit](rtl_response_recovery.md#checkpoint-4-recovered-candidate-gates-and-route-isolation).
+A module cache is module-level approval; an integration failure still leaves the
+whole build failed and prevents a current verification handoff.
+
+### Behavioral simulation of the resumed text build
+
+The generated single-request controller uses an 8-bit address, four banks,
+256 words per bank and no refresh. The compact FIFO simulation profile correctly
+rejects this different contract. `simulate_handoff.py` now additionally supports
+`--profile ddr4-single-request-v1`; the existing FIFO default and legacy generation
+routes are unchanged. See the [simulation documentation](../simulation/README.md#single-request-open-page-profile)
+for the matching command, scenario scope and coverage limits.
+
+The saved build `text_runs/20261027T182419Z_27739196/build` passed the five bounded
+scenarios for seeds 1, 2 and 17: 15 scenario passes and 39,488 cycles. The actual
+Verilator runs used authenticated snapshots, independent admission-based memory
+and command/timing scoreboards, and declared-port observations. Original RTL,
+reviewed caches and handoff were verified unchanged. No LLM calls were made.
+Simulation reports provide local executed evidence separately from the immutable
+frontend status; complete requirement/configuration coverage is not claimed.
+
+### Timing campaign groundwork
+
+Initial/fresh text specification planning now receives a small optional-feature
+discovery index alongside its schema/example/timing context. A richer local
+catalog records source/template hashes, accepted roles, interface/reset/dependency
+summaries and source assumptions in `library_catalog.json`. Entries are not marked
+verified and custom modules are not restricted to a feature menu. Locked repairs
+omit discovery-only metadata while retaining the original design/timing context.
+Selected detailed contract injection remains future work; prompt-budget tests
+continue to enforce the existing 80k reservation.
+Generator revision 19 changes future specification-generation cache identity;
+existing approved exports and exact-spec RTL resume remain valid.
+
+`prepare_timing_campaign.py` creates seven offline request/acceptance cases and
+fingerprinted context snapshots. The two DDR4 timing guards have an executable
+`ddr4-timing-guard-v1` isolated permission profile; the five reloadable timer
+width/priority cases explicitly retain planned checker status. No paid design
+trial is performed by preparing the campaign. See [campaign documentation](../campaigns/README.md).
+
+### RTL review interpretation after specification lowering
+
+Specification-derived RTL prompts now include compiler-derived public interface,
+source type layout and configured timing facts, plus a consistent stage policy
+for generation, full/compact review and merge. YAML timing reference paths and
+shared schema type identifiers are interpreted as elaboration constraints; the
+RTL must preserve their resolved values and ABI. Numeric constants and equivalent
+packed representations are valid unless an explicit RTL directive says otherwise.
+The policy also distinguishes packed dimensions before a typedef name from
+unpacked dimensions after it. This addresses the first timing campaign's review
+nonconvergence without suppressing issues, extending round limits, approving the
+saved candidate or changing legacy/FSM defaults. See the
+[campaign stage-boundary notes](../campaigns/README.md#rtl-review-stage-boundaries-campaign-version-2).

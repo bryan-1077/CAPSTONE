@@ -536,6 +536,10 @@ def build_llm_context(design):
     if "warnings" in design.metadata:
         ctx["warnings"] = design.metadata["warnings"]
 
+    from rtl_lowering_context import lowering_facts
+    facts = lowering_facts(ctx, behavior)
+    if facts is not None:
+        ctx['rtl_lowering'] = facts
     return ctx
 
 

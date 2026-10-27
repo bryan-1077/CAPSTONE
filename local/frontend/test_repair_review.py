@@ -13,7 +13,8 @@ from generate_specification import propose_specification
 from repair_review import build_repair_context
 from repair_specification import plan_repair
 from review_specification import (ASPECTS, ReviewChangesRequired, build_review_prompt,
-                                  review_specification, validate_verdict)
+                                  review_specification, validate_verdict, _repair_prompt_context, _resolve)
+from prompt_context import expand_context, serialize_context
 from specification import SpecificationError, read_document
 from specification_lowering import _compile_snapshot, compile_package, require_approval
 from test_generate_specification import register_fixture
@@ -90,6 +91,56 @@ class RepairReviewTests(unittest.TestCase):
         for verdict in candidates:
             with self.subTest(verdict=verdict), self.assertRaises(SpecificationError):
                 validate_verdict(verdict, self.target, self.context)
+
+    def test_change_transport_recovers_exact_audit_without_mutating_evidence(self):
+        snapshot = {'new/key': [False, 0, None, 'λ'], 'changed~key': {'value': 'current'}}
+        context = copy.deepcopy(self.context)
+        context['changes'] = [
+            {'op': 'add', 'path': '/new~1key', 'after': snapshot['new/key']},
+            {'op': 'replace', 'path': '/changed~0key/value', 'before': 'parent', 'after': 'current'},
+            {'op': 'remove', 'path': '/removed', 'before': [True, 'parent']}]
+        original = copy.deepcopy(context)
+        transport = expand_context(json.loads(serialize_context(_repair_prompt_context(context, snapshot))))
+        self.assertEqual(transport['change_format'], 'snapshot_after_v1')
+        self.assertEqual(transport['findings'], original['findings'])
+        recovered = []
+        for op, path, *before in transport['changes']:
+            change = {'op': op, 'path': path}
+            if before:
+                change['before'] = before[0]
+            if op != 'remove':
+                change['after'] = _resolve(snapshot, path)
+            recovered.append(change)
+        self.assertEqual(recovered, original['changes'])
+        self.assertEqual(context, original)
+        self.assertEqual(snapshot, {'new/key': [False, 0, None, 'λ'], 'changed~key': {'value': 'current'}})
+
+    def test_change_transport_retains_unreconstructable_entries_in_full(self):
+        context = copy.deepcopy(self.context)
+        context['changes'] = [
+            {'op': 'add', 'path': '/missing', 'after': 'keep evidence'},
+            {'op': 'replace', 'path': '/value', 'before': 2, 'after': True},
+            {'op': 'remove', 'path': '/old', 'before': 0, 'extra': 'preserve'},
+            {'op': 'unknown', 'path': '/value', 'after': 1}]
+        self.assertEqual(_repair_prompt_context(context, {'value': 1})['changes'], context['changes'])
+
+    def test_large_change_transport_reduces_reservation_without_dropping_changes(self):
+        from tpm_pacing import estimate_input
+        context = copy.deepcopy(self.context)
+        snapshot = {f'field_{i}': f'Current behavior {i}: ' + 'Preserve reset and progress. ' * 16
+                    for i in range(200)}
+        context['changes'] = [{'op': 'replace', 'path': '/' + key,
+            'before': f'Parent behavior {i}: keep exact evidence.', 'after': value}
+            for i, (key, value) in enumerate(snapshot.items())]
+        encoded = _repair_prompt_context(context, snapshot)
+        def reservation(evidence):
+            return estimate_input([{'role': 'user', 'content': serialize_context(evidence)
+                                    + '\n' + serialize_context(snapshot)}]) + 6000
+        self.assertGreater(reservation(context) - reservation(encoded), 10000)
+        self.assertEqual(len(encoded['changes']), 200)
+        prompt = build_review_prompt(self.target, self.context)
+        self.assertIn('the exact after value is at path', prompt)
+        self.assertIn('CURRENT expanded snapshot', prompt)
 
     def test_unresolved_original_cannot_hide_behind_clean_verdict_or_bad_links(self):
         self.verdict['repair_assessments'][0]['status'] = 'unresolved'

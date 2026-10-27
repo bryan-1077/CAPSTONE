@@ -27,7 +27,7 @@ from specification_edits import apply_architecture_edits, apply_system_edits
 from specification_change_audit import audit_changes
 
 
-GENERATOR_REVISION = 18
+GENERATOR_REVISION = 19
 DOCUMENTS = {name: name + '.yaml' for name in
              ('shared', 'system', 'execution', 'modules', 'graph', 'verification')}
 REFERENCE = ROOT / 'microarch/specification/ddr4_fifo/package.yaml'
@@ -40,8 +40,9 @@ class UnsupportedSpecification(SpecificationError):
     pass
 
 
-def generation_context():
+def generation_context(catalog=None):
     from specification_lowering import COMPILER_REVISION
+    from planning_library import planning_catalog, planning_index
     package, documents, library = load_package(REFERENCE)
     # This example teaches the data format; none of its behavioral choices are
     # implicitly imposed on requests. No feature-to-template registry is used.
@@ -49,16 +50,21 @@ def generation_context():
     package.pop('generation', None)
     return {'generator_revision': GENERATOR_REVISION, 'lowering_revision': COMPILER_REVISION,
             'contract': GUIDE.read_text(),
-            'format_example': dict(package=package, **documents), 'timing_library': library}
+            'format_example': dict(package=package, **documents), 'timing_library': library,
+            'local_library_catalog': planning_index(planning_catalog() if catalog is None else catalog)}
 
 
-def build_prompt(stage, request, context, system=None, feedback='', *, fresh_decomposition=False, repair_base=None):
+def build_prompt(stage, request, context, system=None, feedback='', *, fresh_decomposition=False,
+                 repair_base=None, narrow_architecture=False):
     # Examples must match the stage's accepted shape, rather than contradict
     # its instructions with compiler-owned fields and already-assigned owners.
     prompt_context = copy.deepcopy(context)
     if feedback and not fresh_decomposition:
         # An existing candidate supplies structure; fresh decomposition still needs an example.
         prompt_context.pop('format_example')
+        # Discovery is for initial/fresh planning. A repair keeps the locked
+        # design and timing library; unused template names are not repair facts.
+        prompt_context.pop('local_library_catalog', None)
     else:
         example = prompt_context['format_example']
         if stage == 'system':
@@ -142,6 +148,16 @@ def build_prompt(stage, request, context, system=None, feedback='', *, fresh_dec
                 'Return edits, overriding any full-response instructions in the schema or feedback. '
                 'Preserve unrelated connections and verification declarations. '
                 'Expand shared_definitions_v1 references recursively when reading context.\n')
+        if stage == 'architecture' and narrow_architecture:
+            instruction += (
+                ' SEMANTIC ARCHITECTURE REPAIR: Edit only the reported findings and necessary '
+                'dependent fields. Paths must address nested fields, not entire stage roots. '
+                'Do not replace or remove existing nonempty objects; edit fields inside them. '
+                'Add missing fields when needed; replace list-valued fields as a whole. '
+                'Preserve unrelated contract prose, module identities, graph connections, '
+                'types, rule owners and verification bindings exactly. The complete current '
+                'architecture is the base, not a format example or invitation to decompose again. '
+                'The locked system, original request and configuration remain binding.')
         if stage == 'system':
             instruction = ('Repair the accepted system using explicit edits, never a complete rewrite. '
                            'Return ONLY {"base_fingerprint":"' + fingerprint(repair_base) +
@@ -432,19 +448,23 @@ def assemble_package(system, response, request, model, context_hash, repairs):
     return package, documents
 
 
-def _write_package(directory, package, documents, library):
+def _write_package(directory, package, documents, library, catalog=None):
     directory.mkdir(parents=True, exist_ok=True)
     (directory / 'package.yaml').write_text(yaml.safe_dump(package, sort_keys=False))
     for name, document in documents.items():
         (directory / DOCUMENTS[name]).write_text(yaml.safe_dump(document, sort_keys=False))
     (directory / 'timing.yaml').write_text(yaml.safe_dump(library, sort_keys=False))
+    if catalog is not None:
+        (directory / 'library_catalog.json').write_text(json.dumps(catalog, indent=2) + '\n')
 
 
 def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cache=False,
                           response_path=None, caller=None, repair_seed=None):
     """Return a validated package path. No approval or RTL is ever produced."""
     from specification_lowering import compile_package
-    context = generation_context()
+    from planning_library import planning_catalog
+    catalog = planning_catalog()
+    context = generation_context(catalog=catalog)
     if repair_seed is not None:
         if cache or response_path:
             raise SpecificationError('Semantic repair cannot use a proposal cache or stage replay file')
@@ -504,6 +524,7 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
     try:
         for stage in stages:
             repair_base = None
+            narrow_architecture = bool(repair_seed and repair_seed['stage'] == 'architecture')
             title = 'SYSTEM SPECIFICATION' if stage == 'system' else 'ARCHITECTURE DECOMPOSITION'
             route = 'OFFLINE REPLAY' if replay is not None else 'LLM BASED'
             print('\n' + '=' * 80, flush=True)
@@ -518,7 +539,7 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
                         candidate = {'status': 'supported', **candidate}
                         for key in ('documents', 'design_kind', 'generation', 'review'):
                             candidate['package'].pop(key, None)
-                        repair_base = copy.deepcopy(candidate)
+                    repair_base = copy.deepcopy(candidate)
                     feedback = repair_feedback(stage, candidate, semantic_feedback)
                 else:
                     feedback = semantic_feedback + '\nThe old architecture is invalidated. Generate a fresh complete decomposition of the new locked system.'
@@ -529,7 +550,7 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
                 raw = replay[stage] if replay is not None else caller(build_prompt(stage, request, context, system if stage == 'architecture' else None, feedback,
                     fresh_decomposition=bool(repair_seed and repair_seed['stage'] == 'system'
                                              and stage == 'architecture' and attempt == 0),
-                    repair_base=repair_base), model)
+                    repair_base=repair_base, narrow_architecture=narrow_architecture), model)
                 entry = {'stage': stage, 'attempt': attempt + 1, 'response': copy.deepcopy(raw), 'status': 'received'}
                 if repair_base is not None:
                     entry['repair_base_fingerprint'] = fingerprint(repair_base)
@@ -550,10 +571,10 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
                     if not isinstance(response, dict):
                         raise SpecificationError('Specification response must be an object')
                     if repair_base is not None:
-                        response = (apply_system_edits if stage == 'system' else apply_architecture_edits)(repair_base, response)
+                        response = (apply_system_edits(repair_base, response) if stage == 'system'
+                                    else apply_architecture_edits(repair_base, response, narrow=narrow_architecture))
                         entry['applied_response'] = copy.deepcopy(response)
-                        if stage == 'system':
-                            entry['applied_changes'] = audit_changes(repair_base, response)
+                        entry['applied_changes'] = audit_changes(repair_base, response)
                     candidate = copy.deepcopy(response)
                     if stage == 'system':
                         system = validate_system(response, request, context['timing_library'])
@@ -585,7 +606,7 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
                         # Run the real compiler, including module IR, graph and role
                         # validation, before publishing any usable package.
                         with tempfile.TemporaryDirectory(prefix='capstone-spec-') as temporary:
-                            _write_package(Path(temporary), package, documents, context['timing_library'])
+                            _write_package(Path(temporary), package, documents, context['timing_library'], catalog)
                             validate_matrix(Path(temporary) / 'package.yaml')
                             compile_package(Path(temporary) / 'package.yaml')
                     accepted[stage] = response
@@ -632,7 +653,7 @@ def propose_specification(request, *, output_dir=None, model=DEFAULT_MODEL, cach
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.' + output.name + '-', dir=output.parent) as temporary:
         staging = Path(temporary) / 'package'
-        _write_package(staging, package, documents, context['timing_library'])
+        _write_package(staging, package, documents, context['timing_library'], catalog)
         (staging / 'responses.json').write_text(json.dumps(accepted, indent=2) + '\n')
         (staging / 'system_elaboration.json').write_text(json.dumps(system, indent=2) + '\n')
         (staging / 'attempts.json').write_text(journal.read_text())

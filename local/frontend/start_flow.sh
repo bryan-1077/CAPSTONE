@@ -2,6 +2,24 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Opt-in intake is dispatched before legacy logging/parsing. Its own parser
+# rejects conflicting legacy options and keeps all artifacts in an isolated run.
+from_text=0
+for arg in "$@"; do
+    if [ "$arg" = '--from-text' ]; then from_text=1; fi
+done
+if [ "$from_text" -eq 1 ]; then
+    text_args=()
+    for arg in "$@"; do
+        case "$arg" in
+            --from-text|--specification) ;;
+            *) text_args+=("$arg") ;;
+        esac
+    done
+    exec python3 -u "$SCRIPT_DIR/configure_microarch_from_text.py" "${text_args[@]}"
+fi
+
 LOG_FILE="$SCRIPT_DIR/flow.log"
 export PYTHONUNBUFFERED=1
 exec > >(tee "$LOG_FILE") 2>&1
@@ -16,12 +34,17 @@ Flags:
   --cache         Use existing configs/user_input.yaml and cached dual-LLM RTL; do not call LLMs.
   --microarch     Use the architecture proposal/graph flow with the existing config.
   --specification Generate system specification, then architecture/contracts/intent for review.
+  --from-text     New plain-text intake -> request YAML -> specification/architecture -> RTL.
+                  Use --from-text --help for intake options, including --prepare-only and --simulate.
   --microarch-only Save/validate a proposal and stop before RTL generation.
   --input PATH    Use a requirements/config YAML or architecture manifest (implies --microarch).
   --requirements-file PATH  Add free-form requirements to the proposal.
   --architecture-output PATH  Proposal output path.
   --microarch-response PATH  Replay a saved JSON proposal without an LLM call.
   --microarch-model NAME     Architecture proposal model.
+  --rtl-recovery             Enable bounded RTL recovery (default for architecture RTL builds with lint).
+  --no-rtl-recovery          Disable bounded RTL response recovery.
+  --rtl-generator-model NAME Architecture build generator/merger model; requires an architecture mode.
   --specification-output PATH   Fresh generated-package directory.
   --specification-response PATH Replay both specification stages from JSON.
   --spec-set NAME=VALUE      Override a supplied-package parameter (repeatable).
@@ -37,6 +60,8 @@ no_lint=0
 cache=0
 microarch=0
 specification=0
+rtl_generator_override=0
+rtl_recovery=0
 architecture_input="configs/user_input.yaml"
 architecture_args=()
 
@@ -68,6 +93,16 @@ while [ "$#" -gt 0 ]; do
             architecture_input="$1"
             microarch=1
             ;;
+        --rtl-recovery|--no-rtl-recovery)
+            if [ "$1" = --rtl-recovery ]; then rtl_recovery=1; else rtl_recovery=0; fi
+            architecture_args+=("$1")
+            ;;
+        --rtl-generator-model)
+            if [ "$#" -lt 2 ]; then echo "$1 requires a value" >&2; exit 2; fi
+            architecture_args+=("$1" "$2")
+            rtl_generator_override=1
+            shift
+            ;;
         --requirements-file|--architecture-output|--microarch-response|--microarch-model|--build-dir|--specification-output|--specification-response|--spec-set|--spec-profile|--spec-approval)
             if [ "$#" -lt 2 ]; then echo "$1 requires a value" >&2; exit 2; fi
             architecture_args+=("$1" "$2")
@@ -86,6 +121,16 @@ while [ "$#" -gt 0 ]; do
     esac
     shift
 done
+
+if [ "$rtl_recovery" -eq 1 ] && [ "$microarch" -eq 0 ]; then
+    echo '--rtl-recovery requires --microarch, --specification or --input' >&2
+    exit 2
+fi
+
+if [ "$rtl_generator_override" -eq 1 ] && [ "$microarch" -eq 0 ]; then
+    echo '--rtl-generator-model requires --microarch, --specification or --input' >&2
+    exit 2
+fi
 
 flow_args=()
 if [ "$interactive" -eq 1 ]; then

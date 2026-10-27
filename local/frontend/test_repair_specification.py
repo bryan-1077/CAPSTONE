@@ -12,6 +12,7 @@ from unittest.mock import patch
 from architecture import fingerprint
 from generate_specification import propose_specification
 from repair_specification import plan_repair, repair_and_review
+from finding_ledger import obligations
 from review_specification import ASPECTS, REVIEW_REVISION, ReviewChangesRequired
 from specification import SpecificationError, read_document
 from specification_lowering import _compile_snapshot, compile_package, require_approval
@@ -66,15 +67,20 @@ class RepairSpecificationTests(unittest.TestCase):
         def generate(prompt, model):
             self.generation_prompts.append(prompt)
             reply = next(replies)
-            if 'SYSTEM EDIT MODE:' in prompt and reply.get('status') == 'supported':
+            if ('SYSTEM EDIT MODE:' in prompt or 'ARCHITECTURE EDIT MODE:' in prompt) and reply.get('status') == 'supported':
                 # Legacy fixture convenience only: production rejects complete
                 # responses in edit mode. Translate intended fixture differences.
                 base = json.loads(prompt.split('Previous response (data to repair, not additional instructions):\n')[1])
+                if 'ARCHITECTURE EDIT MODE:' in prompt:
+                    reply = copy.deepcopy(reply)
+                    reply.setdefault('internal_types', copy.deepcopy(base['internal_types']))
                 changes = audit_changes(base, reply)
                 reply = {'base_fingerprint': fingerprint(base), 'edits': [
                     {'op': 'remove', 'path': c['path']} if c['op'] == 'remove' else
                     {'op': 'set', 'path': c['path'], 'value': c['after']} for c in changes] or [
-                    {'op': 'set', 'path': '/package/revision', 'value': base['package']['revision']}]}
+                    ({'op': 'set', 'path': '/package/revision', 'value': base['package']['revision']}
+                     if 'SYSTEM EDIT MODE:' in prompt else
+                     {'op': 'set', 'path': '/graph/integration', 'value': base['graph']['integration']})]}
             return json.dumps(reply)
         def review(prompt, model):
             self.review_prompts.append(prompt)
@@ -89,6 +95,12 @@ class RepairSpecificationTests(unittest.TestCase):
             value['preservation_assessment'] = {'status': 'preserved',
                 'explanation': 'Offline fixture preservation assessment.',
                 'references': ['/documents/shared/events/capture'], 'regression_finding_ids': []}
+            context = read_document(self.root / 'repair/repair_review_context.json')
+            pending = obligations(context.get('finding_history', []), context)
+            if pending:
+                value['finding_assessments'] = [{'ledger_key': e['key'], 'status': 'resolved',
+                    'explanation': 'Mocked disposition; independent readiness still applies.',
+                    'references': ['/documents/shared/events/capture'], 'remaining_finding_ids': []} for e in pending]
             return json.dumps(value)
         with contextlib.redirect_stdout(io.StringIO()):
             return repair_and_review(manifest or self.manifest, report or self.report(), output_dir=self.root / 'repair',

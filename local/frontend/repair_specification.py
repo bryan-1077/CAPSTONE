@@ -15,7 +15,9 @@ from architecture import ArchitectureError, ROOT, fingerprint, validate_architec
 from generate_microarch import DEFAULT_MODEL
 from generate_specification import propose_specification
 from prompt_context import compact_json
-from review_specification import REVIEW_REVISION, review_specification, validate_verdict
+from review_specification import (REVIEW_REVISION, review_specification, validate_verdict,
+                                  validate_reference_protocol, report_history)
+from finding_ledger import validate_ledger, source_from_report
 from specification import SpecificationError, fields, read_document, text_value
 from specification_lowering import compile_package, emit_review
 from specification_request import system_projection
@@ -28,7 +30,8 @@ def plan_repair(manifest, report):
     if not proof or 'generation' not in proof['snapshot']['package']:
         raise SpecificationError('Automatic repair requires a generated package with its authoritative request')
     fields(report, ('review_version', 'review_revision', 'status', 'model', 'mode', 'reviewed_at',
-                    'manifest_fingerprint', 'package_fingerprint', 'verdict', 'readiness_error'), ('repair_context',), 'repair review')
+                    'manifest_fingerprint', 'package_fingerprint', 'verdict', 'readiness_error'),
+           ('repair_context', 'reference_protocol', 'finding_ledger'), 'repair review')
     if (type(report['review_version']) is not int or report['review_version'] != 1
             or type(report['review_revision']) is not int or report['review_revision'] != REVIEW_REVISION
             or report['status'] != 'changes_required' or report['mode'] not in ('llm', 'replay')):
@@ -40,7 +43,9 @@ def plan_repair(manifest, report):
         raise SpecificationError('Repair report is stale or belongs to a different revision/configuration')
     if report['readiness_error'] is not None:
         text_value(report['readiness_error'], 'review.readiness_error')
-    validate_verdict(report['verdict'], manifest, report.get('repair_context'))
+    validate_verdict(report['verdict'], manifest, report.get('repair_context'), report_history(report))
+    validate_reference_protocol(report, manifest)
+    validate_ledger(report, fingerprint(manifest))
     if not report['verdict']['findings']:
         raise SpecificationError('No semantic findings to repair; unresolved agreement/readiness requires explicit disposition')
     findings = [f for f in report['verdict']['findings'] if f['resolution'] == 'design_repair']
@@ -53,6 +58,7 @@ def plan_repair(manifest, report):
             'stage': 'system' if 'system' in scopes else 'architecture', 'scopes': scopes,
             'source_manifest_fingerprint': fingerprint(manifest), 'report_fingerprint': fingerprint(report),
             'findings': copy.deepcopy(findings), 'external_findings': copy.deepcopy(external),
+            'finding_history': [source_from_report(report)],
             'readiness_error': report['readiness_error']}
 
 
@@ -86,7 +92,8 @@ def repair_and_review(manifest, report, *, output_dir, model=DEFAULT_MODEL,
         'rename, rewrite or mark them resolved, and do '
         'not invent user acceptance, external evidence, test execution or new public ports '
         'when existing observations/inference suffice. Unresolved external agreement must '
-        'remain blocking. References identify the previous snapshot.\n' + compact_json(plan))
+        'remain blocking. References identify the previous snapshot.\n'
+        + compact_json({k: v for k, v in plan.items() if k != 'finding_history'}))
     seed = {'stage': plan['stage'], 'system': system, 'architecture': architecture,
             'feedback': feedback, 'library': snapshot['timing_library'],
             'source_manifest_fingerprint': plan['source_manifest_fingerprint'],
