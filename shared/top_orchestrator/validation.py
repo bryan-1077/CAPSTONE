@@ -15,6 +15,7 @@ from uuid import uuid4
 from shared.remote.ssh_executor import SSHExecutor
 from .auth import cached_password, run_with_password_retries
 from .contracts import FailureReport, StageResult
+from .display import TimestampedOutput
 from .mailbox import verify, verify_frontend_revision
 from .remote import RemoteConfig, slurm_command
 
@@ -165,7 +166,9 @@ def validation_node(config, run_dir: Path) -> StageResult:
     result_path = run_dir / "validation_result.json"
     artifacts.update(log=str(log_path), result=str(result_path), mailbox=str(config.mailbox))
     with log_path.open("w", encoding="utf-8") as log:
+        timestamps = {name: TimestampedOutput() for name in ("stdout", "stderr")}
         def output(name, text):
+            text = timestamps["stderr" if name == "stderr" else "stdout"].format(text)
             log.write(text)
             log.flush()
             (sys.stderr if name == "stderr" else sys.stdout).write(text)

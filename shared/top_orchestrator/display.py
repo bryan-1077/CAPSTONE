@@ -1,4 +1,25 @@
-"""Console headings for orchestration transitions."""
+"""Console headings and timestamp formatting for orchestration output."""
+
+from datetime import datetime, timezone
+
+
+class TimestampedOutput:
+    """Prefix nonempty lines while allowing partial prompts through immediately."""
+
+    def __init__(self):
+        self.line_start = True
+
+    def format(self, text: str) -> str:
+        output = []
+        for character in text:
+            if character in "\r\n":
+                self.line_start = True
+            elif self.line_start:
+                timestamp = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+                output.append(f"[{timestamp}] ")
+                self.line_start = False
+            output.append(character)
+        return "".join(output)
 
 NODE_LABELS = {
     "specs": "USER SPECS",
@@ -6,6 +27,7 @@ NODE_LABELS = {
     "bist": "BIST",
     "validation": "VERIFICATION",
     "backend": "PHYSICAL DESIGN",
+    "gdsii-validation": "GDSII VALIDATION",
     "debug": "DEBUG MODE",
     "lec": "LOGICAL EQUIVALENCE CHECK (LEC)",
     "remote-check": "SSH / SLURM PREFLIGHT",

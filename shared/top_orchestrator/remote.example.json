@@ -19,5 +19,13 @@
   "validation_workspace": null,
   "allow_validation_output_dirs": true,
   "validation_job_seconds": 14400,
-  "validation_timeout_seconds": 14490
+  "validation_timeout_seconds": 14490,
+  "gdsii_validation_script": "server/validation/GDSII_Validation_Agent.py",
+  "gdsii_validation_job_seconds": 3600,
+  "gdsii_validation_timeout_seconds": 3690,
+  "gdsii_file": null,
+  "gdsii_netlist": null,
+  "gdsii_top": null,
+  "gdsii_libraries": [],
+  "gdsii_report_dirs": []
 }

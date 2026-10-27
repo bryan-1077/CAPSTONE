@@ -206,19 +206,20 @@ class MailboxBackendTests(unittest.TestCase):
                 "shared.top_orchestrator.orchestrator.NODES", {
                     "generate": lambda c, d: StageResult("generate", "passed", "checks passed"),
                     "backend": backend,
+                    "gdsii-validation": lambda c, d: StageResult("gdsii-validation", "needs_attention", "review required"),
                     "validation": lambda c, d: self.fail("Remote verification must be skipped"),
                 }):
             state = run(RunConfig("generate", recheck_only=True, target_mhz=200,
                                   skip_verification=True, ask_password=True), self.root / "new_run")
-        self.assertEqual(state.status, "complete")
-        self.assertEqual([r.stage for r in state.results], ["generate", "backend"])
+        self.assertEqual(state.status, "needs_attention")
+        self.assertEqual([r.stage for r in state.results], ["generate", "backend", "gdsii-validation"])
         self.assertEqual(seen[0].mailbox, self.root / "shared/mailbox/new_run/revision_001")
         self.assertTrue(seen[0].allow_unvalidated)
         self.assertTrue(seen[0].ask_password)
         self.assertEqual(seen[0].target_mhz, 200)
         saved = json.loads((self.root / "new_run/state.json").read_text())
         self.assertTrue(saved["config"]["skip_verification"])
-        self.assertEqual(saved["results"][-1]["artifacts"]["validation"], "not_run")
+        self.assertEqual(saved["results"][-2]["artifacts"]["validation"], "not_run")
 
     def test_skip_verification_cli_needs_no_validation_configuration(self):
         from shared.top_orchestrator.__main__ import main

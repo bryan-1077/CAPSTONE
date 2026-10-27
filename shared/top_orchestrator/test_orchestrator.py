@@ -207,11 +207,12 @@ class OrchestratorTests(unittest.TestCase):
                     "generate": generate,
                     "debug": lambda c, d: StageResult("debug", "passed", "repaired"),
                     "backend": backend,
+                    "gdsii-validation": lambda c, d: StageResult("gdsii-validation", "needs_attention", "review required"),
                     "validation": lambda c, d: self.fail("Verification must be skipped"),
                 }):
             state = run(RunConfig("generate", skip_verification=True), Path(temporary) / "run")
-        self.assertEqual(state.status, "complete")
-        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend"])
+        self.assertEqual(state.status, "needs_attention")
+        self.assertEqual([r.stage for r in state.results], ["generate", "debug", "generate", "backend", "gdsii-validation"])
 
     def test_skip_verification_stops_on_frontend_failure_or_publication_failure(self):
         for failure in ("frontend", "publication"):
@@ -257,7 +258,8 @@ class OrchestratorTests(unittest.TestCase):
             with patch("sys.stdout", terminal):
                 code = stream_command([sys.executable, "-u", "-c", script, str(marker)], root / "log")
             self.assertEqual(code, 0)
-            self.assertEqual(terminal.getvalue(), "Choose specs: ")
+            self.assertRegex(terminal.getvalue(),
+                             r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [^\]]+\] Choose specs: $")
             self.assertEqual((root / "log").read_text(), terminal.getvalue())
 
     def test_generation_hands_off_to_validation_and_persists_state(self):

@@ -397,7 +397,7 @@ def _run_simple_stage(
     command: str,
     cwd: str,
     log_prefix: str,
-    timeout: int = 120,
+    timeout: int = 300,
     get_pty: bool = False,
 ) -> dict:
     result = ssh.run(command, cwd=cwd, timeout=timeout, get_pty=get_pty)
@@ -449,7 +449,7 @@ def _run_rtl_prep_generation(
     result = ssh.run(
         _build_prepare_command(state_for_attempt),
         cwd=project_root,
-        timeout=120,
+        timeout=300,
     )
 
     logs = {

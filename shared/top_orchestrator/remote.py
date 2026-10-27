@@ -42,6 +42,14 @@ class RemoteConfig:
     validation_mode: str = "system"
     validation_workspace: str | None = None
     allow_validation_output_dirs: bool = True
+    gdsii_validation_script: str = "server/validation/GDSII_Validation_Agent.py"
+    gdsii_validation_job_seconds: int = 3600
+    gdsii_validation_timeout_seconds: int = 3690
+    gdsii_file: str | None = None
+    gdsii_netlist: str | None = None
+    gdsii_top: str | None = None
+    gdsii_libraries: tuple[str, ...] = ()
+    gdsii_report_dirs: tuple[str, ...] = ()
 
     @classmethod
     def load(cls, path: Path | None = None):
@@ -64,9 +72,15 @@ class RemoteConfig:
             "validation_jobs": "CAPSTONE_VALIDATION_JOBS",
             "validation_mode": "CAPSTONE_VALIDATION_MODE",
             "validation_workspace": "CAPSTONE_VALIDATION_WORKSPACE",
+            "gdsii_validation_script": "CAPSTONE_GDSII_VALIDATION_SCRIPT",
+            "gdsii_validation_job_seconds": "CAPSTONE_GDSII_VALIDATION_JOB_SECONDS",
+            "gdsii_validation_timeout_seconds": "CAPSTONE_GDSII_VALIDATION_TIMEOUT_SECONDS",
+            "gdsii_file": "CAPSTONE_GDSII_FILE", "gdsii_netlist": "CAPSTONE_GDSII_NETLIST",
+            "gdsii_top": "CAPSTONE_GDSII_TOP",
         }
         integer_fields = {"port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds",
-                          "validation_job_seconds", "validation_timeout_seconds", "validation_jobs"}
+                          "validation_job_seconds", "validation_timeout_seconds", "validation_jobs",
+                          "gdsii_validation_job_seconds", "gdsii_validation_timeout_seconds"}
         for name, variable in environment.items():
             value = os.environ.get(variable)
             if name not in data and value:
@@ -76,12 +90,19 @@ class RemoteConfig:
                     raise ValueError(f"{variable} must be an integer") from None
         if "setup_commands" not in data and os.environ.get("CAPSTONE_REMOTE_SETUP"):
             data["setup_commands"] = [os.environ["CAPSTONE_REMOTE_SETUP"]]
+        for name, variable in (("gdsii_libraries", "CAPSTONE_GDSII_LIBRARIES"),
+                               ("gdsii_report_dirs", "CAPSTONE_GDSII_REPORT_DIRS")):
+            if name not in data and os.environ.get(variable):
+                try:
+                    data[name] = json.loads(os.environ[variable])
+                except ValueError:
+                    raise ValueError(f"{variable} must be a JSON array of paths") from None
         for name in ("host", "username", "project_dir", "partition", "qos"):
             if name not in data:
                 raise ValueError(f"Set {environment[name]} in the local environment or {name} in --remote-config")
-        for name in ("setup_commands", "required_tools"):
+        for name in ("setup_commands", "required_tools", "gdsii_libraries", "gdsii_report_dirs"):
             if name in data:
-                if not isinstance(data[name], list) or any(not isinstance(x, str) or not x.strip() for x in data[name]):
+                if not isinstance(data[name], list) or any(not isinstance(x, str) or not x.strip() or "\x00" in x for x in data[name]):
                     raise ValueError(f"{name} must be a list of nonempty strings")
                 data[name] = tuple(data[name])
         config = cls(**data)
@@ -89,7 +110,7 @@ class RemoteConfig:
             raise ValueError("validation_mode must be system or modules")
         if not isinstance(config.allow_validation_output_dirs, bool):
             raise ValueError("allow_validation_output_dirs must be a boolean")
-        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script"):
+        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script", "gdsii_validation_script"):
             value = getattr(config, name)
             if not isinstance(value, str) or not value.strip() or "\x00" in value:
                 raise ValueError(f"{name} must be a nonempty string")
@@ -109,6 +130,12 @@ class RemoteConfig:
             raise ValueError("timeout_seconds must allow allocation wait + job time + 30 seconds")
         if config.validation_timeout_seconds < config.allocation_wait_seconds + config.validation_job_seconds + 30:
             raise ValueError("validation_timeout_seconds must allow allocation wait + validation job time + 30 seconds")
+        if config.gdsii_validation_timeout_seconds < config.allocation_wait_seconds + config.gdsii_validation_job_seconds + 30:
+            raise ValueError("gdsii_validation_timeout_seconds must allow allocation wait + job time + 30 seconds")
+        for name in ("gdsii_file", "gdsii_netlist", "gdsii_top"):
+            value = getattr(config, name)
+            if value is not None and (not isinstance(value, str) or not value.strip() or "\x00" in value):
+                raise ValueError(f"{name} must be a nonempty string or null")
         if config.key_filename is not None and not isinstance(config.key_filename, str):
             raise ValueError("key_filename must be a local path string")
         return config

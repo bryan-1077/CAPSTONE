@@ -22,7 +22,7 @@ def main() -> int:
     parser.add_argument("--allow-unvalidated", action="store_true",
                         help="Allow direct backend testing without validation; does not bypass normal generation routing.")
     parser.add_argument("--skip-verification", "--no-verif", dest="skip_verification", action="store_true",
-                        help="Skip remote verification; continue to backend unless --no-backend is set.")
+                        help="Skip pre-backend RTL verification; backend and GDSII validation still run unless --no-backend is set.")
     parser.add_argument("--no-backend", action="store_true",
                         help="Disable backend execution; combine with --no-verif for frontend only.")
     parser.add_argument("--no-bist", action="store_true",
@@ -141,6 +141,9 @@ def main() -> int:
                   "backend": ("backend on explicit UNVALIDATED snapshot -> inspect result" if args.allow_unvalidated
                               else "backend requires accepted validation evidence")}
         print(routes[args.entry])
+        if backend_route:
+            print("After backend success: SSH/srun GDSII validation -> retrieve reports; "
+                  "PASS_WITH_GAPS requires review (needs_attention).")
         print("Frontend failures with supported evidence -> debug -> recheck -> publish -> "
               + ("stop" if args.skip_verification and args.no_backend else
                  "backend" if args.skip_verification else

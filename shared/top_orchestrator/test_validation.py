@@ -448,14 +448,15 @@ class ValidationTests(unittest.TestCase):
                 'shared.top_orchestrator.auth.getpass.getpass', return_value=secret) as prompt, patch.dict(
                 'shared.top_orchestrator.orchestrator.NODES', {
                     'generate': lambda c, d: StageResult('generate', 'passed', 'frontend checked'),
-                    'backend': backend}):
+                    'backend': backend,
+                    'gdsii-validation': lambda c, d: StageResult('gdsii-validation', 'needs_attention', 'review required')}):
             state = run(RunConfig('generate', remote_config=self.remote_config), self.root / 'full_flow')
-        self.assertEqual(state.status, 'complete', state.results[-1].message)
-        self.assertEqual([result.stage for result in state.results], ['generate', 'validation', 'backend'])
+        self.assertEqual(state.status, 'needs_attention', state.results[-1].message)
+        self.assertEqual([result.stage for result in state.results], ['generate', 'validation', 'backend', 'gdsii-validation'])
         self.assertFalse(seen[0].allow_unvalidated)
         self.assertEqual(seen[0].mailbox, state.config.mailbox)
         self.assertEqual(seen[0].target_mhz, 200)
-        self.assertEqual(state.results[-1].artifacts['validation'], 'passed')
+        self.assertEqual(state.results[-2].artifacts['validation'], 'passed')
         prompt.assert_called_once()
         for path in (self.root / 'full_flow').rglob('*.json'):
             self.assertNotIn(secret, path.read_text())

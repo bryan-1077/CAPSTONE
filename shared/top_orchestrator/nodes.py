@@ -13,8 +13,9 @@ from uuid import uuid4
 from .contracts import FailureReport, RunConfig, Stage, StageResult
 from .remote import RemoteConfig, remote_check_node
 from .validation import validation_node, verify_backend_handoff
-from .display import print_node_header
+from .display import TimestampedOutput, print_node_header
 from .auth import cached_password
+from .gdsii_validation import gdsii_validation_node
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = REPO_ROOT / "local" / "frontend"
@@ -71,11 +72,13 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
 
 
 def stream_command(command: list[str], log: Path, *, cwd: Path | None = None,
-                   pass_fds: tuple[int, ...] = (), env_overrides: dict[str, str] | None = None) -> int:
+                   pass_fds: tuple[int, ...] = (), env_overrides: dict[str, str] | None = None,
+                   timestamp_output: bool = True) -> int:
     """Inherit terminal input and tee output, including prompts without newlines."""
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env.update(env_overrides or {})
+    timestamps = TimestampedOutput() if timestamp_output else None
     with log.open("w", encoding="utf-8") as handle:
         with subprocess.Popen(command, cwd=cwd or FRONTEND, env=env,
                               pass_fds=pass_fds,
@@ -83,6 +86,8 @@ def stream_command(command: list[str], log: Path, *, cwd: Path | None = None,
                               text=True, encoding="utf-8", errors="replace") as process:
             assert process.stdout is not None
             while chunk := process.stdout.read(1):
+                if timestamps is not None:
+                    chunk = timestamps.format(chunk)
                 sys.stdout.write(chunk)
                 sys.stdout.flush()
                 handle.write(chunk)
@@ -204,7 +209,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
             username = os.getenv("CAPSTONE_SSH_USER") or "antgamez1203"
         password = cached_password(host, username)
         if password is None:
-            code = stream_command(command, log, cwd=REPO_ROOT / "local/backend", env_overrides=env_overrides)
+            code = stream_command(command, log, cwd=REPO_ROOT / "local/backend",
+                                  env_overrides=env_overrides, timestamp_output=False)
         else:
             # An anonymous inherited descriptor keeps the secret out of argv,
             # environment variables, and persistent run artifacts.
@@ -213,7 +219,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
                 credential.seek(0)
                 code = stream_command(command + ["--ssh-password-fd", str(credential.fileno())],
                                       log, cwd=REPO_ROOT / "local/backend",
-                                      pass_fds=(credential.fileno(),), env_overrides=env_overrides)
+                                      pass_fds=(credential.fileno(),), env_overrides=env_overrides,
+                                      timestamp_output=False)
     except OSError as exc:
         artifacts["failure_category"] = "tool_environment"
         return StageResult("backend", "failed", f"Could not start backend: {exc}", artifacts)
@@ -306,4 +313,5 @@ def debug_node(config: RunConfig, run_dir: Path) -> StageResult:
 
 
 NODES = {"generate": generate_node, "debug": debug_node,
-         "validation": validation_node, "backend": backend_node, "remote-check": remote_check_node}
+         "validation": validation_node, "backend": backend_node,
+         "gdsii-validation": gdsii_validation_node, "remote-check": remote_check_node}

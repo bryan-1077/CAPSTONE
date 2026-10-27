@@ -22,7 +22,8 @@ def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | 
     if result.stage == "validation" and config is not None and config.entry in ("generate", "debug"):
         return None if config.no_backend else "backend"
     return {"generate": "validation", "debug": "generate",
-            "validation": None, "backend": None, "remote-check": None}[result.stage]
+            "validation": None, "backend": "gdsii-validation",
+            "gdsii-validation": None, "remote-check": None}[result.stage]
 
 
 def save_state(state: RunState, run_dir: Path) -> None:
@@ -106,6 +107,10 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
         if stage == "validation" and result.status == "passed":
             receipt = result.artifacts.get("result")
             active_config = replace(active_config, validation_result=Path(receipt) if receipt else None)
+            state.config = active_config
+        if stage == "backend" and result.status == "passed":
+            receipt = result.artifacts.get("result")
+            active_config = replace(active_config, backend_result=Path(receipt) if receipt else None)
             state.config = active_config
         state.results.append(result)
         state.current_stage = next_stage(result, active_config)

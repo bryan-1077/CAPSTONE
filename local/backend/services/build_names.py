@@ -81,6 +81,7 @@ print("RESERVED_BUILD_NAMES=" + json.dumps({key: renamed(value) for key, value i
     result = ssh.run(
         f"{shlex.quote(state.get('remote_python_cmd') or 'python3')} -c {shlex.quote(code)}",
         cwd=state["remote_project_root"],
+        timeout=300,
     )
     if not result["ok"]:
         raise RuntimeError(f"Cannot reserve named builds/scripts; existing files are preserved: {result.get('stderr', '')}")

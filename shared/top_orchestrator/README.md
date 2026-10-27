@@ -26,6 +26,7 @@ selected stage controls and rechecks existing RTL after a successful repair.
 These controls apply to `generate` entry. Default routing continues from remote
 validation into backend when verification reports `READY_FOR_BACKEND`;
 `--no-backend` stops after verification and `--no-verif` goes directly to backend.
+Successful backend execution then runs remote GDSII validation.
 
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
@@ -70,6 +71,8 @@ Debug retains its existing attempt limit and patch checks.
 | `nodes.py` | Frontend/backend adapters and stage registration |
 | `validation.py` | Snapshot transfer, remote invocation, report retrieval, and evidence checks |
 | `validation_runner.py` | Standalone uploaded wrapper for the unchanged deployed pipeline |
+| `gdsii_validation.py` | Backend artifact handoff, SSH execution, and GDSII result checks |
+| `gdsii_validation_runner.py` | Uploaded wrapper for the deployed GDSII structural validator |
 | `mailbox.py` | Atomic RTL/spec snapshots and content verification |
 | `remote.py` | SSH/Slurm configuration, job command builder, and remote preflight |
 | `orchestrator.py` | Explicit routing and atomic state-file updates |
@@ -104,8 +107,8 @@ subdirectories so earlier evidence is preserved.
 Use `--run-dir` to select a new output directory. Existing directories are rejected.
 Exit codes: 0 = complete (or plan printed), 2 = incomplete/stopped or CLI misuse,
 1 = run-artifact filesystem error. A specs-to-verification run completes when the
-required verification evidence passes. A direct unvalidated backend test can complete;
-its result explicitly records `validation: not_run`.
+required verification evidence passes. Direct unvalidated backend testing records
+`validation: not_run` and still proceeds to post-backend GDSII validation.
 
 For frontend-to-backend execution, use `generate --skip-verification`. This starts
 with the usual interactive spec selection and frequency selection, runs RTL
@@ -115,6 +118,8 @@ skips remote verification and records `validation: not_run`. No `--mailbox` or
 `--allow-unvalidated` argument is needed. Frontend failures still follow the
 existing bounded repair/recheck flow; failed checks or publication stop before
 backend execution. Backend failure stops with its logs and structured result.
+`--skip-verification` skips pre-backend RTL validation; post-backend GDSII
+validation still runs after backend success.
 
 Use `--input local/frontend/configs/user_input.yaml` to reuse approved YAML;
 add `--cache` to reuse frontend RTL generation. For existing RTL, use
@@ -335,6 +340,68 @@ completion, not functional validation.
 Native failure triage is retained in the JSON result; PD debug intake translation
 is not yet connected. Remote output paths remain in backend state; this adapter
 does not download every physical-design artifact.
+
+### Post-backend GDSII validation
+
+After backend success, the orchestrator runs `gdsii-validation` over SSH and Slurm.
+It invokes the deployed `server/validation/GDSII_Validation_Agent.py` validation
+class through an uploaded wrapper. The deployed agent source is unchanged. The
+wrapper writes reports into a unique
+`<remote-project>/shared/gdsii_validation_runs/run_<invocation-id>/` directory.
+
+The backend result supplies the final `outputs.gdsii_remote_dir` (falling back to
+`gdsii_candidate_path`) and top module. The wrapper requires one GDSII and one
+netlist in that implementation directory. If it contains no netlist, the wrapper
+requires one in the recorded mapped-netlist directory and records that fallback.
+Missing or ambiguous selections stop with `needs_attention`. Explicit artifact
+paths must remain within those backend output directories. The implementation's
+`reports/` directory is included automatically when present.
+
+The stage checks the backend's mailbox revision, target frequency, completed
+stages, enabled gates, top module, and recorded SSH destination. It binds retrieved
+evidence to a unique invocation and the backend-result digest, hashes input
+artifacts before and after inspection, and verifies the downloaded report archive.
+These hashes record the files inspected; they do not establish LVS correspondence
+between the layout and netlist.
+
+The deployed verifier performs structural inspection and imports backend report
+findings. Its successful result is currently `PASS_WITH_GAPS`, with
+`needs_review: true` and `allow_signoff: false`. The orchestrator preserves that
+result as `needs_attention` (CLI exit 2). Native `FAIL` or `ERROR` results become
+`failed`; missing reports, transport problems, or inconsistent evidence stop for
+attention. GDSII failures do not trigger automatic frontend repair.
+
+Local stage artifacts include `gdsii_validation.log`,
+`gdsii_validation_request.json`, `gdsii_validation_result.json`,
+`remote_gdsii_validation_result.json`, `reports.zip`, and extracted
+`reports/verification_reports/`, including the native report and copies of supplied
+backend reports. Layouts and netlists remain on the server.
+
+GDSII validation uses the existing remote project, Python, setup, SSH, partition,
+and QoS settings and cached password. The server Python must provide the agent's
+dependencies, including `gdspy`. Direct backend and `--skip-verification` routes
+also need `CAPSTONE_REMOTE_PROJECT_DIR`, `CAPSTONE_SLURM_PARTITION`, and
+`CAPSTONE_SLURM_QOS` for this stage. Those routes continue to use environment
+configuration; normal verified flows also support `--remote-config`.
+
+| JSON setting | Default | Environment override |
+| --- | --- | --- |
+| `gdsii_validation_script` | `server/validation/GDSII_Validation_Agent.py` | `CAPSTONE_GDSII_VALIDATION_SCRIPT` |
+| `gdsii_validation_job_seconds` | `3600` | `CAPSTONE_GDSII_VALIDATION_JOB_SECONDS` |
+| `gdsii_validation_timeout_seconds` | `3690` | `CAPSTONE_GDSII_VALIDATION_TIMEOUT_SECONDS` |
+| `gdsii_file` | automatic unique selection | `CAPSTONE_GDSII_FILE` |
+| `gdsii_netlist` | automatic unique selection | `CAPSTONE_GDSII_NETLIST` |
+| `gdsii_top` | backend top module | `CAPSTONE_GDSII_TOP` |
+| `gdsii_libraries` | `[]` | `CAPSTONE_GDSII_LIBRARIES` (JSON array) |
+| `gdsii_report_dirs` | implementation `reports/` if present | `CAPSTONE_GDSII_REPORT_DIRS` (JSON array) |
+
+`gdsii_file` is relative to the final implementation directory or absolute.
+`gdsii_netlist` is relative to the selected implementation/mapped directory or
+absolute. Library paths are relative to the remote project or absolute; configured
+report directories are relative to the final implementation directory or absolute.
+`gdsii_top` explicitly selects a renamed layout top. The timeout must allow
+allocation wait plus job time plus 30 seconds. Setting
+`allow_validation_output_dirs: false` disables the GDSII invocation before SSH.
 
 The backend CLI also supports `--result-json <new-file>` and `--log-dir <new-directory>`
 for standalone invocations. The latter redirects session, parsed-stage, and timing
