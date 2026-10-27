@@ -1,0 +1,97 @@
+graph_id: ddr4_controller_structural_v2
+clock_reset:
+  definition: shared.clock_reset
+  clock_source: top.clk
+  reset_source: top.rst_n
+  consumers:
+  - host_adapter
+  - waiting_queue
+  - fifo_scheduler
+  - command_engine
+  - row_state
+  - timing
+  - memory
+  - refresh
+connections:
+  top.txn_valid:
+  - host_adapter.txn_valid
+  top.txn_addr:
+  - host_adapter.txn_addr
+  top.txn_bank:
+  - host_adapter.txn_bank
+  top.txn_is_write:
+  - host_adapter.txn_is_write
+  top.txn_wdata:
+  - host_adapter.txn_wdata
+  host_adapter.txn_ready:
+  - top.txn_ready
+  host_adapter.cmd_ready:
+  - top.cmd_ready
+  host_adapter.enq_valid:
+  - waiting_queue.enq_valid
+  host_adapter.enq_request:
+  - waiting_queue.enq_request
+  - command_engine.incoming_request
+  waiting_queue.enq_ready:
+  - host_adapter.enq_ready
+  waiting_queue.head_valid:
+  - fifo_scheduler.head_valid
+  waiting_queue.head_request:
+  - fifo_scheduler.head_request
+  fifo_scheduler.head_take:
+  - waiting_queue.head_take
+  fifo_scheduler.dispatch_valid:
+  - command_engine.dispatch_valid
+  fifo_scheduler.dispatch_request:
+  - command_engine.dispatch_request
+  command_engine.dispatch_ready:
+  - fifo_scheduler.dispatch_ready
+  command_engine.candidate_valid:
+  - timing.candidate_valid
+  command_engine.candidate_command:
+  - timing.candidate_command
+  timing.candidate_ok:
+  - command_engine.candidate_ok
+  command_engine.commit_valid:
+  - row_state.commit_valid
+  - timing.commit_valid
+  - memory.commit_valid
+  - refresh.commit_valid
+  command_engine.commit_command:
+  - row_state.commit_command
+  - timing.commit_command
+  - memory.commit_command
+  - refresh.commit_command
+  command_engine.probe_valid:
+  - timing.probe_valid
+  command_engine.probe_command:
+  - timing.probe_command
+  timing.probe_ok:
+  - command_engine.probe_ok
+  command_engine.execution_ready:
+  - host_adapter.execution_ready
+  row_state.open_valid:
+  - command_engine.open_valid
+  - timing.open_valid
+  row_state.open_rows:
+  - command_engine.open_rows
+  - timing.open_rows
+  refresh.pending:
+  - command_engine.refresh_pending
+  refresh.service_busy:
+  - command_engine.refresh_busy
+  memory.rsp_valid:
+  - host_adapter.memory_rsp_valid
+  memory.rsp_data:
+  - host_adapter.memory_rsp_data
+  host_adapter.rsp_rdata:
+  - top.rsp_rdata
+  host_adapter.rsp_valid:
+  - top.rsp_valid
+presence: {}
+verification_outputs:
+  command_engine.cleanup_active: Observes cleanup-reservation creation, dispatch inhibition,
+    and completion without adding a host-visible port.
+integration: Top-level logic is structural only. All connections are typed whole-port
+  wiring. Shared clock/reset are implicit child inputs and are not duplicated in ordinary
+  connections.

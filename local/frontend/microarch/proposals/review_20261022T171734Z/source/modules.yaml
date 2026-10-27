@@ -1,0 +1,606 @@
+contracts:
+  host_protocol:
+    status: draft
+    role: host_protocol
+    owned_state: {}
+    interfaces:
+      txn_valid:
+        direction: input
+        type: shared.types.bit
+      txn_is_write:
+        direction: input
+        type: shared.types.bit
+      txn_addr:
+        direction: input
+        type: shared.types.host_address
+      txn_wdata:
+        direction: input
+        type: shared.types.data
+      txn_bank:
+        direction: input
+        type: shared.types.host_bank
+      queue_ready:
+        direction: input
+        type: shared.types.bit
+      probe_ready:
+        direction: input
+        type: shared.types.bit
+      memory_rsp_valid:
+        direction: input
+        type: shared.types.bit
+      memory_rsp_data:
+        direction: input
+        type: shared.types.data
+      mapped_request:
+        direction: output
+        type: shared.types.request
+      enqueue_valid:
+        direction: output
+        type: shared.types.bit
+      txn_ready:
+        direction: output
+        type: shared.types.bit
+      cmd_ready:
+        direction: output
+        type: shared.types.bit
+      rsp_valid:
+        direction: output
+        type: shared.types.bit
+      rsp_rdata:
+        direction: output
+        type: shared.types.data
+    handshakes:
+      admission: shared.events.admission occurs only from pre-edge txn_valid and txn_ready
+        while reset is inactive. enqueue_valid represents txn_valid; queue_ready supplies
+        admission backpressure.
+      response: Pass the memory-owned registered response stage directly to rsp_valid
+        and rsp_rdata without another response register.
+      diagnostic: cmd_ready is probe_ready only. It does not affect txn_ready, enqueue_valid,
+        request storage, dispatch, timing history, or reservation.
+    reset: Immediately gate enqueue_valid, txn_ready, cmd_ready, and rsp_valid low
+      while rst_n is low. rsp_rdata is zero while reset is asserted. This module owns
+      no state.
+    update_events: {}
+    stalls: The mapped request is combinationally available from host payload fields.
+      The host stability requirement applies while txn_valid is asserted and txn_ready
+      is low.
+    simultaneous_events:
+      admission_and_response: Admission and response delivery are independent.
+      reset_and_events: Reset wins and gates all visible handshake events.
+    invariants:
+    - system.rules.BASE_HOST
+    - system.rules.BASE_ADDRESS
+    - system.rules.BASE_RESET
+    - system.rules.R1
+    - system.rules.R9
+    - system.rules.R10
+    - system.rules.R11
+    - system.rules.CONSTRAINT_1
+    - system.rules.CONSTRAINT_2
+    - system.rules.CONSTRAINT_8
+    - system.rules.CONSTRAINT_9
+    - system.rules.CONSTRAINT_10
+    verification:
+    - system.verification.V_BASE_HOST
+    - system.verification.V_BASE_ADDRESS
+    - system.verification.V_BASE_RESET
+    - system.verification.V_R1
+    - system.verification.V_R9
+    - system.verification.V_R10
+    - system.verification.V_R11
+    - system.verification.V_CONSTRAINT_1
+    - system.verification.V_CONSTRAINT_2
+    - system.verification.V_CONSTRAINT_8
+    - system.verification.V_CONSTRAINT_9
+    - system.verification.V_CONSTRAINT_10
+    combinational_dependencies:
+      mapped_request:
+      - txn_bank
+      - txn_addr
+      - txn_is_write
+      - txn_wdata
+      enqueue_valid:
+      - txn_valid
+      txn_ready:
+      - queue_ready
+      cmd_ready:
+      - probe_ready
+      rsp_valid:
+      - memory_rsp_valid
+      rsp_rdata:
+      - memory_rsp_data
+    dependency_note: shared reset gating is implicit in every visible output.
+  waiting_queue:
+    status: draft
+    role: request_storage
+    owned_state:
+      entries: FIFO-ordered shared.types.request entries, with configurable capacity
+        shared.parameters.WAITING_CAPACITY.
+      occupancy: Registered count of waiting entries only; active and response storage
+        are excluded.
+    interfaces:
+      enqueue_request:
+        direction: input
+        type: shared.types.request
+      enqueue_valid:
+        direction: input
+        type: shared.types.bit
+      head_take:
+        direction: input
+        type: shared.types.bit
+      enqueue_ready:
+        direction: output
+        type: shared.types.bit
+      head_valid:
+        direction: output
+        type: shared.types.bit
+      head_request:
+        direction: output
+        type: shared.types.request
+    handshakes:
+      admission: Accept enqueue_request only on shared.events.admission.
+      dispatch: Remove only the pre-edge head on shared.events.dispatch; head_take
+        alone is not an event.
+      readiness: enqueue_ready is true when pre-edge occupancy is below capacity or
+        a valid pre-edge head dispatches on this edge.
+    reset: Synchronously clear all waiting entries and occupancy; immediately gate
+      enqueue_ready and head_valid low during reset. Invalid head_request is canonical
+      zero.
+    update_events:
+      shared.events.admission: Append the complete pre-edge enqueue_request after
+        all older waiting entries.
+      shared.events.dispatch: Capture and remove only the pre-edge FIFO head. Simultaneous
+        admission appends after that old head is removed.
+    stalls: Stored entries and head_request remain stable until dispatch or reset.
+      A tail admission cannot change a stalled head.
+    simultaneous_events:
+      full_enqueue_and_dispatch: The pre-edge head is removed and the incoming request
+        becomes the newest entry; occupancy is unchanged, including capacity one.
+      retirement_and_enqueue: Retirement does not change waiting occupancy or readiness.
+      reset_and_events: Reset wins.
+    invariants:
+    - system.rules.BASE_QUEUE
+    - system.rules.R2
+    - system.rules.CONSTRAINT_11
+    - system.rules.SYS_SIMULTANEOUS
+    - system.rules.SYS_STORAGE_OWNERSHIP
+    verification:
+    - system.verification.V_BASE_QUEUE
+    - system.verification.V_R2
+    - system.verification.V_CONSTRAINT_11
+    - system.verification.V_SYS_SIMULTANEOUS
+    - system.verification.V_SYS_STORAGE_OWNERSHIP
+    combinational_dependencies:
+      enqueue_ready:
+      - head_take
+      head_valid: []
+      head_request: []
+  fifo_scheduler:
+    status: draft
+    role: request_selection
+    owned_state: {}
+    interfaces:
+      head_valid:
+        direction: input
+        type: shared.types.bit
+      head_request:
+        direction: input
+        type: shared.types.request
+      dispatch_ready:
+        direction: input
+        type: shared.types.bit
+      dispatch_valid:
+        direction: output
+        type: shared.types.bit
+      dispatch_request:
+        direction: output
+        type: shared.types.request
+      head_take:
+        direction: output
+        type: shared.types.bit
+    handshakes:
+      selection: dispatch_valid reflects the previously stored FIFO head independently
+        of timing permission and dispatch_ready.
+      dispatch: shared.events.dispatch occurs when dispatch_valid and dispatch_ready
+        are both high. head_take follows that condition.
+    reset: Immediately gate dispatch_valid and head_take low during reset. No owned
+      state exists.
+    update_events: {}
+    stalls: Continue exposing the same FIFO head while dispatch_ready is low; this
+      module never selects a younger row hit.
+    simultaneous_events:
+      admission_and_dispatch: Selection uses the pre-edge queue head; insertion handling
+        belongs to waiting_queue.
+      retirement_and_dispatch: The engine keeps dispatch_ready low on retirement edges
+        under the recorded no-same-edge-replacement decision.
+    invariants:
+    - system.rules.BASE_POLICY
+    - system.rules.R7
+    - system.rules.CONSTRAINT_3
+    - system.rules.CONSTRAINT_5
+    - system.rules.SYS_ORDERING
+    verification:
+    - system.verification.V_BASE_POLICY
+    - system.verification.V_R7
+    - system.verification.V_CONSTRAINT_3
+    - system.verification.V_CONSTRAINT_5
+    - system.verification.V_SYS_ORDERING
+    combinational_dependencies:
+      dispatch_valid:
+      - head_valid
+      dispatch_request:
+      - head_request
+      head_take:
+      - head_valid
+      - dispatch_ready
+  command_engine:
+    status: draft
+    role: command_sequencing
+    owned_state:
+      active_request: One complete dispatched shared.types.request retained until
+        committed READ or WRITE.
+      active_valid: Registered active-service ownership.
+      candidate: Registered non-NOP command proposal and validity held unchanged while
+        permission is false.
+      cleanup: Optional close-page cleanup bank reservation retained after retirement
+        until committed PRE.
+      refresh_preparation: Registered ascending-bank preparation cursor and phase;
+        it is distinct from refresh pending/service state.
+    interfaces:
+      dispatch_valid:
+        direction: input
+        type: shared.types.bit
+      dispatch_request:
+        direction: input
+        type: shared.types.request
+      candidate_ok:
+        direction: input
+        type: shared.types.bit
+      probe_ok:
+        direction: input
+        type: shared.types.bit
+      open_valid:
+        direction: input
+        type: shared.types.bank_valid
+      open_rows:
+        direction: input
+        type: shared.types.bank_rows
+      refresh_pending:
+        direction: input
+        type: shared.types.bit
+      refresh_busy:
+        direction: input
+        type: shared.types.bit
+      incoming_request:
+        direction: input
+        type: shared.types.request
+      dispatch_ready:
+        direction: output
+        type: shared.types.bit
+      candidate_valid:
+        direction: output
+        type: shared.types.bit
+      candidate_command:
+        direction: output
+        type: shared.types.command
+      commit_valid:
+        direction: output
+        type: shared.types.bit
+      commit_command:
+        direction: output
+        type: shared.types.command
+      probe_valid:
+        direction: output
+        type: shared.types.bit
+      probe_command:
+        direction: output
+        type: shared.types.command
+      probe_ready:
+        direction: output
+        type: shared.types.bit
+    handshakes:
+      dispatch: shared.events.dispatch captures the complete pre-edge dispatch_request
+        before queue storage is released. Timing permission never gates dispatch.
+      commit: shared.events.command_commit is candidate_valid and candidate_ok. commit_valid
+        is never asserted for NOP.
+      probe: Probe independently derives the incoming request first needed command
+        while idle and permitted by cleanup/refresh state. It has no state-changing
+        effect.
+    reset: Synchronously clear active, candidate, cleanup, and preparation ownership.
+      Immediately gate dispatch_ready, candidate_valid, commit_valid, probe_valid,
+      and probe_ready low. Invalid command outputs are canonical NOP.
+    update_events:
+      shared.events.dispatch: Capture the complete pre-edge head into active storage
+        and defer first candidate formation until a later edge.
+      shared.events.command_commit: Committed PRE or ACT advances setup only. Committed
+        READ or WRITE retires active ownership; close_page creates cleanup ownership
+        and open_page retains row ownership. Committed REF completes refresh preparation.
+      every_clock: When no blocked candidate exists, form a candidate from registered
+        active, cleanup, or refresh-preparation ownership. Once refresh_pending is
+        visible, prevent new dispatch, drain active and cleanup, precharge open banks
+        in ascending order, then propose REF. No dispatch occurs while refresh_busy
+        is high.
+    stalls: A valid candidate and complete active payload remain unchanged while candidate_ok
+      is low, including when refresh_pending becomes visible. New candidate formation
+      occurs only after a prior candidate commits.
+    simultaneous_events:
+      refresh_due_and_final_access: The final access may commit; newly visible pending
+        blocks subsequent dispatch and preparation begins later.
+      refresh_due_and_REF: REF acknowledgment does not erase simultaneous due; refresh
+        control retains pending.
+      retirement_and_dispatch: dispatch_ready is low when active ownership exists
+        before the edge; retirement cannot cause same-edge replacement.
+      reset_and_events: Reset wins.
+    invariants:
+    - system.rules.BASE_SEQUENCE
+    - system.rules.BASE_MODULARITY
+    - system.rules.R3
+    - system.rules.R4
+    - execution.rules.EXEC_COMMANDS
+    - execution.rules.EXEC_CLEANUP
+    verification:
+    - system.verification.V_BASE_SEQUENCE
+    - system.verification.V_BASE_MODULARITY
+    - system.verification.V_R3
+    - system.verification.V_R4
+    - execution.verification.V_EXEC_COMMANDS
+    - execution.verification.V_EXEC_CLEANUP
+    combinational_dependencies:
+      dispatch_ready:
+      - refresh_pending
+      - refresh_busy
+      candidate_valid: []
+      candidate_command: []
+      commit_valid:
+      - candidate_ok
+      commit_command: []
+      probe_valid:
+      - incoming_request
+      - open_valid
+      - open_rows
+      - refresh_pending
+      - refresh_busy
+      probe_command:
+      - incoming_request
+      - open_valid
+      - open_rows
+      probe_ready:
+      - probe_ok
+      - refresh_pending
+      - refresh_busy
+  bank_state:
+    status: draft
+    role: bank_state
+    owned_state:
+      open_rows: Registered row value for each bank.
+      open_valid: Registered open-row validity for each bank.
+    interfaces:
+      commit_valid:
+        direction: input
+        type: shared.types.bit
+      commit_command:
+        direction: input
+        type: shared.types.command
+      open_valid:
+        direction: output
+        type: shared.types.bank_valid
+      open_rows:
+        direction: output
+        type: shared.types.bank_rows
+    handshakes:
+      commit: Observe the broadcast shared.events.command_commit only.
+    reset: Synchronously clear all row-valid and row fields; immediately gate open_valid
+      low during reset.
+    update_events:
+      shared.events.command_commit: Committed ACT sets only its target bank valid
+        and row. Committed PRE clears only its target bank valid. Committed REF leaves
+        all banks closed after required preparation. READ and WRITE do not change
+        row state.
+    stalls: No command proposal, permission query, admission, dispatch, or blocked
+      candidate mutates bank state.
+    simultaneous_events:
+      reset_and_commit: Reset wins.
+      command_commit: Only one committed command is permitted per edge.
+    invariants:
+    - system.rules.CONSTRAINT_12
+    - execution.rules.EXEC_BANK_STATE
+    verification:
+    - system.verification.V_CONSTRAINT_12
+    - execution.verification.V_EXEC_BANK_STATE
+    combinational_dependencies:
+      open_valid: []
+      open_rows: []
+  timing_enforcement:
+    status: draft
+    role: timing_enforcement
+    owned_state:
+      bank_history: Registered ACT and PRE histories per bank.
+      global_history: Registered ACT spacing history, up to four unexpired ACT timestamps
+        for tFAW, and REF exclusion history.
+    interfaces:
+      candidate_valid:
+        direction: input
+        type: shared.types.bit
+      candidate_command:
+        direction: input
+        type: shared.types.command
+      probe_valid:
+        direction: input
+        type: shared.types.bit
+      probe_command:
+        direction: input
+        type: shared.types.command
+      open_valid:
+        direction: input
+        type: shared.types.bank_valid
+      open_rows:
+        direction: input
+        type: shared.types.bank_rows
+      commit_valid:
+        direction: input
+        type: shared.types.bit
+      commit_command:
+        direction: input
+        type: shared.types.command
+      candidate_ok:
+        direction: output
+        type: shared.types.bit
+      probe_ok:
+        direction: output
+        type: shared.types.bit
+    handshakes:
+      permission: Evaluate candidate and probe independently from registered history,
+        registered row state, and query command. Invalid, NOP, reserved, bank-illegal,
+        or timing-illegal queries return false.
+      history: Only shared.events.command_commit inserts ACT, PRE, or REF history.
+        Permission has no combinational dependency on commit_valid or any accepted
+        ACT pulse.
+    reset: Synchronously invalidate all histories and immediately gate candidate_ok
+      and probe_ok low during reset.
+    update_events:
+      every_clock: Age and expire histories using the locked edge convention while
+        idle or stalled; elapsed time alone creates no history.
+      shared.events.command_commit: Committed ACT updates tRCD, tRAS, tRRD, and tFAW
+        histories; committed PRE updates tRP history; committed REF starts tRFC exclusion.
+    stalls: Blocked proposals do not insert, refresh, or otherwise alter timing history.
+    simultaneous_events:
+      expiration_and_commit: Permission is evaluated against earlier registered history
+        at the candidate edge; a committed trigger is inserted after that decision.
+      probe_and_commit: Probe observes pre-edge history and is not changed by same-edge
+        commit.
+      reset_and_commit: Reset wins.
+    invariants:
+    - system.rules.BASE_TIMING
+    - system.rules.BASE_LEGALITY
+    - system.rules.BASE_TFAW
+    - system.rules.BASE_TRRD
+    - system.rules.R5
+    - system.rules.CONSTRAINT_6
+    - system.rules.CONSTRAINT_7
+    - execution.rules.EXEC_PERMISSION
+    verification:
+    - system.verification.V_BASE_TIMING
+    - system.verification.V_BASE_LEGALITY
+    - system.verification.V_BASE_TFAW
+    - system.verification.V_BASE_TRRD
+    - system.verification.V_R5
+    - system.verification.V_CONSTRAINT_6
+    - system.verification.V_CONSTRAINT_7
+    - execution.verification.V_EXEC_PERMISSION
+    combinational_dependencies:
+      candidate_ok:
+      - candidate_valid
+      - candidate_command
+      - open_valid
+      - open_rows
+      probe_ok:
+      - probe_valid
+      - probe_command
+      - open_valid
+      - open_rows
+  memory_responses:
+    status: draft
+    role: functional_memory_and_responses
+    owned_state:
+      words: Four isolated banks of sixteen 32-bit words.
+      response: One registered response valid/data stage separate from waiting and
+        active capacity.
+    interfaces:
+      commit_valid:
+        direction: input
+        type: shared.types.bit
+      commit_command:
+        direction: input
+        type: shared.types.command
+      rsp_valid:
+        direction: output
+        type: shared.types.bit
+      rsp_data:
+        direction: output
+        type: shared.types.data
+    handshakes:
+      commit: Observe broadcast shared.events.command_commit. Only committed WRITE
+        mutates storage; only committed READ captures response state.
+      response: shared.events.response_delivery samples the registered response. No
+        response-ready or response backpressure exists.
+    reset: Synchronously zero all words, response validity, and response data. Immediately
+      gate rsp_valid low during reset.
+    update_events:
+      shared.events.command_commit: WRITE updates exactly its addressed bank and compact
+        address. READ captures the addressed pre-edge word into response storage.
+        Other commands do not mutate memory or response state.
+      shared.events.response_delivery: Clear response valid unless a simultaneous
+        committed READ replaces response state after old response delivery.
+    stalls: Candidates, probes, selection, and noncommitted commands cannot mutate
+      storage. Captured response state survives active release, cleanup, and refresh.
+    simultaneous_events:
+      response_delivery_and_READ: Deliver old response data, then capture the new
+        pre-edge read word for the next edge.
+      response_delivery_and_WRITE: Deliver old response independently; WRITE creates
+        no response.
+      reset_and_events: Reset wins.
+    invariants:
+    - system.rules.BASE_DATA
+    - system.rules.R6
+    - execution.rules.EXEC_RESPONSE
+    verification:
+    - system.verification.V_BASE_DATA
+    - system.verification.V_R6
+    - execution.verification.V_EXEC_RESPONSE
+    combinational_dependencies:
+      rsp_valid: []
+      rsp_data: []
+  refresh_control:
+    status: draft
+    role: refresh_control
+    owned_state:
+      deadline: Periodic deadline measured from the last sampled reset edge.
+      pending: Sticky coalesced refresh request.
+      service: Registered REF service exclusion state through tRFC.
+    interfaces:
+      commit_valid:
+        direction: input
+        type: shared.types.bit
+      commit_command:
+        direction: input
+        type: shared.types.command
+      refresh_pending:
+        direction: output
+        type: shared.types.bit
+      refresh_busy:
+        direction: output
+        type: shared.types.bit
+    handshakes:
+      request: shared.events.refresh_due sets sticky pending and advances the deadline
+        by tREFI independently of REF commit.
+      acknowledgment: shared.events.refresh_start, a committed REF, is the sole acknowledgment
+        and starts tRFC service exclusion.
+    reset: Synchronously clear pending, service, and deadline state; rebase the first
+      deadline at the sampled reset edge. Immediately gate outputs low during reset.
+    update_events:
+      shared.events.refresh_due: Set pending and advance periodic deadline. A due
+        event while pending or servicing coalesces.
+      shared.events.refresh_start: Clear pending unless refresh_due also occurs at
+        the edge; start service exclusion.
+      shared.events.refresh_end: End service exclusion while retaining any independently
+        pending refresh.
+    stalls: Pending persists through active work, cleanup, timing stalls, and service.
+      This module owns no waiting request storage.
+    simultaneous_events:
+      due_and_REF: Due wins pending update; REF starts service and one later refresh
+        remains pending.
+      due_and_service_end: Service may end but pending remains set.
+      reset_and_events: Reset wins.
+    invariants:
+    - system.rules.BASE_REFRESH
+    - system.rules.R8
+    - system.rules.CONSTRAINT_4
+    - execution.rules.EXEC_REFRESH
+    verification:
+    - system.verification.V_BASE_REFRESH
+    - system.verification.V_R8
+    - system.verification.V_CONSTRAINT_4
+    - execution.verification.V_EXEC_REFRESH
+    combinational_dependencies:
+      refresh_pending: []
+      refresh_busy: []

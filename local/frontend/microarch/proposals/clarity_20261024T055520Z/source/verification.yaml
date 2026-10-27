@@ -1,0 +1,337 @@
+binding_version: 1
+sampling:
+  phase: pre_edge
+  reset_gates_events: true
+events:
+  admission:
+    status: bound
+    when:
+      all:
+      - endpoint: top.txn_valid
+        equals: 1
+      - endpoint: top.txn_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: host_protocol.enq_request
+  candidate_create:
+    status: unbound
+    reason: No observable creation pulse exists; independently infer creation from
+      candidate outputs and declared later-edge rules.
+  command_commit:
+    status: bound
+    when:
+      endpoint: command_engine.commit_valid
+      equals: 1
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  dispatch:
+    status: bound
+    when:
+      all:
+      - endpoint: fifo_scheduler.dispatch_valid
+        equals: 1
+      - endpoint: command_engine.dispatch_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: fifo_scheduler.dispatch_request
+  refresh_due:
+    status: unbound
+    reason: Deadline state is internal; independently predict tREFI deadlines from
+      reset and observe refresh state.
+  refresh_end:
+    status: unbound
+    reason: No end pulse is exported; independently measure tRFC from committed REF
+      and observe refresh_busy.
+  refresh_start:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - endpoint: command_engine.commit_command
+        field: opcode
+        equals: REF
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  response_delivery:
+    status: bound
+    when:
+      endpoint: top.rsp_valid
+      equals: 1
+    payload:
+      data:
+        endpoint: top.rsp_rdata
+  retirement:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - any:
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: READ
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: WRITE
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+observations:
+  host_ready:
+    endpoint: top.txn_ready
+  cmd_ready:
+    endpoint: top.cmd_ready
+  candidate_valid:
+    endpoint: command_engine.candidate_valid
+  candidate_command:
+    endpoint: command_engine.candidate_command
+  candidate_ok:
+    endpoint: timing_enforcement.candidate_ok
+  commit_command:
+    endpoint: command_engine.commit_command
+  open_valid:
+    endpoint: bank_state.open_valid
+  open_rows:
+    endpoint: bank_state.open_rows
+  refresh_pending:
+    endpoint: refresh_control.refresh_pending
+  refresh_busy:
+    endpoint: refresh_control.refresh_busy
+  response_valid:
+    endpoint: top.rsp_valid
+  response_data:
+    endpoint: top.rsp_rdata
+checks:
+  system.verification.V_ADDRESS:
+    scope: both
+    events:
+    - admission
+    observations:
+    - host_ready
+    note: Scoreboard compact mapping and topology.
+  system.verification.V_MEMORY:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations:
+    - response_valid
+    - response_data
+    note: Use independent banked memory model.
+  system.verification.V_HOST:
+    scope: both
+    events:
+    - admission
+    observations:
+    - host_ready
+    - cmd_ready
+    note: Check valid-ready admission separation.
+  system.verification.V_RESET:
+    scope: both
+    events:
+    - admission
+    - command_commit
+    observations:
+    - host_ready
+    - cmd_ready
+    - response_valid
+    note: Check gating and synchronous clearing.
+  system.verification.V_ISOLATION:
+    scope: system
+    events:
+    - dispatch
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_ok
+    - open_valid
+    note: Review distinct typed functional owners.
+  system.verification.V_IDENTITY:
+    scope: system
+    observations:
+    - host_ready
+    events: []
+    note: Inspect declared identity.
+  system.verification.V_DIAGNOSTIC:
+    scope: both
+    events:
+    - admission
+    observations:
+    - cmd_ready
+    note: Check diagnostic side effects are absent.
+  system.verification.V_EXPORT:
+    scope: system
+    observations:
+    - candidate_command
+    events: []
+    note: Inspect declared links and bindings.
+  system.verification.V_CAPACITY:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - host_ready
+    note: Reconstruct waiting and active capacity.
+  system.verification.V_EXACTLY_ONCE:
+    scope: system
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - candidate_valid
+    note: Track reset-free request lifecycle.
+  system.verification.V_FIFO:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - candidate_command
+    note: Compare acceptance and retirement order.
+  system.verification.V_REFRESH:
+    scope: both
+    events:
+    - refresh_start
+    - command_commit
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - open_valid
+    note: Predict drain, REF, exclusion, and resume.
+  system.verification.V_CONFIGURATION:
+    scope: system
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - refresh_pending
+    note: Inspect locked configuration use.
+  system.verification.V_PAGE:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    - dispatch
+    observations:
+    - open_valid
+    - open_rows
+    note: Check open-page and close-page cleanup.
+  system.verification.V_SEQUENCE:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    observations:
+    - candidate_command
+    - open_valid
+    note: Check closed, hit, and conflict sequences.
+  system.verification.V_CANDIDATE:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    note: Check delayed creation and later replacement.
+  system.verification.V_PAYLOAD:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - commit_command
+    note: Check NOP masking and independent probe payload.
+  system.verification.V_TIMING:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - candidate_ok
+    - open_valid
+    note: Evaluate exact timing boundaries.
+  execution.verification.X_BANK:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - open_valid
+    - open_rows
+    note: Compare rows only against committed operations.
+  execution.verification.X_CLEANUP:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    observations:
+    - open_valid
+    - refresh_pending
+    note: Check cleanup reservation.
+  execution.verification.X_COMMIT:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - commit_command
+    note: Check legal single commit.
+  execution.verification.X_PAYLOAD:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - commit_command
+    note: Check payload behavior.
+  execution.verification.X_PERMISSION:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - candidate_ok
+    - open_valid
+    - open_rows
+    note: Check pre-edge permission.
+  execution.verification.X_READY:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    observations:
+    - host_ready
+    - cmd_ready
+    note: Check capacity and diagnostic readiness.
+  execution.verification.X_REFRESH:
+    scope: both
+    events:
+    - refresh_start
+    - command_commit
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - open_valid
+    note: Check drain and exclusion.
+  execution.verification.X_RESPONSE:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations:
+    - response_valid
+    - response_data
+    note: Check E+1 read response.

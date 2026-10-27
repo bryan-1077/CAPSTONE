@@ -1,0 +1,196 @@
+slice_id: execution_rules
+rules:
+  EXEC_BANK_STATE:
+    origin: model_selected
+    statement: Only committed ACT opens and records its bank row, committed PRE closes
+      its bank, and committed REF clears all rows after preparation. READ and WRITE
+      retain open rows. Probes, proposals, admissions, dispatches, and stalls do not
+      alter row state.
+    verification:
+    - X_BANK
+    owners:
+    - row_state
+    - command_engine
+  EXEC_CLEANUP:
+    origin: model_selected
+    statement: Open-page creates no cleanup reservation after retirement. Close-page
+      retirement creates one cleanup reservation for the serviced bank. While reserved,
+      dispatch is blocked. With no active candidate, a cleanup PRE candidate is created
+      on a later edge, remains stable until permitted, commits once when legal, and
+      then clears the reservation. Refresh preparation waits for the cleanup reservation
+      to clear.
+    verification:
+    - X_CLEANUP
+    owners:
+    - command_engine
+    - row_state
+  EXEC_COMMIT:
+    origin: model_selected
+    statement: candidate_command is the canonical proposal. commit_command mirrors
+      it even when candidate_ok is low. commit_valid requires reset inactive, valid
+      candidate, permission, and non-NOP nonreserved opcode. At most one command commits
+      per edge and all consumers sample the same payload only on commit_valid.
+    verification:
+    - X_COMMIT
+    owners:
+    - command_engine
+    - timing_enforcer
+    - row_state
+    - functional_memory
+    - refresh_control
+  EXEC_CONTROL_CREATION:
+    origin: model_selected
+    statement: A cleanup reservation creates PRE control work independently of active
+      ownership. Refresh pending creates successive PRE control work for the lowest-index
+      open bank and then REF control work when all banks are closed, independently
+      of active ownership. While refresh pending is asserted, dispatch is inhibited.
+      Control candidates are created only on later edges when the candidate slot is
+      empty, hold while blocked, clear on commit, and do not receive same-edge replacement.
+    verification:
+    - X_CONTROL
+    owners:
+    - command_engine
+    - refresh_control
+    - row_state
+  EXEC_PAYLOAD:
+    origin: model_selected
+    statement: candidate_command is zero NOP when candidate_valid is low. A blocked
+      valid candidate remains unchanged. probe_command is the combinational first-command
+      query from incoming mapped request and registered bank state even when probe
+      validity is low. Reset forces all command payloads to zero NOP.
+    verification:
+    - X_PAYLOAD
+    owners:
+    - command_engine
+  EXEC_PERMISSION:
+    origin: model_selected
+    statement: Permission uses registered timing history, registered bank state, independent
+      candidate, and selected bindings. ACT requires closed bank; READ and WRITE require
+      matching open row; PRE requires open bank; REF requires all banks closed and
+      all-bank tRP. Permission does not depend on same-edge commit or updates.
+    verification:
+    - X_PERMISSION
+    owners:
+    - timing_enforcer
+    - row_state
+  EXEC_READY:
+    origin: model_selected
+    statement: 'txn_ready reflects only waiting admission capacity including same-edge
+      dispatch release. cmd_ready is reset-gated diagnostic first-command readiness
+      only while the engine is idle: active ownership is absent, candidate storage
+      is empty, no cleanup reservation exists, and refresh is neither pending nor
+      in service. It uses independent row and timing probes, remains meaningful without
+      txn_valid, and neither diagnostic alters state.'
+    verification:
+    - X_READY
+    owners:
+    - host_adapter
+    - waiting_queue
+    - command_engine
+    - timing_enforcer
+  EXEC_REFRESH:
+    origin: model_selected
+    statement: The first deadline is the last reset-sampled edge plus tREFI; later
+      deadlines advance by tREFI independently of REF. Pending is sticky. Pending
+      immediately prevents dispatch, waits for already owned active work and cleanup
+      completion, creates ordered refresh-preparation PRE candidates until all banks
+      are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes
+      commands strictly before REF-edge+tRFC.
+    verification:
+    - X_REFRESH
+    owners:
+    - refresh_control
+    - command_engine
+    - row_state
+    - timing_enforcer
+  EXEC_RESPONSE:
+    origin: model_selected
+    statement: 'READ commit at E captures pre-edge memory data and registers rsp_valid
+      and rsp_rdata for host sampling at E+1. Delivery and a new READ may share an
+      edge: the host samples the old response before replacement. Writes produce no
+      response.'
+    verification:
+    - X_RESPONSE
+    owners:
+    - functional_memory
+    - host_adapter
+verification:
+  X_BANK:
+    scenario: Commit ACT, PRE, READ, WRITE, and REF across banks and compare with
+      stalled proposals.
+    expected: Only responsible committed operations alter row state.
+    status: planned_not_executed
+    rules:
+    - EXEC_BANK_STATE
+  X_CLEANUP:
+    scenario: Retire accesses under both page-policy values, retain cleanup through
+      a timing-blocked PRE, and assert refresh during cleanup.
+    expected: Open-page retains rows; close-page exposes a distinct cleanup reservation,
+      blocks dispatch, produces one later legal cleanup PRE candidate, commits that
+      PRE once, and only then permits refresh preparation.
+    status: planned_not_executed
+    rules:
+    - EXEC_CLEANUP
+  X_COMMIT:
+    scenario: Present legal commands, NOP, reserved opcodes, blocked candidates, and
+      simultaneous admissions.
+    expected: Only permitted legal candidates commit once per edge and noncommits
+      have no commit effects.
+    status: planned_not_executed
+    rules:
+    - EXEC_COMMIT
+  X_CONTROL:
+    scenario: Retire close-page work without active ownership, then initiate refresh
+      with multiple open banks and no active ownership while FIFO traffic is waiting.
+    expected: Cleanup and refresh preparation create independently distinguishable
+      PRE or REF candidates after active retirement or with no active ownership; pending
+      refresh blocks dispatch; each candidate holds when blocked and is not replaced
+      on its commit edge.
+    status: planned_not_executed
+    rules:
+    - EXEC_CONTROL_CREATION
+  X_PAYLOAD:
+    scenario: Observe candidate, commit, probe, and probe-valid values while validity,
+      permission, probe gating, refresh, cleanup, and reset vary.
+    expected: Invalid and reset candidate payloads are zero NOP, blocked candidate
+      payload holds, commit payload mirrors candidate independent of permission, and
+      probe payload remains independently defined when probe validity is low.
+    status: planned_not_executed
+    rules:
+    - EXEC_PAYLOAD
+  X_PERMISSION:
+    scenario: Test every trigger/block pair one cycle before and at its exact timing
+      bound.
+    expected: Permission derives only from pre-edge registered state and becomes eligible
+      only at declared boundaries.
+    status: planned_not_executed
+    rules:
+    - EXEC_PERMISSION
+  X_READY:
+    scenario: Vary occupancy, dispatch opportunity, incoming command type, row/timing
+      state, txn_valid, active ownership, candidate occupancy, cleanup, refresh, and
+      reset.
+    expected: txn_ready tracks admission capacity only; cmd_ready is side-effect-free
+      diagnostic readiness and remains low whenever active ownership, candidate occupancy,
+      cleanup reservation, pending refresh, refresh preparation, or refresh service
+      makes the engine non-idle.
+    status: planned_not_executed
+    rules:
+    - EXEC_READY
+  X_REFRESH:
+    scenario: Run deadlines through active, stalled candidate, cleanup, multiple open
+      banks, ordered preparation, tRFC exclusion, and due/REF coincidence.
+    expected: Pending coalesces without traffic loss, inhibits dispatch before refresh
+      preparation, closes banks in ascending order, commits REF once, excludes commands
+      early after REF, and resumes service afterward.
+    status: planned_not_executed
+    rules:
+    - EXEC_REFRESH
+  X_RESPONSE:
+    scenario: Commit consecutive reads, overlap delivery with a new READ, issue writes,
+      and reset during response visibility.
+    expected: Each READ yields exactly one E+1 sampled response with pre-edge data;
+      writes yield none.
+    status: planned_not_executed
+    rules:
+    - EXEC_RESPONSE

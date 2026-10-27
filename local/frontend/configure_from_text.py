@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from tpm_pacing import paced_post
 
 from run_flow import (
     SCRIPT_DIR,
@@ -100,8 +101,7 @@ def call_llm(prompt: str, model: str) -> str:
         raise FatalConfigTextError("TAMUS_AI_CHAT_API_KEY is not set.")
 
     try:
-        response = requests.post(
-            TAMU_API_URL,
+        response = paced_post(TAMU_API_URL, pacing_label="Configuration",
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",

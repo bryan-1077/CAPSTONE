@@ -101,11 +101,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip dual-LLM single-file lint and full-system lint.",
     )
-    parser.add_argument(
+    cache_mode = parser.add_mutually_exclusive_group()
+    cache_mode.add_argument(
         "--cache",
         action="store_true",
         help="Use cached dual-LLM RTL for cache-backed modules and avoid LLM calls.",
     )
+    cache_mode.add_argument('--resume', action='store_true',
+                            help='On an architecture manifest, reuse matching reviewed RTL and generate missing modules.')
     parser.add_argument("--microarch", action="store_true", help="Propose an LLM architecture before generation.")
     parser.add_argument("--specification", action="store_true",
                         help="Generate system behavior first, then contracts/graph/intent; requires review before RTL.")
@@ -123,6 +126,16 @@ def parse_args() -> argparse.Namespace:
                         help="Override a configurable system-package parameter (repeatable).")
     parser.add_argument("--spec-profile", help="Select a system-package timing profile.")
     parser.add_argument("--spec-approval", type=Path, help="Recorded approval of this exact specification-derived architecture.")
+    parser.add_argument('--automated-spec-review', action='store_true',
+                        help='Review this exact specification revision and allow RTL only on a clean automated review.')
+    parser.add_argument('--spec-review-response', type=Path,
+                        help='Offline reviewer verdict replay; requires --automated-spec-review.')
+    parser.add_argument('--spec-review-output', type=Path,
+                        help='Fresh directory for the automated review report and approval.')
+    parser.add_argument('--auto-spec-repair', action='store_true',
+                        help='With automated review, allow one semantic repair cycle then review the new revision.')
+    parser.add_argument('--spec-repair-output', type=Path,
+                        help='Fresh directory for the single repaired revision; requires --auto-spec-repair.')
     return parser.parse_args()
 
 
@@ -152,13 +165,15 @@ def run_command(command: list[str]) -> None:
     subprocess.run(command, check=True, cwd=SCRIPT_DIR, env=env)
 
 
-def design_command(yaml_path: Path, *, no_lint: bool, cache: bool) -> list[str]:
+def design_command(yaml_path: Path, *, no_lint: bool, cache: bool, resume: bool = False) -> list[str]:
     """Build the design.py command with generation-flow flags."""
     command = [sys.executable, "design.py", str(yaml_path)]
     if no_lint:
         command.append("--no-lint")
     if cache:
         command.append("--cache")
+    if resume:
+        command.append('--resume')
     return command
 
 
@@ -580,6 +595,23 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     from specification import read_document
 
     source = read_document(input_path)
+    if args.auto_spec_repair and not args.automated_spec_review:
+        raise ValueError('--auto-spec-repair requires --automated-spec-review')
+    if args.spec_repair_output and not args.auto_spec_repair:
+        raise ValueError('--spec-repair-output requires --auto-spec-repair')
+    if args.auto_spec_repair and (args.cache or args.resume):
+        raise ValueError('Semantic repair creates a new revision; cache/resume an approved export separately')
+    if (args.spec_review_response or args.spec_review_output) and not args.automated_spec_review:
+        raise ValueError('--spec-review-response/--spec-review-output require --automated-spec-review')
+    if args.automated_spec_review and args.cache and not args.spec_review_response:
+        raise ValueError('--cache cannot make a live automated review call; supply a replay or an existing --spec-approval')
+    if args.automated_spec_review and args.spec_approval:
+        raise ValueError('Choose --automated-spec-review or --spec-approval, not both')
+    if args.automated_spec_review and not (args.specification or 'specification_version' in source
+                                         or is_specification_manifest(source)):
+        raise ValueError('--automated-spec-review requires a specification request, package or derived manifest')
+    if args.resume and ('architecture_version' not in source or args.microarch_only or args.specification or args.microarch):
+        raise ValueError('--resume requires an existing architecture manifest and an RTL build')
     if args.spec_approval and args.microarch_only:
         raise ValueError('--spec-approval is used for RTL builds, not proposal-only exports')
     package_input = 'specification_version' in source
@@ -627,16 +659,35 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
             raise ValueError('Architecture export must not overwrite the request or generated specification source')
         emit_review(manifest, proposal_path)
         print(f'[MICROARCH] Generated specification review export: {proposal_path}')
-        if args.microarch_only:
+        if args.microarch_only and not args.automated_spec_review:
             print('[MICROARCH] Review required; RTL generation and behavioral verification have not run.')
             return 0
+    repaired_export = None
+    if args.automated_spec_review:
+        from review_specification import ReviewChangesRequired, review_specification
+        try:
+            args.spec_approval = review_specification(manifest, output_dir=args.spec_review_output,
+                                                    model=args.microarch_model,
+                                                    response_path=args.spec_review_response)
+        except ReviewChangesRequired as exc:
+            if not args.auto_spec_repair:
+                raise
+            from repair_specification import repair_and_review
+            manifest, args.spec_approval, repaired_export = repair_and_review(
+                manifest, read_document(exc.report_path),
+                output_dir=args.spec_repair_output or exc.report_path.parent / 'repair_1',
+                model=args.microarch_model)
+        print(f'[MICROARCH] Automated specification approval: {args.spec_approval}')
     if args.microarch_only:
         if is_specification_manifest(manifest):
-            proposal_path = input_path if not package_input else args.architecture_output
-            if package_input and proposal_path == SCRIPT_DIR / 'microarch/proposals/architecture.yaml':
+            if repaired_export is not None:
+                proposal_path = repaired_export
+            elif not generated_input:
+                proposal_path = input_path if not package_input else args.architecture_output
+            if package_input and repaired_export is None and proposal_path == SCRIPT_DIR / 'microarch/proposals/architecture.yaml':
                 digest = manifest['provenance']['specification']['package_fingerprint']
                 proposal_path = SCRIPT_DIR / 'microarch/proposals/specification' / digest[:16] / 'architecture.yaml'
-            if package_input:
+            if package_input and repaired_export is None:
                 snapshot = manifest['provenance']['specification']['snapshot']
                 source_files = {input_path.resolve()}
                 source_files.update((input_path.parent / p).resolve() for p in snapshot['package']['documents'].values())
@@ -645,7 +696,9 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
             specs = emit_review(manifest, proposal_path)
             print(f'[MICROARCH] Specification review export: {proposal_path}')
             print(f'[MICROARCH] Module YAMLs for verification: {specs[0].parent} ({len(specs)} definitions)')
-            print('[MICROARCH] Revision-bound approval is required before RTL generation. Behavioral verification has not run.')
+            print('[MICROARCH] ' + ('Automated review approved this exact revision. ' if args.automated_spec_review
+                                      else 'Revision-bound approval is required before RTL generation. ') +
+                  'RTL generation and behavioral verification have not run.')
             return 0
         proposal_path = input_path if 'architecture_version' in source else args.architecture_output
         specs = emit_verification_specs(manifest, proposal_path)
@@ -656,6 +709,9 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
     build_dir = (args.build_dir or SCRIPT_DIR / "microarch/builds" / fingerprint(manifest)[:16]).resolve()
     if build_dir == SCRIPT_DIR:
         raise ValueError("Architecture builds must use a separate directory")
+    print('\n' + '=' * 80, flush=True)
+    print('--- STARTING --- ARCHITECTURE LOWERING + STRUCTURAL TOP ------ COMPILER', flush=True)
+    print('=' * 80 + '\n', flush=True)
     specs = lower_architecture(manifest, build_dir, specification_approval=args.spec_approval)
     status = {"structural_validation": "passed", "declared_dependency_validation": "passed", "rtl_generation": "in_progress",
               "integration_lint": "not_run", "behavioral_verification": "not_run"}
@@ -673,10 +729,13 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
             # A failed rebuild must not leave a prior handoff looking current.
             (build_dir / 'verification_handoff.json').unlink(missing_ok=True)
         for spec in specs:
-            run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache) +
+            run_command(design_command(spec, no_lint=args.no_lint, cache=args.cache, resume=args.resume) +
                         ["--output-root", str(build_dir)])
         status["rtl_generation"] = "passed"
         if not args.no_lint:
+            print('\n' + '=' * 80, flush=True)
+            print('--- STARTING --- INTEGRATION LINT ------ VERILATOR', flush=True)
+            print('=' * 80 + '\n', flush=True)
             from dual_llm_rtlGen import _run_verilator_lint_file_set, LINT_MODE_INTEGRATION
             rtl_dir = build_dir / "rtl_output"
             files = [str(rtl_dir / name) for name in (rtl_dir / "filelist.f").read_text().splitlines()]
@@ -688,6 +747,9 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
         else:
             status["integration_lint"] = "skipped"
         if is_specification_manifest(manifest):
+            print('\n' + '=' * 80, flush=True)
+            print('--- STARTING --- VERIFICATION HANDOFF ------ COMPILER', flush=True)
+            print('=' * 80 + '\n', flush=True)
             from verification_handoff import emit_handoff
             status['verification_handoff'] = 'in_progress'
             handoff = emit_handoff(manifest, build_dir / 'architecture.yaml', specs,
@@ -740,7 +802,7 @@ def _run_flow(args) -> int:
         input_path = input_path.resolve()
 
     try:
-        if args.specification or args.microarch or args.microarch_only or (input_path.is_file() and ({'architecture_version', 'specification_version'} & load_yaml(input_path).keys())):
+        if args.auto_spec_repair or args.spec_repair_output or args.automated_spec_review or args.spec_review_response or args.spec_review_output or args.resume or args.specification or args.microarch or args.microarch_only or (input_path.is_file() and ({'architecture_version', 'specification_version'} & load_yaml(input_path).keys())):
             return run_architecture_flow(input_path, args)
         if args.requirements_file or args.microarch_response or args.build_dir or args.spec_set or args.spec_profile or args.spec_approval or args.specification_output or args.specification_response:
             raise ValueError("Architecture options require --microarch or an architecture manifest input")

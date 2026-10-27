@@ -19,7 +19,7 @@ def elaborate_bindings(documents, parameters, widths):
     if sampling != {'phase': 'pre_edge', 'reset_gates_events': True} or type(sampling['reset_gates_events']) is not bool:
         raise SpecificationError('Verification bindings require pre-edge sampling and reset-gated events')
     layouts = elaborate_type_layouts(shared['types'], parameters, widths)
-    ports = {'top.' + name: port for name, port in shared['host_interface'].items()}
+    ports = {'top.' + name: port for name, port in fields(shared['host_interface'], (), None, 'host_interface').items()}
     for instance, contract in documents['modules']['contracts'].items():
         ports.update({instance + '.' + name: port for name, port in contract['interfaces'].items()})
 
@@ -28,10 +28,12 @@ def elaborate_bindings(documents, parameters, widths):
         endpoint = value['endpoint']
         if not isinstance(endpoint, str) or endpoint not in ports:
             raise SpecificationError(f'Unknown verification endpoint: {endpoint!r}')
-        port = ports[endpoint]
+        port = fields(ports[endpoint], ('direction', 'type'), ('when',), 'verification port ' + endpoint)
         if 'when' in port and not expression(port['when'], parameters):
             raise SpecificationError(f'Verification endpoint is absent in this configuration: {endpoint}')
         type_ref = port['type']
+        if not isinstance(type_ref, str) or not type_ref.startswith('shared.types.') or type_ref.removeprefix('shared.types.') not in layouts:
+            raise SpecificationError(f'Unknown verification port type on {endpoint}: {type_ref!r}')
         layout = layouts[type_ref.removeprefix('shared.types.')]
         lsb, width = 0, layout['width']
         if 'field' in value:
@@ -90,11 +92,16 @@ def elaborate_bindings(documents, parameters, widths):
         else:
             raise SpecificationError(f'{name}: unsupported binding status')
     observations = {name: reference(ref) for name, ref in fields(document['observations'], (), None, 'observations').items()}
-    obligations = {f'{section}.verification.{name}' for section in ('system', 'execution')
-                   for name in documents[section]['verification']}
+    obligations = set()
+    for section in ('system', 'execution'):
+        source = fields(documents[section], ('verification',), None, section)
+        obligations.update(f'{section}.verification.{name}' for name in
+                           fields(source['verification'], (), None, section + '.verification'))
     checks = fields(document['checks'], (), None, 'verification checks')
     if set(checks) != obligations:
-        raise SpecificationError('Verification checks must cover every obligation exactly once')
+        raise SpecificationError('Verification checks must cover every obligation exactly once: '
+                                 f'missing {sorted(obligations - checks.keys())}; '
+                                 f'unknown {sorted(checks.keys() - obligations)}')
     for ref, check in checks.items():
         fields(check, ('scope', 'events', 'observations', 'note'), (), ref)
         if check['scope'] not in ('module', 'system', 'both'):

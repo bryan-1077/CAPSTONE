@@ -1,0 +1,416 @@
+binding_version: 1
+sampling:
+  phase: pre_edge
+  reset_gates_events: true
+events:
+  admission:
+    status: bound
+    when:
+      all:
+      - endpoint: top.txn_valid
+        equals: 1
+      - endpoint: top.txn_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: host_adapter.enq_request
+  dispatch:
+    status: bound
+    when:
+      all:
+      - endpoint: fifo_scheduler.dispatch_valid
+        equals: 1
+      - endpoint: command_engine.dispatch_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: fifo_scheduler.dispatch_request
+  command_commit:
+    status: bound
+    when:
+      endpoint: command_engine.commit_valid
+      equals: 1
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  retirement:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - any:
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: READ
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: WRITE
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  response_delivery:
+    status: bound
+    when:
+      endpoint: top.rsp_valid
+      equals: 1
+    payload:
+      data:
+        endpoint: top.rsp_rdata
+  refresh_start:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - endpoint: command_engine.commit_command
+        field: opcode
+        equals: REF
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  candidate_create:
+    status: unbound
+    reason: Candidate-slot transition is internal. Observe candidate_valid, candidate_command,
+      dispatch, retirement, cleanup_active, refresh_pending, row state, and command_commit
+      to reconstruct later-edge creation and no-same-edge replacement.
+  cleanup_candidate_create:
+    status: unbound
+    reason: Cleanup PRE creation is internal. Observe cleanup_active, candidate_valid,
+      candidate_command, dispatch_ready, command_commit, and row state to distinguish
+      reservation creation, blocked hold, and PRE completion.
+  refresh_candidate_create:
+    status: unbound
+    reason: Refresh-preparation selection is internal. Observe refresh_pending, candidate_valid,
+      candidate_command, open_valid, command_commit, and refresh_start to reconstruct
+      ascending PRE or REF creation.
+  refresh_due:
+    status: unbound
+    reason: Deadline storage is internal. Independently predict deadlines from reset
+      edges and tREFI while observing pending and refresh_start.
+  refresh_end:
+    status: unbound
+    reason: No end pulse is exposed. Independently calculate the tRFC boundary from
+      refresh_start and observe service_busy.
+observations:
+  host_ready:
+    endpoint: top.txn_ready
+  cmd_ready:
+    endpoint: top.cmd_ready
+  incoming_request:
+    endpoint: host_adapter.enq_request
+  dispatch_ready:
+    endpoint: command_engine.dispatch_ready
+  candidate_valid:
+    endpoint: command_engine.candidate_valid
+  candidate_command:
+    endpoint: command_engine.candidate_command
+  candidate_ok:
+    endpoint: timing.candidate_ok
+  probe_valid:
+    endpoint: command_engine.probe_valid
+  probe_command:
+    endpoint: command_engine.probe_command
+  probe_ok:
+    endpoint: timing.probe_ok
+  cleanup_active:
+    endpoint: command_engine.cleanup_active
+  open_valid:
+    endpoint: row_state.open_valid
+  open_rows:
+    endpoint: row_state.open_rows
+  refresh_pending:
+    endpoint: refresh.pending
+  refresh_busy:
+    endpoint: refresh.service_busy
+checks:
+  system.verification.V_ADDRESS:
+    scope: both
+    events:
+    - admission
+    observations:
+    - incoming_request
+    note: Check compact request mapping and declared widths from host stimulus.
+  system.verification.V_MEMORY:
+    scope: both
+    events:
+    - admission
+    - command_commit
+    - response_delivery
+    observations: []
+    note: Use independent banked reference memory and accepted request history.
+  system.verification.V_HOST:
+    scope: both
+    events:
+    - admission
+    observations:
+    - host_ready
+    - cmd_ready
+    note: Check valid-ready admission independently of diagnostic readiness.
+  system.verification.V_TIMING:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - open_valid
+    - open_rows
+    note: Check profile timing boundaries with independent commit timestamps.
+  system.verification.V_ISOLATION:
+    scope: system
+    events:
+    - dispatch
+    - command_commit
+    observations:
+    - dispatch_ready
+    - candidate_valid
+    - candidate_ok
+    note: Review distinct functional owners and structural top wiring.
+  system.verification.V_FIFO:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations: []
+    note: Compare accepted and dispatched complete request sequences.
+  system.verification.V_PAGE:
+    scope: both
+    events:
+    - dispatch
+    - retirement
+    - command_commit
+    observations:
+    - cleanup_active
+    - dispatch_ready
+    - candidate_valid
+    - candidate_command
+    - open_valid
+    - refresh_pending
+    note: Distinguish close-page cleanup reservation, blocked dispatch, legal PRE
+      hold, and completion.
+  system.verification.V_CAPACITY:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - host_ready
+    - dispatch_ready
+    note: Reconstruct waiting occupancy from event history.
+  system.verification.V_EXACTLY_ONCE:
+    scope: system
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations: []
+    note: Match admitted requests to one dispatch and final service in each reset-free
+      epoch.
+  system.verification.V_REFRESH:
+    scope: both
+    events:
+    - command_commit
+    - refresh_start
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - candidate_valid
+    - candidate_command
+    - cleanup_active
+    - open_valid
+    note: Check sticky pending, drain, ascending preparation, REF, and tRFC exclusion.
+  system.verification.V_RESET:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - command_commit
+    - response_delivery
+    observations:
+    - host_ready
+    - cmd_ready
+    - candidate_valid
+    - cleanup_active
+    - open_valid
+    - refresh_pending
+    note: Assert reset in each lifecycle phase and check suppression and clearing.
+  system.verification.V_SEQUENCE:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    - retirement
+    observations:
+    - candidate_valid
+    - candidate_command
+    - open_valid
+    - open_rows
+    note: Predict ACT/PRE/access sequence from independent request and row models.
+  system.verification.V_CANDIDATE:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - cleanup_active
+    - refresh_pending
+    note: Check later-edge creation, blocked hold, commit clear, priority, and no
+      same-edge replacement.
+  system.verification.V_PAYLOAD:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - probe_valid
+    - probe_command
+    note: Check invalid and reset NOP payloads, commit mirroring, and independently
+      defined valid-low probe payload.
+  system.verification.V_DIAGNOSTIC:
+    scope: both
+    events:
+    - admission
+    observations:
+    - cmd_ready
+    - probe_valid
+    - probe_command
+    - probe_ok
+    - cleanup_active
+    - refresh_pending
+    note: Verify side-effect-free diagnostic readiness without txn_valid.
+  system.verification.V_EXPORT:
+    scope: system
+    events:
+    - admission
+    observations:
+    - candidate_valid
+    note: Inspect declared requirement IDs, bindings, scenarios, and expected results;
+      no execution claim is made.
+  system.verification.V_CONFIGURATION:
+    scope: system
+    events:
+    - command_commit
+    observations:
+    - candidate_ok
+    note: Inspect selected parameters, profile bindings, and recorded constraints.
+  system.verification.V_IDENTITY:
+    scope: system
+    events:
+    - admission
+    observations:
+    - host_ready
+    note: Inspect package identity and design kind metadata.
+  execution.verification.X_BANK:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - open_valid
+    - open_rows
+    note: Compare next-edge row state against committed opcode history.
+  execution.verification.X_CLEANUP:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    - dispatch
+    observations:
+    - cleanup_active
+    - dispatch_ready
+    - candidate_valid
+    - candidate_command
+    - open_valid
+    - refresh_pending
+    note: Prove distinct cleanup reservation, dispatch inhibition, later PRE creation,
+      blocked stability, one completion, and refresh wait.
+  execution.verification.X_COMMIT:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - open_valid
+    note: Check one shared permitted commit and no effects from noncommits.
+  execution.verification.X_CONTROL:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    observations:
+    - cleanup_active
+    - refresh_pending
+    - candidate_valid
+    - candidate_command
+    - open_valid
+    note: Check independent cleanup and refresh control creation without active ownership.
+  execution.verification.X_PAYLOAD:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - probe_valid
+    - probe_command
+    note: Check zero NOP invalid payloads, hold behavior, commit mirroring, and valid-low
+      probe payload.
+  execution.verification.X_PERMISSION:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - probe_valid
+    - probe_command
+    - probe_ok
+    - open_valid
+    - open_rows
+    note: Check pre-edge legality and exact timing eligibility boundaries.
+  execution.verification.X_READY:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    observations:
+    - host_ready
+    - cmd_ready
+    - probe_valid
+    - probe_command
+    - probe_ok
+    - cleanup_active
+    - refresh_pending
+    note: Check capacity-only txn_ready and side-effect-free diagnostic cmd_ready.
+  execution.verification.X_REFRESH:
+    scope: both
+    events:
+    - command_commit
+    - refresh_start
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - candidate_valid
+    - candidate_command
+    - cleanup_active
+    - open_valid
+    note: Check deadlines, coalescing, drain, preparation, and service exclusion.
+  execution.verification.X_RESPONSE:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations: []
+    note: Use independent pre-edge memory model for one-cycle READ responses and write
+      suppression.

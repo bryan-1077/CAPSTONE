@@ -47,6 +47,7 @@ ENABLE_SYNTAX_CHECK = False         # Set to True when syntax checker is working
 def call_llm(prompt: str, max_tokens: int = 1000, temperature: float = 0.0) -> str:
     """Call TAMU AI Chat API. Requires TAMUS_AI_CHAT_API_KEY env var."""
     import requests
+    from tpm_pacing import paced_post
     import token_usage
 
     api_key = os.environ.get("TAMUS_AI_CHAT_API_KEY")
@@ -55,8 +56,7 @@ def call_llm(prompt: str, max_tokens: int = 1000, temperature: float = 0.0) -> s
 
     recorded = False
     try:
-        response = requests.post(
-            TAMU_API_URL,
+        response = paced_post(TAMU_API_URL, pacing_label="RTL",
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type":  "application/json",

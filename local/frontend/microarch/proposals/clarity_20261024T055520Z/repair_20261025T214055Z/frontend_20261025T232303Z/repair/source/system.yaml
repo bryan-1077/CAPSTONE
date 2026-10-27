@@ -1,0 +1,682 @@
+slice_id: system_behavior
+rules:
+  R1:
+    verification:
+    - V_FIFO
+    origin: request.R1
+    statement: Implement global FIFO service in acceptance order, including same-address
+      writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently
+      of command readiness.
+    owners:
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+  R2:
+    verification:
+    - V_CAPACITY
+    origin: request.R2
+    statement: Provide four waiting entries plus one separately stored active request.
+      Dispatch only previously stored requests, capture the complete pre-edge head
+      before releasing its slot, and permit full-queue simultaneous dispatch/admission
+      including capacity one. No empty-queue bypass or same-edge active replacement
+      at retirement.
+    owners:
+    - waiting_queue
+    - command_engine
+    - fifo_scheduler
+  R3:
+    verification:
+    - V_SEQUENCE
+    origin: request.R3
+    statement: Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP
+      never committed and at most one command commit per edge. Sequence closed banks
+      with ACT-access, row hits with access, and row conflicts with PRE-ACT-access.
+      PRE/ACT never retire the active request. Keep blocked candidates stable through
+      stalls and newly pending refresh.
+    owners:
+    - command_engine
+    - row_state
+  R4:
+    verification:
+    - V_ISOLATION
+    origin: request.R4
+    statement: Keep separate owners for host mapping, waiting storage, scheduling,
+      command sequencing, row state, timing, functional memory/responses, and refresh
+      control. The top must contain structural connections only.
+    owners:
+    - host_adapter
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+    - row_state
+    - timing_enforcer
+    - functional_memory
+    - refresh_control
+  R5:
+    verification:
+    - V_TIMING
+    origin: request.R5
+    statement: Update bank state and timing history only from committed commands.
+      Enforce tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile.
+      A trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits
+      with age strictly less than its window. Reset creates no synthetic timing history.
+    owners:
+    - timing_enforcer
+    - row_state
+  R6:
+    verification:
+    - V_MEMORY
+    origin: request.R6
+    statement: Preserve functional banked 32-bit memory and compact host address mapping.
+      WRITE commit updates storage; READ commit at E captures pre-edge data and registers
+      valid/data for host sampling at E+1, with no extra adapter response register.
+      Responses survive active release, cleanup and refresh; writes produce no response.
+    owners:
+    - functional_memory
+    - host_adapter
+  R7:
+    verification:
+    - V_PAGE
+    origin: request.R7
+    statement: Open-page retains rows. Support close-page as a configurable alternative,
+      retaining a separate cleanup bank reservation after retirement until a legal
+      PRE commits; block new dispatch during cleanup.
+    owners:
+    - command_engine
+    - row_state
+  R8:
+    verification:
+    - V_REFRESH
+    origin: request.R8
+    statement: Generate periodic refresh deadlines from the last sampled reset edge
+      using tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins
+      over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining
+      open banks in ascending order, respect all-bank tRP, commit REF once, and exclude
+      commands strictly before REF-edge+tRFC. Retain queued traffic and resume service
+      afterward.
+    owners:
+    - refresh_control
+    - command_engine
+    - row_state
+    - timing_enforcer
+  R9:
+    verification:
+    - V_DIAGNOSTIC
+    origin: request.R9
+    statement: cmd_ready is reset-gated diagnostic readiness for the incoming request's
+      first needed command, using independent row/timing probe queries while the engine
+      is idle and cleanup/refresh permit. It is meaningful without txn_valid and must
+      not admit, dispatch, bypass FIFO, mutate history or reserve storage.
+    owners:
+    - host_adapter
+    - command_engine
+    - timing_enforcer
+  R10:
+    verification:
+    - V_RESET
+    origin: request.R10
+    statement: Use synchronous active-low reset for state, with immediate valid/ready/event
+      gating. Reset clears queued/active/cleanup work, row state, timing history,
+      memory, responses and refresh state; it wins over every simultaneous event.
+      The host holds payload while stalled and samples every response; no response
+      backpressure is provided.
+    owners:
+    - host_adapter
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+    - row_state
+    - timing_enforcer
+    - functional_memory
+    - refresh_control
+  R11:
+    verification:
+    - V_EXPORT
+    origin: request.R11
+    statement: Generate architecture-specific module isolation and system verification
+      intent with exact requirement IDs, independent scenarios/expected results, and
+      declared port/event bindings. Export it alongside RTL for the external UVM/vector
+      stage. Do not execute downstream verification or backend stages in this frontend
+      flow.
+    owners:
+    - host_adapter
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+    - timing_enforcer
+    - functional_memory
+    - row_state
+    - refresh_control
+  R12:
+    verification:
+    - V_CANDIDATE
+    origin: request.R12
+    statement: Explicitly distinguish initial command candidate creation from replacement.
+      Dispatch captures the request without forming a candidate on that edge. When
+      the candidate slot is empty, form the first candidate on a later edge from registered
+      ownership and current bank state. Hold a blocked candidate unchanged. Commit
+      clears its slot; a following candidate is formed only on a later edge using
+      updated bank state, never by same-edge replacement. Reset wins; an outstanding
+      candidate holds or commits before other progress. With no candidate, drain active
+      service, then cleanup, then pending refresh preparation. Refresh service blocks
+      dispatch and new candidate formation. Internal state encoding remains an implementation
+      choice.
+    owners:
+    - command_engine
+  R13:
+    verification:
+    - V_PAYLOAD
+    origin: request.R13
+    statement: Define payload behavior independently of valid gating. candidate_command
+      is canonical zero NOP when candidate_valid is low. commit_command mirrors candidate_command
+      even when candidate_ok is low; permission gates commit_valid only, and consumers
+      sample payload only on commit_valid. probe_command remains the combinational
+      first-command query from the incoming request and bank state even when probe_valid
+      is low; idle, cleanup and refresh restrictions gate probe validity/readiness,
+      not its payload. Reset forces all command payloads to zero NOP. Combinational
+      dependencies must include any current-cycle input used to gate payload, not
+      just its valid signal.
+    owners:
+    - command_engine
+    - timing_enforcer
+  BASE_HOST:
+    verification:
+    - V_HOST
+    - V_RESET
+    origin: request.BASE_HOST
+    statement: Preserve the existing host ports and widths listed in the baseline
+      contract. Accept a request only on a rising clk edge with txn_valid && txn_ready.
+      Hold payload while stalled. Consecutive accepted cycles with txn_valid held
+      high are distinct requests. cmd_ready is execution/timing visibility, not the
+      host acceptance handshake. Deassert txn_ready and rsp_valid during reset.
+    owners:
+    - host_adapter
+  BASE_ADDRESS:
+    verification:
+    - V_ADDRESS
+    origin: request.BASE_ADDRESS
+    statement: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2],
+      column=txn_addr[1:0], zero-extended into the internal 10-bit row and 6-bit column
+      fields. Preserve explicit txn_bank for multi-bank configurations; a single-bank
+      configuration uses bank 0. Internal packed requests retain bank(2), row(10),
+      column(6), write flag(1), write data(32).'
+    owners:
+    - host_adapter
+    - functional_memory
+  BASE_QUEUE:
+    verification:
+    - V_CAPACITY
+    - V_EXACTLY_ONCE
+    origin: request.BASE_QUEUE
+    statement: 'Provide 4 WAITING request slots PLUS one separately stored active-service
+      request: waiting plus active capacity is 5. The active request must not consume
+      a waiting slot. Dispatch captures the complete pre-edge request in active registers
+      and frees its waiting slot without retiring the transaction. A full queue may
+      admit on the same edge as dispatch; retirement alone does not free waiting storage.
+      Accepted request fields survive stalls and each accepted request is serviced
+      exactly once within a reset-free epoch. Keep admission, dispatch, retirement
+      and read response delivery distinct. Captured response storage consumes neither
+      waiting nor active capacity.'
+    owners:
+    - waiting_queue
+    - command_engine
+    - fifo_scheduler
+  BASE_DATA:
+    verification:
+    - V_MEMORY
+    origin: request.BASE_DATA
+    statement: Provide functional 32-bit memory storage with 16 addresses per bank,
+      bank isolation and reset-to-zero contents. Accepted writes update only their
+      addressed location at service completion or a committed WRITE. Each accepted
+      read produces exactly one one-cycle rsp_valid pulse with the stored rsp_rdata
+      after read service/READ commit, using the existing one-cycle response stage.
+      Writes produce no host response. Selection and stalled candidates cannot mutate
+      memory; mere command output without storage and read responses is insufficient.
+    owners:
+    - functional_memory
+    - host_adapter
+  BASE_TIMING:
+    verification:
+    - V_TIMING
+    origin: request.BASE_TIMING
+    statement: Retain existing tRCD, tRAS and tRP timing protection from the selected
+      JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS,
+      and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate
+      service may retain the existing protected timing envelope instead. Configured
+      tRRD and tFAW gates must use accepted activation events, not host admissions
+      or stalled proposals. Never treat existing basic timing as an unrequested future
+      feature.
+    owners:
+    - timing_enforcer
+  BASE_SEQUENCE:
+    verification:
+    - V_SEQUENCE
+    - V_CANDIDATE
+    origin: request.BASE_SEQUENCE
+    statement: Dispatch captures the complete selected request in separate active-service
+      registers before freeing its waiting queue slot. Hold that active request and
+      payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+      Setup commands never retire the active request. Aggregate service also keeps
+      active-service ownership through completion. Waiting-queue dequeue at dispatch
+      is distinct from active-request retirement. Row state changes only on the responsible
+      committed operation; uncommitted proposals cannot change state.
+    owners:
+    - command_engine
+    - row_state
+  BASE_MODULARITY:
+    verification:
+    - V_ISOLATION
+    origin: request.BASE_MODULARITY
+    statement: Keep request storage, request selection, command sequencing, timing
+      enforcement and functional memory in independently verifiable modules with explicit
+      interfaces. No single controller core may own all these functions. Each mandatory
+      role has distinct module owners with functional inter-module connections. Module
+      names and further decomposition remain design choices.
+    owners:
+    - host_adapter
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+    - timing_enforcer
+    - functional_memory
+    - row_state
+    - refresh_control
+  BASE_LEGALITY:
+    verification:
+    - V_TIMING
+    origin: request.BASE_LEGALITY
+    statement: Compute command permission from registered timing/bank history and
+      an independent candidate. An accepted ACT pulse is derived from candidate &&
+      permission; permission must not combinationally depend on that same accepted
+      pulse. Scheduler selection/validity must be available independently of timing_ok;
+      timing_ok may gate commit but must not create a selection-validity feedback
+      loop. Declare accurate per-output combinational input dependencies.
+    owners:
+    - timing_enforcer
+    - command_engine
+  BASE_RESET:
+    verification:
+    - V_RESET
+    origin: request.BASE_RESET
+    statement: Use top-level clk and active-low rst_n. Reset clears pending requests,
+      active service, row validity, memory and responses. Preserve reusable blocks
+      with either synchronous or asynchronous active-low resets driven by the same
+      rst_n; differing assertion styles do not require rebuilding otherwise reusable
+      blocks. Do not change polarity without an explicit adapter.
+    owners:
+    - host_adapter
+    - waiting_queue
+    - fifo_scheduler
+    - command_engine
+    - row_state
+    - timing_enforcer
+    - functional_memory
+    - refresh_control
+  BASE_POLICY:
+    verification:
+    - V_FIFO
+    - V_PAGE
+    origin: request.BASE_POLICY
+    statement: Honor the requested scheduler policy fifo. Preserve page policy open_page.
+      Open-page retains a serviced row; close-page closes it before subsequent bank
+      use. Preserve request ownership through any setup sequence. Internal module
+      decomposition and command latency may change while these observable contracts
+      hold.
+    owners:
+    - fifo_scheduler
+    - command_engine
+    - row_state
+  BASE_REFRESH:
+    verification:
+    - V_REFRESH
+    origin: request.BASE_REFRESH
+    statement: Retain periodic refresh requests using profile tREFI, refresh priority
+      and request/acknowledgment handling without dropping queued traffic. Refresh
+      must make progress and normal requests must resume. Existing refresh is simplified;
+      full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+      describe drain/row-state interaction and acknowledge once at commit.
+    owners:
+    - refresh_control
+    - command_engine
+    - row_state
+    - timing_enforcer
+  BASE_TRRD:
+    verification:
+    - V_TIMING
+    origin: request.BASE_TRRD
+    statement: tRRD is enabled; honor that setting and resolve enabled timing values
+      from DDR4-3200.
+    owners:
+    - timing_enforcer
+  BASE_TFAW:
+    verification:
+    - V_TIMING
+    origin: request.BASE_TFAW
+    statement: tFAW is enabled; honor that setting and resolve enabled timing values
+      from DDR4-3200.
+    owners:
+    - timing_enforcer
+  CONSTRAINT_1:
+    verification:
+    - V_IDENTITY
+    origin: request.CONSTRAINT_1
+    statement: Requested constraint /design_name = "ddr4_controller_top".
+    owners:
+    - host_adapter
+  CONSTRAINT_2:
+    verification:
+    - V_IDENTITY
+    origin: request.CONSTRAINT_2
+    statement: Requested constraint /design_type = "memory_controller".
+    owners:
+    - host_adapter
+  CONSTRAINT_3:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_3
+    statement: Requested constraint /features/page_policy = "open_page".
+    owners:
+    - command_engine
+    - row_state
+  CONSTRAINT_4:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_4
+    statement: Requested constraint /features/refresh = true.
+    owners:
+    - refresh_control
+    - command_engine
+  CONSTRAINT_5:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_5
+    statement: Requested constraint /features/scheduler = "fifo".
+    owners:
+    - waiting_queue
+    - fifo_scheduler
+  CONSTRAINT_6:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_6
+    statement: Requested constraint /features/tFAW = true.
+    owners:
+    - timing_enforcer
+  CONSTRAINT_7:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_7
+    statement: Requested constraint /features/tRRD = true.
+    owners:
+    - timing_enforcer
+  CONSTRAINT_8:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_8
+    statement: Requested constraint /memory/protocol = "DDR4".
+    owners:
+    - timing_enforcer
+    - refresh_control
+  CONSTRAINT_9:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_9
+    statement: Requested constraint /memory/speed = "3200".
+    owners:
+    - timing_enforcer
+  CONSTRAINT_10:
+    verification:
+    - V_CONFIGURATION
+    origin: request.CONSTRAINT_10
+    statement: Requested constraint /microarchitecture/baseline = "current_controller".
+    owners:
+    - command_engine
+  CONSTRAINT_11:
+    verification:
+    - V_CAPACITY
+    origin: request.CONSTRAINT_11
+    statement: Requested constraint /microarchitecture/waiting_capacity = 4.
+    owners:
+    - waiting_queue
+  CONSTRAINT_12:
+    verification:
+    - V_ADDRESS
+    - V_MEMORY
+    origin: request.CONSTRAINT_12
+    statement: Requested constraint /topology/banks = 4.
+    owners:
+    - host_adapter
+    - functional_memory
+    - row_state
+  SYS_CONTROL_PRIORITY:
+    origin: model_selected
+    statement: With reset inactive, an outstanding candidate holds or commits before
+      other nonreset progress. When candidate storage is empty, active-request candidate
+      creation has priority over cleanup candidate creation, cleanup candidate creation
+      has priority over refresh-preparation candidate creation, and dispatch is permitted
+      only when refresh_pending is low and none of those control conditions applies.
+      A pending refresh therefore inhibits dispatch before refresh-preparation candidate
+      creation and cannot race dispatch. A candidate created from cleanup or refresh
+      preparation follows the same hold, permission, commit, and no-same-edge-replacement
+      rules as an active-request candidate.
+    verification:
+    - V_CANDIDATE
+    - V_PAGE
+    - V_REFRESH
+    owners:
+    - command_engine
+  SYS_SIMULTANEOUS:
+    origin: model_selected
+    statement: Reset wins over every event. With reset inactive, admission may coincide
+      with command commit. Full waiting storage may admit on a dispatch edge using
+      the pre-edge head for dispatch and the incoming request for the tail. Dispatch
+      and retirement do not coincide because active ownership remains occupied through
+      retirement. A refresh due coincident with REF commit leaves pending asserted.
+    verification:
+    - V_CAPACITY
+    - V_REFRESH
+    - V_RESET
+    owners:
+    - waiting_queue
+    - command_engine
+    - refresh_control
+    - functional_memory
+  SYS_STORAGE:
+    origin: model_selected
+    statement: Waiting storage holds admitted undispatched requests, active storage
+      holds one dispatched unretired request, cleanup reservation holds only a retired
+      close-page bank awaiting its PRE, candidate storage holds exactly one uncommitted
+      command proposal, and response storage holds one captured read response. These
+      capacities are independent. Dispatch release is not retirement.
+    verification:
+    - V_CAPACITY
+    - V_EXACTLY_ONCE
+    - V_PAGE
+    - V_MEMORY
+    owners:
+    - waiting_queue
+    - command_engine
+    - functional_memory
+verification:
+  V_ADDRESS:
+    scenario: Exercise all host addresses and banks.
+    expected: Row, column, bank, widths, and packed request fields follow the declared
+      compact mapping.
+    status: planned_not_executed
+    rules:
+    - BASE_ADDRESS
+    - CONSTRAINT_12
+  V_CANDIDATE:
+    scenario: Dispatch, create, stall, commit, and attempt same-edge replacement;
+      repeat with cleanup reserved and with refresh pending.
+    expected: Dispatch creates no candidate; blocked candidates hold; commit clears
+      the slot; later creation uses updated state; active, cleanup, and refresh-preparation
+      candidates follow the declared priority; pending refresh inhibits dispatch and
+      candidates never replace on the commit edge.
+    status: planned_not_executed
+    rules:
+    - BASE_SEQUENCE
+    - R12
+    - SYS_CONTROL_PRIORITY
+  V_CAPACITY:
+    scenario: Fill waiting storage, stall active service, dispatch at full occupancy,
+      admit concurrently with dispatch, and retire with queued work.
+    expected: Four waiting entries and one active request coexist; full waiting storage
+      admits on dispatch; retirement alone does not free waiting storage; no empty-queue
+      bypass occurs.
+    status: planned_not_executed
+    rules:
+    - BASE_QUEUE
+    - CONSTRAINT_11
+    - R2
+    - SYS_SIMULTANEOUS
+    - SYS_STORAGE
+  V_CONFIGURATION:
+    scenario: Inspect parameters, profile selection, timing bindings, and recorded
+      decisions.
+    expected: Open-page default, refresh, FIFO, tFAW, tRRD, DDR4-3200, current_controller
+      baseline, and four-bank topology are recorded.
+    status: planned_not_executed
+    rules:
+    - CONSTRAINT_10
+    - CONSTRAINT_3
+    - CONSTRAINT_4
+    - CONSTRAINT_5
+    - CONSTRAINT_6
+    - CONSTRAINT_7
+    - CONSTRAINT_8
+    - CONSTRAINT_9
+  V_DIAGNOSTIC:
+    scenario: Vary incoming request, row state, timing, txn_valid, engine-idle state,
+      active ownership, candidate occupancy, cleanup, refresh, reset, and queue occupancy.
+    expected: cmd_ready is reset-gated first-command diagnostic readiness only when
+      the engine is idle and cleanup and refresh permit; it is meaningful without
+      txn_valid and has no admission, dispatch, storage, history, or commit side effect.
+    status: planned_not_executed
+    rules:
+    - R9
+  V_EXACTLY_ONCE:
+    scenario: Apply long timing stalls, refresh delays, repeated queue reuse, and
+      mixed traffic in a reset-free epoch.
+    expected: Each admitted request is dispatched and serviced once with no loss,
+      duplication, or premature retirement.
+    status: planned_not_executed
+    rules:
+    - BASE_QUEUE
+    - SYS_STORAGE
+  V_EXPORT:
+    scenario: Inspect this package before downstream UVM/vector use.
+    expected: Requirement IDs, scenarios, expected outcomes, declared interfaces,
+      and declared events are present; no downstream execution or backend completion
+      is claimed.
+    status: planned_not_executed
+    rules:
+    - R11
+  V_FIFO:
+    scenario: Accept mixed read/write traffic including same-address write/read pairs,
+      row hits, misses, and timing stalls.
+    expected: Dispatch and retirement follow acceptance order exactly; command readiness
+      does not control admission; younger requests never bypass older requests.
+    status: planned_not_executed
+    rules:
+    - BASE_POLICY
+    - R1
+  V_HOST:
+    scenario: Hold valid and payload through stalls and across consecutive ready cycles.
+    expected: Only valid-and-ready rising edges admit requests; consecutive qualifying
+      edges are distinct; cmd_ready never substitutes for txn_ready.
+    status: planned_not_executed
+    rules:
+    - BASE_HOST
+  V_IDENTITY:
+    scenario: Inspect package metadata.
+    expected: The design name is ddr4_controller_top and design kind is memory_controller.
+    status: planned_not_executed
+    rules:
+    - CONSTRAINT_1
+    - CONSTRAINT_2
+  V_ISOLATION:
+    scenario: Review future architecture export against required functional responsibilities.
+    expected: Distinct independently verifiable functional responsibilities and a
+      structural-only top are declared without selecting an architecture here.
+    status: planned_not_executed
+    rules:
+    - BASE_MODULARITY
+    - R4
+  V_MEMORY:
+    scenario: Write and read every compact address in every bank, overlap response
+      delivery with later reads, and reset during response visibility.
+    expected: WRITE updates only its addressed word; READ captures pre-edge data and
+      yields one E+1 response; banks isolate; reset zeros memory and cancels validity.
+    status: planned_not_executed
+    rules:
+    - BASE_DATA
+    - CONSTRAINT_12
+    - R6
+    - SYS_STORAGE
+  V_PAGE:
+    scenario: Run equivalent traffic under both page-policy values, create a close-page
+      cleanup reservation, and assert refresh during cleanup.
+    expected: Open-page retains rows. Close-page retirement creates a separate cleanup
+      reservation, blocks dispatch, creates exactly one legal PRE candidate after
+      retirement, and releases the reservation only when that PRE commits. Refresh
+      preparation begins only after cleanup completes.
+    status: planned_not_executed
+    rules:
+    - BASE_POLICY
+    - R7
+    - SYS_CONTROL_PRIORITY
+    - SYS_STORAGE
+  V_PAYLOAD:
+    scenario: Vary candidate valid, permission, probe valid, idle restrictions, cleanup,
+      refresh restrictions, and reset independently.
+    expected: Invalid candidate and reset command payloads are zero NOP; commit payload
+      mirrors candidate; probe payload remains independently defined when probe validity
+      is low.
+    status: planned_not_executed
+    rules:
+    - R13
+  V_REFRESH:
+    scenario: Cause deadlines while idle, active, candidate-blocked, cleanup-active,
+      during preparation PRE commits, and during REF acknowledgment.
+    expected: Deadlines coalesce; pending refresh inhibits dispatch; active and cleanup
+      drain; remaining banks close in ascending order through refresh-preparation
+      PRE candidates; REF occurs after all-bank tRP; due with REF leaves pending;
+      traffic resumes after tRFC.
+    status: planned_not_executed
+    rules:
+    - BASE_REFRESH
+    - R8
+    - SYS_CONTROL_PRIORITY
+    - SYS_SIMULTANEOUS
+  V_RESET:
+    scenario: Assert reset during every defined event and visible response condition.
+    expected: Events and valid/ready outputs are gated while reset is low; reset clears
+      specified state and defeats simultaneous nonreset actions.
+    status: planned_not_executed
+    rules:
+    - BASE_HOST
+    - BASE_RESET
+    - R10
+    - SYS_SIMULTANEOUS
+  V_SEQUENCE:
+    scenario: Service closed-bank, row-hit, and row-conflict requests while candidates
+      stall.
+    expected: Closed banks use ACT then access, hits use access, conflicts use PRE
+      then ACT then access, and setup commands do not retire active work.
+    status: planned_not_executed
+    rules:
+    - BASE_SEQUENCE
+    - R3
+  V_TIMING:
+    scenario: Test trigger and blocked commands at E+T-1 and E+T, including global
+      ACT spacing and four prior ACTs.
+    expected: Only committed commands update history; permission is independent of
+      its own acceptance; no command commits early; exact boundaries are eligible
+      when other conditions hold.
+    status: planned_not_executed
+    rules:
+    - BASE_LEGALITY
+    - BASE_TFAW
+    - BASE_TIMING
+    - BASE_TRRD
+    - R5

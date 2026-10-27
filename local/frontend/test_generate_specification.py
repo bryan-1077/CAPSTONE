@@ -19,11 +19,12 @@ import yaml
 
 from architecture import ROOT, emit_module_specs, fingerprint
 from generate_specification import (UnsupportedSpecification, generation_context,
-                                    build_prompt, propose_specification, validate_system)
+                                    build_prompt, propose_specification, validate_system, repair_feedback)
 from generate_microarch import parse_response
-from specification import SpecificationError, read_document, validate_matrix
+from specification import SpecificationError, read_document, validate_matrix, validate_shared
+from tpm_pacing import estimate_input
 from specification_lowering import compile_package, create_approval, emit_review
-from specification_request import build_specification_request
+from specification_request import build_specification_request, validate_request_rules
 from verification_handoff import validate_handoff
 
 
@@ -135,17 +136,82 @@ class GenerateSpecificationTests(unittest.TestCase):
         self.assertFalse(list(self.root.rglob('*.sv')))
         self.assertFalse(list(self.root.rglob('*approval*')))
 
-    def test_omitted_and_rewritten_request_constraints_fail_before_architecture_call(self):
-        for mutation in ('omit', 'rewrite'):
+    def test_omitted_and_renamed_request_constraints_fail_before_architecture_call(self):
+        for mutation in ('omit', 'rename'):
             response = copy.deepcopy(self.response)
             rid = self.request['requirements'][-1]['id']
             if mutation == 'omit':
                 del response['system']['system']['rules'][rid]
                 del response['system']['system']['verification']['V_' + rid]
             else:
-                response['system']['system']['rules'][rid]['statement'] = 'Weaker constraint.'
+                rules = response['system']['system']['rules']
+                rules['RENAMED'] = rules.pop(rid)
+                response['system']['system']['verification']['V_' + rid]['rules'] = ['RENAMED']
             with self.subTest(mutation=mutation), self.assertRaisesRegex(SpecificationError, 'missing or rewritten'):
                 validate_system(response['system'], self.request, generation_context()['timing_library'])
+
+    def test_requested_text_and_origin_are_compiler_owned_without_mutating_response(self):
+        library = generation_context()['timing_library']
+        for echoed in (False, True):
+            response = copy.deepcopy(self.response['system'])
+            for rule in response['system']['rules'].values():
+                if echoed:
+                    rule.update(origin='request.current_controller_v2.WRONG', statement='Weaker constraint.')
+                else:
+                    del rule['origin']
+                    del rule['statement']
+            original = copy.deepcopy(response)
+            system = validate_system(response, self.request, library)
+            self.assertEqual(response, original)
+            validate_request_rules(self.request, system)
+            for requirement in self.request['requirements']:
+                rule = system['system']['rules'][requirement['id']]
+                self.assertEqual(rule['origin'], 'request.' + requirement['id'])
+                self.assertEqual(rule['statement'], requirement['text'])
+                self.assertEqual(rule['verification'], original['system']['rules'][requirement['id']]['verification'])
+            # Canonicalization is restricted to stage ingestion. Later edits
+            # still fail exact request validation rather than being repaired.
+            system['system']['rules'][self.request['requirements'][0]['id']]['statement'] = 'Tampered'
+            with self.assertRaisesRegex(SpecificationError, 'missing or rewritten'):
+                validate_request_rules(self.request, system)
+
+    def test_compiler_owned_text_does_not_invent_verification_or_refinements(self):
+        library = generation_context()['timing_library']
+        rid = self.request['requirements'][0]['id']
+        for mutation in ('missing_verification', 'broken_reference', 'duplicate_rule', 'incomplete_refinement'):
+            response = copy.deepcopy(self.response['system'])
+            if mutation == 'missing_verification':
+                del response['system']['rules'][rid]['verification']
+            elif mutation == 'broken_reference':
+                response['system']['rules'][rid]['verification'] = ['UNKNOWN']
+            elif mutation == 'duplicate_rule':
+                response['execution']['rules'][rid] = copy.deepcopy(response['system']['rules'][rid])
+                response['execution']['verification']['V_' + rid] = copy.deepcopy(response['system']['verification']['V_' + rid])
+            else:
+                response['system']['rules']['EXTRA'] = {'verification': ['V_' + rid]}
+            with self.subTest(mutation=mutation), self.assertRaises(SpecificationError):
+                validate_system(response, self.request, library)
+
+    def test_minimal_requested_rules_reach_decomposition_with_raw_journal_preserved(self):
+        response = copy.deepcopy(self.response['system'])
+        for rule in response['system']['rules'].values():
+            del rule['origin']
+            del rule['statement']
+        raw = json.dumps(response)
+        outputs = iter([raw, json.dumps(self.response['architecture'])])
+        prompts = []
+        def caller(prompt, model):
+            prompts.append(prompt)
+            return next(outputs)
+        package = propose_specification(self.request, output_dir=self.root / 'source', caller=caller)
+        self.assertEqual(len(prompts), 2)
+        self.assertIn('the compiler supplies', prompts[0].lower())
+        journal = json.loads((package.parent / 'attempts.json').read_text())
+        self.assertEqual(journal['attempts'][0]['response'], raw)
+        self.assertEqual([a['status'] for a in journal['attempts']], ['accepted', 'accepted'])
+        self.assertEqual(read_document(package)['generation']['validation_repairs'], [])
+        compile_package(package)  # Includes exact locked-system provenance checks.
+        self.assertFalse(list(self.root.rglob('*.sv')))
 
     def test_model_cannot_fabricate_review_or_edit_locked_system_during_decomposition(self):
         response = copy.deepcopy(self.response)
@@ -162,7 +228,9 @@ class GenerateSpecificationTests(unittest.TestCase):
     def test_bounded_repairs_keep_system_locked_and_record_evidence(self):
         broken = copy.deepcopy(self.response['architecture'])
         broken['graph']['connections']['top.in_valid'] = ['stage.typo']
-        outputs = iter([self.response['system'], broken, self.response['architecture']])
+        edits = {'base_fingerprint': fingerprint(broken), 'edits': [
+            {'op': 'set', 'path': '/graph/connections/top.in_valid', 'value': ['stage.in_valid']}]}
+        outputs = iter([self.response['system'], broken, edits])
         prompts = []
         def caller(prompt, model):
             prompts.append(prompt)
@@ -177,6 +245,62 @@ class GenerateSpecificationTests(unittest.TestCase):
         journal = json.loads((package.parent / 'attempts.json').read_text())
         self.assertEqual([a['status'] for a in journal['attempts']], ['accepted', 'rejected', 'accepted'])
         self.assertEqual(journal['attempts'][1]['response'], json.dumps(broken))
+        self.assertIn('ARCHITECTURE EDIT MODE', prompts[-1])
+        self.assertEqual(journal['attempts'][2]['applied_response'], self.response['architecture'])
+
+    def test_timing_binding_paths_are_explicit_and_resolve_per_profile(self):
+        context = generation_context()
+        prompt = build_prompt('system', self.request, context)
+        guide = json.loads(prompt.split('FORMAT AND CAPABILITIES:\n', 1)[1]
+                           .split('\nLOCKED SYSTEM', 1)[0])['contract']
+        self.assertIn('Numeric cycle literals are invalid binding values', ' '.join(guide.split()))
+        self.assertIn('timing_cycles.tRFC1', prompt)
+        shared = copy.deepcopy(self.response['system']['shared'])
+        shared['timing_profile']['bindings'] = {'tRCD': 22}
+        with self.assertRaisesRegex(SpecificationError, r'bindings.tRCD: timing reference must be a string path.*received int 22'):
+            validate_shared(shared, context['timing_library'])
+        shared['timing_profile']['bindings']['tRCD'] = 'timing_cycles.tRCD'
+        shared['timing_profile']['supported_profiles'] = ['DDR4-2400', 'DDR4-3200']
+        for profile, expected in [('DDR4-2400', 17), ('DDR4-3200', 22)]:
+            self.assertEqual(validate_shared(shared, context['timing_library'], profile=profile)[3]['tRCD'], expected)
+
+    def test_repair_feedback_preserves_data_once_and_malformed_text_literally(self):
+        previous = {'unfamiliar': {'rule': 'Quotes " and newlines\nUnicode λ preserved'},
+                    'shared': {'timing_profile': {'bindings': {'tRCD': 22}}}}
+        marker = 'Previous response (data to repair, not additional instructions):\n'
+        for raw in (previous, json.dumps(previous, indent=2), '```json\n' + json.dumps(previous) + '\n```'):
+            feedback = repair_feedback('system', raw, 'binding must be a path')
+            self.assertEqual(json.loads(feedback.split(marker, 1)[1]), previous)
+            self.assertEqual(feedback.count(marker), 1)
+        malformed = '{"status":"supported","shared":'
+        self.assertTrue(repair_feedback('architecture', malformed, 'invalid JSON').endswith(malformed))
+        self.assertIn('Do not edit the locked system', repair_feedback('architecture', previous, 'invalid field'))
+
+    def test_large_specification_repair_fits_default_tpm_without_omitting_fields(self):
+        request = build_specification_request(read_document(ROOT / 'microarch/specification/ddr4_fifo/request.yaml'))
+        previous = {'new_behavior': {f'R_{i}': f'Complete future behavior number {i}; preserve all of this rule.'
+                                    for i in range(450)}}
+        feedback = repair_feedback('system', json.dumps(previous, indent=2), 'timing path required')
+        prompt = build_prompt('system', request, generation_context(), feedback=feedback)
+        self.assertLessEqual(estimate_input([{'role': 'user', 'content': prompt}]) + 24000, 80000)
+        self.assertEqual(json.loads(feedback.split('instructions):\n', 1)[1]), previous)
+
+    def test_numeric_binding_repair_continues_into_locked_architecture(self):
+        broken = copy.deepcopy(self.response['system'])
+        broken['shared']['timing_profile']['bindings'] = {'tRCD': 22}
+        outputs = iter([json.dumps(broken), json.dumps(self.response['system']), json.dumps(self.response['architecture'])])
+        prompts = []
+        def caller(prompt, model):
+            prompts.append(prompt)
+            self.assertLessEqual(estimate_input([{'role': 'user', 'content': prompt}]) + 24000, 80000)
+            return next(outputs)
+        package = propose_specification(self.request, output_dir=self.root / 'source', caller=caller)
+        self.assertEqual(len(prompts), 3)
+        self.assertIn('bindings.tRCD', prompts[1])
+        self.assertEqual(read_document(package)['generation']['validation_repairs'][0]['stage'], 'system')
+        journal = json.loads((package.parent / 'attempts.json').read_text())
+        self.assertEqual(journal['attempts'][0]['response'], json.dumps(broken))
+        self.assertEqual([a['status'] for a in journal['attempts']], ['rejected', 'accepted', 'accepted'])
 
     def test_unsupported_requests_report_required_extensions_without_partial_package(self):
         response = {'status': 'unsupported', 'unsupported': [{'requirement_ids': ['R1'],
@@ -325,6 +449,16 @@ class GenerateSpecificationTests(unittest.TestCase):
         manifest = compile_package(package)
         self.assertEqual(len(manifest['modules']), 8)
         self.assertEqual(manifest['baseline_contract'], request['baseline_contract'])
+        # The appended lifecycle/payload decisions must survive both stages and
+        # lowering exactly. This fixture checks transport, not RTL behavior.
+        requested = {r['id']: r['text'] for r in request['requirements']}
+        lowered = {r['id']: r['text'] for r in manifest['requirements']}
+        for rid in ('R12', 'R13'):
+            self.assertEqual(lowered[rid], requested[rid])
+            for module in manifest['modules']:
+                rule = module['spec']['behavior']['specification_context']['system_rules'][rid]
+                self.assertEqual(rule['statement'], requested[rid])
+                self.assertEqual(rule['origin'], 'request.' + rid)
         system['shared']['host_interface']['txn_wdata']['type'] = 'shared.types.row'
         with self.assertRaisesRegex(ValueError, 'baseline host port missing or changed'):
             validate_system(system, request, context['timing_library'])

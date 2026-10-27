@@ -1,0 +1,13 @@
+{
+  "structural_validation": "passed",
+  "declared_dependency_validation": "passed",
+  "rtl_generation": "failed",
+  "integration_lint": "not_run",
+  "behavioral_verification": "not_run",
+  "specification_validation": "passed",
+  "specification_approval": "approved",
+  "specification_fingerprint": "d094f930480b800de15078a0db4116f987b18a011953299f8da677812232bafe",
+  "verification_handoff": "not_run",
+  "token_usage_report": "/home/bryan/Desktop/code/CAPSTONE/local/frontend/microarch/usage/20261022T184123Z_60d43010c4e3/usage.json",
+  "result": "failed"
+}

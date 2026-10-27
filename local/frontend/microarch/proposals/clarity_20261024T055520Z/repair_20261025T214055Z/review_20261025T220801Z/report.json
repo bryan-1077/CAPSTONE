@@ -1,0 +1,74 @@
+{
+  "review_version": 1,
+  "review_revision": 3,
+  "status": "changes_required",
+  "model": "protected.gpt-5.6-terra",
+  "mode": "llm",
+  "reviewed_at": "2026-10-25T22:08:06.437197+00:00",
+  "manifest_fingerprint": "f931ab6bd3d4614e35dbf0be5a07dcfdf173c79b0e9e16a5606885fd1e8c765f",
+  "package_fingerprint": "ed582f2fbac5bf2f4896ed71e0b4dd7f10252520571ae5469403c2129f1ac335",
+  "verdict": {
+    "status": "changes_required",
+    "reviewed_aspects": [
+      "request_coverage",
+      "lifecycle_and_progress",
+      "payload_and_dependencies",
+      "verification_consistency",
+      "observation_sufficiency",
+      "unresolved_assumptions"
+    ],
+    "findings": [
+      {
+        "id": "F_PAYLOAD_COMMIT_UNOBSERVABLE",
+        "scope": "architecture",
+        "message": "The declared payload checks require proving that commit_command mirrors candidate_command even when candidate_ok is low, but commit_command and commit_valid are not declared observations. The command_commit event exposes commit_command only when commit_valid is already high, so it cannot distinguish an incorrect blocked or invalid commit payload from the required mirror behavior. Add bound observations for command_engine.commit_command and command_engine.commit_valid, and include them in the payload checks that claim this behavior.",
+        "references": [
+          "/documents/verification/checks/execution.verification.X_PAYLOAD",
+          "/documents/verification/checks/system.verification.V_PAYLOAD",
+          "/documents/verification/events/command_commit",
+          "/documents/verification/observations",
+          "/documents/shared/events/command_commit",
+          "/documents/execution/rules/EXEC_PAYLOAD"
+        ],
+        "requirement_ids": [
+          "R13"
+        ]
+      },
+      {
+        "id": "F_DIAGNOSTIC_IDLE_GATING_UNDERSPECIFIED",
+        "scope": "architecture",
+        "message": "cmd_ready is required to represent first-command diagnostic readiness only while the engine is idle and cleanup/refresh permit it, but the declared command-engine combinational dependencies for probe_valid and execution_ready name only refresh state (and probe_ok for execution_ready). The contract does not explicitly connect active ownership, an occupied candidate slot, or cleanup reservation to the diagnostic gate. This leaves a compliant-looking implementation able to assert cmd_ready while active work, a held candidate, or cleanup is present. Define the idle, candidate-slot, and cleanup gating conditions for probe_valid/execution_ready and declare their relevant dependencies so the diagnostic behavior is implementable and reviewable.",
+        "references": [
+          "/documents/modules/contracts/command_engine/combinational_dependencies/probe_valid",
+          "/documents/modules/contracts/command_engine/combinational_dependencies/execution_ready",
+          "/documents/modules/contracts/command_engine/handshakes/probe",
+          "/documents/execution/rules/EXEC_READY",
+          "/documents/system/rules/R9"
+        ],
+        "requirement_ids": [
+          "R9"
+        ]
+      },
+      {
+        "id": "F_PROFILE_PROVENANCE_UNRESOLVED",
+        "scope": "system",
+        "message": "The package explicitly records that authoritative provenance and acceptance of the selected DDR4-3200 timing-library source requires external review and blocks design review. Timing permissions, refresh cadence, and all exact-boundary expectations depend on that external acceptance. Resolve or explicitly obtain the required external timing-library provenance/acceptance before RTL generation; this cannot be established by compilation or the planned checks alone.",
+        "references": [
+          "/package/open_questions/Q_PROFILE_PROVENANCE",
+          "/package/assumptions/A_PROFILE",
+          "/documents/shared/timing_profile",
+          "/timing_library/DDR4-3200",
+          "/documents/system/verification/V_TIMING"
+        ],
+        "requirement_ids": [
+          "BASE_TIMING",
+          "BASE_TRRD",
+          "BASE_TFAW",
+          "R5",
+          "R8"
+        ]
+      }
+    ]
+  },
+  "readiness_error": "Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']"
+}

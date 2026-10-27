@@ -1,0 +1,3261 @@
+{
+  "compiler_revision": 3,
+  "package_fingerprint": "48c9a1f81868266db98afc541f741c5a7734f3514d1a1d097c8c57da98ee3bdb",
+  "snapshot": {
+    "package": {
+      "specification_version": 1,
+      "package_id": "ddr4_controller_top_spec",
+      "design_name": "ddr4_controller_top",
+      "revision": "draft_003",
+      "status": "draft_for_review",
+      "scope": {
+        "plan": "current_controller_v2 request elaboration",
+        "milestone": "system_behavior_specification",
+        "covered": [
+          "host_interface",
+          "request_lifecycle",
+          "fifo_service",
+          "command_semantics",
+          "timing_protection",
+          "banked_memory",
+          "responses",
+          "page_policy",
+          "refresh",
+          "reset",
+          "verification_intent"
+        ],
+        "pending": []
+      },
+      "verification_strategy": {
+        "status": "planned_not_executed",
+        "configurations": {
+          "parameters": {
+            "PAGE_POLICY": [
+              "open_page",
+              "close_page"
+            ],
+            "WAITING_CAPACITY": [
+              1,
+              4
+            ]
+          },
+          "profiles": [
+            "DDR4-3200"
+          ]
+        },
+        "module_checks": "Future downstream checks shall independently verify host mapping, waiting storage, FIFO selection, candidate lifecycle, command permission, row state, timing history, functional memory and responses, refresh control, cleanup control, and host diagnostics through declared interfaces.",
+        "system_scenario": "Apply directed and randomized host traffic with independent FIFO, command-trace, timing, memory, response, refresh, reset, cleanup, and diagnostic scoreboards.",
+        "system_evidence": "Planned evidence includes per-rule assertions, directed vectors, randomized traces, commit-edge monitors, timing-boundary checks, reset checks, simultaneous-event checks, and configuration coverage."
+      },
+      "decisions": {
+        "D_CAPACITY": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "four_waiting_plus_one_active",
+          "reason": "Waiting and active capacities are distinct."
+        },
+        "D_COMMANDS": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "explicit_NOP_ACT_PRE_READ_WRITE_REF",
+          "reason": "Explicit command semantics and commit gating are required."
+        },
+        "D_CONTROL_CANDIDATES": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "separate_active_cleanup_and_refresh_control_candidate_creation",
+          "reason": "Cleanup and refresh preparation require legal PRE and REF candidates after active request retirement or without active ownership."
+        },
+        "D_FIFO": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "global_acceptance_order",
+          "reason": "Accepted requests are serviced in FIFO acceptance order."
+        },
+        "D_PAGE_POLICY": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "open_page_default_with_close_page_option",
+          "reason": "Open-page is requested while close-page is a configurable alternative."
+        },
+        "D_REFRESH": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "sticky_periodic_pending_drain_close_then_ref",
+          "reason": "Refresh deadlines coalesce and service drains work before REF."
+        },
+        "D_RESET": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "synchronous_active_low_state_reset_with_immediate_event_gating",
+          "reason": "State reset is synchronous and visible events are immediately gated."
+        },
+        "D_RESPONSE": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "read_commit_E_host_sampling_E_plus_1",
+          "reason": "READ captures pre-edge data and provides the requested one-cycle response stage."
+        }
+      },
+      "assumptions": {
+        "A_CLOCK": {
+          "statement": "clk continues to provide rising edges while rst_n is low so synchronous reset state clearing can occur.",
+          "status": "documented"
+        },
+        "A_HOST_STALL": {
+          "statement": "The host holds txn_valid and all transaction payload fields stable while txn_valid is high and txn_ready is low.",
+          "status": "documented"
+        },
+        "A_PROFILE": {
+          "statement": "The selected timing library supplies the declared DDR4-3200 timing paths.",
+          "status": "requires_review"
+        },
+        "A_PROGRESS": {
+          "statement": "Service progress requires reset to remain inactive and timing and refresh intervals to elapse; no bounded transaction latency is asserted.",
+          "status": "documented"
+        },
+        "A_RESPONSE": {
+          "statement": "The host samples every rsp_valid pulse because no response-backpressure interface is provided.",
+          "status": "documented"
+        }
+      },
+      "open_questions": {
+        "Q_PROFILE_PROVENANCE": {
+          "blocks": "design_review",
+          "question": "The authoritative provenance and acceptance of the selected DDR4-3200 timing-library source requires external review before RTL generation; planned timing-boundary checks cannot establish library correctness."
+        },
+        "Q_RTL_APPROVAL": {
+          "blocks": "rtl_generation",
+          "question": "Approval of this exact draft package is required before RTL generation or downstream implementation export."
+        }
+      },
+      "documents": {
+        "shared": "shared.yaml",
+        "system": "system.yaml",
+        "execution": "execution.yaml",
+        "modules": "modules.yaml",
+        "graph": "graph.yaml",
+        "verification": "verification.yaml"
+      },
+      "design_kind": "memory_controller",
+      "generation": {
+        "version": 1,
+        "model": "protected.gpt-5.6-terra",
+        "request": {
+          "constraints": {
+            "design_name": "ddr4_controller_top",
+            "design_type": "memory_controller",
+            "memory": {
+              "protocol": "DDR4",
+              "speed": "3200"
+            },
+            "topology": {
+              "banks": 4
+            },
+            "features": {
+              "scheduler": "fifo",
+              "page_policy": "open_page",
+              "refresh": true,
+              "tRRD": true,
+              "tFAW": true
+            },
+            "microarchitecture": {
+              "baseline": "current_controller",
+              "waiting_capacity": 4
+            }
+          },
+          "requirements": [
+            {
+              "id": "R1",
+              "text": "Implement global FIFO service in acceptance order, including same-address writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently of command readiness."
+            },
+            {
+              "id": "R2",
+              "text": "Provide four waiting entries plus one separately stored active request. Dispatch only previously stored requests, capture the complete pre-edge head before releasing its slot, and permit full-queue simultaneous dispatch/admission including capacity one. No empty-queue bypass or same-edge active replacement at retirement."
+            },
+            {
+              "id": "R3",
+              "text": "Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP never committed and at most one command commit per edge. Sequence closed banks with ACT-access, row hits with access, and row conflicts with PRE-ACT-access. PRE/ACT never retire the active request. Keep blocked candidates stable through stalls and newly pending refresh."
+            },
+            {
+              "id": "R4",
+              "text": "Keep separate owners for host mapping, waiting storage, scheduling, command sequencing, row state, timing, functional memory/responses, and refresh control. The top must contain structural connections only."
+            },
+            {
+              "id": "R5",
+              "text": "Update bank state and timing history only from committed commands. Enforce tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile. A trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits with age strictly less than its window. Reset creates no synthetic timing history."
+            },
+            {
+              "id": "R6",
+              "text": "Preserve functional banked 32-bit memory and compact host address mapping. WRITE commit updates storage; READ commit at E captures pre-edge data and registers valid/data for host sampling at E+1, with no extra adapter response register. Responses survive active release, cleanup and refresh; writes produce no response."
+            },
+            {
+              "id": "R7",
+              "text": "Open-page retains rows. Support close-page as a configurable alternative, retaining a separate cleanup bank reservation after retirement until a legal PRE commits; block new dispatch during cleanup."
+            },
+            {
+              "id": "R8",
+              "text": "Generate periodic refresh deadlines from the last sampled reset edge using tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining open banks in ascending order, respect all-bank tRP, commit REF once, and exclude commands strictly before REF-edge+tRFC. Retain queued traffic and resume service afterward."
+            },
+            {
+              "id": "R9",
+              "text": "cmd_ready is reset-gated diagnostic readiness for the incoming request's first needed command, using independent row/timing probe queries while the engine is idle and cleanup/refresh permit. It is meaningful without txn_valid and must not admit, dispatch, bypass FIFO, mutate history or reserve storage."
+            },
+            {
+              "id": "R10",
+              "text": "Use synchronous active-low reset for state, with immediate valid/ready/event gating. Reset clears queued/active/cleanup work, row state, timing history, memory, responses and refresh state; it wins over every simultaneous event. The host holds payload while stalled and samples every response; no response backpressure is provided."
+            },
+            {
+              "id": "R11",
+              "text": "Generate architecture-specific module isolation and system verification intent with exact requirement IDs, independent scenarios/expected results, and declared port/event bindings. Export it alongside RTL for the external UVM/vector stage. Do not execute downstream verification or backend stages in this frontend flow."
+            },
+            {
+              "id": "R12",
+              "text": "Explicitly distinguish initial command candidate creation from replacement. Dispatch captures the request without forming a candidate on that edge. When the candidate slot is empty, form the first candidate on a later edge from registered ownership and current bank state. Hold a blocked candidate unchanged. Commit clears its slot; a following candidate is formed only on a later edge using updated bank state, never by same-edge replacement. Reset wins; an outstanding candidate holds or commits before other progress. With no candidate, drain active service, then cleanup, then pending refresh preparation. Refresh service blocks dispatch and new candidate formation. Internal state encoding remains an implementation choice."
+            },
+            {
+              "id": "R13",
+              "text": "Define payload behavior independently of valid gating. candidate_command is canonical zero NOP when candidate_valid is low. commit_command mirrors candidate_command even when candidate_ok is low; permission gates commit_valid only, and consumers sample payload only on commit_valid. probe_command remains the combinational first-command query from the incoming request and bank state even when probe_valid is low; idle, cleanup and refresh restrictions gate probe validity/readiness, not its payload. Reset forces all command payloads to zero NOP. Combinational dependencies must include any current-cycle input used to gate payload, not just its valid signal."
+            },
+            {
+              "id": "BASE_HOST",
+              "text": "Preserve the existing host ports and widths listed in the baseline contract. Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload while stalled. Consecutive accepted cycles with txn_valid held high are distinct requests. cmd_ready is execution/timing visibility, not the host acceptance handshake. Deassert txn_ready and rsp_valid during reset."
+            },
+            {
+              "id": "BASE_ADDRESS",
+              "text": "Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0], zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit txn_bank for multi-bank configurations; a single-bank configuration uses bank 0. Internal packed requests retain bank(2), row(10), column(6), write flag(1), write data(32)."
+            },
+            {
+              "id": "BASE_QUEUE",
+              "text": "Provide 4 WAITING request slots PLUS one separately stored active-service request: waiting plus active capacity is 5. The active request must not consume a waiting slot. Dispatch captures the complete pre-edge request in active registers and frees its waiting slot without retiring the transaction. A full queue may admit on the same edge as dispatch; retirement alone does not free waiting storage. Accepted request fields survive stalls and each accepted request is serviced exactly once within a reset-free epoch. Keep admission, dispatch, retirement and read response delivery distinct. Captured response storage consumes neither waiting nor active capacity."
+            },
+            {
+              "id": "BASE_DATA",
+              "text": "Provide functional 32-bit memory storage with 16 addresses per bank, bank isolation and reset-to-zero contents. Accepted writes update only their addressed location at service completion or a committed WRITE. Each accepted read produces exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ commit, using the existing one-cycle response stage. Writes produce no host response. Selection and stalled candidates cannot mutate memory; mere command output without storage and read responses is insufficient."
+            },
+            {
+              "id": "BASE_TIMING",
+              "text": "Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate service may retain the existing protected timing envelope instead. Configured tRRD and tFAW gates must use accepted activation events, not host admissions or stalled proposals. Never treat existing basic timing as an unrequested future feature."
+            },
+            {
+              "id": "BASE_SEQUENCE",
+              "text": "Dispatch captures the complete selected request in separate active-service registers before freeing its waiting queue slot. Hold that active request and payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits. Setup commands never retire the active request. Aggregate service also keeps active-service ownership through completion. Waiting-queue dequeue at dispatch is distinct from active-request retirement. Row state changes only on the responsible committed operation; uncommitted proposals cannot change state."
+            },
+            {
+              "id": "BASE_MODULARITY",
+              "text": "Keep request storage, request selection, command sequencing, timing enforcement and functional memory in independently verifiable modules with explicit interfaces. No single controller core may own all these functions. Each mandatory role has distinct module owners with functional inter-module connections. Module names and further decomposition remain design choices."
+            },
+            {
+              "id": "BASE_LEGALITY",
+              "text": "Compute command permission from registered timing/bank history and an independent candidate. An accepted ACT pulse is derived from candidate && permission; permission must not combinationally depend on that same accepted pulse. Scheduler selection/validity must be available independently of timing_ok; timing_ok may gate commit but must not create a selection-validity feedback loop. Declare accurate per-output combinational input dependencies."
+            },
+            {
+              "id": "BASE_RESET",
+              "text": "Use top-level clk and active-low rst_n. Reset clears pending requests, active service, row validity, memory and responses. Preserve reusable blocks with either synchronous or asynchronous active-low resets driven by the same rst_n; differing assertion styles do not require rebuilding otherwise reusable blocks. Do not change polarity without an explicit adapter."
+            },
+            {
+              "id": "BASE_POLICY",
+              "text": "Honor the requested scheduler policy fifo. Preserve page policy open_page. Open-page retains a serviced row; close-page closes it before subsequent bank use. Preserve request ownership through any setup sequence. Internal module decomposition and command latency may change while these observable contracts hold."
+            },
+            {
+              "id": "BASE_REFRESH",
+              "text": "Retain periodic refresh requests using profile tREFI, refresh priority and request/acknowledgment handling without dropping queued traffic. Refresh must make progress and normal requests must resume. Existing refresh is simplified; full REF/tRFC servicing remains later feature work. If explicit REF is proposed, describe drain/row-state interaction and acknowledge once at commit."
+            },
+            {
+              "id": "BASE_TRRD",
+              "text": "tRRD is enabled; honor that setting and resolve enabled timing values from DDR4-3200."
+            },
+            {
+              "id": "BASE_TFAW",
+              "text": "tFAW is enabled; honor that setting and resolve enabled timing values from DDR4-3200."
+            },
+            {
+              "id": "CONSTRAINT_1",
+              "text": "Requested constraint /design_name = \"ddr4_controller_top\"."
+            },
+            {
+              "id": "CONSTRAINT_2",
+              "text": "Requested constraint /design_type = \"memory_controller\"."
+            },
+            {
+              "id": "CONSTRAINT_3",
+              "text": "Requested constraint /features/page_policy = \"open_page\"."
+            },
+            {
+              "id": "CONSTRAINT_4",
+              "text": "Requested constraint /features/refresh = true."
+            },
+            {
+              "id": "CONSTRAINT_5",
+              "text": "Requested constraint /features/scheduler = \"fifo\"."
+            },
+            {
+              "id": "CONSTRAINT_6",
+              "text": "Requested constraint /features/tFAW = true."
+            },
+            {
+              "id": "CONSTRAINT_7",
+              "text": "Requested constraint /features/tRRD = true."
+            },
+            {
+              "id": "CONSTRAINT_8",
+              "text": "Requested constraint /memory/protocol = \"DDR4\"."
+            },
+            {
+              "id": "CONSTRAINT_9",
+              "text": "Requested constraint /memory/speed = \"3200\"."
+            },
+            {
+              "id": "CONSTRAINT_10",
+              "text": "Requested constraint /microarchitecture/baseline = \"current_controller\"."
+            },
+            {
+              "id": "CONSTRAINT_11",
+              "text": "Requested constraint /microarchitecture/waiting_capacity = 4."
+            },
+            {
+              "id": "CONSTRAINT_12",
+              "text": "Requested constraint /topology/banks = 4."
+            }
+          ],
+          "baseline_contract": {
+            "id": "current_controller_v2",
+            "design_name": "ddr4_controller_top",
+            "profile": "DDR4-3200",
+            "config": {
+              "design_name": "ddr4_controller_top",
+              "design_type": "memory_controller",
+              "memory": {
+                "protocol": "DDR4",
+                "speed": "3200"
+              },
+              "topology": {
+                "banks": 4
+              },
+              "features": {
+                "scheduler": "fifo",
+                "page_policy": "open_page",
+                "refresh": true,
+                "tRRD": true,
+                "tFAW": true
+              },
+              "microarchitecture": {
+                "baseline": "current_controller",
+                "waiting_capacity": 4
+              }
+            },
+            "host_ports": [
+              {
+                "name": "clk",
+                "direction": "input",
+                "width": 1
+              },
+              {
+                "name": "rst_n",
+                "direction": "input",
+                "width": 1
+              },
+              {
+                "name": "txn_valid",
+                "direction": "input",
+                "width": 1
+              },
+              {
+                "name": "txn_is_write",
+                "direction": "input",
+                "width": 1
+              },
+              {
+                "name": "txn_addr",
+                "direction": "input",
+                "width": 4
+              },
+              {
+                "name": "txn_wdata",
+                "direction": "input",
+                "width": 32
+              },
+              {
+                "name": "txn_bank",
+                "direction": "input",
+                "width": 2
+              },
+              {
+                "name": "txn_ready",
+                "direction": "output",
+                "width": 1
+              },
+              {
+                "name": "cmd_ready",
+                "direction": "output",
+                "width": 1
+              },
+              {
+                "name": "rsp_valid",
+                "direction": "output",
+                "width": 1
+              },
+              {
+                "name": "rsp_rdata",
+                "direction": "output",
+                "width": 32
+              }
+            ],
+            "requirements": [
+              {
+                "id": "BASE_HOST",
+                "text": "Preserve the existing host ports and widths listed in the baseline contract. Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload while stalled. Consecutive accepted cycles with txn_valid held high are distinct requests. cmd_ready is execution/timing visibility, not the host acceptance handshake. Deassert txn_ready and rsp_valid during reset."
+              },
+              {
+                "id": "BASE_ADDRESS",
+                "text": "Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0], zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit txn_bank for multi-bank configurations; a single-bank configuration uses bank 0. Internal packed requests retain bank(2), row(10), column(6), write flag(1), write data(32)."
+              },
+              {
+                "id": "BASE_QUEUE",
+                "text": "Provide 4 WAITING request slots PLUS one separately stored active-service request: waiting plus active capacity is 5. The active request must not consume a waiting slot. Dispatch captures the complete pre-edge request in active registers and frees its waiting slot without retiring the transaction. A full queue may admit on the same edge as dispatch; retirement alone does not free waiting storage. Accepted request fields survive stalls and each accepted request is serviced exactly once within a reset-free epoch. Keep admission, dispatch, retirement and read response delivery distinct. Captured response storage consumes neither waiting nor active capacity."
+              },
+              {
+                "id": "BASE_DATA",
+                "text": "Provide functional 32-bit memory storage with 16 addresses per bank, bank isolation and reset-to-zero contents. Accepted writes update only their addressed location at service completion or a committed WRITE. Each accepted read produces exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ commit, using the existing one-cycle response stage. Writes produce no host response. Selection and stalled candidates cannot mutate memory; mere command output without storage and read responses is insufficient."
+              },
+              {
+                "id": "BASE_TIMING",
+                "text": "Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate service may retain the existing protected timing envelope instead. Configured tRRD and tFAW gates must use accepted activation events, not host admissions or stalled proposals. Never treat existing basic timing as an unrequested future feature."
+              },
+              {
+                "id": "BASE_SEQUENCE",
+                "text": "Dispatch captures the complete selected request in separate active-service registers before freeing its waiting queue slot. Hold that active request and payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits. Setup commands never retire the active request. Aggregate service also keeps active-service ownership through completion. Waiting-queue dequeue at dispatch is distinct from active-request retirement. Row state changes only on the responsible committed operation; uncommitted proposals cannot change state."
+              },
+              {
+                "id": "BASE_MODULARITY",
+                "text": "Keep request storage, request selection, command sequencing, timing enforcement and functional memory in independently verifiable modules with explicit interfaces. No single controller core may own all these functions. Each mandatory role has distinct module owners with functional inter-module connections. Module names and further decomposition remain design choices."
+              },
+              {
+                "id": "BASE_LEGALITY",
+                "text": "Compute command permission from registered timing/bank history and an independent candidate. An accepted ACT pulse is derived from candidate && permission; permission must not combinationally depend on that same accepted pulse. Scheduler selection/validity must be available independently of timing_ok; timing_ok may gate commit but must not create a selection-validity feedback loop. Declare accurate per-output combinational input dependencies."
+              },
+              {
+                "id": "BASE_RESET",
+                "text": "Use top-level clk and active-low rst_n. Reset clears pending requests, active service, row validity, memory and responses. Preserve reusable blocks with either synchronous or asynchronous active-low resets driven by the same rst_n; differing assertion styles do not require rebuilding otherwise reusable blocks. Do not change polarity without an explicit adapter."
+              },
+              {
+                "id": "BASE_POLICY",
+                "text": "Honor the requested scheduler policy fifo. Preserve page policy open_page. Open-page retains a serviced row; close-page closes it before subsequent bank use. Preserve request ownership through any setup sequence. Internal module decomposition and command latency may change while these observable contracts hold."
+              },
+              {
+                "id": "BASE_REFRESH",
+                "text": "Retain periodic refresh requests using profile tREFI, refresh priority and request/acknowledgment handling without dropping queued traffic. Refresh must make progress and normal requests must resume. Existing refresh is simplified; full REF/tRFC servicing remains later feature work. If explicit REF is proposed, describe drain/row-state interaction and acknowledge once at commit."
+              },
+              {
+                "id": "BASE_TRRD",
+                "text": "tRRD is enabled; honor that setting and resolve enabled timing values from DDR4-3200."
+              },
+              {
+                "id": "BASE_TFAW",
+                "text": "tFAW is enabled; honor that setting and resolve enabled timing values from DDR4-3200."
+              }
+            ]
+          },
+          "design_kind": "memory_controller"
+        },
+        "input_fingerprint": "a9363db45ea6e024454babfbf1da8e66f81e1bc4687b0a4c6c4c2366025c44a4",
+        "context_fingerprint": "c6a19345ae2ea73b98d6a40c8657e86f46b34cd09a09ec85bff3262e09079311",
+        "system_fingerprint": "9eaf17f94a1ccbec5799d1973ddf7649c4aaecd6bfc3a71a389426da33690fd3",
+        "internal_types": {},
+        "validation_repairs": [
+          {
+            "stage": "semantic_review",
+            "attempt": 1,
+            "error": "Repair only findings in the plan.findings list, not external_findings. External agreement stays blocking and cannot be resolved through regeneration. Repair the semantic findings from the previous revision below. They are review evidence, not permission to weaken the authoritative request. Only address fields owned by the current stage. Preserve the request IDs/text, constraints and selected configuration. System repair invalidates the old architecture; architecture-only repair must leave the locked system unchanged. Keep every original requires_review assumption and non-rtl_generation blocking question unchanged: do not remove, rename, rewrite or mark them resolved, and do not invent user acceptance, external evidence, test execution or new public ports when existing observations/inference suffice. Unresolved external agreement must remain blocking. References identify the previous snapshot.\n{\"compiler_attempts_per_stage\":3,\"external_findings\":[{\"id\":\"F_PROFILE_PROVENANCE_REQUIRES_EXTERNAL_REVIEW\",\"message\":\"The selected DDR4-3200 timing-library provenance is explicitly marked requires_review, and the recorded open question states that authoritative source acceptance requires external review before RTL generation. The supplied numeric timing table permits compiler implementation, but it does not resolve that external provenance/acceptance decision. Obtain and record external confirmation of the selected timing-library source and paths.\",\"references\":[\"/package/assumptions/A_PROFILE\",\"/package/open_questions/Q_PROFILE_PROVENANCE\"],\"requirement_ids\":[\"BASE_TIMING\",\"BASE_TRRD\",\"BASE_TFAW\"],\"resolution\":\"external_agreement\",\"scope\":\"system\"}],\"findings\":[{\"id\":\"F_REFRESH_PENDING_DISPATCH_RACE\",\"message\":\"The dispatch event does not exclude pre-edge refresh_pending, although refresh candidate creation is enabled by that same state. Consequently, when refresh is pending with no active, cleanup, candidate, or service ownership, dispatch and refresh-preparation candidate creation can both occur on one edge. This violates the required refresh drain/priority behavior and can capture new active work instead of beginning refresh preparation. Amend the locked dispatch eligibility/priority definition so dispatch is inhibited whenever pending refresh control work applies, and preserve the defined later-edge candidate-creation behavior.\",\"references\":[\"/documents/shared/events/dispatch/condition\",\"/documents/shared/events/refresh_candidate_create/condition\",\"/documents/execution/rules/EXEC_REFRESH/statement\",\"/documents/system/rules/SYS_CONTROL_PRIORITY/statement\"],\"requirement_ids\":[\"R8\",\"R12\",\"BASE_REFRESH\"],\"resolution\":\"design_repair\",\"scope\":\"system\"},{\"id\":\"F_CMD_READY_NOT_GATED_BY_ENGINE_IDLE_OR_CLEANUP\",\"message\":\"cmd_ready is required to report first-command readiness only while the engine is idle and cleanup/refresh permit. However, command_engine declares probe_valid dependent only on refresh_pending and refresh_busy, and execution_ready dependent only on probe_ok, refresh_pending, and refresh_busy. No declared gate incorporates active ownership, an outstanding candidate, or cleanup reservation; therefore cmd_ready can remain asserted during active service, candidate occupancy, or cleanup, contrary to the diagnostic contract. Define and wire the required idle and cleanup gating into probe_valid/execution_ready while retaining the valid-low probe payload behavior.\",\"references\":[\"/documents/modules/contracts/command_engine/combinational_dependencies/probe_valid\",\"/documents/modules/contracts/command_engine/combinational_dependencies/execution_ready\",\"/documents/modules/contracts/command_engine/handshakes/probe\",\"/documents/system/rules/R9/statement\",\"/documents/execution/rules/EXEC_READY/statement\"],\"requirement_ids\":[\"R9\"],\"resolution\":\"design_repair\",\"scope\":\"architecture\"}],\"max_semantic_cycles\":1,\"readiness_error\":\"Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']\",\"repair_version\":1,\"report_fingerprint\":\"bd84088c4af92c46c0a1678dff010dac61a7bc9caf5e8d56c5b2c612fd5ddfaf\",\"scopes\":[\"architecture\",\"system\"],\"source_manifest_fingerprint\":\"f931ab6bd3d4614e35dbf0be5a07dcfdf173c79b0e9e16a5606885fd1e8c765f\",\"stage\":\"system\"}",
+            "diagnostics": [
+              "Repair only findings in the plan.findings list, not external_findings. External agreement stays blocking and cannot be resolved through regeneration. Repair the semantic findings from the previous revision below. They are review evidence, not permission to weaken the authoritative request. Only address fields owned by the current stage. Preserve the request IDs/text, constraints and selected configuration. System repair invalidates the old architecture; architecture-only repair must leave the locked system unchanged. Keep every original requires_review assumption and non-rtl_generation blocking question unchanged: do not remove, rename, rewrite or mark them resolved, and do not invent user acceptance, external evidence, test execution or new public ports when existing observations/inference suffice. Unresolved external agreement must remain blocking. References identify the previous snapshot.\n{\"compiler_attempts_per_stage\":3,\"external_findings\":[{\"id\":\"F_PROFILE_PROVENANCE_REQUIRES_EXTERNAL_REVIEW\",\"message\":\"The selected DDR4-3200 timing-library provenance is explicitly marked requires_review, and the recorded open question states that authoritative source acceptance requires external review before RTL generation. The supplied numeric timing table permits compiler implementation, but it does not resolve that external provenance/acceptance decision. Obtain and record external confirmation of the selected timing-library source and paths.\",\"references\":[\"/package/assumptions/A_PROFILE\",\"/package/open_questions/Q_PROFILE_PROVENANCE\"],\"requirement_ids\":[\"BASE_TIMING\",\"BASE_TRRD\",\"BASE_TFAW\"],\"resolution\":\"external_agreement\",\"scope\":\"system\"}],\"findings\":[{\"id\":\"F_REFRESH_PENDING_DISPATCH_RACE\",\"message\":\"The dispatch event does not exclude pre-edge refresh_pending, although refresh candidate creation is enabled by that same state. Consequently, when refresh is pending with no active, cleanup, candidate, or service ownership, dispatch and refresh-preparation candidate creation can both occur on one edge. This violates the required refresh drain/priority behavior and can capture new active work instead of beginning refresh preparation. Amend the locked dispatch eligibility/priority definition so dispatch is inhibited whenever pending refresh control work applies, and preserve the defined later-edge candidate-creation behavior.\",\"references\":[\"/documents/shared/events/dispatch/condition\",\"/documents/shared/events/refresh_candidate_create/condition\",\"/documents/execution/rules/EXEC_REFRESH/statement\",\"/documents/system/rules/SYS_CONTROL_PRIORITY/statement\"],\"requirement_ids\":[\"R8\",\"R12\",\"BASE_REFRESH\"],\"resolution\":\"design_repair\",\"scope\":\"system\"},{\"id\":\"F_CMD_READY_NOT_GATED_BY_ENGINE_IDLE_OR_CLEANUP\",\"message\":\"cmd_ready is required to report first-command readiness only while the engine is idle and cleanup/refresh permit. However, command_engine declares probe_valid dependent only on refresh_pending and refresh_busy, and execution_ready dependent only on probe_ok, refresh_pending, and refresh_busy. No declared gate incorporates active ownership, an outstanding candidate, or cleanup reservation; therefore cmd_ready can remain asserted during active service, candidate occupancy, or cleanup, contrary to the diagnostic contract. Define and wire the required idle and cleanup gating into probe_valid/execution_ready while retaining the valid-low probe payload behavior.\",\"references\":[\"/documents/modules/contracts/command_engine/combinational_dependencies/probe_valid\",\"/documents/modules/contracts/command_engine/combinational_dependencies/execution_ready\",\"/documents/modules/contracts/command_engine/handshakes/probe\",\"/documents/system/rules/R9/statement\",\"/documents/execution/rules/EXEC_READY/statement\"],\"requirement_ids\":[\"R9\"],\"resolution\":\"design_repair\",\"scope\":\"architecture\"}],\"max_semantic_cycles\":1,\"readiness_error\":\"Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']\",\"repair_version\":1,\"report_fingerprint\":\"bd84088c4af92c46c0a1678dff010dac61a7bc9caf5e8d56c5b2c612fd5ddfaf\",\"scopes\":[\"architecture\",\"system\"],\"source_manifest_fingerprint\":\"f931ab6bd3d4614e35dbf0be5a07dcfdf173c79b0e9e16a5606885fd1e8c765f\",\"stage\":\"system\"}"
+            ]
+          },
+          {
+            "stage": "architecture",
+            "attempt": 1,
+            "error": "BASE_POLICY must identify a scheduler module owner",
+            "diagnostics": [
+              "BASE_POLICY must identify a scheduler module owner"
+            ]
+          }
+        ]
+      }
+    },
+    "documents": {
+      "shared": {
+        "parameters": {
+          "ACTIVE_CAPACITY": {
+            "value": 1,
+            "configurable": false
+          },
+          "BANK_COUNT": {
+            "value": 4,
+            "configurable": false,
+            "allowed": [
+              4
+            ]
+          },
+          "COMMAND_OPCODE_WIDTH": {
+            "value": 3
+          },
+          "DATA_WIDTH": {
+            "value": 32
+          },
+          "HOST_ADDR_WIDTH": {
+            "value": 4
+          },
+          "HOST_BANK_WIDTH": {
+            "derive": "ceil_log2(BANK_COUNT)"
+          },
+          "MEMORY_WORDS_PER_BANK": {
+            "derive": "2**HOST_ADDR_WIDTH"
+          },
+          "PAGE_POLICY": {
+            "value": "open_page",
+            "configurable": true,
+            "allowed": [
+              "open_page",
+              "close_page"
+            ]
+          },
+          "READ_RESPONSE_LATENCY": {
+            "value": 1,
+            "configurable": false,
+            "unit": "cycles"
+          },
+          "REQUEST_BANK_WIDTH": {
+            "value": 2
+          },
+          "REQUEST_COLUMN_WIDTH": {
+            "value": 6
+          },
+          "REQUEST_ROW_WIDTH": {
+            "value": 10
+          },
+          "TFAW_ACT_LIMIT": {
+            "value": 4,
+            "configurable": false
+          },
+          "WAITING_CAPACITY": {
+            "value": 4,
+            "configurable": true,
+            "minimum": 1
+          }
+        },
+        "clock_reset": {
+          "clock": "clk",
+          "edge": "rising",
+          "reset": "rst_n",
+          "active_level": 0,
+          "priority": "reset_before_all_events",
+          "assertion_style": "synchronous",
+          "handshake_gating": "Suppress all valid, ready, admission, dispatch, candidate-creation, commit, response-delivery, and refresh events while rst_n is low."
+        },
+        "types": {
+          "bit": {
+            "kind": "unsigned",
+            "width": 1
+          },
+          "data": {
+            "kind": "unsigned",
+            "width": "shared.parameters.DATA_WIDTH"
+          },
+          "host_address": {
+            "kind": "unsigned",
+            "width": "shared.parameters.HOST_ADDR_WIDTH"
+          },
+          "host_bank": {
+            "kind": "unsigned",
+            "width": "shared.parameters.HOST_BANK_WIDTH"
+          },
+          "bank": {
+            "kind": "unsigned",
+            "width": "shared.parameters.REQUEST_BANK_WIDTH"
+          },
+          "row": {
+            "kind": "unsigned",
+            "width": "shared.parameters.REQUEST_ROW_WIDTH"
+          },
+          "column": {
+            "kind": "unsigned",
+            "width": "shared.parameters.REQUEST_COLUMN_WIDTH"
+          },
+          "opcode": {
+            "kind": "enum",
+            "width": "shared.parameters.COMMAND_OPCODE_WIDTH",
+            "encodings": {
+              "NOP": 0,
+              "ACT": 1,
+              "PRE": 2,
+              "READ": 3,
+              "WRITE": 4,
+              "REF": 5
+            },
+            "reserved": [
+              6,
+              7
+            ]
+          },
+          "request": {
+            "kind": "record",
+            "packed_order": "msb_to_lsb",
+            "fields": [
+              {
+                "name": "bank",
+                "type": "shared.types.bank"
+              },
+              {
+                "name": "row",
+                "type": "shared.types.row"
+              },
+              {
+                "name": "column",
+                "type": "shared.types.column"
+              },
+              {
+                "name": "is_write",
+                "type": "shared.types.bit"
+              },
+              {
+                "name": "wdata",
+                "type": "shared.types.data"
+              }
+            ]
+          },
+          "command": {
+            "kind": "record",
+            "packed_order": "msb_to_lsb",
+            "fields": [
+              {
+                "name": "opcode",
+                "type": "shared.types.opcode"
+              },
+              {
+                "name": "bank",
+                "type": "shared.types.bank"
+              },
+              {
+                "name": "row",
+                "type": "shared.types.row"
+              },
+              {
+                "name": "column",
+                "type": "shared.types.column"
+              },
+              {
+                "name": "wdata",
+                "type": "shared.types.data"
+              }
+            ]
+          },
+          "bank_rows": {
+            "kind": "array",
+            "element_type": "shared.types.row",
+            "count": "shared.parameters.BANK_COUNT",
+            "packed_order": "ascending_index_from_lsb"
+          },
+          "bank_valid": {
+            "kind": "array",
+            "element_type": "shared.types.bit",
+            "count": "shared.parameters.BANK_COUNT",
+            "packed_order": "ascending_index_from_lsb"
+          }
+        },
+        "host_interface": {
+          "clk": {
+            "direction": "input",
+            "type": "shared.types.bit"
+          },
+          "rst_n": {
+            "direction": "input",
+            "type": "shared.types.bit"
+          },
+          "txn_valid": {
+            "direction": "input",
+            "type": "shared.types.bit"
+          },
+          "txn_is_write": {
+            "direction": "input",
+            "type": "shared.types.bit"
+          },
+          "txn_addr": {
+            "direction": "input",
+            "type": "shared.types.host_address"
+          },
+          "txn_wdata": {
+            "direction": "input",
+            "type": "shared.types.data"
+          },
+          "txn_bank": {
+            "direction": "input",
+            "type": "shared.types.host_bank"
+          },
+          "txn_ready": {
+            "direction": "output",
+            "type": "shared.types.bit"
+          },
+          "cmd_ready": {
+            "direction": "output",
+            "type": "shared.types.bit"
+          },
+          "rsp_valid": {
+            "direction": "output",
+            "type": "shared.types.bit"
+          },
+          "rsp_rdata": {
+            "direction": "output",
+            "type": "shared.types.data"
+          }
+        },
+        "events": {
+          "admission": {
+            "condition": "At a rising clk edge, rst_n is high and pre-edge txn_valid and txn_ready are high.",
+            "effect": "Capture one complete mapped request into waiting storage."
+          },
+          "dispatch": {
+            "condition": "At a rising clk edge, rst_n is high, active ownership is absent, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, candidate storage is empty, and a pre-edge FIFO head is selected.",
+            "effect": "Capture the complete pre-edge FIFO head into active ownership and release exactly that waiting entry. Dispatch never coincides with refresh-preparation candidate creation."
+          },
+          "candidate_create": {
+            "condition": "At a rising clk edge, rst_n is high, active ownership exists, candidate storage is empty, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge.",
+            "effect": "Create the first active-request candidate from registered active ownership and registered bank state."
+          },
+          "cleanup_candidate_create": {
+            "condition": "At a rising clk edge, rst_n is high, PAGE_POLICY is close_page, active ownership is absent, a cleanup reservation exists, candidate storage is empty, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge.",
+            "effect": "Create a PRE candidate for the reserved cleanup bank from registered bank state."
+          },
+          "refresh_candidate_create": {
+            "condition": "At a rising clk edge, rst_n is high, refresh_pending is high, active ownership and cleanup reservation are absent, candidate storage is empty, refresh service is not in tRFC exclusion, and no command commits on that edge.",
+            "effect": "Create exactly one refresh-preparation candidate from registered bank state: PRE for the lowest-index open bank, or REF when all banks are closed."
+          },
+          "command_commit": {
+            "condition": "At a rising clk edge, rst_n is high, candidate_valid and candidate_ok are high, and candidate_command is non-NOP and nonreserved.",
+            "effect": "Commit one command and update only state assigned to that committed opcode. Commit clears the candidate slot; no candidate is replaced on the same edge."
+          },
+          "retirement": {
+            "condition": "shared.events.command_commit commits READ or WRITE for the active request.",
+            "effect": "Retire one active request; READ captures response state before active release. Under close_page, retirement creates a cleanup reservation for the serviced bank."
+          },
+          "refresh_due": {
+            "condition": "At a rising clk edge, rst_n is high and the periodic deadline reaches that edge.",
+            "effect": "Set sticky refresh_pending. A simultaneous REF acknowledgment cannot clear newly due pending."
+          },
+          "refresh_start": {
+            "condition": "shared.events.command_commit commits REF.",
+            "effect": "Acknowledge one pending refresh and begin tRFC command exclusion."
+          },
+          "refresh_end": {
+            "condition": "At a rising clk edge, rst_n is high and the edge is at least tRFC cycles after committed REF.",
+            "effect": "End refresh command exclusion."
+          },
+          "response_delivery": {
+            "condition": "At a rising clk edge, rst_n is high and pre-edge rsp_valid is high.",
+            "effect": "The host samples pre-edge rsp_rdata."
+          }
+        },
+        "timing_profile": {
+          "source": "timing.yaml",
+          "selection": "DDR4-3200",
+          "supported_profiles": [
+            "DDR4-3200"
+          ],
+          "unit": "cycles",
+          "bindings": {
+            "tRCD": "timing_cycles.tRCD",
+            "tRAS": "timing_cycles.tRAS",
+            "tRP": "timing_cycles.tRP",
+            "tRRD": "timing_cycles.tRRD",
+            "tFAW": "timing_cycles.tFAW",
+            "tREFI": "timing_cycles.tREFI",
+            "tRFC": "timing_cycles.tRFC1"
+          },
+          "note": "Numeric cycle values are resolved separately from the selected timing-library profile."
+        },
+        "timing_rules": {
+          "edge_convention": "A trigger committed at edge E permits a blocked command at E+T when all other conditions hold. Reset creates no timing history. tFAW counts earlier ACT commits whose age at the candidate edge is strictly less than its window.",
+          "tRCD": {
+            "trigger": "ACT",
+            "blocked": [
+              "READ",
+              "WRITE"
+            ],
+            "minimum": "shared.timing_profile.bindings.tRCD",
+            "scope": "same_bank"
+          },
+          "tRAS": {
+            "trigger": "ACT",
+            "blocked": [
+              "PRE"
+            ],
+            "minimum": "shared.timing_profile.bindings.tRAS",
+            "scope": "same_bank"
+          },
+          "tRP": {
+            "trigger": "PRE",
+            "blocked": [
+              "ACT",
+              "REF"
+            ],
+            "minimum": "shared.timing_profile.bindings.tRP",
+            "scope": "same_bank_for_ACT_all_banks_for_REF"
+          },
+          "tRRD": {
+            "trigger": "ACT",
+            "blocked": [
+              "ACT"
+            ],
+            "minimum": "shared.timing_profile.bindings.tRRD",
+            "scope": "all_banks"
+          },
+          "tFAW": {
+            "trigger": "ACT",
+            "blocked": [
+              "ACT"
+            ],
+            "window": "shared.timing_profile.bindings.tFAW",
+            "limit": "shared.parameters.TFAW_ACT_LIMIT",
+            "scope": "all_banks"
+          },
+          "tRFC": {
+            "trigger": "REF",
+            "blocked": [
+              "ACT",
+              "PRE",
+              "READ",
+              "WRITE",
+              "REF"
+            ],
+            "minimum": "shared.timing_profile.bindings.tRFC",
+            "scope": "all_banks"
+          }
+        }
+      },
+      "system": {
+        "slice_id": "system_behavior",
+        "rules": {
+          "R1": {
+            "verification": [
+              "V_FIFO"
+            ],
+            "origin": "request.R1",
+            "statement": "Implement global FIFO service in acceptance order, including same-address writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently of command readiness.",
+            "owners": [
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine"
+            ]
+          },
+          "R2": {
+            "verification": [
+              "V_CAPACITY"
+            ],
+            "origin": "request.R2",
+            "statement": "Provide four waiting entries plus one separately stored active request. Dispatch only previously stored requests, capture the complete pre-edge head before releasing its slot, and permit full-queue simultaneous dispatch/admission including capacity one. No empty-queue bypass or same-edge active replacement at retirement.",
+            "owners": [
+              "waiting_queue",
+              "command_engine",
+              "fifo_scheduler"
+            ]
+          },
+          "R3": {
+            "verification": [
+              "V_SEQUENCE"
+            ],
+            "origin": "request.R3",
+            "statement": "Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP never committed and at most one command commit per edge. Sequence closed banks with ACT-access, row hits with access, and row conflicts with PRE-ACT-access. PRE/ACT never retire the active request. Keep blocked candidates stable through stalls and newly pending refresh.",
+            "owners": [
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "R4": {
+            "verification": [
+              "V_ISOLATION"
+            ],
+            "origin": "request.R4",
+            "statement": "Keep separate owners for host mapping, waiting storage, scheduling, command sequencing, row state, timing, functional memory/responses, and refresh control. The top must contain structural connections only.",
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine",
+              "row_state",
+              "timing_enforcer",
+              "functional_memory",
+              "refresh_control"
+            ]
+          },
+          "R5": {
+            "verification": [
+              "V_TIMING"
+            ],
+            "origin": "request.R5",
+            "statement": "Update bank state and timing history only from committed commands. Enforce tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile. A trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits with age strictly less than its window. Reset creates no synthetic timing history.",
+            "owners": [
+              "timing_enforcer",
+              "row_state"
+            ]
+          },
+          "R6": {
+            "verification": [
+              "V_MEMORY"
+            ],
+            "origin": "request.R6",
+            "statement": "Preserve functional banked 32-bit memory and compact host address mapping. WRITE commit updates storage; READ commit at E captures pre-edge data and registers valid/data for host sampling at E+1, with no extra adapter response register. Responses survive active release, cleanup and refresh; writes produce no response.",
+            "owners": [
+              "functional_memory",
+              "host_adapter"
+            ]
+          },
+          "R7": {
+            "verification": [
+              "V_PAGE"
+            ],
+            "origin": "request.R7",
+            "statement": "Open-page retains rows. Support close-page as a configurable alternative, retaining a separate cleanup bank reservation after retirement until a legal PRE commits; block new dispatch during cleanup.",
+            "owners": [
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "R8": {
+            "verification": [
+              "V_REFRESH"
+            ],
+            "origin": "request.R8",
+            "statement": "Generate periodic refresh deadlines from the last sampled reset edge using tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining open banks in ascending order, respect all-bank tRP, commit REF once, and exclude commands strictly before REF-edge+tRFC. Retain queued traffic and resume service afterward.",
+            "owners": [
+              "refresh_control",
+              "command_engine",
+              "row_state",
+              "timing_enforcer"
+            ]
+          },
+          "R9": {
+            "verification": [
+              "V_DIAGNOSTIC"
+            ],
+            "origin": "request.R9",
+            "statement": "cmd_ready is reset-gated diagnostic readiness for the incoming request's first needed command, using independent row/timing probe queries while the engine is idle and cleanup/refresh permit. It is meaningful without txn_valid and must not admit, dispatch, bypass FIFO, mutate history or reserve storage.",
+            "owners": [
+              "host_adapter",
+              "command_engine",
+              "timing_enforcer"
+            ]
+          },
+          "R10": {
+            "verification": [
+              "V_RESET"
+            ],
+            "origin": "request.R10",
+            "statement": "Use synchronous active-low reset for state, with immediate valid/ready/event gating. Reset clears queued/active/cleanup work, row state, timing history, memory, responses and refresh state; it wins over every simultaneous event. The host holds payload while stalled and samples every response; no response backpressure is provided.",
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine",
+              "row_state",
+              "timing_enforcer",
+              "functional_memory",
+              "refresh_control"
+            ]
+          },
+          "R11": {
+            "verification": [
+              "V_EXPORT"
+            ],
+            "origin": "request.R11",
+            "statement": "Generate architecture-specific module isolation and system verification intent with exact requirement IDs, independent scenarios/expected results, and declared port/event bindings. Export it alongside RTL for the external UVM/vector stage. Do not execute downstream verification or backend stages in this frontend flow.",
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine",
+              "timing_enforcer",
+              "functional_memory",
+              "row_state",
+              "refresh_control"
+            ]
+          },
+          "R12": {
+            "verification": [
+              "V_CANDIDATE"
+            ],
+            "origin": "request.R12",
+            "statement": "Explicitly distinguish initial command candidate creation from replacement. Dispatch captures the request without forming a candidate on that edge. When the candidate slot is empty, form the first candidate on a later edge from registered ownership and current bank state. Hold a blocked candidate unchanged. Commit clears its slot; a following candidate is formed only on a later edge using updated bank state, never by same-edge replacement. Reset wins; an outstanding candidate holds or commits before other progress. With no candidate, drain active service, then cleanup, then pending refresh preparation. Refresh service blocks dispatch and new candidate formation. Internal state encoding remains an implementation choice.",
+            "owners": [
+              "command_engine"
+            ]
+          },
+          "R13": {
+            "verification": [
+              "V_PAYLOAD"
+            ],
+            "origin": "request.R13",
+            "statement": "Define payload behavior independently of valid gating. candidate_command is canonical zero NOP when candidate_valid is low. commit_command mirrors candidate_command even when candidate_ok is low; permission gates commit_valid only, and consumers sample payload only on commit_valid. probe_command remains the combinational first-command query from the incoming request and bank state even when probe_valid is low; idle, cleanup and refresh restrictions gate probe validity/readiness, not its payload. Reset forces all command payloads to zero NOP. Combinational dependencies must include any current-cycle input used to gate payload, not just its valid signal.",
+            "owners": [
+              "command_engine",
+              "timing_enforcer"
+            ]
+          },
+          "BASE_HOST": {
+            "verification": [
+              "V_HOST",
+              "V_RESET"
+            ],
+            "origin": "request.BASE_HOST",
+            "statement": "Preserve the existing host ports and widths listed in the baseline contract. Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload while stalled. Consecutive accepted cycles with txn_valid held high are distinct requests. cmd_ready is execution/timing visibility, not the host acceptance handshake. Deassert txn_ready and rsp_valid during reset.",
+            "owners": [
+              "host_adapter"
+            ]
+          },
+          "BASE_ADDRESS": {
+            "verification": [
+              "V_ADDRESS"
+            ],
+            "origin": "request.BASE_ADDRESS",
+            "statement": "Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0], zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit txn_bank for multi-bank configurations; a single-bank configuration uses bank 0. Internal packed requests retain bank(2), row(10), column(6), write flag(1), write data(32).",
+            "owners": [
+              "host_adapter",
+              "functional_memory"
+            ]
+          },
+          "BASE_QUEUE": {
+            "verification": [
+              "V_CAPACITY",
+              "V_EXACTLY_ONCE"
+            ],
+            "origin": "request.BASE_QUEUE",
+            "statement": "Provide 4 WAITING request slots PLUS one separately stored active-service request: waiting plus active capacity is 5. The active request must not consume a waiting slot. Dispatch captures the complete pre-edge request in active registers and frees its waiting slot without retiring the transaction. A full queue may admit on the same edge as dispatch; retirement alone does not free waiting storage. Accepted request fields survive stalls and each accepted request is serviced exactly once within a reset-free epoch. Keep admission, dispatch, retirement and read response delivery distinct. Captured response storage consumes neither waiting nor active capacity.",
+            "owners": [
+              "waiting_queue",
+              "command_engine",
+              "fifo_scheduler"
+            ]
+          },
+          "BASE_DATA": {
+            "verification": [
+              "V_MEMORY"
+            ],
+            "origin": "request.BASE_DATA",
+            "statement": "Provide functional 32-bit memory storage with 16 addresses per bank, bank isolation and reset-to-zero contents. Accepted writes update only their addressed location at service completion or a committed WRITE. Each accepted read produces exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ commit, using the existing one-cycle response stage. Writes produce no host response. Selection and stalled candidates cannot mutate memory; mere command output without storage and read responses is insufficient.",
+            "owners": [
+              "functional_memory",
+              "host_adapter"
+            ]
+          },
+          "BASE_TIMING": {
+            "verification": [
+              "V_TIMING"
+            ],
+            "origin": "request.BASE_TIMING",
+            "statement": "Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate service may retain the existing protected timing envelope instead. Configured tRRD and tFAW gates must use accepted activation events, not host admissions or stalled proposals. Never treat existing basic timing as an unrequested future feature.",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "BASE_SEQUENCE": {
+            "verification": [
+              "V_SEQUENCE",
+              "V_CANDIDATE"
+            ],
+            "origin": "request.BASE_SEQUENCE",
+            "statement": "Dispatch captures the complete selected request in separate active-service registers before freeing its waiting queue slot. Hold that active request and payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits. Setup commands never retire the active request. Aggregate service also keeps active-service ownership through completion. Waiting-queue dequeue at dispatch is distinct from active-request retirement. Row state changes only on the responsible committed operation; uncommitted proposals cannot change state.",
+            "owners": [
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "BASE_MODULARITY": {
+            "verification": [
+              "V_ISOLATION"
+            ],
+            "origin": "request.BASE_MODULARITY",
+            "statement": "Keep request storage, request selection, command sequencing, timing enforcement and functional memory in independently verifiable modules with explicit interfaces. No single controller core may own all these functions. Each mandatory role has distinct module owners with functional inter-module connections. Module names and further decomposition remain design choices.",
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine",
+              "timing_enforcer",
+              "functional_memory",
+              "row_state",
+              "refresh_control"
+            ]
+          },
+          "BASE_LEGALITY": {
+            "verification": [
+              "V_TIMING"
+            ],
+            "origin": "request.BASE_LEGALITY",
+            "statement": "Compute command permission from registered timing/bank history and an independent candidate. An accepted ACT pulse is derived from candidate && permission; permission must not combinationally depend on that same accepted pulse. Scheduler selection/validity must be available independently of timing_ok; timing_ok may gate commit but must not create a selection-validity feedback loop. Declare accurate per-output combinational input dependencies.",
+            "owners": [
+              "timing_enforcer",
+              "command_engine"
+            ]
+          },
+          "BASE_RESET": {
+            "verification": [
+              "V_RESET"
+            ],
+            "origin": "request.BASE_RESET",
+            "statement": "Use top-level clk and active-low rst_n. Reset clears pending requests, active service, row validity, memory and responses. Preserve reusable blocks with either synchronous or asynchronous active-low resets driven by the same rst_n; differing assertion styles do not require rebuilding otherwise reusable blocks. Do not change polarity without an explicit adapter.",
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "fifo_scheduler",
+              "command_engine",
+              "row_state",
+              "timing_enforcer",
+              "functional_memory",
+              "refresh_control"
+            ]
+          },
+          "BASE_POLICY": {
+            "verification": [
+              "V_FIFO",
+              "V_PAGE"
+            ],
+            "origin": "request.BASE_POLICY",
+            "statement": "Honor the requested scheduler policy fifo. Preserve page policy open_page. Open-page retains a serviced row; close-page closes it before subsequent bank use. Preserve request ownership through any setup sequence. Internal module decomposition and command latency may change while these observable contracts hold.",
+            "owners": [
+              "fifo_scheduler",
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "BASE_REFRESH": {
+            "verification": [
+              "V_REFRESH"
+            ],
+            "origin": "request.BASE_REFRESH",
+            "statement": "Retain periodic refresh requests using profile tREFI, refresh priority and request/acknowledgment handling without dropping queued traffic. Refresh must make progress and normal requests must resume. Existing refresh is simplified; full REF/tRFC servicing remains later feature work. If explicit REF is proposed, describe drain/row-state interaction and acknowledge once at commit.",
+            "owners": [
+              "refresh_control",
+              "command_engine",
+              "row_state",
+              "timing_enforcer"
+            ]
+          },
+          "BASE_TRRD": {
+            "verification": [
+              "V_TIMING"
+            ],
+            "origin": "request.BASE_TRRD",
+            "statement": "tRRD is enabled; honor that setting and resolve enabled timing values from DDR4-3200.",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "BASE_TFAW": {
+            "verification": [
+              "V_TIMING"
+            ],
+            "origin": "request.BASE_TFAW",
+            "statement": "tFAW is enabled; honor that setting and resolve enabled timing values from DDR4-3200.",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "CONSTRAINT_1": {
+            "verification": [
+              "V_IDENTITY"
+            ],
+            "origin": "request.CONSTRAINT_1",
+            "statement": "Requested constraint /design_name = \"ddr4_controller_top\".",
+            "owners": [
+              "host_adapter"
+            ]
+          },
+          "CONSTRAINT_2": {
+            "verification": [
+              "V_IDENTITY"
+            ],
+            "origin": "request.CONSTRAINT_2",
+            "statement": "Requested constraint /design_type = \"memory_controller\".",
+            "owners": [
+              "host_adapter"
+            ]
+          },
+          "CONSTRAINT_3": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_3",
+            "statement": "Requested constraint /features/page_policy = \"open_page\".",
+            "owners": [
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "CONSTRAINT_4": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_4",
+            "statement": "Requested constraint /features/refresh = true.",
+            "owners": [
+              "refresh_control",
+              "command_engine"
+            ]
+          },
+          "CONSTRAINT_5": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_5",
+            "statement": "Requested constraint /features/scheduler = \"fifo\".",
+            "owners": [
+              "waiting_queue",
+              "fifo_scheduler"
+            ]
+          },
+          "CONSTRAINT_6": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_6",
+            "statement": "Requested constraint /features/tFAW = true.",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "CONSTRAINT_7": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_7",
+            "statement": "Requested constraint /features/tRRD = true.",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "CONSTRAINT_8": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_8",
+            "statement": "Requested constraint /memory/protocol = \"DDR4\".",
+            "owners": [
+              "timing_enforcer",
+              "refresh_control"
+            ]
+          },
+          "CONSTRAINT_9": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_9",
+            "statement": "Requested constraint /memory/speed = \"3200\".",
+            "owners": [
+              "timing_enforcer"
+            ]
+          },
+          "CONSTRAINT_10": {
+            "verification": [
+              "V_CONFIGURATION"
+            ],
+            "origin": "request.CONSTRAINT_10",
+            "statement": "Requested constraint /microarchitecture/baseline = \"current_controller\".",
+            "owners": [
+              "command_engine"
+            ]
+          },
+          "CONSTRAINT_11": {
+            "verification": [
+              "V_CAPACITY"
+            ],
+            "origin": "request.CONSTRAINT_11",
+            "statement": "Requested constraint /microarchitecture/waiting_capacity = 4.",
+            "owners": [
+              "waiting_queue"
+            ]
+          },
+          "CONSTRAINT_12": {
+            "verification": [
+              "V_ADDRESS",
+              "V_MEMORY"
+            ],
+            "origin": "request.CONSTRAINT_12",
+            "statement": "Requested constraint /topology/banks = 4.",
+            "owners": [
+              "host_adapter",
+              "functional_memory",
+              "row_state"
+            ]
+          },
+          "SYS_CONTROL_PRIORITY": {
+            "origin": "model_selected",
+            "statement": "With reset inactive, an outstanding candidate holds or commits before other nonreset progress. When candidate storage is empty, active-request candidate creation has priority over cleanup candidate creation, cleanup candidate creation has priority over refresh-preparation candidate creation, and dispatch is permitted only when refresh_pending is low and none of those control conditions applies. A pending refresh therefore inhibits dispatch before refresh-preparation candidate creation and cannot race dispatch. A candidate created from cleanup or refresh preparation follows the same hold, permission, commit, and no-same-edge-replacement rules as an active-request candidate.",
+            "verification": [
+              "V_CANDIDATE",
+              "V_PAGE",
+              "V_REFRESH"
+            ],
+            "owners": [
+              "command_engine"
+            ]
+          },
+          "SYS_SIMULTANEOUS": {
+            "origin": "model_selected",
+            "statement": "Reset wins over every event. With reset inactive, admission may coincide with command commit. Full waiting storage may admit on a dispatch edge using the pre-edge head for dispatch and the incoming request for the tail. Dispatch and retirement do not coincide because active ownership remains occupied through retirement. A refresh due coincident with REF commit leaves pending asserted.",
+            "verification": [
+              "V_CAPACITY",
+              "V_REFRESH",
+              "V_RESET"
+            ],
+            "owners": [
+              "waiting_queue",
+              "command_engine",
+              "refresh_control",
+              "functional_memory"
+            ]
+          },
+          "SYS_STORAGE": {
+            "origin": "model_selected",
+            "statement": "Waiting storage holds admitted undispatched requests, active storage holds one dispatched unretired request, cleanup reservation holds only a retired close-page bank awaiting its PRE, candidate storage holds exactly one uncommitted command proposal, and response storage holds one captured read response. These capacities are independent. Dispatch release is not retirement.",
+            "verification": [
+              "V_CAPACITY",
+              "V_EXACTLY_ONCE",
+              "V_PAGE",
+              "V_MEMORY"
+            ],
+            "owners": [
+              "waiting_queue",
+              "command_engine",
+              "functional_memory"
+            ]
+          }
+        },
+        "verification": {
+          "V_ADDRESS": {
+            "scenario": "Exercise all host addresses and banks.",
+            "expected": "Row, column, bank, widths, and packed request fields follow the declared compact mapping.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_ADDRESS",
+              "CONSTRAINT_12"
+            ]
+          },
+          "V_CANDIDATE": {
+            "scenario": "Dispatch, create, stall, commit, and attempt same-edge replacement; repeat with cleanup reserved and with refresh pending.",
+            "expected": "Dispatch creates no candidate; blocked candidates hold; commit clears the slot; later creation uses updated state; active, cleanup, and refresh-preparation candidates follow the declared priority; pending refresh inhibits dispatch and candidates never replace on the commit edge.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_SEQUENCE",
+              "R12",
+              "SYS_CONTROL_PRIORITY"
+            ]
+          },
+          "V_CAPACITY": {
+            "scenario": "Fill waiting storage, stall active service, dispatch at full occupancy, admit concurrently with dispatch, and retire with queued work.",
+            "expected": "Four waiting entries and one active request coexist; full waiting storage admits on dispatch; retirement alone does not free waiting storage; no empty-queue bypass occurs.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_QUEUE",
+              "CONSTRAINT_11",
+              "R2",
+              "SYS_SIMULTANEOUS",
+              "SYS_STORAGE"
+            ]
+          },
+          "V_CONFIGURATION": {
+            "scenario": "Inspect parameters, profile selection, timing bindings, and recorded decisions.",
+            "expected": "Open-page default, refresh, FIFO, tFAW, tRRD, DDR4-3200, current_controller baseline, and four-bank topology are recorded.",
+            "status": "planned_not_executed",
+            "rules": [
+              "CONSTRAINT_10",
+              "CONSTRAINT_3",
+              "CONSTRAINT_4",
+              "CONSTRAINT_5",
+              "CONSTRAINT_6",
+              "CONSTRAINT_7",
+              "CONSTRAINT_8",
+              "CONSTRAINT_9"
+            ]
+          },
+          "V_DIAGNOSTIC": {
+            "scenario": "Vary incoming request, row state, timing, txn_valid, engine-idle state, active ownership, candidate occupancy, cleanup, refresh, reset, and queue occupancy.",
+            "expected": "cmd_ready is reset-gated first-command diagnostic readiness only when the engine is idle and cleanup and refresh permit; it is meaningful without txn_valid and has no admission, dispatch, storage, history, or commit side effect.",
+            "status": "planned_not_executed",
+            "rules": [
+              "R9"
+            ]
+          },
+          "V_EXACTLY_ONCE": {
+            "scenario": "Apply long timing stalls, refresh delays, repeated queue reuse, and mixed traffic in a reset-free epoch.",
+            "expected": "Each admitted request is dispatched and serviced once with no loss, duplication, or premature retirement.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_QUEUE",
+              "SYS_STORAGE"
+            ]
+          },
+          "V_EXPORT": {
+            "scenario": "Inspect this package before downstream UVM/vector use.",
+            "expected": "Requirement IDs, scenarios, expected outcomes, declared interfaces, and declared events are present; no downstream execution or backend completion is claimed.",
+            "status": "planned_not_executed",
+            "rules": [
+              "R11"
+            ]
+          },
+          "V_FIFO": {
+            "scenario": "Accept mixed read/write traffic including same-address write/read pairs, row hits, misses, and timing stalls.",
+            "expected": "Dispatch and retirement follow acceptance order exactly; command readiness does not control admission; younger requests never bypass older requests.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_POLICY",
+              "R1"
+            ]
+          },
+          "V_HOST": {
+            "scenario": "Hold valid and payload through stalls and across consecutive ready cycles.",
+            "expected": "Only valid-and-ready rising edges admit requests; consecutive qualifying edges are distinct; cmd_ready never substitutes for txn_ready.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_HOST"
+            ]
+          },
+          "V_IDENTITY": {
+            "scenario": "Inspect package metadata.",
+            "expected": "The design name is ddr4_controller_top and design kind is memory_controller.",
+            "status": "planned_not_executed",
+            "rules": [
+              "CONSTRAINT_1",
+              "CONSTRAINT_2"
+            ]
+          },
+          "V_ISOLATION": {
+            "scenario": "Review future architecture export against required functional responsibilities.",
+            "expected": "Distinct independently verifiable functional responsibilities and a structural-only top are declared without selecting an architecture here.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_MODULARITY",
+              "R4"
+            ]
+          },
+          "V_MEMORY": {
+            "scenario": "Write and read every compact address in every bank, overlap response delivery with later reads, and reset during response visibility.",
+            "expected": "WRITE updates only its addressed word; READ captures pre-edge data and yields one E+1 response; banks isolate; reset zeros memory and cancels validity.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_DATA",
+              "CONSTRAINT_12",
+              "R6",
+              "SYS_STORAGE"
+            ]
+          },
+          "V_PAGE": {
+            "scenario": "Run equivalent traffic under both page-policy values, create a close-page cleanup reservation, and assert refresh during cleanup.",
+            "expected": "Open-page retains rows. Close-page retirement creates a separate cleanup reservation, blocks dispatch, creates exactly one legal PRE candidate after retirement, and releases the reservation only when that PRE commits. Refresh preparation begins only after cleanup completes.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_POLICY",
+              "R7",
+              "SYS_CONTROL_PRIORITY",
+              "SYS_STORAGE"
+            ]
+          },
+          "V_PAYLOAD": {
+            "scenario": "Vary candidate valid, permission, probe valid, idle restrictions, cleanup, refresh restrictions, and reset independently.",
+            "expected": "Invalid candidate and reset command payloads are zero NOP; commit payload mirrors candidate; probe payload remains independently defined when probe validity is low.",
+            "status": "planned_not_executed",
+            "rules": [
+              "R13"
+            ]
+          },
+          "V_REFRESH": {
+            "scenario": "Cause deadlines while idle, active, candidate-blocked, cleanup-active, during preparation PRE commits, and during REF acknowledgment.",
+            "expected": "Deadlines coalesce; pending refresh inhibits dispatch; active and cleanup drain; remaining banks close in ascending order through refresh-preparation PRE candidates; REF occurs after all-bank tRP; due with REF leaves pending; traffic resumes after tRFC.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_REFRESH",
+              "R8",
+              "SYS_CONTROL_PRIORITY",
+              "SYS_SIMULTANEOUS"
+            ]
+          },
+          "V_RESET": {
+            "scenario": "Assert reset during every defined event and visible response condition.",
+            "expected": "Events and valid/ready outputs are gated while reset is low; reset clears specified state and defeats simultaneous nonreset actions.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_HOST",
+              "BASE_RESET",
+              "R10",
+              "SYS_SIMULTANEOUS"
+            ]
+          },
+          "V_SEQUENCE": {
+            "scenario": "Service closed-bank, row-hit, and row-conflict requests while candidates stall.",
+            "expected": "Closed banks use ACT then access, hits use access, conflicts use PRE then ACT then access, and setup commands do not retire active work.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_SEQUENCE",
+              "R3"
+            ]
+          },
+          "V_TIMING": {
+            "scenario": "Test trigger and blocked commands at E+T-1 and E+T, including global ACT spacing and four prior ACTs.",
+            "expected": "Only committed commands update history; permission is independent of its own acceptance; no command commits early; exact boundaries are eligible when other conditions hold.",
+            "status": "planned_not_executed",
+            "rules": [
+              "BASE_LEGALITY",
+              "BASE_TFAW",
+              "BASE_TIMING",
+              "BASE_TRRD",
+              "R5"
+            ]
+          }
+        }
+      },
+      "execution": {
+        "slice_id": "execution_rules",
+        "rules": {
+          "EXEC_BANK_STATE": {
+            "origin": "model_selected",
+            "statement": "Only committed ACT opens and records its bank row, committed PRE closes its bank, and committed REF clears all rows after preparation. READ and WRITE retain open rows. Probes, proposals, admissions, dispatches, and stalls do not alter row state.",
+            "verification": [
+              "X_BANK"
+            ],
+            "owners": [
+              "row_state",
+              "command_engine"
+            ]
+          },
+          "EXEC_CLEANUP": {
+            "origin": "model_selected",
+            "statement": "Open-page creates no cleanup reservation after retirement. Close-page retirement creates one cleanup reservation for the serviced bank. While reserved, dispatch is blocked. With no active candidate, a cleanup PRE candidate is created on a later edge, remains stable until permitted, commits once when legal, and then clears the reservation. Refresh preparation waits for the cleanup reservation to clear.",
+            "verification": [
+              "X_CLEANUP"
+            ],
+            "owners": [
+              "command_engine",
+              "row_state"
+            ]
+          },
+          "EXEC_COMMIT": {
+            "origin": "model_selected",
+            "statement": "candidate_command is the canonical proposal. commit_command mirrors it even when candidate_ok is low. commit_valid requires reset inactive, valid candidate, permission, and non-NOP nonreserved opcode. At most one command commits per edge and all consumers sample the same payload only on commit_valid.",
+            "verification": [
+              "X_COMMIT"
+            ],
+            "owners": [
+              "command_engine",
+              "timing_enforcer",
+              "row_state",
+              "functional_memory",
+              "refresh_control"
+            ]
+          },
+          "EXEC_CONTROL_CREATION": {
+            "origin": "model_selected",
+            "statement": "A cleanup reservation creates PRE control work independently of active ownership. Refresh pending creates successive PRE control work for the lowest-index open bank and then REF control work when all banks are closed, independently of active ownership. While refresh pending is asserted, dispatch is inhibited. Control candidates are created only on later edges when the candidate slot is empty, hold while blocked, clear on commit, and do not receive same-edge replacement.",
+            "verification": [
+              "X_CONTROL"
+            ],
+            "owners": [
+              "command_engine",
+              "refresh_control",
+              "row_state"
+            ]
+          },
+          "EXEC_PAYLOAD": {
+            "origin": "model_selected",
+            "statement": "candidate_command is zero NOP when candidate_valid is low. A blocked valid candidate remains unchanged. probe_command is the combinational first-command query from incoming mapped request and registered bank state even when probe validity is low. Reset forces all command payloads to zero NOP.",
+            "verification": [
+              "X_PAYLOAD"
+            ],
+            "owners": [
+              "command_engine"
+            ]
+          },
+          "EXEC_PERMISSION": {
+            "origin": "model_selected",
+            "statement": "Permission uses registered timing history, registered bank state, independent candidate, and selected bindings. ACT requires closed bank; READ and WRITE require matching open row; PRE requires open bank; REF requires all banks closed and all-bank tRP. Permission does not depend on same-edge commit or updates.",
+            "verification": [
+              "X_PERMISSION"
+            ],
+            "owners": [
+              "timing_enforcer",
+              "row_state"
+            ]
+          },
+          "EXEC_READY": {
+            "origin": "model_selected",
+            "statement": "txn_ready reflects only waiting admission capacity including same-edge dispatch release. cmd_ready is reset-gated diagnostic first-command readiness only while the engine is idle: active ownership is absent, candidate storage is empty, no cleanup reservation exists, and refresh is neither pending nor in service. It uses independent row and timing probes, remains meaningful without txn_valid, and neither diagnostic alters state.",
+            "verification": [
+              "X_READY"
+            ],
+            "owners": [
+              "host_adapter",
+              "waiting_queue",
+              "command_engine",
+              "timing_enforcer"
+            ]
+          },
+          "EXEC_REFRESH": {
+            "origin": "model_selected",
+            "statement": "The first deadline is the last reset-sampled edge plus tREFI; later deadlines advance by tREFI independently of REF. Pending is sticky. Pending immediately prevents dispatch, waits for already owned active work and cleanup completion, creates ordered refresh-preparation PRE candidates until all banks are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes commands strictly before REF-edge+tRFC.",
+            "verification": [
+              "X_REFRESH"
+            ],
+            "owners": [
+              "refresh_control",
+              "command_engine",
+              "row_state",
+              "timing_enforcer"
+            ]
+          },
+          "EXEC_RESPONSE": {
+            "origin": "model_selected",
+            "statement": "READ commit at E captures pre-edge memory data and registers rsp_valid and rsp_rdata for host sampling at E+1. Delivery and a new READ may share an edge: the host samples the old response before replacement. Writes produce no response.",
+            "verification": [
+              "X_RESPONSE"
+            ],
+            "owners": [
+              "functional_memory",
+              "host_adapter"
+            ]
+          }
+        },
+        "verification": {
+          "X_BANK": {
+            "scenario": "Commit ACT, PRE, READ, WRITE, and REF across banks and compare with stalled proposals.",
+            "expected": "Only responsible committed operations alter row state.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_BANK_STATE"
+            ]
+          },
+          "X_CLEANUP": {
+            "scenario": "Retire accesses under both page-policy values, retain cleanup through a timing-blocked PRE, and assert refresh during cleanup.",
+            "expected": "Open-page retains rows; close-page exposes a distinct cleanup reservation, blocks dispatch, produces one later legal cleanup PRE candidate, commits that PRE once, and only then permits refresh preparation.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_CLEANUP"
+            ]
+          },
+          "X_COMMIT": {
+            "scenario": "Present legal commands, NOP, reserved opcodes, blocked candidates, and simultaneous admissions.",
+            "expected": "Only permitted legal candidates commit once per edge and noncommits have no commit effects.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_COMMIT"
+            ]
+          },
+          "X_CONTROL": {
+            "scenario": "Retire close-page work without active ownership, then initiate refresh with multiple open banks and no active ownership while FIFO traffic is waiting.",
+            "expected": "Cleanup and refresh preparation create independently distinguishable PRE or REF candidates after active retirement or with no active ownership; pending refresh blocks dispatch; each candidate holds when blocked and is not replaced on its commit edge.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_CONTROL_CREATION"
+            ]
+          },
+          "X_PAYLOAD": {
+            "scenario": "Observe candidate, commit, probe, and probe-valid values while validity, permission, probe gating, refresh, cleanup, and reset vary.",
+            "expected": "Invalid and reset candidate payloads are zero NOP, blocked candidate payload holds, commit payload mirrors candidate independent of permission, and probe payload remains independently defined when probe validity is low.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_PAYLOAD"
+            ]
+          },
+          "X_PERMISSION": {
+            "scenario": "Test every trigger/block pair one cycle before and at its exact timing bound.",
+            "expected": "Permission derives only from pre-edge registered state and becomes eligible only at declared boundaries.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_PERMISSION"
+            ]
+          },
+          "X_READY": {
+            "scenario": "Vary occupancy, dispatch opportunity, incoming command type, row/timing state, txn_valid, active ownership, candidate occupancy, cleanup, refresh, and reset.",
+            "expected": "txn_ready tracks admission capacity only; cmd_ready is side-effect-free diagnostic readiness and remains low whenever active ownership, candidate occupancy, cleanup reservation, pending refresh, refresh preparation, or refresh service makes the engine non-idle.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_READY"
+            ]
+          },
+          "X_REFRESH": {
+            "scenario": "Run deadlines through active, stalled candidate, cleanup, multiple open banks, ordered preparation, tRFC exclusion, and due/REF coincidence.",
+            "expected": "Pending coalesces without traffic loss, inhibits dispatch before refresh preparation, closes banks in ascending order, commits REF once, excludes commands early after REF, and resumes service afterward.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_REFRESH"
+            ]
+          },
+          "X_RESPONSE": {
+            "scenario": "Commit consecutive reads, overlap delivery with a new READ, issue writes, and reset during response visibility.",
+            "expected": "Each READ yields exactly one E+1 sampled response with pre-edge data; writes yield none.",
+            "status": "planned_not_executed",
+            "rules": [
+              "EXEC_RESPONSE"
+            ]
+          }
+        }
+      },
+      "modules": {
+        "contracts": {
+          "host_adapter": {
+            "status": "draft",
+            "role": "host_protocol",
+            "owned_state": {},
+            "interfaces": {
+              "txn_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "txn_ready": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "txn_is_write": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "txn_addr": {
+                "direction": "input",
+                "type": "shared.types.host_address"
+              },
+              "txn_wdata": {
+                "direction": "input",
+                "type": "shared.types.data"
+              },
+              "txn_bank": {
+                "direction": "input",
+                "type": "shared.types.host_bank"
+              },
+              "cmd_ready": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "queue_ready": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "incoming_request": {
+                "direction": "output",
+                "type": "shared.types.request"
+              },
+              "enqueue_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "execution_ready": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "memory_rsp_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "memory_rsp_data": {
+                "direction": "input",
+                "type": "shared.types.data"
+              },
+              "rsp_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "rsp_rdata": {
+                "direction": "output",
+                "type": "shared.types.data"
+              }
+            },
+            "handshakes": {
+              "admission": "shared.events.admission occurs only when pre-edge txn_valid and txn_ready are high. txn_ready mirrors queue_ready with reset gating; cmd_ready is independent of admission.",
+              "response": "memory_rsp_valid and memory_rsp_data are passed to the host without an additional response stage. shared.events.response_delivery is the pre-edge host sampling of rsp_valid."
+            },
+            "reset": "While rst_n is low, gate txn_ready, cmd_ready, enqueue_valid, and rsp_valid low and drive rsp_rdata to zero. No state is owned.",
+            "update_events": {},
+            "stalls": "The host retains transaction fields while txn_valid is high and txn_ready is low. The adapter does not suppress consecutive qualifying admissions.",
+            "simultaneous_events": {
+              "admission_and_response": "Admission and response delivery are independent.",
+              "reset_and_events": "Reset suppresses all visible events."
+            },
+            "combinational_dependencies": {
+              "txn_ready": [
+                "queue_ready"
+              ],
+              "incoming_request": [
+                "txn_bank",
+                "txn_addr",
+                "txn_is_write",
+                "txn_wdata"
+              ],
+              "enqueue_valid": [
+                "txn_valid"
+              ],
+              "cmd_ready": [
+                "execution_ready"
+              ],
+              "rsp_valid": [
+                "memory_rsp_valid"
+              ],
+              "rsp_rdata": [
+                "memory_rsp_data"
+              ]
+            },
+            "invariants": [
+              "execution.rules.EXEC_READY",
+              "execution.rules.EXEC_RESPONSE",
+              "system.rules.BASE_ADDRESS",
+              "system.rules.BASE_DATA",
+              "system.rules.BASE_HOST",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_RESET",
+              "system.rules.CONSTRAINT_1",
+              "system.rules.CONSTRAINT_12",
+              "system.rules.CONSTRAINT_2",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R4",
+              "system.rules.R6",
+              "system.rules.R9"
+            ],
+            "verification": [
+              "execution.verification.X_READY",
+              "execution.verification.X_RESPONSE",
+              "system.verification.V_ADDRESS",
+              "system.verification.V_DIAGNOSTIC",
+              "system.verification.V_EXPORT",
+              "system.verification.V_HOST",
+              "system.verification.V_IDENTITY",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_MEMORY",
+              "system.verification.V_RESET"
+            ]
+          },
+          "waiting_queue": {
+            "status": "draft",
+            "role": "request_storage",
+            "owned_state": {
+              "entries": "Ordered waiting requests with capacity shared.parameters.WAITING_CAPACITY.",
+              "occupancy": "Registered count of admitted and undispatched requests."
+            },
+            "interfaces": {
+              "enqueue_request": {
+                "direction": "input",
+                "type": "shared.types.request"
+              },
+              "enqueue_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "enqueue_ready": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "head_request": {
+                "direction": "output",
+                "type": "shared.types.request"
+              },
+              "head_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "head_take": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "admission": "Accept enqueue_request when enqueue_valid and enqueue_ready are high.",
+              "dispatch": "A pre-edge valid head is removed only when head_take is high. Dispatch uses the pre-edge head payload."
+            },
+            "reset": "Synchronously clear occupancy and stored entries. Gate enqueue_ready and head_valid low during reset and drive invalid head_request to zero.",
+            "update_events": {
+              "shared.events.admission": "Append the complete captured request after older entries.",
+              "shared.events.dispatch": "Remove exactly the pre-edge head after its payload is captured by active ownership."
+            },
+            "stalls": "Stored entries and head payload remain stable until dispatch or reset. Tail admission cannot alter a stalled head.",
+            "simultaneous_events": {
+              "enqueue_and_dispatch": "Read old head, remove it, then append the admitted request. Occupancy is unchanged, including at full capacity and capacity one.",
+              "enqueue_when_empty": "Append only; no dispatch occurs because pre-edge head_valid is low.",
+              "reset_and_events": "Reset wins.",
+              "take_when_empty": "head_take alone does not remove storage."
+            },
+            "combinational_dependencies": {
+              "enqueue_ready": [
+                "head_take"
+              ],
+              "head_request": [],
+              "head_valid": []
+            },
+            "invariants": [
+              "execution.rules.EXEC_READY",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_QUEUE",
+              "system.rules.BASE_RESET",
+              "system.rules.CONSTRAINT_11",
+              "system.rules.CONSTRAINT_5",
+              "system.rules.R1",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R2",
+              "system.rules.R4",
+              "system.rules.SYS_SIMULTANEOUS",
+              "system.rules.SYS_STORAGE"
+            ],
+            "verification": [
+              "execution.verification.X_READY",
+              "system.verification.V_CAPACITY",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_EXACTLY_ONCE",
+              "system.verification.V_EXPORT",
+              "system.verification.V_FIFO",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_MEMORY",
+              "system.verification.V_PAGE",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET"
+            ]
+          },
+          "fifo_scheduler": {
+            "status": "draft",
+            "role": "request_selection",
+            "owned_state": {},
+            "interfaces": {
+              "head_request": {
+                "direction": "input",
+                "type": "shared.types.request"
+              },
+              "head_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "dispatch_ready": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "dispatch_request": {
+                "direction": "output",
+                "type": "shared.types.request"
+              },
+              "dispatch_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "head_take": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "selection": "dispatch_valid follows head_valid independently of timing permission.",
+              "dispatch": "shared.events.dispatch uses dispatch_valid and dispatch_ready. head_take mirrors dispatch_ready with reset gating and is qualified by queue head validity at the storage owner."
+            },
+            "reset": "Gate dispatch_valid and head_take low while rst_n is low. No state is owned.",
+            "update_events": {},
+            "stalls": "Continue presenting the FIFO head while blocked. The queue preserves its payload.",
+            "simultaneous_events": {
+              "admission_and_dispatch": "The queue provides old-head dispatch and tail insertion semantics.",
+              "reset_and_events": "Reset suppresses dispatch."
+            },
+            "combinational_dependencies": {
+              "dispatch_request": [
+                "head_request"
+              ],
+              "dispatch_valid": [
+                "head_valid"
+              ],
+              "head_take": [
+                "dispatch_ready"
+              ]
+            },
+            "invariants": [
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_POLICY",
+              "system.rules.BASE_QUEUE",
+              "system.rules.BASE_RESET",
+              "system.rules.CONSTRAINT_5",
+              "system.rules.R1",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R2",
+              "system.rules.R4"
+            ],
+            "verification": [
+              "system.verification.V_CAPACITY",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_EXACTLY_ONCE",
+              "system.verification.V_EXPORT",
+              "system.verification.V_FIFO",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_PAGE",
+              "system.verification.V_RESET"
+            ]
+          },
+          "command_engine": {
+            "status": "draft",
+            "role": "command_sequencing",
+            "owned_state": {
+              "active_request": "One dispatched complete request retained through final READ or WRITE commit.",
+              "candidate": "Registered valid bit and shared.types.command proposal.",
+              "cleanup_reservation": "Optional retired close-page bank awaiting its committed PRE.",
+              "refresh_preparation": "Registered control ownership for ascending-bank PRE preparation and REF creation."
+            },
+            "interfaces": {
+              "dispatch_request": {
+                "direction": "input",
+                "type": "shared.types.request"
+              },
+              "dispatch_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "dispatch_ready": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "incoming_request": {
+                "direction": "input",
+                "type": "shared.types.request"
+              },
+              "open_rows": {
+                "direction": "input",
+                "type": "shared.types.bank_rows"
+              },
+              "open_valid": {
+                "direction": "input",
+                "type": "shared.types.bank_valid"
+              },
+              "refresh_pending": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "refresh_busy": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "candidate_ok": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "probe_ok": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "candidate_command": {
+                "direction": "output",
+                "type": "shared.types.command"
+              },
+              "candidate_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "commit_command": {
+                "direction": "output",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "probe_command": {
+                "direction": "output",
+                "type": "shared.types.command"
+              },
+              "probe_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "execution_ready": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "dispatch": "Accept exactly one FIFO head only when registered active ownership, candidate storage, cleanup reservation, refresh preparation, pending refresh, and refresh service are absent. Pending refresh always inhibits dispatch before refresh-preparation control work.",
+              "commit": "candidate_command is canonical. commit_command mirrors it. commit_valid requires reset inactive, candidate_valid, candidate_ok, and a non-NOP nonreserved opcode.",
+              "probe": "probe_command is the independently computed first command for incoming_request and registered row state regardless of probe_valid. probe_valid and execution_ready are asserted only when registered engine-idle conditions hold: no active request, no candidate, no cleanup reservation, no refresh preparation, no pending refresh, and no refresh service. Thus diagnostic readiness cannot assert during active service, candidate occupancy, cleanup, or refresh control."
+            },
+            "reset": "Synchronously clear active, candidate, cleanup, and refresh-preparation ownership. While reset is low, suppress dispatch_ready, candidate_valid, commit_valid, probe_valid, and execution_ready. Drive candidate_command, commit_command, and probe_command to zero NOP.",
+            "update_events": {
+              "shared.events.dispatch": "Capture dispatch_request into active ownership only; do not create a candidate on the dispatch edge.",
+              "shared.events.command_commit": "Clear the committed candidate. ACT and PRE retain active ownership; READ or WRITE retires active ownership and creates close-page cleanup reservation when selected. Cleanup PRE clears cleanup reservation. REF completes refresh preparation.",
+              "every_clock": "When no candidate exists, create only one later candidate according to locked priority: active service first, then cleanup PRE, then pending-refresh preparation PRE for the lowest-index open bank or REF when all banks are closed. No creation occurs on a commit edge and no same-edge replacement occurs."
+            },
+            "stalls": "A blocked valid candidate and active request remain unchanged. No dispatch occurs during pending refresh, refresh preparation, refresh service, cleanup, or active ownership.",
+            "simultaneous_events": {
+              "reset_and_events": "Reset wins.",
+              "candidate_and_other_progress": "An outstanding candidate holds or commits before nonreset progress.",
+              "refresh_pending_and_dispatch": "Pre-edge refresh_pending inhibits dispatch; refresh preparation is selected instead only on a later eligible candidate-creation edge.",
+              "due_and_REF": "A simultaneous due condition leaves refresh pending asserted after REF acknowledgment.",
+              "retirement_and_dispatch": "Dispatch is not permitted because active ownership existed before the edge."
+            },
+            "combinational_dependencies": {
+              "dispatch_ready": [
+                "dispatch_valid",
+                "refresh_pending",
+                "refresh_busy"
+              ],
+              "candidate_command": [],
+              "candidate_valid": [],
+              "commit_command": [],
+              "commit_valid": [
+                "candidate_ok"
+              ],
+              "probe_command": [
+                "incoming_request",
+                "open_rows",
+                "open_valid"
+              ],
+              "probe_valid": [
+                "refresh_pending",
+                "refresh_busy"
+              ],
+              "execution_ready": [
+                "probe_ok",
+                "refresh_pending",
+                "refresh_busy"
+              ]
+            },
+            "dependency_note": "candidate_valid, probe_valid, execution_ready, and dispatch_ready additionally depend on registered engine ownership described in owned_state; registered-state terms add no current-cycle input dependencies.",
+            "invariants": [
+              "execution.rules.EXEC_BANK_STATE",
+              "execution.rules.EXEC_CLEANUP",
+              "execution.rules.EXEC_COMMIT",
+              "execution.rules.EXEC_CONTROL_CREATION",
+              "execution.rules.EXEC_PAYLOAD",
+              "execution.rules.EXEC_READY",
+              "execution.rules.EXEC_REFRESH",
+              "system.rules.BASE_LEGALITY",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_POLICY",
+              "system.rules.BASE_QUEUE",
+              "system.rules.BASE_REFRESH",
+              "system.rules.BASE_RESET",
+              "system.rules.BASE_SEQUENCE",
+              "system.rules.CONSTRAINT_10",
+              "system.rules.CONSTRAINT_3",
+              "system.rules.CONSTRAINT_4",
+              "system.rules.R1",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R12",
+              "system.rules.R13",
+              "system.rules.R2",
+              "system.rules.R3",
+              "system.rules.R4",
+              "system.rules.R7",
+              "system.rules.R8",
+              "system.rules.R9",
+              "system.rules.SYS_CONTROL_PRIORITY",
+              "system.rules.SYS_SIMULTANEOUS",
+              "system.rules.SYS_STORAGE"
+            ],
+            "verification": [
+              "execution.verification.X_BANK",
+              "execution.verification.X_CLEANUP",
+              "execution.verification.X_COMMIT",
+              "execution.verification.X_CONTROL",
+              "execution.verification.X_PAYLOAD",
+              "execution.verification.X_READY",
+              "execution.verification.X_REFRESH",
+              "system.verification.V_CANDIDATE",
+              "system.verification.V_CAPACITY",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_DIAGNOSTIC",
+              "system.verification.V_EXACTLY_ONCE",
+              "system.verification.V_EXPORT",
+              "system.verification.V_FIFO",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_MEMORY",
+              "system.verification.V_PAGE",
+              "system.verification.V_PAYLOAD",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET",
+              "system.verification.V_SEQUENCE",
+              "system.verification.V_TIMING"
+            ]
+          },
+          "row_state": {
+            "status": "draft",
+            "role": "bank_state",
+            "owned_state": {
+              "rows": "Per-bank registered row values and validity bits."
+            },
+            "interfaces": {
+              "commit_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "open_rows": {
+                "direction": "output",
+                "type": "shared.types.bank_rows"
+              },
+              "open_valid": {
+                "direction": "output",
+                "type": "shared.types.bank_valid"
+              }
+            },
+            "handshakes": {
+              "commit": "Sample the common committed command only when commit_valid is high."
+            },
+            "reset": "Synchronously clear row values and validity. Gate open_valid low while reset is asserted.",
+            "update_events": {
+              "shared.events.command_commit": "Committed ACT opens and records its bank row, PRE closes its bank, and REF clears every bank. READ and WRITE retain rows."
+            },
+            "stalls": "Retain all row state unless a responsible command commits.",
+            "simultaneous_events": {
+              "reset_and_commit": "Reset wins.",
+              "different_bank_updates": "Only one command commits per edge; REF is the only all-bank update."
+            },
+            "combinational_dependencies": {
+              "open_rows": [],
+              "open_valid": []
+            },
+            "invariants": [
+              "execution.rules.EXEC_BANK_STATE",
+              "execution.rules.EXEC_CLEANUP",
+              "execution.rules.EXEC_COMMIT",
+              "execution.rules.EXEC_CONTROL_CREATION",
+              "execution.rules.EXEC_PERMISSION",
+              "execution.rules.EXEC_REFRESH",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_POLICY",
+              "system.rules.BASE_REFRESH",
+              "system.rules.BASE_RESET",
+              "system.rules.BASE_SEQUENCE",
+              "system.rules.CONSTRAINT_12",
+              "system.rules.CONSTRAINT_3",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R3",
+              "system.rules.R4",
+              "system.rules.R5",
+              "system.rules.R7",
+              "system.rules.R8"
+            ],
+            "verification": [
+              "execution.verification.X_BANK",
+              "execution.verification.X_CLEANUP",
+              "execution.verification.X_COMMIT",
+              "execution.verification.X_CONTROL",
+              "execution.verification.X_PERMISSION",
+              "execution.verification.X_REFRESH",
+              "system.verification.V_ADDRESS",
+              "system.verification.V_CANDIDATE",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_EXPORT",
+              "system.verification.V_FIFO",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_MEMORY",
+              "system.verification.V_PAGE",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET",
+              "system.verification.V_SEQUENCE",
+              "system.verification.V_TIMING"
+            ]
+          },
+          "timing_enforcer": {
+            "status": "draft",
+            "role": "timing_enforcement",
+            "owned_state": {
+              "bank_history": "Registered ACT and PRE timing history per bank.",
+              "global_history": "Registered global ACT, REF, and tFAW activation-window history."
+            },
+            "interfaces": {
+              "candidate_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "candidate_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "probe_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "probe_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "open_rows": {
+                "direction": "input",
+                "type": "shared.types.bank_rows"
+              },
+              "open_valid": {
+                "direction": "input",
+                "type": "shared.types.bank_valid"
+              },
+              "commit_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "candidate_ok": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "probe_ok": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "permission": "Permission uses only pre-edge registered bank and timing history plus the independent query. Invalid, NOP, reserved, row-illegal, and timing-illegal queries are denied.",
+              "history": "Only shared.events.command_commit inserts ACT, PRE, or REF history. Probes and stalled candidates never alter history."
+            },
+            "reset": "Synchronously clear all history-valid state and gate permission outputs low while reset is asserted.",
+            "update_events": {
+              "every_clock": "Age and expire histories through idle and stalled cycles according to the selected timing bindings.",
+              "shared.events.command_commit": "Committed ACT updates bank and global ACT history; PRE updates bank PRE history; REF starts global tRFC history."
+            },
+            "stalls": "Elapsed time advances but no candidate or probe causes insertion.",
+            "simultaneous_events": {
+              "expiration_and_commit": "Permission observes pre-edge histories. Expiration and insertion are applied after permission evaluation.",
+              "probe_and_commit": "Probe evaluates pre-edge history and row state only.",
+              "reset_and_commit": "Reset wins."
+            },
+            "combinational_dependencies": {
+              "candidate_ok": [
+                "candidate_command",
+                "candidate_valid",
+                "open_rows",
+                "open_valid"
+              ],
+              "probe_ok": [
+                "probe_command",
+                "probe_valid",
+                "open_rows",
+                "open_valid"
+              ]
+            },
+            "invariants": [
+              "execution.rules.EXEC_COMMIT",
+              "execution.rules.EXEC_PERMISSION",
+              "execution.rules.EXEC_READY",
+              "execution.rules.EXEC_REFRESH",
+              "system.rules.BASE_LEGALITY",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_REFRESH",
+              "system.rules.BASE_RESET",
+              "system.rules.BASE_TFAW",
+              "system.rules.BASE_TIMING",
+              "system.rules.BASE_TRRD",
+              "system.rules.CONSTRAINT_6",
+              "system.rules.CONSTRAINT_7",
+              "system.rules.CONSTRAINT_8",
+              "system.rules.CONSTRAINT_9",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R13",
+              "system.rules.R4",
+              "system.rules.R5",
+              "system.rules.R8",
+              "system.rules.R9"
+            ],
+            "verification": [
+              "execution.verification.X_COMMIT",
+              "execution.verification.X_PERMISSION",
+              "execution.verification.X_READY",
+              "execution.verification.X_REFRESH",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_DIAGNOSTIC",
+              "system.verification.V_EXPORT",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_PAYLOAD",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET",
+              "system.verification.V_TIMING"
+            ]
+          },
+          "functional_memory": {
+            "status": "draft",
+            "role": "functional_memory_and_responses",
+            "owned_state": {
+              "words": "BANK_COUNT banks of MEMORY_WORDS_PER_BANK shared.types.data words.",
+              "response": "One registered response data and valid slot."
+            },
+            "interfaces": {
+              "commit_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "rsp_valid": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "rsp_data": {
+                "direction": "output",
+                "type": "shared.types.data"
+              }
+            },
+            "handshakes": {
+              "commit": "Sample common command only on commit_valid.",
+              "response": "A committed READ captures pre-edge word data at E and exposes registered valid/data for host sampling at E+1. Writes produce no response."
+            },
+            "reset": "Synchronously zero memory words, response data, and response validity. Gate rsp_valid low while reset is asserted.",
+            "update_events": {
+              "shared.events.command_commit": "Committed WRITE updates only its addressed word. Committed READ captures the pre-edge addressed word into response storage.",
+              "shared.events.response_delivery": "Clear response validity unless a simultaneous committed READ replaces the response slot."
+            },
+            "stalls": "No command or response backpressure is generated. Captured response survives active release, cleanup, and refresh.",
+            "simultaneous_events": {
+              "delivery_and_READ": "Deliver pre-edge response before replacing response storage with new read data.",
+              "delivery_and_WRITE": "Deliver old response and update memory independently.",
+              "reset_and_events": "Reset wins without mutation or delivery."
+            },
+            "combinational_dependencies": {
+              "rsp_valid": [],
+              "rsp_data": []
+            },
+            "invariants": [
+              "execution.rules.EXEC_COMMIT",
+              "execution.rules.EXEC_RESPONSE",
+              "system.rules.BASE_ADDRESS",
+              "system.rules.BASE_DATA",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_RESET",
+              "system.rules.CONSTRAINT_12",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R4",
+              "system.rules.R6",
+              "system.rules.SYS_SIMULTANEOUS",
+              "system.rules.SYS_STORAGE"
+            ],
+            "verification": [
+              "execution.verification.X_COMMIT",
+              "execution.verification.X_RESPONSE",
+              "system.verification.V_ADDRESS",
+              "system.verification.V_CAPACITY",
+              "system.verification.V_EXACTLY_ONCE",
+              "system.verification.V_EXPORT",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_MEMORY",
+              "system.verification.V_PAGE",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET"
+            ]
+          },
+          "refresh_control": {
+            "status": "draft",
+            "role": "refresh_control",
+            "owned_state": {
+              "deadline": "Periodic deadline relative to the last reset-sampled edge.",
+              "pending": "Sticky coalesced refresh request.",
+              "service": "Registered REF service exclusion interval."
+            },
+            "interfaces": {
+              "commit_command": {
+                "direction": "input",
+                "type": "shared.types.command"
+              },
+              "commit_valid": {
+                "direction": "input",
+                "type": "shared.types.bit"
+              },
+              "refresh_pending": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              },
+              "refresh_busy": {
+                "direction": "output",
+                "type": "shared.types.bit"
+              }
+            },
+            "handshakes": {
+              "request": "refresh_pending is level-sensitive and remains asserted until REF acknowledgment unless a simultaneous deadline reasserts it.",
+              "acknowledgment": "shared.events.refresh_start, a committed REF, is the sole acknowledgment path."
+            },
+            "reset": "Synchronously clear deadline, pending, and service state; rebase the first deadline from the reset-sampled edge. Gate outputs low while reset is asserted.",
+            "update_events": {
+              "shared.events.refresh_due": "Set pending and advance the periodic deadline by tREFI.",
+              "shared.events.refresh_start": "Start tRFC service and clear pending unless refresh_due occurs on the same edge.",
+              "shared.events.refresh_end": "End service exclusion while retaining independently accumulated pending."
+            },
+            "stalls": "Deadlines advance through active work, cleanup, timing stalls, and refresh service. No request storage is owned.",
+            "simultaneous_events": {
+              "due_and_REF": "Due wins pending update; REF starts exactly one service interval.",
+              "due_and_service_end": "Service ends but newly or previously pending refresh remains asserted.",
+              "reset_and_events": "Reset wins."
+            },
+            "combinational_dependencies": {
+              "refresh_pending": [],
+              "refresh_busy": []
+            },
+            "invariants": [
+              "execution.rules.EXEC_COMMIT",
+              "execution.rules.EXEC_CONTROL_CREATION",
+              "execution.rules.EXEC_REFRESH",
+              "system.rules.BASE_MODULARITY",
+              "system.rules.BASE_REFRESH",
+              "system.rules.BASE_RESET",
+              "system.rules.CONSTRAINT_4",
+              "system.rules.CONSTRAINT_8",
+              "system.rules.R10",
+              "system.rules.R11",
+              "system.rules.R4",
+              "system.rules.R8",
+              "system.rules.SYS_SIMULTANEOUS"
+            ],
+            "verification": [
+              "execution.verification.X_COMMIT",
+              "execution.verification.X_CONTROL",
+              "execution.verification.X_REFRESH",
+              "system.verification.V_CAPACITY",
+              "system.verification.V_CONFIGURATION",
+              "system.verification.V_EXPORT",
+              "system.verification.V_ISOLATION",
+              "system.verification.V_REFRESH",
+              "system.verification.V_RESET"
+            ]
+          }
+        }
+      },
+      "graph": {
+        "graph_id": "ddr4_controller_fresh_structural",
+        "clock_reset": {
+          "definition": "shared.clock_reset",
+          "clock_source": "top.clk",
+          "reset_source": "top.rst_n",
+          "consumers": [
+            "host_adapter",
+            "waiting_queue",
+            "fifo_scheduler",
+            "command_engine",
+            "row_state",
+            "timing_enforcer",
+            "functional_memory",
+            "refresh_control"
+          ]
+        },
+        "connections": {
+          "top.txn_valid": [
+            "host_adapter.txn_valid"
+          ],
+          "top.txn_is_write": [
+            "host_adapter.txn_is_write"
+          ],
+          "top.txn_addr": [
+            "host_adapter.txn_addr"
+          ],
+          "top.txn_wdata": [
+            "host_adapter.txn_wdata"
+          ],
+          "top.txn_bank": [
+            "host_adapter.txn_bank"
+          ],
+          "host_adapter.txn_ready": [
+            "top.txn_ready"
+          ],
+          "host_adapter.cmd_ready": [
+            "top.cmd_ready"
+          ],
+          "host_adapter.rsp_valid": [
+            "top.rsp_valid"
+          ],
+          "host_adapter.rsp_rdata": [
+            "top.rsp_rdata"
+          ],
+          "host_adapter.incoming_request": [
+            "waiting_queue.enqueue_request",
+            "command_engine.incoming_request"
+          ],
+          "host_adapter.enqueue_valid": [
+            "waiting_queue.enqueue_valid"
+          ],
+          "waiting_queue.enqueue_ready": [
+            "host_adapter.queue_ready"
+          ],
+          "waiting_queue.head_request": [
+            "fifo_scheduler.head_request"
+          ],
+          "waiting_queue.head_valid": [
+            "fifo_scheduler.head_valid"
+          ],
+          "fifo_scheduler.head_take": [
+            "waiting_queue.head_take"
+          ],
+          "fifo_scheduler.dispatch_request": [
+            "command_engine.dispatch_request"
+          ],
+          "fifo_scheduler.dispatch_valid": [
+            "command_engine.dispatch_valid"
+          ],
+          "command_engine.dispatch_ready": [
+            "fifo_scheduler.dispatch_ready"
+          ],
+          "command_engine.candidate_command": [
+            "timing_enforcer.candidate_command"
+          ],
+          "command_engine.candidate_valid": [
+            "timing_enforcer.candidate_valid"
+          ],
+          "timing_enforcer.candidate_ok": [
+            "command_engine.candidate_ok"
+          ],
+          "command_engine.probe_command": [
+            "timing_enforcer.probe_command"
+          ],
+          "command_engine.probe_valid": [
+            "timing_enforcer.probe_valid"
+          ],
+          "timing_enforcer.probe_ok": [
+            "command_engine.probe_ok"
+          ],
+          "command_engine.execution_ready": [
+            "host_adapter.execution_ready"
+          ],
+          "command_engine.commit_command": [
+            "row_state.commit_command",
+            "timing_enforcer.commit_command",
+            "functional_memory.commit_command",
+            "refresh_control.commit_command"
+          ],
+          "command_engine.commit_valid": [
+            "row_state.commit_valid",
+            "timing_enforcer.commit_valid",
+            "functional_memory.commit_valid",
+            "refresh_control.commit_valid"
+          ],
+          "row_state.open_rows": [
+            "command_engine.open_rows",
+            "timing_enforcer.open_rows"
+          ],
+          "row_state.open_valid": [
+            "command_engine.open_valid",
+            "timing_enforcer.open_valid"
+          ],
+          "refresh_control.refresh_pending": [
+            "command_engine.refresh_pending"
+          ],
+          "refresh_control.refresh_busy": [
+            "command_engine.refresh_busy"
+          ],
+          "functional_memory.rsp_valid": [
+            "host_adapter.memory_rsp_valid"
+          ],
+          "functional_memory.rsp_data": [
+            "host_adapter.memory_rsp_data"
+          ]
+        },
+        "presence": {},
+        "integration": "The top is structural only. All functional behavior is owned by contracts. Shared clock and reset are implicit child inputs and are not duplicated in ordinary connections."
+      },
+      "verification": {
+        "binding_version": 1,
+        "sampling": {
+          "phase": "pre_edge",
+          "reset_gates_events": true
+        },
+        "events": {
+          "admission": {
+            "status": "bound",
+            "when": {
+              "all": [
+                {
+                  "endpoint": "top.txn_valid",
+                  "equals": 1
+                },
+                {
+                  "endpoint": "top.txn_ready",
+                  "equals": 1
+                }
+              ]
+            },
+            "payload": {
+              "request": {
+                "endpoint": "host_adapter.incoming_request"
+              }
+            }
+          },
+          "dispatch": {
+            "status": "bound",
+            "when": {
+              "all": [
+                {
+                  "endpoint": "fifo_scheduler.dispatch_valid",
+                  "equals": 1
+                },
+                {
+                  "endpoint": "command_engine.dispatch_ready",
+                  "equals": 1
+                }
+              ]
+            },
+            "payload": {
+              "request": {
+                "endpoint": "fifo_scheduler.dispatch_request"
+              }
+            }
+          },
+          "command_commit": {
+            "status": "bound",
+            "when": {
+              "endpoint": "command_engine.commit_valid",
+              "equals": 1
+            },
+            "payload": {
+              "command": {
+                "endpoint": "command_engine.commit_command"
+              }
+            }
+          },
+          "retirement": {
+            "status": "bound",
+            "when": {
+              "all": [
+                {
+                  "endpoint": "command_engine.commit_valid",
+                  "equals": 1
+                },
+                {
+                  "any": [
+                    {
+                      "endpoint": "command_engine.commit_command",
+                      "field": "opcode",
+                      "equals": "READ"
+                    },
+                    {
+                      "endpoint": "command_engine.commit_command",
+                      "field": "opcode",
+                      "equals": "WRITE"
+                    }
+                  ]
+                }
+              ]
+            },
+            "payload": {
+              "command": {
+                "endpoint": "command_engine.commit_command"
+              }
+            }
+          },
+          "response_delivery": {
+            "status": "bound",
+            "when": {
+              "endpoint": "top.rsp_valid",
+              "equals": 1
+            },
+            "payload": {
+              "data": {
+                "endpoint": "top.rsp_rdata"
+              }
+            }
+          },
+          "refresh_start": {
+            "status": "bound",
+            "when": {
+              "all": [
+                {
+                  "endpoint": "command_engine.commit_valid",
+                  "equals": 1
+                },
+                {
+                  "endpoint": "command_engine.commit_command",
+                  "field": "opcode",
+                  "equals": "REF"
+                }
+              ]
+            },
+            "payload": {
+              "command": {
+                "endpoint": "command_engine.commit_command"
+              }
+            }
+          },
+          "refresh_due": {
+            "status": "unbound",
+            "reason": "Deadline state is internal. Independent checks derive tREFI deadlines from reset epochs and observe refresh_pending transitions and REF acknowledgments."
+          },
+          "refresh_end": {
+            "status": "unbound",
+            "reason": "No service-end pulse is externally exposed. Independent checks derive tRFC completion and observe refresh_busy."
+          },
+          "candidate_create": {
+            "status": "unbound",
+            "reason": "Candidate creation is internal registered ownership. Checks observe candidate payload and valid behavior across dispatch, commit, and stalls."
+          },
+          "cleanup_candidate_create": {
+            "status": "unbound",
+            "reason": "Cleanup control creation is internal. Checks infer it from committed retirement, candidate behavior, row state, and dispatch inhibition."
+          },
+          "refresh_candidate_create": {
+            "status": "unbound",
+            "reason": "Refresh preparation creation is internal. Checks infer ordered PRE and REF candidates from pending state and committed command traces."
+          }
+        },
+        "observations": {
+          "host_ready": {
+            "endpoint": "top.txn_ready"
+          },
+          "cmd_ready": {
+            "endpoint": "top.cmd_ready"
+          },
+          "incoming_request": {
+            "endpoint": "host_adapter.incoming_request"
+          },
+          "dispatch_ready": {
+            "endpoint": "command_engine.dispatch_ready"
+          },
+          "candidate_valid": {
+            "endpoint": "command_engine.candidate_valid"
+          },
+          "candidate_command": {
+            "endpoint": "command_engine.candidate_command"
+          },
+          "candidate_ok": {
+            "endpoint": "timing_enforcer.candidate_ok"
+          },
+          "probe_valid": {
+            "endpoint": "command_engine.probe_valid"
+          },
+          "probe_command": {
+            "endpoint": "command_engine.probe_command"
+          },
+          "probe_ok": {
+            "endpoint": "timing_enforcer.probe_ok"
+          },
+          "open_valid": {
+            "endpoint": "row_state.open_valid"
+          },
+          "open_rows": {
+            "endpoint": "row_state.open_rows"
+          },
+          "refresh_pending": {
+            "endpoint": "refresh_control.refresh_pending"
+          },
+          "refresh_busy": {
+            "endpoint": "refresh_control.refresh_busy"
+          }
+        },
+        "checks": {
+          "system.verification.V_ADDRESS": {
+            "scope": "both",
+            "events": [
+              "admission"
+            ],
+            "observations": [
+              "incoming_request"
+            ],
+            "note": "Check compact host address mapping and request field packing independently."
+          },
+          "system.verification.V_CANDIDATE": {
+            "scope": "both",
+            "events": [
+              "dispatch",
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok",
+              "refresh_pending"
+            ],
+            "note": "Check later-edge creation, blocked hold, commit clear, no same-edge replacement, and control priority."
+          },
+          "system.verification.V_CAPACITY": {
+            "scope": "both",
+            "events": [
+              "admission",
+              "dispatch",
+              "retirement"
+            ],
+            "observations": [
+              "host_ready",
+              "dispatch_ready"
+            ],
+            "note": "Reconstruct waiting occupancy from event history and verify separate active capacity."
+          },
+          "system.verification.V_CONFIGURATION": {
+            "scope": "system",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "refresh_pending",
+              "refresh_busy"
+            ],
+            "note": "Inspect selected configuration, profile bindings, and declared policy behavior."
+          },
+          "system.verification.V_DIAGNOSTIC": {
+            "scope": "both",
+            "events": [
+              "admission",
+              "dispatch",
+              "command_commit"
+            ],
+            "observations": [
+              "cmd_ready",
+              "probe_valid",
+              "probe_command",
+              "probe_ok",
+              "candidate_valid",
+              "refresh_pending",
+              "refresh_busy"
+            ],
+            "note": "Verify diagnostic readiness is idle-only, side-effect-free, and meaningful without txn_valid."
+          },
+          "system.verification.V_EXACTLY_ONCE": {
+            "scope": "system",
+            "events": [
+              "admission",
+              "dispatch",
+              "retirement"
+            ],
+            "observations": [],
+            "note": "Compare admitted, dispatched, and retired request sequences within reset-free epochs."
+          },
+          "system.verification.V_EXPORT": {
+            "scope": "system",
+            "events": [
+              "admission"
+            ],
+            "observations": [],
+            "note": "Inspect declared requirement IDs, scenarios, events, interfaces, and planned status without claiming execution."
+          },
+          "system.verification.V_FIFO": {
+            "scope": "both",
+            "events": [
+              "admission",
+              "dispatch",
+              "retirement"
+            ],
+            "observations": [],
+            "note": "Compare accepted and dispatched complete payload ordering."
+          },
+          "system.verification.V_HOST": {
+            "scope": "both",
+            "events": [
+              "admission"
+            ],
+            "observations": [
+              "host_ready",
+              "cmd_ready",
+              "incoming_request"
+            ],
+            "note": "Check valid-ready admission and distinction between txn_ready and cmd_ready."
+          },
+          "system.verification.V_IDENTITY": {
+            "scope": "system",
+            "events": [
+              "admission"
+            ],
+            "observations": [],
+            "note": "Inspect declared design identity and kind."
+          },
+          "system.verification.V_ISOLATION": {
+            "scope": "system",
+            "events": [
+              "dispatch",
+              "command_commit"
+            ],
+            "observations": [],
+            "note": "Inspect distinct functional owners and structural-only integration."
+          },
+          "system.verification.V_MEMORY": {
+            "scope": "both",
+            "events": [
+              "command_commit",
+              "response_delivery"
+            ],
+            "observations": [],
+            "note": "Maintain independent banked-memory reference contents and response expectations."
+          },
+          "system.verification.V_PAGE": {
+            "scope": "both",
+            "events": [
+              "retirement",
+              "command_commit",
+              "dispatch"
+            ],
+            "observations": [
+              "open_valid",
+              "open_rows",
+              "candidate_valid",
+              "candidate_command",
+              "dispatch_ready",
+              "refresh_pending"
+            ],
+            "note": "Check open-page retention and close-page cleanup reservation behavior."
+          },
+          "system.verification.V_PAYLOAD": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok",
+              "probe_valid",
+              "probe_command"
+            ],
+            "note": "Check canonical invalid NOP payload, commit mirroring, held blocked payload, and independent probe payload."
+          },
+          "system.verification.V_REFRESH": {
+            "scope": "both",
+            "events": [
+              "command_commit",
+              "dispatch",
+              "retirement",
+              "refresh_start"
+            ],
+            "observations": [
+              "refresh_pending",
+              "refresh_busy",
+              "candidate_valid",
+              "candidate_command",
+              "dispatch_ready",
+              "open_valid"
+            ],
+            "note": "Check pending dispatch inhibition, drain, ordered preparation, REF, tRFC exclusion, and resumption."
+          },
+          "system.verification.V_RESET": {
+            "scope": "both",
+            "events": [
+              "admission",
+              "dispatch",
+              "command_commit",
+              "response_delivery"
+            ],
+            "observations": [
+              "host_ready",
+              "cmd_ready",
+              "candidate_valid",
+              "open_valid",
+              "refresh_pending",
+              "refresh_busy"
+            ],
+            "note": "Assert reset across visible conditions and verify gating and cancellation."
+          },
+          "system.verification.V_SEQUENCE": {
+            "scope": "both",
+            "events": [
+              "dispatch",
+              "command_commit",
+              "retirement"
+            ],
+            "observations": [
+              "candidate_command",
+              "candidate_valid",
+              "open_valid",
+              "open_rows"
+            ],
+            "note": "Independently predict ACT/access and PRE/ACT/access sequences."
+          },
+          "system.verification.V_TIMING": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok",
+              "probe_valid",
+              "probe_command",
+              "probe_ok",
+              "open_valid",
+              "open_rows"
+            ],
+            "note": "Check profile timing boundaries, committed-history-only updates, tRRD, and tFAW."
+          },
+          "execution.verification.X_BANK": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "open_valid",
+              "open_rows"
+            ],
+            "note": "Compare architectural row state only against committed ACT, PRE, and REF operations."
+          },
+          "execution.verification.X_CLEANUP": {
+            "scope": "both",
+            "events": [
+              "retirement",
+              "command_commit",
+              "dispatch"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "dispatch_ready",
+              "refresh_pending"
+            ],
+            "note": "Check distinct close-page cleanup PRE lifecycle and refresh wait."
+          },
+          "execution.verification.X_COMMIT": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok"
+            ],
+            "note": "Check legal one-command commit and absence of effects from noncommits."
+          },
+          "execution.verification.X_CONTROL": {
+            "scope": "both",
+            "events": [
+              "retirement",
+              "command_commit",
+              "dispatch"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "refresh_pending",
+              "dispatch_ready",
+              "open_valid"
+            ],
+            "note": "Check cleanup and refresh control creation independently of active ownership."
+          },
+          "execution.verification.X_PAYLOAD": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok",
+              "probe_valid",
+              "probe_command"
+            ],
+            "note": "Check reset and invalid payload behavior and permission-independent commit payload."
+          },
+          "execution.verification.X_PERMISSION": {
+            "scope": "both",
+            "events": [
+              "command_commit"
+            ],
+            "observations": [
+              "candidate_valid",
+              "candidate_command",
+              "candidate_ok",
+              "open_valid",
+              "open_rows"
+            ],
+            "note": "Check pre-edge legality and exact timing eligibility boundaries."
+          },
+          "execution.verification.X_READY": {
+            "scope": "both",
+            "events": [
+              "admission",
+              "dispatch",
+              "command_commit"
+            ],
+            "observations": [
+              "host_ready",
+              "cmd_ready",
+              "probe_valid",
+              "probe_command",
+              "probe_ok",
+              "candidate_valid",
+              "refresh_pending",
+              "refresh_busy"
+            ],
+            "note": "Check admission capacity versus side-effect-free engine-idle diagnostic readiness."
+          },
+          "execution.verification.X_REFRESH": {
+            "scope": "both",
+            "events": [
+              "command_commit",
+              "dispatch",
+              "retirement",
+              "refresh_start"
+            ],
+            "observations": [
+              "refresh_pending",
+              "refresh_busy",
+              "candidate_valid",
+              "candidate_command",
+              "dispatch_ready",
+              "open_valid"
+            ],
+            "note": "Independently derive deadlines and verify drain, coalescing, REF, and exclusion."
+          },
+          "execution.verification.X_RESPONSE": {
+            "scope": "both",
+            "events": [
+              "command_commit",
+              "response_delivery"
+            ],
+            "observations": [],
+            "note": "Check one-cycle read response visibility, pre-edge read data, and no write response."
+          }
+        }
+      }
+    },
+    "timing_library": {
+      "DDR4-2400": {
+        "clock_frequency_mhz": 1200,
+        "tck_ns": 0.833,
+        "timing_ns": {
+          "tRCD": 13.75,
+          "tRP": 13.75,
+          "tRAS": 32.0,
+          "tRC": 45.75,
+          "tRRD": 3.333,
+          "tFAW": 25.0,
+          "tRFC1": 350.0,
+          "tREFI": 7800.0
+        },
+        "timing_cycles": {
+          "tRCD": 17,
+          "tRP": 17,
+          "tRAS": 39,
+          "tRC": 55,
+          "tRRD": 4,
+          "tFAW": 30,
+          "tRFC1": 420,
+          "tREFI": 9360
+        },
+        "cas_latency_options": [
+          17
+        ]
+      },
+      "DDR4-3200": {
+        "clock_frequency_mhz": 1600,
+        "tck_ns": 0.625,
+        "timing_ns": {
+          "tRCD": 13.75,
+          "tRP": 13.75,
+          "tRAS": 32.0,
+          "tRC": 45.75,
+          "tRRD": 3.333,
+          "tFAW": 25.0,
+          "tRFC1": 350.0,
+          "tREFI": 7800.0
+        },
+        "timing_cycles": {
+          "tRCD": 22,
+          "tRP": 22,
+          "tRAS": 52,
+          "tRC": 74,
+          "tRRD": 6,
+          "tFAW": 40,
+          "tRFC1": 560,
+          "tREFI": 12480
+        },
+        "cas_latency_options": [
+          22
+        ]
+      }
+    },
+    "overrides": {},
+    "profile": "DDR4-3200"
+  }
+}

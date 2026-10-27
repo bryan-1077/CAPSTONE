@@ -1,0 +1,7 @@
+{
+  "status": "stopped",
+  "stage": "system",
+  "semantic_cycles": 1,
+  "rtl_generation": "not_run",
+  "error": "Semantic review requires changes (scopes: ['architecture', 'system']); readiness: Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']. See local/frontend/microarch/proposals/clarity_20261024T055520Z/repair_20261025T214055Z/review/report.json"
+}

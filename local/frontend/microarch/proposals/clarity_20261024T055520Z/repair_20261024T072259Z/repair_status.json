@@ -1,0 +1,7 @@
+{
+  "status": "stopped",
+  "stage": "system",
+  "semantic_cycles": 1,
+  "rtl_generation": "not_run",
+  "error": "Specification LLM call failed (ConnectionError)"
+}

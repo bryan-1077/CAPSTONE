@@ -1,0 +1,147 @@
+slice_id: execution_rules
+rules:
+  EXEC_COMMIT:
+    origin: model_selected
+    statement: candidate_command is the canonical proposal. commit_command mirrors
+      it even when candidate_ok is low. commit_valid requires reset inactive, valid
+      candidate, permission, and non-NOP nonreserved opcode. At most one command commits
+      per edge and all consumers sample the same payload only on commit_valid.
+    verification:
+    - X_COMMIT
+    owners:
+    - command_engine
+  EXEC_BANK_STATE:
+    origin: model_selected
+    statement: Only committed ACT opens and records its bank row, committed PRE closes
+      its bank, and committed REF clears all rows after preparation. READ and WRITE
+      retain open rows. Probes, proposals, admissions, dispatches, and stalls do not
+      alter row state.
+    verification:
+    - X_BANK
+    owners:
+    - bank_state
+  EXEC_RESPONSE:
+    origin: model_selected
+    statement: 'READ commit at E captures pre-edge memory data and registers rsp_valid
+      and rsp_rdata for host sampling at E+1. Delivery and a new READ may share an
+      edge: the host samples the old response before replacement. Writes produce no
+      response.'
+    verification:
+    - X_RESPONSE
+    owners:
+    - functional_memory
+  EXEC_REFRESH:
+    origin: model_selected
+    statement: The first deadline is the last reset-sampled edge plus tREFI; later
+      deadlines advance by tREFI independently of REF. Pending is sticky. Pending
+      blocks dispatch and candidate creation after outstanding candidate or active
+      work resolves, drains cleanup, closes remaining open banks in ascending order,
+      waits all-bank tRP, commits REF once, and excludes commands strictly before
+      REF-edge+tRFC.
+    verification:
+    - X_REFRESH
+    owners:
+    - refresh_control
+  EXEC_CLEANUP:
+    origin: model_selected
+    statement: Open-page creates no cleanup reservation after retirement. Close-page
+      reserves the serviced bank until legal PRE commit, blocks dispatch, and does
+      not duplicate retirement or response. Refresh preparation waits for cleanup.
+    verification:
+    - X_CLEANUP
+    owners:
+    - command_engine
+  EXEC_PAYLOAD:
+    origin: model_selected
+    statement: candidate_command is zero NOP when candidate_valid is low. A blocked
+      valid candidate remains unchanged. probe_command is the combinational first-command
+      query from incoming mapped request and registered bank state even when probe
+      validity is low. Reset forces all command payloads to zero NOP.
+    verification:
+    - X_PAYLOAD
+    owners:
+    - command_engine
+  EXEC_PERMISSION:
+    origin: model_selected
+    statement: Permission uses registered timing history, registered bank state, independent
+      candidate, and selected bindings. ACT requires closed bank; READ/WRITE require
+      matching open row; PRE requires open bank; REF requires all banks closed and
+      all-bank tRP. Permission does not depend on same-edge commit or updates.
+    verification:
+    - X_PERMISSION
+    owners:
+    - timing_enforcement
+  EXEC_READY:
+    origin: model_selected
+    statement: txn_ready reflects only waiting admission capacity including same-edge
+      dispatch release. cmd_ready is reset-gated diagnostic first-command readiness
+      using independent row and timing probes while idle and permitted by cleanup
+      and refresh state. Neither diagnostic alters state.
+    verification:
+    - X_READY
+    owners:
+    - command_engine
+verification:
+  X_COMMIT:
+    rules:
+    - EXEC_COMMIT
+    scenario: Present legal commands, NOP, reserved opcodes, blocked candidates, and
+      simultaneous admissions.
+    expected: Only permitted legal candidates commit once per edge and noncommits
+      have no commit effects.
+    status: planned_not_executed
+  X_BANK:
+    rules:
+    - EXEC_BANK_STATE
+    scenario: Commit ACT, PRE, READ, WRITE, and REF across banks and compare with
+      stalled proposals.
+    expected: Only responsible committed operations alter row state.
+    status: planned_not_executed
+  X_RESPONSE:
+    rules:
+    - EXEC_RESPONSE
+    scenario: Commit consecutive reads, overlap delivery with a new READ, issue writes,
+      and reset during response visibility.
+    expected: Each READ yields exactly one E+1 sampled response with pre-edge data;
+      writes yield none.
+    status: planned_not_executed
+  X_REFRESH:
+    rules:
+    - EXEC_REFRESH
+    scenario: Run deadlines through active, stalled candidate, cleanup, multiple open
+      banks, tRFC exclusion, and due/REF coincidence.
+    expected: Pending coalesces without traffic loss; close order is ascending; no
+      command commits early after REF; service resumes afterward.
+    status: planned_not_executed
+  X_CLEANUP:
+    rules:
+    - EXEC_CLEANUP
+    scenario: Retire accesses under both page-policy values and assert refresh during
+      close-page cleanup.
+    expected: Open-page retains rows; close-page blocks dispatch until one legal PRE
+      and does not duplicate effects.
+    status: planned_not_executed
+  X_PAYLOAD:
+    rules:
+    - EXEC_PAYLOAD
+    scenario: Observe payloads while validity, permission, probe gating, refresh,
+      cleanup, and reset vary.
+    expected: Invalid and reset payloads are zero NOP, blocked candidate payload holds,
+      and probe payload is independently defined.
+    status: planned_not_executed
+  X_PERMISSION:
+    rules:
+    - EXEC_PERMISSION
+    scenario: Test every trigger/block pair one cycle before and at its exact timing
+      bound.
+    expected: Permission derives only from pre-edge registered state and becomes eligible
+      only at declared boundaries.
+    status: planned_not_executed
+  X_READY:
+    rules:
+    - EXEC_READY
+    scenario: Vary occupancy, dispatch opportunity, incoming command type, row/timing
+      state, txn_valid, cleanup, refresh, and reset.
+    expected: txn_ready tracks admission capacity only and cmd_ready is side-effect-free
+      diagnostic readiness.
+    status: planned_not_executed

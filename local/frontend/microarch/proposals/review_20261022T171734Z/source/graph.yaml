@@ -1,0 +1,94 @@
+graph_id: ddr4_controller_top_structural
+clock_reset:
+  definition: shared.clock_reset
+  clock_source: top.clk
+  reset_source: top.rst_n
+  consumers:
+  - host_protocol
+  - waiting_queue
+  - fifo_scheduler
+  - command_engine
+  - bank_state
+  - timing_enforcement
+  - memory_responses
+  - refresh_control
+connections:
+  top.txn_valid:
+  - host_protocol.txn_valid
+  top.txn_is_write:
+  - host_protocol.txn_is_write
+  top.txn_addr:
+  - host_protocol.txn_addr
+  top.txn_wdata:
+  - host_protocol.txn_wdata
+  top.txn_bank:
+  - host_protocol.txn_bank
+  host_protocol.mapped_request:
+  - waiting_queue.enqueue_request
+  - command_engine.incoming_request
+  host_protocol.enqueue_valid:
+  - waiting_queue.enqueue_valid
+  waiting_queue.enqueue_ready:
+  - host_protocol.queue_ready
+  waiting_queue.head_valid:
+  - fifo_scheduler.head_valid
+  waiting_queue.head_request:
+  - fifo_scheduler.head_request
+  fifo_scheduler.head_take:
+  - waiting_queue.head_take
+  fifo_scheduler.dispatch_valid:
+  - command_engine.dispatch_valid
+  fifo_scheduler.dispatch_request:
+  - command_engine.dispatch_request
+  command_engine.dispatch_ready:
+  - fifo_scheduler.dispatch_ready
+  command_engine.candidate_valid:
+  - timing_enforcement.candidate_valid
+  command_engine.candidate_command:
+  - timing_enforcement.candidate_command
+  timing_enforcement.candidate_ok:
+  - command_engine.candidate_ok
+  command_engine.probe_valid:
+  - timing_enforcement.probe_valid
+  command_engine.probe_command:
+  - timing_enforcement.probe_command
+  timing_enforcement.probe_ok:
+  - command_engine.probe_ok
+  command_engine.probe_ready:
+  - host_protocol.probe_ready
+  bank_state.open_valid:
+  - command_engine.open_valid
+  - timing_enforcement.open_valid
+  bank_state.open_rows:
+  - command_engine.open_rows
+  - timing_enforcement.open_rows
+  command_engine.commit_valid:
+  - bank_state.commit_valid
+  - timing_enforcement.commit_valid
+  - memory_responses.commit_valid
+  - refresh_control.commit_valid
+  command_engine.commit_command:
+  - bank_state.commit_command
+  - timing_enforcement.commit_command
+  - memory_responses.commit_command
+  - refresh_control.commit_command
+  refresh_control.refresh_pending:
+  - command_engine.refresh_pending
+  refresh_control.refresh_busy:
+  - command_engine.refresh_busy
+  memory_responses.rsp_valid:
+  - host_protocol.memory_rsp_valid
+  memory_responses.rsp_data:
+  - host_protocol.memory_rsp_data
+  host_protocol.txn_ready:
+  - top.txn_ready
+  host_protocol.cmd_ready:
+  - top.cmd_ready
+  host_protocol.rsp_valid:
+  - top.rsp_valid
+  host_protocol.rsp_rdata:
+  - top.rsp_rdata
+presence: {}
+integration: The top is structural only. Shared clk and rst_n are implicit child inputs
+  through shared.clock_reset; all other functional connectivity is explicit typed
+  whole-port wiring.

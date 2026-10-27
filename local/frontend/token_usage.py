@@ -69,7 +69,7 @@ def _read(path):
 
 
 def record_usage(model, label, usage=None, *, outcome='response', finish_reason=None,
-                 request_characters=None):
+                 request_characters=None, rate_limit_headers=None):
     """Count every provider response, including truncation retries and errors."""
     target = os.environ.get(LEDGER_ENV)
     if not target:
@@ -83,11 +83,12 @@ def record_usage(model, label, usage=None, *, outcome='response', finish_reason=
                      'module': os.environ.get(MODULE_ENV), 'module_scope': os.environ.get(SCOPE_ENV),
                      'input_tokens': incoming, 'output_tokens': outgoing, 'total_tokens': total,
                      'provider_total_tokens': reported_total, 'outcome': outcome, 'finish_reason': finish_reason,
-                     'request_characters': request_characters})
+                     'request_characters': request_characters, 'rate_limit_headers': rate_limit_headers})
 
 
 def record_response(model, label, response, *, request_characters=None):
     """Record once before callers validate the response or raise HTTP errors."""
+    from tpm_pacing import rate_limit_headers
     try:
         data = response.json()
     except (ValueError, TypeError):
@@ -97,7 +98,8 @@ def record_response(model, label, response, *, request_characters=None):
     choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
     record_usage(model, label, data.get('usage'),
                  outcome='response' if response.status_code == 200 else 'http_error',
-                 finish_reason=choice.get('finish_reason'), request_characters=request_characters)
+                 finish_reason=choice.get('finish_reason'), request_characters=request_characters,
+                 rate_limit_headers=rate_limit_headers(response))
 
 
 def summarize(calls):

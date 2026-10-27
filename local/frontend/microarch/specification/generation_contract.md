@@ -74,25 +74,44 @@ supported value when that value satisfies the request.
 
 Events map names to `{condition,effect}` with precise pre-edge sampling prose.
 Timing profiles use `{source,selection,supported_profiles,unit,bindings,note}`;
-source is compiler-rewritten to local `timing.yaml`; unit is cycles. Resolve
-bindings from the supplied project timing library, never invent profile values.
+source is compiler-rewritten to local `timing.yaml`; unit is cycles. Each binding
+value MUST be a string containing a dotted path relative to the SELECTED profile
+in the supplied timing library. Keep that path in the response; the compiler
+resolves its numeric cycle value separately for each selected profile. Numeric
+cycle literals are invalid binding values, even when they equal today's library
+value. For the supplied example:
+
+```json
+{"bindings":{"tRCD":"timing_cycles.tRCD","tRFC":"timing_cycles.tRFC1"}}
+```
+
+Use paths that actually exist in the supplied library; never invent profile
+values or paths. Do not prefix binding paths with `shared` or the profile name.
+References FROM timing rules use the shared vocabulary instead, for example
+`"minimum":"shared.timing_profile.bindings.tRCD"`. These are different reference
+locations: library paths define bindings; shared paths consume those bindings.
 An empty timing binding map is allowed for designs with no timing requirements.
 Timing rules use the example's opcode type and minimum/window vocabulary, or
 an empty mapping when no such timing constraints are requested.
 
 Both system and execution have `{slice_id,rules,verification}`; execution may
 have empty rules/verification when appropriate. In this stage each rule is
-`{origin,statement,verification}` WITHOUT owners. Each request requirement must
-appear once, globally, under its original ID, exact text, and `origin: request.ID`.
-Additional detailed rules may refine it; they may not weaken it. Rule IDs must
+`{verification}` for requested IDs (compiler sets exact text and `request.ID`
+origins); `{origin,statement,verification}` for refinements. No owners.
+Refinements cannot weaken requests. Rule IDs must
 be globally unique HDL identifiers. Verification IDs are local to each slice.
-Every rule lists nonempty verification IDs; each obligation has
-`{rules,scenario,expected,status}` with reciprocal local rule IDs, precise
-independent expected results and `status: planned_not_executed`. Define reset,
-stalls, simultaneous events, capacities, order and exact response/timing edges.
-Do not depend on implementation-private names or copy implementation algorithms
-into expected-result models. Preserved text and references establish traceability;
-semantic compliance must still be reviewed.
+Every rule lists nonempty local verification IDs. Generated obligations have
+`{scenario,expected,status}`; OMIT `rules`, derived by the compiler from rule
+references. Explicit `rules` lists remain strictly validated. Published source
+packages require both directions. Use independent expected results and
+`status: planned_not_executed`. Define reset, stalls, simultaneous events,
+capacities, order and exact response/timing edges. Avoid implementation-private
+names or copying implementation algorithms into expected-result models.
+
+For stateful proposals, distinguish first creation, blocked hold, commit and later
+replacement, with edge timing and simultaneous-event priorities. Define payload
+values when each valid signal is low, separately from reset. Preserve any requested
+latency choices; otherwise record the choice without fixing an FSM encoding.
 
 ## Stage 2: decomposition and bindings
 
@@ -100,21 +119,43 @@ Return `status: supported`, `modules`, `graph`, `verification`, and `rule_owners
 The complete first-stage result is locked. Do not return edited package/shared
 definitions/rules/expected results. `rule_owners` maps EVERY `system.rules.ID`
 and `execution.rules.ID` to a nonempty list of module contract IDs. Assign each
-rule's verification obligations to every owner in that contract's references.
+rule's behavior to those owners. OMIT generated contract `invariants` and
+`verification`: the compiler derives each owner's qualified rule/obligation
+references from `rule_owners` and locked rules. Explicit lists remain strictly
+validated, never corrected. This derives bookkeeping, not behavioral compliance.
+Top-level bindings, checks, scenarios and expected results remain required.
+`{"status":"supported","modules":{"contracts":{}},"internal_types":{},"graph":{},"verification":{},"rule_owners":{}}`.
+`modules` contains only `contracts`; close both objects before the next root field.
+Optional `internal_types`, `graph`, `verification` and `rule_owners` are root fields,
+never children of `modules` or `contracts`.
+
 Optional `internal_types` may add shared type definitions needed by internal
 interfaces. It cannot replace existing types or change system semantics. The
 compiler merges these additions into the single shared vocabulary and records
 their identity separately from the locked first-stage projection.
 
 Modules have `contracts`, mapping instance names to contracts. Required contract
-fields are `status`, `role`, `owned_state`, `interfaces`, `handshakes`, `reset`,
-`update_events`, `stalls`, `simultaneous_events`, `invariants`, `verification`,
-`combinational_dependencies`; optional `dependency_note`. Use detailed behavioral
+fields in generated responses are `status`, `role`, `owned_state`, `interfaces`,
+`handshakes`, `reset`, `update_events`, `stalls`, `simultaneous_events`, and
+`combinational_dependencies`; optional `dependency_note`. Published source requires
+both reference lists; hand-authored packages must supply them explicitly.
+`owned_state`, `handshakes`, `update_events`, `simultaneous_events`: objects
+`{name:description}`, NEVER strings or lists (empty: `{}`). `interfaces` and
+`combinational_dependencies`: objects; `invariants`, `verification`: lists.
+Use detailed behavioral
 prose with explicit event-driven updates, independently testable interfaces,
 owned state, absent-port semantics, valid/ready behavior and invalid outputs.
+Express lifecycle/priority decisions in the existing update_events, stalls and
+simultaneous_events fields. Initial creation must not require a previous commit.
+Any valid-dependent payload masking must appear in its input dependencies; a
+payload held independently of valid must say so. Reset gating remains implicit.
 Update event keys are `shared.events.NAME` or `every_clock`. Invariants reference
 qualified rules; verification lists qualified obligations. Dependencies map EVERY
-output to current-cycle input names; [] means state-only/constant. Shared reset
+output to current-cycle input names; [] means state-only/constant. Dependency
+entries may name only declared INPUT ports, never another output or an internal
+signal. Flatten transitive combinational paths to their input-port dependencies;
+terms that depend only on registered state add no current-cycle input dependency.
+Shared reset
 gating is implicit. Declare transitive dependencies; never hide feedback.
 
 Supported role vocabulary: request_storage, request_selection, command_sequencing,
@@ -125,13 +166,21 @@ command_engine, timing and memory. Further splitting is allowed; do not create
 trivial helpers while hiding all behavior in one core. Generic designs need not
 use every controller role. Unsupported roles require an explicit extension.
 
-Graph has `graph_id`, `clock_reset`, `connections`, `presence`, `integration`.
+Graph has `graph_id`, `clock_reset`, `connections`, `presence`, `integration`;
+optional `verification_outputs` maps child output endpoints to nonempty reasons.
 Clock_reset has definition shared.clock_reset, top clock/reset source endpoints,
 and every contract in consumers. Connections map source endpoints to sink lists.
 Use typed whole-port wiring only; one driver per sink, matching types and widths,
-all sources used, conditional ends omitted together. No clock/reset duplication
+sources wired or explicitly verification-only, conditional ends omitted together.
+Clock/reset wiring shape:
+`{"definition":"shared.clock_reset","clock_source":"top.clk","reset_source":"top.rst_n","consumers":["instance"]}`.
+Use declared names; no nested `source` object.
+No clock/reset duplication
 in the ordinary connection map. Presence maps EVERY conditional endpoint to its
-declared condition. Top integration is structural; functional glue needs a contract.
+declared condition. Verification-only outputs need a present child output, no
+functional sink, and an observation used by a validated check. Inputs/top ports
+cannot qualify. Never add unrelated consumers to silence unused-source errors.
+Preserve unrelated valid wiring. Top wiring is structural; glue needs a contract.
 
 Verification bindings have binding_version 1, sampling
 `{phase:pre_edge,reset_gates_events:true}`, events, observations and checks.

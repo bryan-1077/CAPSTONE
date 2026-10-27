@@ -1,0 +1,7 @@
+{
+  "status": "stopped",
+  "stage": "system",
+  "semantic_cycles": 1,
+  "rtl_generation": "not_run",
+  "error": "architecture specification failed validation: Validation failed with 1 error(s):\n- Undriven graph sinks ['host_adapter.engine_cmd_ready']; unused sources ['command_engine.cmd_ready']"
+}

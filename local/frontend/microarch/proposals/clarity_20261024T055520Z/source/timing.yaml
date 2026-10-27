@@ -1,0 +1,46 @@
+DDR4-2400:
+  clock_frequency_mhz: 1200
+  tck_ns: 0.833
+  timing_ns:
+    tRCD: 13.75
+    tRP: 13.75
+    tRAS: 32.0
+    tRC: 45.75
+    tRRD: 3.333
+    tFAW: 25.0
+    tRFC1: 350.0
+    tREFI: 7800.0
+  timing_cycles:
+    tRCD: 17
+    tRP: 17
+    tRAS: 39
+    tRC: 55
+    tRRD: 4
+    tFAW: 30
+    tRFC1: 420
+    tREFI: 9360
+  cas_latency_options:
+  - 17
+DDR4-3200:
+  clock_frequency_mhz: 1600
+  tck_ns: 0.625
+  timing_ns:
+    tRCD: 13.75
+    tRP: 13.75
+    tRAS: 32.0
+    tRC: 45.75
+    tRRD: 3.333
+    tFAW: 25.0
+    tRFC1: 350.0
+    tREFI: 7800.0
+  timing_cycles:
+    tRCD: 22
+    tRP: 22
+    tRAS: 52
+    tRC: 74
+    tRRD: 6
+    tFAW: 40
+    tRFC1: 560
+    tREFI: 12480
+  cas_latency_options:
+  - 22

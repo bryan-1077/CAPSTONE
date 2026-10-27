@@ -1,0 +1,440 @@
+specification_version: 1
+package_id: ddr4_controller_top_spec
+design_name: ddr4_controller_top
+revision: draft_001
+status: draft_for_review
+scope:
+  plan: current_controller_v2 request
+  milestone: system_behavior_and_verification_intent
+  covered:
+  - host_interface
+  - request_lifecycle
+  - fifo_ordering
+  - command_semantics
+  - bank_state
+  - timing_protection
+  - functional_memory
+  - responses
+  - refresh
+  - reset
+  - configuration_constraints
+  - verification_intent
+  pending: []
+verification_strategy:
+  status: planned_not_executed
+  configurations:
+    parameters:
+      PAGE_POLICY:
+      - open_page
+      - close_page
+      WAITING_CAPACITY:
+      - 1
+      - 4
+    profiles:
+    - DDR4-3200
+  module_checks: Future isolated checks shall exercise request storage, selection,
+    command sequencing, timing enforcement, bank state, functional memory/response
+    handling, host protocol behavior, and refresh behavior through declared interfaces
+    after decomposition.
+  system_scenario: Future system checks shall cover reset, consecutive admissions,
+    FIFO ordering, full-queue simultaneous dispatch/admission, row hit/conflict behavior,
+    timing boundaries, read/write ordering, refresh drain/service/resume, response
+    timing, and diagnostic cmd_ready behavior.
+  system_evidence: Future downstream evidence shall use independent admission, dispatch,
+    command-commit, memory, response, timing, and refresh scoreboards/monitors. No
+    downstream verification or backend stage has been executed.
+decisions:
+  D_DESIGN_NAME:
+    origin: requested_constraint
+    status: recorded
+    value: ddr4_controller_top
+    reason: Requested design identity.
+  D_DESIGN_KIND:
+    origin: requested_constraint
+    status: recorded
+    value: memory_controller
+    reason: Requested design type.
+  D_PROTOCOL:
+    origin: requested_constraint
+    status: recorded
+    value: DDR4
+    reason: Requested memory protocol.
+  D_PROFILE:
+    origin: requested_constraint
+    status: recorded
+    value: DDR4-3200
+    reason: Requested memory speed/profile.
+  D_BANKS:
+    origin: requested_constraint
+    status: recorded
+    value: '4'
+    reason: Requested topology.
+  D_WAITING_CAPACITY:
+    origin: requested_constraint
+    status: recorded
+    value: '4'
+    reason: Requested waiting capacity.
+  D_FIFO_POLICY:
+    origin: requested_constraint
+    status: recorded
+    value: fifo
+    reason: Requested scheduling policy.
+  D_PAGE_POLICY:
+    origin: requested_constraint
+    status: recorded
+    value: open_page
+    reason: Requested default page policy.
+  D_REFRESH:
+    origin: requested_constraint
+    status: recorded
+    value: enabled
+    reason: Requested refresh feature.
+  D_TRRD:
+    origin: requested_constraint
+    status: recorded
+    value: enabled
+    reason: Requested tRRD feature.
+  D_TFAW:
+    origin: requested_constraint
+    status: recorded
+    value: enabled
+    reason: Requested tFAW feature.
+  D_RESET_STYLE:
+    origin: model_selected
+    status: recorded
+    value: synchronous_active_low_state_reset_with_immediate_event_gating
+    reason: Satisfies the synchronous reset requirement while retaining the stated
+      reuse allowance.
+  D_RESPONSE_EDGE:
+    origin: model_selected
+    status: recorded
+    value: read_commit_at_E_is_host_sampled_at_E_plus_1
+    reason: Defines the one-cycle response stage without another response adapter
+      stage.
+  D_ACTIVE_REPLACEMENT:
+    origin: model_selected
+    status: recorded
+    value: no_same_edge_dispatch_on_retirement
+    reason: Separates active retirement from dispatch.
+  D_REFRESH_ORDER:
+    origin: model_selected
+    status: recorded
+    value: drain_then_ascending_bank_precharge_then_ref
+    reason: Resolves refresh preparation ordering and all-bank closure.
+assumptions:
+  A_CLOCK_CONTINUES:
+    statement: clk continues through reset and reset is sampled at at least one rising
+      edge when state clearing is required.
+    status: documented
+  A_HOST_STABILITY:
+    statement: The host holds txn_valid and all request payload fields stable during
+      any cycle in which txn_valid is asserted and txn_ready is low.
+    status: documented
+  A_HOST_RESPONSE_SAMPLING:
+    statement: The host samples every rsp_valid pulse; no response-ready or response-backpressure
+      signal exists.
+    status: documented
+  A_EVENTUAL_PROGRESS:
+    statement: Eventual completion requires future legal command opportunities and
+      clock progress; no fixed host-visible latency bound is specified.
+    status: documented
+  A_REFRESH_MODEL:
+    statement: The refresh behavior is a functional periodic pending/drain/service
+      model and is not a claim of complete physical DDR4 refresh-debt behavior.
+    status: documented
+open_questions:
+  Q_EXPORT_APPROVAL:
+    blocks: rtl_generation
+    question: Approval tied to the exact reviewed specification package is required
+      before RTL generation.
+documents:
+  shared: shared.yaml
+  system: system.yaml
+  execution: execution.yaml
+  modules: modules.yaml
+  graph: graph.yaml
+  verification: verification.yaml
+design_kind: memory_controller
+generation:
+  version: 1
+  model: protected.gpt-5.6-terra
+  request:
+    constraints:
+      design_name: ddr4_controller_top
+      design_type: memory_controller
+      memory:
+        protocol: DDR4
+        speed: '3200'
+      topology:
+        banks: 4
+      features:
+        scheduler: fifo
+        page_policy: open_page
+        refresh: true
+        tRRD: true
+        tFAW: true
+      microarchitecture:
+        baseline: current_controller
+        waiting_capacity: 4
+    requirements:
+    - id: R1
+      text: Implement global FIFO service in acceptance order, including same-address
+        writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently
+        of command readiness.
+    - id: R2
+      text: Provide four waiting entries plus one separately stored active request.
+        Dispatch only previously stored requests, capture the complete pre-edge head
+        before releasing its slot, and permit full-queue simultaneous dispatch/admission
+        including capacity one. No empty-queue bypass or same-edge active replacement
+        at retirement.
+    - id: R3
+      text: Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP never
+        committed and at most one command commit per edge. Sequence closed banks with
+        ACT-access, row hits with access, and row conflicts with PRE-ACT-access. PRE/ACT
+        never retire the active request. Keep blocked candidates stable through stalls
+        and newly pending refresh.
+    - id: R4
+      text: Keep separate owners for host mapping, waiting storage, scheduling, command
+        sequencing, row state, timing, functional memory/responses, and refresh control.
+        The top must contain structural connections only.
+    - id: R5
+      text: Update bank state and timing history only from committed commands. Enforce
+        tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile. A
+        trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits
+        with age strictly less than its window. Reset creates no synthetic timing
+        history.
+    - id: R6
+      text: Preserve functional banked 32-bit memory and compact host address mapping.
+        WRITE commit updates storage; READ commit at E captures pre-edge data and
+        registers valid/data for host sampling at E+1, with no extra adapter response
+        register. Responses survive active release, cleanup and refresh; writes produce
+        no response.
+    - id: R7
+      text: Open-page retains rows. Support close-page as a configurable alternative,
+        retaining a separate cleanup bank reservation after retirement until a legal
+        PRE commits; block new dispatch during cleanup.
+    - id: R8
+      text: Generate periodic refresh deadlines from the last sampled reset edge using
+        tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins
+        over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining
+        open banks in ascending order, respect all-bank tRP, commit REF once, and
+        exclude commands strictly before REF-edge+tRFC. Retain queued traffic and
+        resume service afterward.
+    - id: R9
+      text: cmd_ready is reset-gated diagnostic readiness for the incoming request's
+        first needed command, using independent row/timing probe queries while the
+        engine is idle and cleanup/refresh permit. It is meaningful without txn_valid
+        and must not admit, dispatch, bypass FIFO, mutate history or reserve storage.
+    - id: R10
+      text: Use synchronous active-low reset for state, with immediate valid/ready/event
+        gating. Reset clears queued/active/cleanup work, row state, timing history,
+        memory, responses and refresh state; it wins over every simultaneous event.
+        The host holds payload while stalled and samples every response; no response
+        backpressure is provided.
+    - id: R11
+      text: Generate architecture-specific module isolation and system verification
+        intent with exact requirement IDs, independent scenarios/expected results,
+        and declared port/event bindings. Export it alongside RTL for the external
+        UVM/vector stage. Do not execute downstream verification or backend stages
+        in this frontend flow.
+    - &id001
+      id: BASE_HOST
+      text: Preserve the existing host ports and widths listed in the baseline contract.
+        Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold
+        payload while stalled. Consecutive accepted cycles with txn_valid held high
+        are distinct requests. cmd_ready is execution/timing visibility, not the host
+        acceptance handshake. Deassert txn_ready and rsp_valid during reset.
+    - &id002
+      id: BASE_ADDRESS
+      text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+        zero-extended into the internal 10-bit row and 6-bit column fields. Preserve
+        explicit txn_bank for multi-bank configurations; a single-bank configuration
+        uses bank 0. Internal packed requests retain bank(2), row(10), column(6),
+        write flag(1), write data(32).'
+    - &id003
+      id: BASE_QUEUE
+      text: 'Provide 4 WAITING request slots PLUS one separately stored active-service
+        request: waiting plus active capacity is 5. The active request must not consume
+        a waiting slot. Dispatch captures the complete pre-edge request in active
+        registers and frees its waiting slot without retiring the transaction. A full
+        queue may admit on the same edge as dispatch; retirement alone does not free
+        waiting storage. Accepted request fields survive stalls and each accepted
+        request is serviced exactly once within a reset-free epoch. Keep admission,
+        dispatch, retirement and read response delivery distinct. Captured response
+        storage consumes neither waiting nor active capacity.'
+    - &id004
+      id: BASE_DATA
+      text: Provide functional 32-bit memory storage with 16 addresses per bank, bank
+        isolation and reset-to-zero contents. Accepted writes update only their addressed
+        location at service completion or a committed WRITE. Each accepted read produces
+        exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read
+        service/READ commit, using the existing one-cycle response stage. Writes produce
+        no host response. Selection and stalled candidates cannot mutate memory; mere
+        command output without storage and read responses is insufficient.
+    - &id005
+      id: BASE_TIMING
+      text: Retain existing tRCD, tRAS and tRP timing protection from the selected
+        JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS,
+        and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate
+        service may retain the existing protected timing envelope instead. Configured
+        tRRD and tFAW gates must use accepted activation events, not host admissions
+        or stalled proposals. Never treat existing basic timing as an unrequested
+        future feature.
+    - &id006
+      id: BASE_SEQUENCE
+      text: Dispatch captures the complete selected request in separate active-service
+        registers before freeing its waiting queue slot. Hold that active request
+        and payload across setup PRE/ACT and timing stalls until its final READ/WRITE
+        commits. Setup commands never retire the active request. Aggregate service
+        also keeps active-service ownership through completion. Waiting-queue dequeue
+        at dispatch is distinct from active-request retirement. Row state changes
+        only on the responsible committed operation; uncommitted proposals cannot
+        change state.
+    - &id007
+      id: BASE_MODULARITY
+      text: Keep request storage, request selection, command sequencing, timing enforcement
+        and functional memory in independently verifiable modules with explicit interfaces.
+        No single controller core may own all these functions. Each mandatory role
+        has distinct module owners with functional inter-module connections. Module
+        names and further decomposition remain design choices.
+    - &id008
+      id: BASE_LEGALITY
+      text: Compute command permission from registered timing/bank history and an
+        independent candidate. An accepted ACT pulse is derived from candidate &&
+        permission; permission must not combinationally depend on that same accepted
+        pulse. Scheduler selection/validity must be available independently of timing_ok;
+        timing_ok may gate commit but must not create a selection-validity feedback
+        loop. Declare accurate per-output combinational input dependencies.
+    - &id009
+      id: BASE_RESET
+      text: Use top-level clk and active-low rst_n. Reset clears pending requests,
+        active service, row validity, memory and responses. Preserve reusable blocks
+        with either synchronous or asynchronous active-low resets driven by the same
+        rst_n; differing assertion styles do not require rebuilding otherwise reusable
+        blocks. Do not change polarity without an explicit adapter.
+    - &id010
+      id: BASE_POLICY
+      text: Honor the requested scheduler policy fifo. Preserve page policy open_page.
+        Open-page retains a serviced row; close-page closes it before subsequent bank
+        use. Preserve request ownership through any setup sequence. Internal module
+        decomposition and command latency may change while these observable contracts
+        hold.
+    - &id011
+      id: BASE_REFRESH
+      text: Retain periodic refresh requests using profile tREFI, refresh priority
+        and request/acknowledgment handling without dropping queued traffic. Refresh
+        must make progress and normal requests must resume. Existing refresh is simplified;
+        full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+        describe drain/row-state interaction and acknowledge once at commit.
+    - &id012
+      id: BASE_TRRD
+      text: tRRD is enabled; honor that setting and resolve enabled timing values
+        from DDR4-3200.
+    - &id013
+      id: BASE_TFAW
+      text: tFAW is enabled; honor that setting and resolve enabled timing values
+        from DDR4-3200.
+    - id: CONSTRAINT_1
+      text: Requested constraint /design_name = "ddr4_controller_top".
+    - id: CONSTRAINT_2
+      text: Requested constraint /design_type = "memory_controller".
+    - id: CONSTRAINT_3
+      text: Requested constraint /features/page_policy = "open_page".
+    - id: CONSTRAINT_4
+      text: Requested constraint /features/refresh = true.
+    - id: CONSTRAINT_5
+      text: Requested constraint /features/scheduler = "fifo".
+    - id: CONSTRAINT_6
+      text: Requested constraint /features/tFAW = true.
+    - id: CONSTRAINT_7
+      text: Requested constraint /features/tRRD = true.
+    - id: CONSTRAINT_8
+      text: Requested constraint /memory/protocol = "DDR4".
+    - id: CONSTRAINT_9
+      text: Requested constraint /memory/speed = "3200".
+    - id: CONSTRAINT_10
+      text: Requested constraint /microarchitecture/baseline = "current_controller".
+    - id: CONSTRAINT_11
+      text: Requested constraint /microarchitecture/waiting_capacity = 4.
+    - id: CONSTRAINT_12
+      text: Requested constraint /topology/banks = 4.
+    baseline_contract:
+      id: current_controller_v2
+      design_name: ddr4_controller_top
+      profile: DDR4-3200
+      config:
+        design_name: ddr4_controller_top
+        design_type: memory_controller
+        memory:
+          protocol: DDR4
+          speed: '3200'
+        topology:
+          banks: 4
+        features:
+          scheduler: fifo
+          page_policy: open_page
+          refresh: true
+          tRRD: true
+          tFAW: true
+        microarchitecture:
+          baseline: current_controller
+          waiting_capacity: 4
+      host_ports:
+      - name: clk
+        direction: input
+        width: 1
+      - name: rst_n
+        direction: input
+        width: 1
+      - name: txn_valid
+        direction: input
+        width: 1
+      - name: txn_is_write
+        direction: input
+        width: 1
+      - name: txn_addr
+        direction: input
+        width: 4
+      - name: txn_wdata
+        direction: input
+        width: 32
+      - name: txn_bank
+        direction: input
+        width: 2
+      - name: txn_ready
+        direction: output
+        width: 1
+      - name: cmd_ready
+        direction: output
+        width: 1
+      - name: rsp_valid
+        direction: output
+        width: 1
+      - name: rsp_rdata
+        direction: output
+        width: 32
+      requirements:
+      - *id001
+      - *id002
+      - *id003
+      - *id004
+      - *id005
+      - *id006
+      - *id007
+      - *id008
+      - *id009
+      - *id010
+      - *id011
+      - *id012
+      - *id013
+    design_kind: memory_controller
+  input_fingerprint: f5ab061b75d930bf07218bd5865deb3dff701eb7bcb8c8b83cc006def9a4c922
+  context_fingerprint: 460f21e091933aeef3e5087966ba3f8f15d4b76cb851746bbe0afe8f8540cb77
+  system_fingerprint: 6f91b75faf2fb503583358252b58243d302fea4747a3006849425bfb0a686d27
+  internal_types: {}
+  validation_repairs:
+  - stage: system
+    attempt: 1
+    error: 'decisions.D_BANKS.value: expected nonempty text'
+    diagnostics:
+    - 'decisions.D_BANKS.value: expected nonempty text'

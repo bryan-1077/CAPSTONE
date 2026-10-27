@@ -1,0 +1,276 @@
+parameters:
+  BANK_COUNT:
+    value: 4
+    configurable: false
+    allowed:
+    - 4
+  WAITING_CAPACITY:
+    value: 4
+    configurable: true
+    minimum: 1
+  ACTIVE_CAPACITY:
+    value: 1
+    configurable: false
+  PAGE_POLICY:
+    value: open_page
+    configurable: true
+    allowed:
+    - open_page
+    - close_page
+  DATA_WIDTH:
+    value: 32
+  HOST_ADDR_WIDTH:
+    value: 4
+  HOST_BANK_WIDTH:
+    derive: ceil_log2(BANK_COUNT)
+  REQUEST_BANK_WIDTH:
+    value: 2
+  REQUEST_ROW_WIDTH:
+    value: 10
+  REQUEST_COLUMN_WIDTH:
+    value: 6
+  COMMAND_OPCODE_WIDTH:
+    value: 3
+  MEMORY_WORDS_PER_BANK:
+    derive: 2**HOST_ADDR_WIDTH
+  READ_RESPONSE_LATENCY:
+    value: 1
+    configurable: false
+    unit: cycles
+  TFAW_ACT_LIMIT:
+    value: 4
+    configurable: false
+clock_reset:
+  clock: clk
+  edge: rising
+  reset: rst_n
+  active_level: 0
+  priority: reset_before_all_events
+  assertion_style: synchronous
+  handshake_gating: Suppress all valid, ready, admission, dispatch, commit, response-delivery,
+    and refresh events while rst_n is low.
+types:
+  bit:
+    kind: unsigned
+    width: 1
+  data:
+    kind: unsigned
+    width: shared.parameters.DATA_WIDTH
+  host_address:
+    kind: unsigned
+    width: shared.parameters.HOST_ADDR_WIDTH
+  host_bank:
+    kind: unsigned
+    width: shared.parameters.HOST_BANK_WIDTH
+  bank:
+    kind: unsigned
+    width: shared.parameters.REQUEST_BANK_WIDTH
+  row:
+    kind: unsigned
+    width: shared.parameters.REQUEST_ROW_WIDTH
+  column:
+    kind: unsigned
+    width: shared.parameters.REQUEST_COLUMN_WIDTH
+  opcode:
+    kind: enum
+    width: shared.parameters.COMMAND_OPCODE_WIDTH
+    encodings:
+      NOP: 0
+      ACT: 1
+      PRE: 2
+      READ: 3
+      WRITE: 4
+      REF: 5
+    reserved:
+    - 6
+    - 7
+  request:
+    kind: record
+    packed_order: msb_to_lsb
+    fields:
+    - name: bank
+      type: shared.types.bank
+    - name: row
+      type: shared.types.row
+    - name: column
+      type: shared.types.column
+    - name: is_write
+      type: shared.types.bit
+    - name: wdata
+      type: shared.types.data
+    mapping:
+      bank: Zero-extend txn_bank.
+      row: Zero-extend txn_addr[3:2].
+      column: Zero-extend txn_addr[1:0].
+      is_write: txn_is_write.
+      wdata: txn_wdata.
+    legal_values: bank is less than BANK_COUNT; host-originated row[9:2] and column[5:2]
+      are zero.
+  command:
+    kind: record
+    packed_order: msb_to_lsb
+    fields:
+    - name: opcode
+      type: shared.types.opcode
+    - name: bank
+      type: shared.types.bank
+    - name: row
+      type: shared.types.row
+    - name: column
+      type: shared.types.column
+    - name: wdata
+      type: shared.types.data
+    semantics:
+      NOP: Canonical all-zero payload; never commits.
+      ACT: Open bank at row; column and wdata are zero.
+      PRE: Close bank; row, column, and wdata are zero.
+      READ: Access matching open bank row and column; wdata is zero.
+      WRITE: Access matching open bank row and column with wdata.
+      REF: All-bank refresh; bank, row, column, and wdata are zero.
+  bank_valid:
+    kind: array
+    element_type: shared.types.bit
+    count: shared.parameters.BANK_COUNT
+    packed_order: ascending_index_from_lsb
+  bank_rows:
+    kind: array
+    element_type: shared.types.row
+    count: shared.parameters.BANK_COUNT
+    packed_order: ascending_index_from_lsb
+host_interface:
+  clk:
+    direction: input
+    type: shared.types.bit
+  rst_n:
+    direction: input
+    type: shared.types.bit
+  txn_valid:
+    direction: input
+    type: shared.types.bit
+  txn_is_write:
+    direction: input
+    type: shared.types.bit
+  txn_addr:
+    direction: input
+    type: shared.types.host_address
+  txn_wdata:
+    direction: input
+    type: shared.types.data
+  txn_bank:
+    direction: input
+    type: shared.types.host_bank
+  txn_ready:
+    direction: output
+    type: shared.types.bit
+  cmd_ready:
+    direction: output
+    type: shared.types.bit
+  rsp_valid:
+    direction: output
+    type: shared.types.bit
+  rsp_rdata:
+    direction: output
+    type: shared.types.data
+events:
+  admission:
+    condition: At a rising clk edge, rst_n is high and pre-edge txn_valid and txn_ready
+      are high.
+    effect: Capture one complete mapped request into waiting storage.
+  dispatch:
+    condition: At a rising clk edge, rst_n is high, active ownership is absent, cleanup
+      and refresh service are absent, no candidate is outstanding, and a pre-edge
+      FIFO head is selected.
+    effect: Capture the complete pre-edge FIFO head into active ownership and release
+      exactly that waiting entry.
+  candidate_create:
+    condition: At a rising clk edge, rst_n is high, active ownership exists, candidate
+      storage is empty, refresh preparation or service is not selected, and no command
+      commits on that edge.
+    effect: Create a candidate from registered active ownership and registered bank
+      state.
+  command_commit:
+    condition: At a rising clk edge, rst_n is high, candidate_valid and candidate_ok
+      are high, and candidate_command is non-NOP and nonreserved.
+    effect: Commit one command and update only state assigned to that committed opcode.
+  retirement:
+    condition: shared.events.command_commit commits READ or WRITE for the active request.
+    effect: Retire one active request; READ captures response state before active
+      release.
+  response_delivery:
+    condition: At a rising clk edge, rst_n is high and pre-edge rsp_valid is high.
+    effect: The host samples pre-edge rsp_rdata.
+  refresh_due:
+    condition: At a rising clk edge, rst_n is high and the periodic deadline reaches
+      that edge.
+    effect: Set sticky refresh pending; simultaneous REF acknowledgment cannot clear
+      newly due pending.
+  refresh_start:
+    condition: shared.events.command_commit commits REF.
+    effect: Acknowledge one pending refresh and begin tRFC command exclusion.
+  refresh_end:
+    condition: At a rising clk edge, rst_n is high and the edge is at least tRFC cycles
+      after committed REF.
+    effect: End refresh command exclusion.
+timing_profile:
+  source: timing.yaml
+  selection: DDR4-3200
+  supported_profiles:
+  - DDR4-3200
+  unit: cycles
+  bindings:
+    tRCD: timing_cycles.tRCD
+    tRAS: timing_cycles.tRAS
+    tRP: timing_cycles.tRP
+    tRRD: timing_cycles.tRRD
+    tFAW: timing_cycles.tFAW
+    tREFI: timing_cycles.tREFI
+    tRFC: timing_cycles.tRFC1
+  note: Numeric cycle values are resolved separately from the selected timing-library
+    profile.
+timing_rules:
+  edge_convention: A trigger committed at edge E permits a blocked command at E+T
+    when all other conditions hold. Reset creates no timing history. tFAW counts earlier
+    ACT commits whose age at the candidate edge is strictly less than its window.
+  tRCD:
+    trigger: ACT
+    blocked:
+    - READ
+    - WRITE
+    minimum: shared.timing_profile.bindings.tRCD
+    scope: same_bank
+  tRAS:
+    trigger: ACT
+    blocked:
+    - PRE
+    minimum: shared.timing_profile.bindings.tRAS
+    scope: same_bank
+  tRP:
+    trigger: PRE
+    blocked:
+    - ACT
+    - REF
+    minimum: shared.timing_profile.bindings.tRP
+    scope: same_bank_for_ACT_all_banks_for_REF
+  tRRD:
+    trigger: ACT
+    blocked:
+    - ACT
+    minimum: shared.timing_profile.bindings.tRRD
+    scope: all_banks
+  tFAW:
+    trigger: ACT
+    blocked:
+    - ACT
+    window: shared.timing_profile.bindings.tFAW
+    limit: shared.parameters.TFAW_ACT_LIMIT
+    scope: all_banks
+  tRFC:
+    trigger: REF
+    blocked:
+    - ACT
+    - PRE
+    - READ
+    - WRITE
+    - REF
+    minimum: shared.timing_profile.bindings.tRFC
+    scope: all_banks

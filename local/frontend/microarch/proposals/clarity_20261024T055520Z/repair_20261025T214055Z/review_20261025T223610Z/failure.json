@@ -1,0 +1,6 @@
+{
+  "error": "Validation failed with 1 error(s):\n- draft_package_requires_rtl_approval: external agreement must reference a recorded blocking entry with system scope",
+  "diagnostics": [
+    "draft_package_requires_rtl_approval: external agreement must reference a recorded blocking entry with system scope"
+  ]
+}

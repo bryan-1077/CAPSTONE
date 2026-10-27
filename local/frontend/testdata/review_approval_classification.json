@@ -1,0 +1,301 @@
+{
+  "description": "Approval-policy projection of saved 223610Z findings and accepted package metadata, not a complete specification.",
+  "snapshot": {
+    "package": {
+      "status": "draft_for_review",
+      "decisions": {
+        "D_CAPACITY": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "four_waiting_plus_one_active",
+          "reason": "Waiting and active capacities are distinct."
+        },
+        "D_COMMANDS": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "explicit_NOP_ACT_PRE_READ_WRITE_REF",
+          "reason": "Explicit command semantics and commit gating are required."
+        },
+        "D_FIFO": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "global_acceptance_order",
+          "reason": "Accepted requests are serviced in FIFO acceptance order."
+        },
+        "D_PAGE_POLICY": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "open_page_default_with_close_page_option",
+          "reason": "Open-page is requested while close-page is a configurable alternative."
+        },
+        "D_REFRESH": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "sticky_periodic_pending_drain_close_then_ref",
+          "reason": "Refresh deadlines coalesce and service drains work before REF."
+        },
+        "D_RESET": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "synchronous_active_low_state_reset_with_immediate_event_gating",
+          "reason": "State reset is synchronous and visible events are immediately gated."
+        },
+        "D_RESPONSE": {
+          "origin": "requested_constraint",
+          "status": "recorded",
+          "value": "read_commit_E_host_sampling_E_plus_1",
+          "reason": "READ captures pre-edge data and provides the requested one-cycle response stage."
+        },
+        "D_CONTROL_CANDIDATES": {
+          "origin": "model_selected",
+          "status": "recorded",
+          "value": "separate_active_cleanup_and_refresh_control_candidate_creation",
+          "reason": "Cleanup and refresh preparation require legal PRE and REF candidates after active request retirement or without active ownership."
+        }
+      },
+      "assumptions": {
+        "A_CLOCK": {
+          "statement": "clk continues to provide rising edges while rst_n is low so synchronous reset state clearing can occur.",
+          "status": "documented"
+        },
+        "A_HOST_STALL": {
+          "statement": "The host holds txn_valid and all transaction payload fields stable while txn_valid is high and txn_ready is low.",
+          "status": "documented"
+        },
+        "A_PROFILE": {
+          "statement": "The selected timing library supplies the declared DDR4-3200 timing paths.",
+          "status": "requires_review"
+        },
+        "A_PROGRESS": {
+          "statement": "Service progress requires reset to remain inactive and timing and refresh intervals to elapse; no bounded transaction latency is asserted.",
+          "status": "documented"
+        },
+        "A_RESPONSE": {
+          "statement": "The host samples every rsp_valid pulse because no response-backpressure interface is provided.",
+          "status": "documented"
+        }
+      },
+      "open_questions": {
+        "Q_PROFILE_PROVENANCE": {
+          "blocks": "design_review",
+          "question": "The authoritative provenance and acceptance of the selected DDR4-3200 timing-library source requires external review before RTL generation; planned timing-boundary checks cannot establish library correctness."
+        },
+        "Q_RTL_APPROVAL": {
+          "blocks": "rtl_generation",
+          "question": "Approval of this exact draft package is required before RTL generation or downstream implementation export."
+        }
+      }
+    },
+    "timing_library": {
+      "DDR4-3200": {
+        "clock_frequency_mhz": 1600,
+        "tck_ns": 0.625,
+        "timing_ns": {
+          "tRCD": 13.75,
+          "tRP": 13.75,
+          "tRAS": 32.0,
+          "tRC": 45.75,
+          "tRRD": 3.333,
+          "tFAW": 25.0,
+          "tRFC1": 350.0,
+          "tREFI": 7800.0
+        },
+        "timing_cycles": {
+          "tRCD": 22,
+          "tRP": 22,
+          "tRAS": 52,
+          "tRC": 74,
+          "tRRD": 6,
+          "tFAW": 40,
+          "tRFC1": 560,
+          "tREFI": 12480
+        },
+        "cas_latency_options": [
+          22
+        ]
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "R1"
+    },
+    {
+      "id": "R2"
+    },
+    {
+      "id": "R3"
+    },
+    {
+      "id": "R4"
+    },
+    {
+      "id": "R5"
+    },
+    {
+      "id": "R6"
+    },
+    {
+      "id": "R7"
+    },
+    {
+      "id": "R8"
+    },
+    {
+      "id": "R9"
+    },
+    {
+      "id": "R10"
+    },
+    {
+      "id": "R11"
+    },
+    {
+      "id": "R12"
+    },
+    {
+      "id": "R13"
+    },
+    {
+      "id": "BASE_HOST"
+    },
+    {
+      "id": "BASE_ADDRESS"
+    },
+    {
+      "id": "BASE_QUEUE"
+    },
+    {
+      "id": "BASE_DATA"
+    },
+    {
+      "id": "BASE_TIMING"
+    },
+    {
+      "id": "BASE_SEQUENCE"
+    },
+    {
+      "id": "BASE_MODULARITY"
+    },
+    {
+      "id": "BASE_LEGALITY"
+    },
+    {
+      "id": "BASE_RESET"
+    },
+    {
+      "id": "BASE_POLICY"
+    },
+    {
+      "id": "BASE_REFRESH"
+    },
+    {
+      "id": "BASE_TRRD"
+    },
+    {
+      "id": "BASE_TFAW"
+    },
+    {
+      "id": "CONSTRAINT_1"
+    },
+    {
+      "id": "CONSTRAINT_2"
+    },
+    {
+      "id": "CONSTRAINT_3"
+    },
+    {
+      "id": "CONSTRAINT_4"
+    },
+    {
+      "id": "CONSTRAINT_5"
+    },
+    {
+      "id": "CONSTRAINT_6"
+    },
+    {
+      "id": "CONSTRAINT_7"
+    },
+    {
+      "id": "CONSTRAINT_8"
+    },
+    {
+      "id": "CONSTRAINT_9"
+    },
+    {
+      "id": "CONSTRAINT_10"
+    },
+    {
+      "id": "CONSTRAINT_11"
+    },
+    {
+      "id": "CONSTRAINT_12"
+    },
+    {
+      "id": "SYS_SIMULTANEOUS"
+    },
+    {
+      "id": "SYS_STORAGE"
+    },
+    {
+      "id": "SYS_CONTROL_PRIORITY"
+    },
+    {
+      "id": "EXEC_BANK_STATE"
+    },
+    {
+      "id": "EXEC_CLEANUP"
+    },
+    {
+      "id": "EXEC_COMMIT"
+    },
+    {
+      "id": "EXEC_CONTROL_CREATION"
+    },
+    {
+      "id": "EXEC_PAYLOAD"
+    },
+    {
+      "id": "EXEC_PERMISSION"
+    },
+    {
+      "id": "EXEC_READY"
+    },
+    {
+      "id": "EXEC_REFRESH"
+    },
+    {
+      "id": "EXEC_RESPONSE"
+    }
+  ],
+  "findings": [
+    {
+      "id": "profile_provenance_requires_external_review",
+      "scope": "system",
+      "resolution": "external_agreement",
+      "message": "The selected DDR4-3200 timing-library provenance and acceptance are explicitly marked requires_review and listed as blocking design review. RTL timing enforcement and planned timing-boundary verification therefore cannot establish that the supplied external timing values are authoritative. Obtain and record external approval of the selected timing-library source and values before RTL generation.",
+      "references": [
+        "/package/assumptions/A_PROFILE",
+        "/package/open_questions/Q_PROFILE_PROVENANCE",
+        "/timing_library/DDR4-3200"
+      ],
+      "requirement_ids": [
+        "BASE_TIMING",
+        "BASE_TRRD",
+        "BASE_TFAW",
+        "R5"
+      ]
+    },
+    {
+      "id": "draft_package_requires_rtl_approval",
+      "scope": "system",
+      "resolution": "external_agreement",
+      "message": "The current artifact is a draft_for_review and explicitly records approval of this exact draft package as blocking RTL generation. Obtain the required external approval or replace the blocking open question with a recorded approval before proceeding to RTL generation.",
+      "references": [
+        "/package/status",
+        "/package/open_questions/Q_RTL_APPROVAL"
+      ],
+      "requirement_ids": []
+    }
+  ]
+}

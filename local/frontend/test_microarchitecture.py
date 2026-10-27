@@ -81,6 +81,14 @@ class ArchitectureTests(unittest.TestCase):
     def setUp(self):
         self.manifest = json.loads(EXAMPLE.read_text())
         self.request = build_request(read_mapping(REQUEST))
+        pacing = patch.dict("os.environ", {"CAPSTONE_TPM_LIMIT": "0"})
+        pacing.start()
+        self.addCleanup(pacing.stop)
+        # A few API tests intentionally clear the environment; keep their mocked
+        # requests isolated from real workspace reservations as well.
+        reservation = patch('tpm_pacing.reserve_request')
+        reservation.start()
+        self.addCleanup(reservation.stop)
 
     def assert_invalid(self, change, message):
         manifest = copy.deepcopy(self.manifest)

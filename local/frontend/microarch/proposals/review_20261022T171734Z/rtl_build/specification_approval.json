@@ -1,0 +1,13 @@
+{
+  "approval_version": 1,
+  "status": "approved",
+  "reviewer": "bryan",
+  "approved_at": "2026-10-22T17:23:13.556449+00:00",
+  "package_id": "ddr4_controller_top_spec",
+  "revision": "draft_001",
+  "package_fingerprint": "d094f930480b800de15078a0db4116f987b18a011953299f8da677812232bafe",
+  "manifest_fingerprint": "d3acf093a9eccca20a11c40495437a4deabec0ab4cc87e39eee0a58b5e5bdc06",
+  "resolved_questions": [
+    "Q_EXPORT_APPROVAL"
+  ]
+}

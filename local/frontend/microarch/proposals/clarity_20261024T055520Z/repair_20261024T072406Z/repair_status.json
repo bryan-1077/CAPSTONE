@@ -1,0 +1,7 @@
+{
+  "status": "stopped",
+  "stage": "system",
+  "semantic_cycles": 1,
+  "rtl_generation": "not_run",
+  "error": "architecture specification failed validation: Validation failed with 1 error(s):\n- graph.clock_reset: missing fields ['clock_source', 'reset_source'], unknown fields ['source']"
+}

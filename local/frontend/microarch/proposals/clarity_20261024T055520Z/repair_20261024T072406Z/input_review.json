@@ -1,0 +1,95 @@
+{
+  "review_version": 1,
+  "review_revision": 2,
+  "status": "changes_required",
+  "model": "protected.gpt-5.6-terra",
+  "mode": "llm",
+  "reviewed_at": "2026-10-24T06:40:15.346059+00:00",
+  "manifest_fingerprint": "e3ee787f2cd8114326e3ce77da79c5cdf905fcb7c7ac4dc950bbc09c1cfb412c",
+  "package_fingerprint": "ea0e149468731c4749403581559fddbb02bbe1d572ad7949fb74f44cc6b1f2c6",
+  "verdict": {
+    "status": "changes_required",
+    "reviewed_aspects": [
+      "request_coverage",
+      "lifecycle_and_progress",
+      "payload_and_dependencies",
+      "verification_consistency",
+      "observation_sufficiency",
+      "unresolved_assumptions"
+    ],
+    "findings": [
+      {
+        "id": "F_MAINTENANCE_CANDIDATE_PATH",
+        "scope": "system",
+        "message": "The sole shared candidate-creation event requires active request ownership, but both close-page cleanup and refresh preparation require PRE/REF commands after active ownership has been retired or is absent. Consequently, the specified cleanup reservation cannot necessarily produce its legal PRE, and refresh preparation cannot necessarily close banks or commit REF; this can deadlock service and violates required progress. Define system-level candidate/control creation events and priority rules for cleanup PRE and refresh-preparation PRE/REF, reconcile them with the existing active-request candidate rule, and regenerate downstream architecture decomposition against the repaired shared lifecycle.",
+        "references": [
+          "/documents/shared/events/candidate_create",
+          "/documents/execution/rules/EXEC_CLEANUP",
+          "/documents/execution/rules/EXEC_REFRESH",
+          "/documents/modules/contracts/command_engine/owned_state",
+          "/documents/modules/contracts/command_engine/update_events",
+          "/documents/modules/contracts/command_engine/handshakes/candidate"
+        ],
+        "requirement_ids": [
+          "R7",
+          "R8",
+          "R12",
+          "BASE_SEQUENCE",
+          "BASE_REFRESH"
+        ]
+      },
+      {
+        "id": "F_PROBE_PAYLOAD_UNOBSERVABLE",
+        "scope": "architecture",
+        "message": "The required valid-low probe-payload behavior cannot be verified through the declared observations: probe_command and probe_valid have graph connections but no verification observation bindings, while the payload checks claim to cover independently defined probe payloads when probe validity is low. Add bindings for probe_command and probe_valid and use them in the payload/diagnostic checks, so invalid-low probe payload behavior can be distinguished from valid gating behavior.",
+        "references": [
+          "/documents/execution/rules/EXEC_PAYLOAD",
+          "/documents/system/rules/R13",
+          "/documents/verification/checks/execution.verification.X_PAYLOAD",
+          "/documents/verification/checks/system.verification.V_PAYLOAD",
+          "/documents/verification/observations",
+          "/documents/verification/events/candidate_create"
+        ],
+        "requirement_ids": [
+          "R13"
+        ]
+      },
+      {
+        "id": "F_CLEANUP_VERIFICATION_NOT_DISTINGUISHABLE",
+        "scope": "architecture",
+        "message": "The cleanup verification binding observes only row state and refresh_pending for a check that claims to establish cleanup reservation, dispatch blocking, and exactly one legal cleanup PRE. Those observations cannot distinguish cleanup ownership from an ordinary timing stall, active service, or another dispatch restriction. Expose an observable cleanup/service-selection state or bind enough command-engine dispatch/candidate/commit state to prove reservation creation, dispatch inhibition, and its single PRE completion under close-page operation.",
+        "references": [
+          "/documents/execution/verification/X_CLEANUP",
+          "/documents/verification/checks/execution.verification.X_CLEANUP",
+          "/documents/system/verification/V_PAGE",
+          "/documents/verification/checks/system.verification.V_PAGE",
+          "/documents/modules/contracts/command_engine/owned_state/cleanup",
+          "/documents/modules/contracts/command_engine/handshakes/dispatch"
+        ],
+        "requirement_ids": [
+          "R7"
+        ]
+      },
+      {
+        "id": "F_PROFILE_PROVENANCE_UNRESOLVED",
+        "scope": "system",
+        "message": "Timing enforcement is required to use the selected DDR4-3200 profile, but the package explicitly leaves the timing-library assumption in requires_review status. Numeric paths are supplied in the snapshot, but their authoritative provenance/acceptance remains an external, non-compiler-checkable assumption. Resolve or explicitly disposition that profile-source review before RTL generation; RTL and planned timing-boundary checks cannot establish external timing-library correctness themselves.",
+        "references": [
+          "/package/assumptions/A_PROFILE",
+          "/documents/shared/timing_profile",
+          "/timing_library/DDR4-3200",
+          "/documents/system/rules/BASE_TIMING",
+          "/documents/system/rules/BASE_TRRD",
+          "/documents/system/rules/BASE_TFAW"
+        ],
+        "requirement_ids": [
+          "BASE_TIMING",
+          "BASE_TRRD",
+          "BASE_TFAW",
+          "R5"
+        ]
+      }
+    ]
+  },
+  "readiness_error": "Resolve blocking decisions/questions before approving RTL: ['A_PROFILE']"
+}

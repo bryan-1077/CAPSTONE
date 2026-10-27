@@ -35,6 +35,9 @@ def response(incoming=100, outgoing=20, finish='stop', status=200):
 
 class UsageTests(unittest.TestCase):
     def setUp(self):
+        pacing = patch.dict("os.environ", {"CAPSTONE_TPM_LIMIT": "0"})
+        pacing.start()
+        self.addCleanup(pacing.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)

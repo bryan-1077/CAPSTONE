@@ -4,9 +4,196 @@ Build a specification-driven generator for a functional DDR4-like controller.
 New capabilities should enter through design requests and specifications, without
 feature-specific branches in Python expansion or wrapper generation.
 
+## Current handoff — 2026-10-26 (America/Chicago)
+
+**Start here in the next session.** This section supersedes older "next step"
+statements below. The detailed sections retain historical implementation and
+validation evidence; their test counts are selected milestone suites, not one
+current full-repository test result.
+
+### Goal and present capability
+
+The goal is a repeatable, dynamic frontend for varied specifications, not a
+manually repaired DDR4 RTL example. The intended path is:
+
+```text
+request → system specification → architecture/contracts/verification bindings
+        → compiler checks and bounded edits → semantic review/readiness
+        → approved RTL generation → structural integration lint → handoff
+```
+
+Automated semantic review may authorize RTL when all readiness checks pass;
+the user explicitly authorized that policy. Downstream UVM/vector execution,
+BIST and backend execution are outside this frontend run. Keep work in small,
+verified sections. The user runs paid API commands; do not start paid retries
+merely to inspect a failure. Do not add agents, more rounds, RTL chunking or a
+large JEDEC rule dictionary to address the current failure.
+
+**Infrastructure exists, but reliable live completion remains unproven.** Some
+earlier artifacts reached RTL generation for a few modules. This repaired dynamic
+controller path has not completed semantic approval, RTL generation and integration
+lint. Offline passing checks are not target behavioral verification or proof of
+repeatability across specifications.
+
+### Implemented and verified in the recent sections
+
+- [x] Revision-bound source/export validation, approval/readiness enforcement,
+      existing RTL generators and typed downstream handoff infrastructure.
+- [x] Module/flow token and estimated cost accounting, stage banners, conservative
+      TPM pacing, reviewed-RTL cache/resume and saved failure/attempt diagnostics.
+- [x] Lossless context sharing and stage-specific prompt/schema guidance.
+- [x] Aggregate independent ownership/dependency, functional wiring and explicit
+      verification-output declaration errors where prerequisites permit it.
+      Invalid partial graphs do not produce misleading coverage/cycle conclusions.
+- [x] Derive omitted contract invariant/verification references from explicit
+      rule owners and locked rules. Derive omitted obligation reverse references
+      from explicit rule-to-verification selections. Explicit inconsistent lists
+      remain failures; published/hand-authored source validation stays strict.
+- [x] Semantic review excludes historical compiler repair diagnostics from current
+      evidence, while preserving full source provenance and fingerprints.
+- [x] Review classification separates design_repair from external_agreement.
+      External-only cases stop before generation; only repairable system findings
+      select system regeneration. Normal draft/RTL approval is not an external
+      prerequisite; the review prompt states this and lists eligible blocker paths.
+- [x] Bounded explicit architecture edits and system semantic edits. System edits
+      preserve unmentioned fields, reject bulk replacement of existing nonempty
+      objects, protect request text/origin and external agreement, and journal
+      exact applied changes. Fresh system generation still uses complete responses.
+- [x] Repair-focused final review uses the existing single final call. Every input
+      design finding requires an explicit assessment; preservation regressions and
+      unresolved findings must link current design findings and block approval.
+      Target-bound repair_review_context.json is saved and rechecked for approval.
+      Standalone --repair-context retains those obligations on explicit re-review.
+
+Current identities: generator revision **18**, semantic review protocol **4**,
+repair-review context version **1**. No new protocol bump is needed merely to
+continue testing these already implemented mechanisms.
+
+Recent validation milestones: 74 selected generation/edit/audit/prompt checks
+passed for system edits; 65 selected repair-review/repair/system-edit/standard
+review checks passed for repair-focused review. Compilation and whitespace checks
+passed. Neither milestone demonstrates live model adherence or behavioral proof.
+
+### Latest live run: structural check diagnostics exhausted the repair budget
+
+The run directory is named in UTC (20261027T023137Z); this occurred on October 26
+in Central Time. Define the following paths for inspection, not as a paid command:
+
+```bash
+accepted_parent="local/frontend/microarch/proposals/clarity_20261024T055520Z/repair_20261025T214055Z/frontend_20261025T232303Z/repair"
+latest_attempt="$accepted_parent/repair_20261027T023137Z"
+```
+
+- Parent export/review: `$accepted_parent/architecture.yaml` and
+  `$accepted_parent/review/report.json`. This parent is **structurally valid but
+  semantically rejected**, with the known refresh-drain deadlock. Do not mistake
+  it for an approved baseline.
+- Latest evidence: `$latest_attempt/source.attempts.json`,
+  `$latest_attempt/source.failure.json`, `$latest_attempt/repair_status.json`
+  and `${latest_attempt}.log`.
+- Usage: `microarch/usage/20261027T023138Z_2ccdbb28d556/usage.json`.
+  Four calls, input 77,948, output 8,696, total 86,644; estimated cost $0.260248.
+
+Observed sequence:
+
+1. System semantic repair passed on attempt 1 using **11 explicit edits**. It
+   removed the pending-low restriction from active/cleanup creation and clarified
+   corresponding drain/priority statements and expected results. This is compiler
+   acceptance of the edited system, **not final semantic approval**.
+2. Architecture attempt 1 included two invalid input-dependency references:
+   waiting_queue.enqueue_ready named output head_valid, and
+   command_engine.commit_valid named output candidate_valid. Both were repaired
+   on attempt 2. Internal registered state is not a module input dependency;
+   express internal-state gating in behavioral contracts instead.
+3. The first architecture response already omitted `events` in four check objects:
+   V_CONFIGURATION, V_EXPORT, V_IDENTITY and V_ISOLATION. The binding validator
+   reported only the first omission. Attempt 2 fixed V_CONFIGURATION; attempt 3
+   fixed V_EXPORT, then failed on V_IDENTITY. V_ISOLATION remained hidden behind it.
+4. Three architecture attempts were exhausted. No new source/package.yaml or
+   architecture export was published for this attempt. No repair_review_context.json
+   was produced, no final repair-focused semantic review ran, and no RTL ran.
+
+The latest failure is an **incomplete diagnostics bottleneck**, not evidence of
+another system-edit regression, TPM exhaustion or a provider timeout. It does
+not establish that the updated system is behaviorally correct either.
+
+### Next bounded implementation task — do this before another paid run
+
+- [ ] In [verification_bindings.py](verification_bindings.py), aggregate independent
+      verification-check shape errors across all entries instead of stopping at
+      the first `fields(check, ...)` failure. Preserve prerequisites; do not run
+      relationship checks on malformed entries or coerce invalid data.
+- [ ] Add a saved regression projection from the latest first architecture
+      response: expose all four missing-events errors together, alongside the
+      independently checkable dependency errors. Verify stable diagnostics, no
+      input mutation, unchanged rejection and no extra attempts/model calls.
+- [ ] Clarify generation guidance: `events` is a required field but `events: []`
+      is already allowed when observations supply the check's evidence. Do not
+      invent unrelated event triggers to satisfy configuration/identity checks,
+      silently fill missing fields, or relax reference/coverage validation.
+- [ ] Run the focused binding/diagnostic/edit/generation compatibility checks.
+      Only then perform one bounded live repair test and inspect its artifacts.
+
+The previous live run added refresh_due as an event anchor to V_CONFIGURATION;
+this satisfied shape validation but should not become a default compiler rule.
+The existing validator requires at least events or observations, not a nonempty
+events list for every check.
+
+### Remaining milestones and unresolved facts
+
+- [ ] Demonstrate a compiled repair reaching the new repair-focused review and
+      resolving its input findings without preservation regressions.
+- [ ] Explicitly disposition A_PROFILE/Q_PROFILE_PROVENANCE. They remain recorded
+      external timing-library agreement blockers. Do not clear them by model
+      repair, treat numeric values as proof of authoritative provenance, or confuse
+      them with the ordinary Q_RTL_APPROVAL gate. This is not yet resolved.
+- [ ] Complete a frontend-only run through RTL, integration lint and handoff;
+      retain strict admission checks and existing retry limits.
+- [ ] Establish repeated success on different specifications, not only DDR4.
+- [ ] Consider specification-stage checkpoints/resume after the current convergence
+      work. RTL resume exists; accepted intermediate system/failed architecture
+      attempts are **not** automatically resumed by the current specification flow.
+- [ ] Decide how to consolidate independently confirmed findings across separate
+      reviews. Current carry-forward covers only the selected input review for a
+      repair, not a global history. Earlier commit-payload observability concerns
+      on the 214055Z source were confirmed but have no recorded explicit resolution;
+      recheck them on any new architecture rather than infer resolution from silence.
+- [ ] Keep sourced/versioned timing/common-rule additions deferred until the first
+      complete frontend run, as recorded below.
+
+Known repair-preservation evidence: the 232303Z full system rewrite fixed dispatch
+eligibility but wrongly gated active/cleanup creation by pending refresh, causing
+deadlock. The offline audit recorded 24 changed fields and three unrelated removed
+type-description fields. See [the audit](microarch/reviews/repair_20261025T232303Z_change_audit.md).
+Explicit system edits and repair-focused review were added afterward; the latest
+live run exercised the edits but stopped before exercising that final review.
+
+Key implementation entry points: [generate_specification.py](generate_specification.py),
+[specification_edits.py](specification_edits.py),
+[verification_bindings.py](verification_bindings.py),
+[review_specification.py](review_specification.py),
+[repair_specification.py](repair_specification.py),
+[repair_review.py](repair_review.py), and
+[specification_change_audit.py](specification_change_audit.py).
+Detailed history and usage are in [architecture_flow.md](microarch/architecture_flow.md)
+and [automated_review.md](microarch/automated_review.md).
+
+## Deferred until a full frontend run completes
+
+- [ ] Audit the existing timing/command libraries, then incrementally add sourced,
+      versioned standard-derived facts and reusable common behavioral rules that
+      the compiler can resolve/check. Keep standard facts, project conventions and
+      user requirements distinct. Require evidence that each rule prevents a real
+      failure; preserve dynamic decomposition. Do not build a comprehensive JEDEC
+      dictionary before completing the current request-to-RTL frontend flow.
+
 ## 1. Specification and Generation System
 
-### Starting point
+- [x] Add simple terminal stage headers for system specification, architecture
+      decomposition, semantic review, compiler lowering, integration lint and
+      verification handoff. Preserve existing per-module dual-LLM/FSM banners.
+
+### Starting point (historical)
 
 The original flow selects predefined features in `run_flow.py`, expands templates
 in `expand_spec.py`, and adds controller behavior in `generate_wrapper.py`.
@@ -26,7 +213,7 @@ Target flow:
 Design request + constraints + optional compatibility preset
     → elaborated system specification
     → module contracts + architecture graph
-    → consistency checks + user review
+    → consistency checks + semantic review/readiness
     → approved specs → IR → RTL + structural integration
     → RTL + specification/verification-intent handoff
     → downstream UVM + vector verification → requirement results
@@ -138,6 +325,242 @@ status for the generated `draft_003` export, not the separate supplied `draft_00
       Validation: 32 offline checks passed (16 API boundary tests, 14 usage/cost/
       review tests and two actual frontend generation/cache/lint smoke tests).
       Compilation and whitespace checks passed; no live API calls were made.
+- [x] Add simple shared TPM pacing (2026-10-18): one 60-second reservation window
+      across frontend API calls/models/subprocesses, default 80k estimated TPM,
+      full output reservations, bounded logged waits, no early refunds or new
+      network retries. Fail oversized requests before sending and log provider
+      rate-limit headers; keep billing based on actual provider usage.
+      Validation: 101 offline checks passed across pacing (12), dual-LLM API (16),
+      usage/cost (14), debug API (15), architecture (27), and staged generation (17).
+      Fake clocks avoid real pacing sleeps; subprocess tests exercise file locking.
+      Live pacing behavior and the cause of HTTP 524 remain unconfirmed.
+- [x] Clarify specification timing bindings as selected-library path strings and
+      report the full offending field/type/value for numeric literals. Verify
+      that the same reference resolves correctly across project timing profiles.
+- [x] Compact specification request/context/locked-system JSON and include each
+      previous repair response once without double encoding; preserve raw journals
+      and complete repair data. Generator revision 3 refreshes proposal caches.
+      The actual oversized repair now reserves 74,059 estimated tokens instead of
+      82,444, under the unchanged 80k target and 24k output allowance. Reference-only
+      correction of its saved system response passes offline system validation.
+      Historical failure reports remain unchanged; live proposal retry is pending.
+      Validation: all 45 selected offline checks passed (21 staged-generation,
+      12 package and 12 TPM tests), including numeric-binding repair through both
+      generation stages, cross-profile resolution and lossless repair feedback.
+      Compilation and whitespace checks passed; no live API calls were made.
+- [x] Separate initial-generation examples from repair schema guidance. Keep the
+      complete request, locked system, schema/library and rejected candidate;
+      share repeated request/system facts losslessly using the existing serializer.
+      Require full corrected stage responses and preserve raw journals.
+- [x] Make each named owner's invariant and full verification coverage explicit
+      in initial/repair instructions. Preserve compiler validation and approval gates.
+- [x] Regression-check both stages' initial and repair budgets with large-controller
+      fixtures. The saved architecture repair now reserves 76,492 estimated tokens
+      instead of 99,467 under unchanged 80k/24k budgets. Generator revision 4
+      refreshes proposal caches. All 37 selected offline checks passed; no live
+      API calls were made. Live proposal retry remains pending.
+- [x] Aggregate independent architecture ownership and dependency errors into one
+      repair report, alongside safe graph/metadata diagnostics. Preserve early
+      schema stops and require clean validation before export or handoff.
+- [x] Save structured diagnostics in attempt journals and repair provenance;
+      clarify that combinational dependencies list declared inputs only. Generator
+      revision 5 refreshes proposal caches; the three-attempt limit is unchanged.
+      Offline replay of the latest first architecture candidate reports 15 errors,
+      including both invalid dependencies, with a 74,481-token repair reservation
+      under the unchanged 80k target. All 72 selected offline diagnostic, package,
+      generation, prompt, lowering/approval and handoff tests passed.
+      Live proposal retry remains pending.
+- [x] Make requested rule text and origins compiler-owned at system-stage ingestion.
+      The model declares original IDs and verification links; missing/renamed IDs,
+      duplicate rules and invalid obligations still fail. Preserve raw responses and
+      retain strict request/provenance checks after elaboration. Generator revision 6.
+      The October 22 first response now passes system validation offline, changing
+      only its 13 incorrectly qualified origins on a copy. All 47 selected offline
+      generation, prompt, diagnostic and package checks passed. Live retry is pending.
+- [x] Recover one extra trailing closing brace in specification responses only,
+      logging the recovery and preserving raw journals. Strict parsing must succeed
+      after that single deletion, followed by all existing validation. Saved October
+      22 attempt 2 now passes system validation offline. Generator revision 7;
+      all 54 selected offline JSON, pacing, generation, diagnostic and prompt tests pass.
+- [x] Verify that the existing TPM override supports a reported 1,000,000 limit
+      and still paces cumulative requests. Keep the 80k default pending account
+      confirmation; a confirmed 1M allowance can use an 800k local target.
+- [ ] Investigate the October 22 server error separately from semantic repair.
+- [x] Clarify generation guidance for first creation versus replacement, blocked
+      holds, simultaneous-event priorities, and payload behavior when valid is low.
+      Use existing contract fields and preserve the complete-module RTL path.
+- [x] Append target R12/R13 for candidate lifecycle and valid/payload separation,
+      preserving R1-R11 exactly. Generator revision 9 refreshes proposal caches.
+      Verify exact requirement transport through both stages and lowering. All 36
+      distinct selected offline generation, prompt, link and approval checks pass.
+- [ ] Generate/review a fresh package from R12/R13, check dependency/ownership
+      semantics, record its own approval, then attempt one complete-module RTL run.
+      Existing approved exports and their caches remain untouched; new global
+      package fingerprints can invalidate reuse across revisions.
+- [x] Make the dual-LLM client timeout configurable with DUAL_LLM_TIMEOUT_SECONDS
+      (default 180); add probe --timeout override and use it for the stream guard.
+      Reject invalid/nonfinite values before network activity. All 44 selected
+      offline API, diagnostic and pacing checks pass. Live 600-second test pending.
+- [x] Add a diagnostic for the exact initial generator request with a small output
+      cap, elapsed time, usage/cost and rate-limit header reporting. Verify the saved
+      command-engine prompt remains 52,379 characters and make no RTL/cache writes.
+      Initial six offline checks passed. The live 512-token request returned HTTP
+      200 in 8.6s with zero visible characters; detailed reasoning attribution is pending.
+- [x] Extend the diagnostic with provider usage details and message field summaries,
+      plus opt-in SSE streaming and first-header/body/reasoning/content timings.
+      Save metadata in probe.json without reasoning text, prompt text or RTL output.
+      All 37 selected offline diagnostic, pacing and usage checks passed.
+      Gateway streaming behavior and the paired 2,048-token live tests remain pending.
+- [x] Add explicit RTL `--resume`: reuse reviewed module caches keyed by exact
+      generated YAML in the same build directory, recheck local lint, generate
+      missing/invalid entries, and rerun integration lint. Keep `--cache` cache-only
+      and preserve specification approval. All 39 selected offline checks passed.
+      The actual interrupted build reused its first three modules at zero new API
+      calls, then stopped on sandbox DNS restrictions. Network retry was denied;
+      target RTL completion remains pending.
+- [x] Aggregate system-stage reciprocal verification-link errors across both
+      system and execution slices after schema validation. Keep malformed-schema
+      stops and block decomposition until every link passes. Generator revision 8.
+      Saved run review_20261022T170628Z now reports all three first-response errors
+      together; the second reports two and the third still passes offline.
+      All 47 selected offline link, generation, JSON, diagnostic and prompt tests pass.
+- [x] Collect independent system metadata, fixed configuration-axis and reciprocal
+      link errors together, retaining schema prerequisites and strict rejection.
+      Generator revision 10. Saved clarity_20261024T042800Z attempt 1 now reports
+      all five errors together; an explicitly corrected copy passes offline.
+      Raw responses and historical proposal artifacts remain unchanged.
+      All 79 selected offline checks, compilation and whitespace checks pass.
+- [x] Make the architecture root JSON shape explicit and add targeted nesting
+      repair feedback. Keep modules limited to contracts; internal_types, graph,
+      verification and rule_owners are root siblings. Generator revision 11.
+      Saved clarity_20261024T050035Z responses receive closure guidance for attempts
+      1/2 and an exact modules.internal_types location hint for attempt 3.
+      Malformed JSON remains rejected; no fields/braces are repaired automatically.
+      All 49 selected offline checks, compilation and whitespace checks pass.
+- [x] Review clarity_20261024T055520Z across shared events, execution expectations,
+      contracts, bindings and approval readiness. All four matrix configurations
+      and the exported architecture pass structural checks. Record semantic gaps
+      and the A_PROFILE approval blocker in microarch/reviews/clarity_20261024T055520Z.md;
+      structural PASS does not approve this revision for RTL.
+- [x] Add a bounded, persisted semantic review report/check before RTL admission,
+      using snapshot JSON pointers and unrelated register-design fixtures. User
+      authorized automated review to allow RTL. Opt-in --automated-spec-review
+      issues distinct version-3 revision-bound approvals on a clean verdict plus
+      compiler readiness; malformed verdicts/findings/provider failures stop.
+      Existing explicit approval and proposal-only defaults remain available.
+      All 76 selected offline checks, compilation and whitespace checks pass.
+- [x] Clarify automated-review reference coordinates after the first live review:
+      expand shared prompt definitions and reference snapshot roots, not /context
+      or /package/timing_library. Review revision 2 aggregates invalid references
+      and retains parsed findings in failed reports. All 19 gate tests pass;
+      saved live verdict reports all 15 invalid references without mutation.
+      Scope guidance now explicitly routes shared-event/expected-result changes
+      back to system elaboration. No live retry or automatic path repair ran.
+- [x] Confirm live review revision 2 produces a valid changes_required report:
+      clarity_20261024T055520Z/automated_review_v2 identifies two system and two
+      architecture findings with valid references. Approval correctly remains
+      blocked. One call used 19,899 tokens, estimated $0.069988; no RTL ran.
+- [x] Add one opt-in semantic repair cycle (--auto-spec-repair) and a standalone
+      repair_specification.py entry point for an existing validated report. Any
+      system finding regenerates system/decomposition; architecture-only findings
+      preserve the locked system. Recompile/review the new revision, with existing
+      stage limits and no second semantic cycle. Preserve request/configuration,
+      parent timing library and unresolved external agreement. No target-specific
+      text patches, new dictionaries, agent framework or RTL fragment generation.
+      All 103 selected offline checks, compilation and whitespace checks pass;
+      saved controller findings select system routing. Live repair remains untested.
+- [x] Fix fresh architecture generation after system repair: keep the stage-format
+      example even with semantic feedback, distinguish fresh decomposition from
+      candidate repair, and specify contract mapping/list and flat clock/reset
+      field shapes. Generator revision 12. Collect independent contract-shape and
+      graph clock/reset shape errors before relational validation. Saved repair
+      20261024T072406Z now reports 17/9/1 errors across its three architecture replies.
+      No coercion, additional rounds, source mutation or paid retry is introduced.
+      All 126 selected offline checks, compilation and whitespace checks pass.
+- [x] Support explicit graph.verification_outputs declarations backed by validated
+      observations used in checks; reject input/top/absent/connected ports and
+      preserve every functional sink/source coverage check. Lower to existing
+      unused_outputs and retain typed handoff observations. Generator revision 13.
+      Add repair guidance to preserve unrelated valid wiring, with no guessed
+      connections or automatic controller patch. Existing exports still validate.
+      176 distinct offline checks passed across focused/compatibility runs,
+      including actual interface-fixture integration lint; no paid calls ran.
+- [x] Use explicit object-field edits for parseable architecture compiler retries
+      instead of regenerating the whole candidate. Bind edits to a candidate
+      fingerprint, apply atomically, retain raw/applied evidence and rerun all
+      existing compiler checks. Preserve full regeneration for malformed initial
+      responses, existing attempt limits and semantic-review boundaries.
+- [x] Diagnostic audit, first section: aggregate independent verification-output
+      declaration errors after endpoint/connection/binding prerequisites pass.
+      Explain that connected outputs remain observable without a verification-only
+      declaration. Replay a committed graph projection from the saved 232854Z
+      attempt: report all 13 conflicts together without changing the candidate.
+      All 39 focused offline tests, compilation and whitespace checks pass.
+      Broader graph diagnostics and bookkeeping changes remain separate work.
+- [x] Diagnostic audit, second section: collect independent connection endpoint,
+      sink-list, conditional-presence, direction, type/width and duplicate-driver
+      errors. Stop before coverage/output-use/cycle checks on a partial invalid
+      graph. Preserve prerequisite checks and valid-graph behavior. Seven new
+      regressions include the saved duplicate dispatch-driver edge; all 46 focused
+      offline checks, compilation and whitespace checks pass. No paid retry ran.
+- [x] Ownership bookkeeping, first section: generated contracts may omit
+      invariants/verification reference lists; derive them deterministically from
+      explicit rule_owners and locked rule-to-obligation links. Keep supplied
+      lists strict and published/hand-authored package validation unchanged.
+      Keep behavioral intent, checks, observations and semantic approval explicit.
+      Generator revision 15; all 113 selected offline tests pass. A read-only
+      controller replay reproduces all eight original contract reference sets.
+      System-stage reciprocal references and specification resume remain separate.
+- [x] System verification bookkeeping, second section: rule verification IDs stay
+      authoritative; derive omitted obligation.rules reverse references locally
+      within each slice. Keep explicit lists, coverage, behavioral intent and
+      published source validation strict. Generator revision 16. All 124 selected
+      offline checks pass; a read-only controller replay matches 26 reverse-link
+      sets without changing scenarios, expected results or status. No paid run.
+- [x] Review context boundary: exclude historical generation validation_repairs
+      from semantic-review input and reference resolution, retaining full saved
+      provenance and artifact fingerprints. Review protocol revision 3 requires
+      fresh review. The saved repaired response-wiring regression preserves
+      current connections and external blockers while omitting stale diagnostics.
+      All 37 selected offline review/repair tests, compilation and diff checks pass.
+- [x] Separate repairable design findings from external agreement. Review protocol
+      4 requires explicit resolution classification and validated blocker refs.
+      External-only cases stop before generation; mixed architecture/external
+      reports preserve the system and retain blockers. Real design system issues
+      still select system repair. Preserve unresolved decisions as well as
+      assumptions/questions during regeneration (generator revision 17).
+      All 53 focused offline review/repair/prompt tests pass; no paid calls ran.
+- [x] Clarify automated approval policy in review input: draft status and normal
+      RTL approval questions are not external prerequisites. Render eligible
+      blocker paths from validator metadata checks; preserve strict validation.
+      Saved 223610Z classification regression retains the legitimate profile
+      finding and rejects circular approval. All 47 offline review/repair tests,
+      compilation and whitespace checks pass. No paid calls or source edits ran.
+- [x] Repair preservation, first segment: audit the saved 232303Z system rewrite
+      without changing live repair behavior. Record 24 exact system-projection
+      differences and a focused regression fixture, including broadened active/
+      cleanup guards and three removed type-description fields. Add a read-only
+      JSON change utility with no behavioral inference or automatic repair.
+      All 16 selected offline audit/edit tests, compilation and diff checks pass.
+- [x] Constrain system semantic repair to fingerprint-bound explicit edits from
+      its accepted parent. Preserve unmentioned fields, reject bulk object
+      replacement and request/external-agreement mutations, record applied
+      changes, and retain existing compiler/final-review checks and attempt limits.
+      Saved preservation cases and generic real-compiler repair regressions cover
+      the new path. Fresh system generation remains complete-response based.
+      All 74 selected offline tests, compilation and whitespace checks pass;
+      no paid calls or target source/export edits ran.
+- [x] Repair-focused final review: carry every input design finding and exact
+      change evidence into the existing single review call. Require explicit
+      per-finding disposition and preservation assessment, current references and
+      links to open/regression findings. Persist target-bound context and recheck
+      it during approval/next repair. Add --repair-context for explicit re-review.
+      All 65 focused offline tests, compilation and whitespace checks pass.
+      No paid calls; merging unrelated historical reviews remains separate work.
+- [ ] Aggregate independent verification-check shape errors and clarify required
+      but possibly empty events lists, using the 20261027T023137Z saved failure.
+      This is the immediate next task; see Current handoff above. Do not increase
+      rounds or retry the paid flow before the diagnostic fix is verified.
 - [ ] Complete the live target RTL build and integration lint with these repairs;
       downstream UVM/vector testing remains outside frontend scope.
 

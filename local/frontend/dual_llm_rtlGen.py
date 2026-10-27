@@ -19,6 +19,7 @@ Usage:
 """
 
 import os
+import math
 import re
 import sys
 import json
@@ -27,6 +28,7 @@ import shutil
 import tempfile
 import subprocess
 import requests
+from tpm_pacing import paced_post
 import token_usage
 import uuid
 
@@ -73,6 +75,17 @@ DEFAULT_INTEGRATION_TOP_MODULE = os.environ.get(
 # API helper
 # ---------------------------------------------------------------------------
 
+def request_timeout_seconds(value=None):
+    """Positive finite client timeout, shared by RTL calls and diagnostics."""
+    try:
+        timeout = float(os.environ.get('DUAL_LLM_TIMEOUT_SECONDS', '180') if value is None else value)
+        if not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError()
+    except (TypeError, ValueError):
+        raise RuntimeError('DUAL_LLM_TIMEOUT_SECONDS/--timeout must be a positive finite number') from None
+    return timeout
+
+
 def _call_llm(model, system_prompt, user_message, label="LLM"):
     """
     Call the TAMU LLM API, retrying token-limited responses with a larger budget.
@@ -91,6 +104,7 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
     except ValueError as e:
         raise RuntimeError("Invalid DUAL_LLM_MAX_TOKENS/DUAL_LLM_MAX_RETRY_TOKENS: {}".format(e))
 
+    timeout = request_timeout_seconds()
     payload = {
         "model": model,
         "max_tokens": token_budget,
@@ -102,17 +116,17 @@ def _call_llm(model, system_prompt, user_message, label="LLM"):
     }
     request_characters = len(system_prompt) + len(user_message)
     print(f'[dual_llm] {label}: request_characters={request_characters} (system + user text; not tokens)')
+    print(f'[dual_llm] {label}: client_timeout_seconds={timeout:g}')
 
     while True:
         try:
-            resp = requests.post(
-                ENDPOINT,
+            resp = paced_post(ENDPOINT, pacing_label=label,
                 headers={
                     "Authorization": "Bearer " + api_key,
                     "Content-Type":  "application/json"
                 },
                 json=dict(payload),
-                timeout=180
+                timeout=timeout
             )
         except requests.exceptions.RequestException as e:
             token_usage.record_usage(model, label, outcome="network_error",
@@ -1499,10 +1513,10 @@ def _llm1_merge(design, yaml_text, llm1_code, llm2_code, review_report, history,
 # Main loop
 # ---------------------------------------------------------------------------
 
-def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
+def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False, resume=False):
     trace = {"module": design.design_name, "max_rounds": MAX_ROUNDS, "rounds": [], "outcome": "failed"}
     try:
-        rtl = _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace)
+        rtl = _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=resume)
         trace["outcome"] = "accepted_or_reviewed_cache"
         return rtl
     except Exception as exc:
@@ -1516,7 +1530,7 @@ def run_dual_llm_rtlgen(design, yaml_text, lint_enabled=True, use_cache=False):
             print(f"[dual_llm] Round report: {path}", flush=True)
 
 
-def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace):
+def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace, resume=False):
     """
     Run the dual-LLM RTL generation loop.
 
@@ -1536,18 +1550,24 @@ def _run_dual_llm_rtlgen(design, yaml_text, lint_enabled, use_cache, trace):
     carryover_status = ""
     carryover_issues = []
 
-    if use_cache:
+    if use_cache and resume:
+        raise ValueError('--cache and --resume are mutually exclusive')
+    if use_cache or resume:
         cached_rtl = _load_reviewed_cache(
             design.design_name,
             lint_enabled=lint_enabled,
             cache_only=True,
         )
         if cached_rtl:
+            trace['cache_hit'] = True
             return cached_rtl
-        raise RuntimeError(
-            "dual_llm_rtlgen: --cache requested but no usable cached reviewed RTL exists for {}".format(
-                design.design_name)
-        )
+        if use_cache:
+            raise RuntimeError(
+                "dual_llm_rtlgen: --cache requested but no usable cached reviewed RTL exists for {}".format(
+                    design.design_name)
+            )
+        trace['cache_hit'] = False
+        print('[dual_llm] Resume: no usable matching reviewed cache; generating {}.'.format(design.design_name))
 
     print("[dual_llm] Starting dual-LLM loop | max_rounds={} | LLM1={} | LLM2={} | lint={}".format(
         MAX_ROUNDS, LLM1_MODEL, LLM2_MODEL, "on" if lint_enabled else "off"))

@@ -2218,6 +2218,7 @@ def call_patch_llm(prompt: str, model: str, *, system_prompt: str | None = None,
 
     try:
         import requests
+        from tpm_pacing import paced_post
     except ImportError as exc:
         raise RuntimeError("The requests package is required for online patch proposals.") from exc
 
@@ -2251,8 +2252,7 @@ def call_patch_llm(prompt: str, model: str, *, system_prompt: str | None = None,
         metadata = {"model": model, "max_tokens": payload["max_tokens"],
                     "attempt": len(attempts) + 1}
         try:
-            response = requests.post(
-                TAMU_API_URL,
+            response = paced_post(TAMU_API_URL, pacing_label="Debug",
                 headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
                 json=dict(payload), timeout=180,
             )

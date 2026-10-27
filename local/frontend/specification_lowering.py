@@ -147,6 +147,9 @@ def _compile_snapshot(snapshot):
         'provenance': {'source': SOURCE, 'specification': {'compiler_revision': COMPILER_REVISION,
                          'package_fingerprint': package_hash, 'snapshot': snapshot}},
     }
+    if graph.get('verification_outputs'):
+        manifest['unused_outputs'] = [{'endpoint': endpoint, 'reason': reason}
+                                      for endpoint, reason in graph['verification_outputs'].items()]
     if package.get('design_kind') == 'memory_controller' or CONTROLLER_ROLES <= roles:
         manifest['design_kind'] = 'memory_controller'
     baseline = package.get('generation', {}).get('request', {}).get('baseline_contract')
@@ -232,14 +235,21 @@ def require_approval(manifest, approval_path=None):
         raise SpecificationError('RTL generation requires revision-bound specification approval. Export with --microarch-only, review the artifacts, then supply --spec-approval.')
     approval = read_document(approval_path)
     version = approval.get('approval_version')
-    if type(version) is not int or version not in (1, 2):
+    if type(version) is not int or version not in (1, 2, 3):
         raise SpecificationError('Unsupported specification approval_version')
     fields(approval, ('approval_version', 'status', 'reviewer', 'approved_at', 'package_id', 'revision',
                       'package_fingerprint', 'manifest_fingerprint', 'resolved_questions') +
-                      (('review_confirmations',) if version == 2 else ()), (), 'approval')
+                      (('review_confirmations',) if version == 2 else
+                       ('automated_review',) if version == 3 else ()), (), 'approval')
+    if version == 3:
+        from review_specification import validate_pass_report
+        validate_pass_report(approval['automated_review'], manifest)
+        report = approval['automated_review']
+        if approval['reviewer'] != 'automated:' + report['mode'] + ':' + report['model']:
+            raise SpecificationError('Automated approval reviewer does not match its review report')
     confirmations = approval.get('review_confirmations', [])
     package = _reviewable(manifest, confirmations)
-    expected = {'approval_version': 2 if confirmations else 1, 'status': 'approved', 'package_id': package['package_id'],
+    expected = {'approval_version': 3 if version == 3 else 2 if confirmations else 1, 'status': 'approved', 'package_id': package['package_id'],
                 'revision': package['revision'], 'package_fingerprint': manifest['provenance']['specification']['package_fingerprint'],
                 'manifest_fingerprint': _fingerprint(manifest), 'resolved_questions': list(package['open_questions'])}
     if type(approval['approval_version']) is not int or any(approval.get(k) != v for k, v in expected.items()):

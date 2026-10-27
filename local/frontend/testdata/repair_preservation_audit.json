@@ -1,0 +1,298 @@
+{
+  "description": "Exact saved behavior projection for offline change auditing, not a behavioral model or complete specification.",
+  "source_run": "frontend_20261025T232303Z",
+  "before": {
+    "shared": {
+      "events": {
+        "dispatch": {
+          "condition": "At a rising clk edge, rst_n is high, active ownership is absent, cleanup reservation is absent, refresh preparation or service is absent, candidate storage is empty, and a pre-edge FIFO head is selected.",
+          "effect": "Capture the complete pre-edge FIFO head into active ownership and release exactly that waiting entry."
+        },
+        "candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, active ownership exists, candidate storage is empty, cleanup reservation and refresh preparation or service are absent, and no command commits on that edge.",
+          "effect": "Create the first active-request candidate from registered active ownership and registered bank state."
+        },
+        "cleanup_candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, PAGE_POLICY is close_page, active ownership is absent, a cleanup reservation exists, candidate storage is empty, refresh preparation or service is absent, and no command commits on that edge.",
+          "effect": "Create a PRE candidate for the reserved cleanup bank from registered bank state. This candidate is not an active-request candidate."
+        },
+        "refresh_candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, refresh pending is asserted, active ownership and cleanup reservation are absent, candidate storage is empty, refresh service is not in tRFC exclusion, and no command commits on that edge.",
+          "effect": "Create exactly one refresh-preparation candidate from registered bank state: PRE for the lowest-index open bank, or REF when all banks are closed."
+        }
+      },
+      "types": {
+        "command": {
+          "kind": "record",
+          "packed_order": "msb_to_lsb",
+          "fields": [
+            {
+              "name": "opcode",
+              "type": "shared.types.opcode"
+            },
+            {
+              "name": "bank",
+              "type": "shared.types.bank"
+            },
+            {
+              "name": "row",
+              "type": "shared.types.row"
+            },
+            {
+              "name": "column",
+              "type": "shared.types.column"
+            },
+            {
+              "name": "wdata",
+              "type": "shared.types.data"
+            }
+          ],
+          "semantics": {
+            "NOP": "Canonical all-zero payload; never commits.",
+            "ACT": "Open bank at row; column and wdata are zero.",
+            "PRE": "Close bank; row, column, and wdata are zero.",
+            "READ": "Access matching open bank row and column; wdata is zero.",
+            "WRITE": "Access matching open bank row and column with wdata.",
+            "REF": "All-bank refresh; bank, row, column, and wdata are zero."
+          }
+        },
+        "request": {
+          "kind": "record",
+          "packed_order": "msb_to_lsb",
+          "fields": [
+            {
+              "name": "bank",
+              "type": "shared.types.bank"
+            },
+            {
+              "name": "row",
+              "type": "shared.types.row"
+            },
+            {
+              "name": "column",
+              "type": "shared.types.column"
+            },
+            {
+              "name": "is_write",
+              "type": "shared.types.bit"
+            },
+            {
+              "name": "wdata",
+              "type": "shared.types.data"
+            }
+          ],
+          "mapping": {
+            "bank": "Zero-extend txn_bank.",
+            "row": "Zero-extend txn_addr[3:2].",
+            "column": "Zero-extend txn_addr[1:0].",
+            "is_write": "txn_is_write.",
+            "wdata": "txn_wdata."
+          },
+          "legal_values": "bank is less than BANK_COUNT; host-originated row[9:2] and column[5:2] are zero."
+        }
+      }
+    },
+    "execution": {
+      "rules": {
+        "EXEC_REFRESH": {
+          "statement": "The first deadline is the last reset-sampled edge plus tREFI; later deadlines advance by tREFI independently of REF. Pending is sticky. Pending blocks dispatch after active work resolves, waits for cleanup completion, creates ordered refresh-preparation PRE candidates until all banks are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes commands strictly before REF-edge+tRFC."
+        },
+        "EXEC_CONTROL_CREATION": {
+          "statement": "A cleanup reservation creates PRE control work independently of active ownership. Refresh pending creates successive PRE control work for the lowest-index open bank and then REF control work when all banks are closed, independently of active ownership. Control candidates are created only on later edges when the candidate slot is empty, hold while blocked, clear on commit, and do not receive same-edge replacement."
+        }
+      }
+    },
+    "system": {
+      "rules": {
+        "SYS_CONTROL_PRIORITY": {
+          "statement": "With reset inactive, an outstanding candidate holds or commits before other nonreset progress. When candidate storage is empty, active-request candidate creation has priority over cleanup candidate creation, cleanup candidate creation has priority over refresh-preparation candidate creation, and dispatch is permitted only when none of those control conditions applies. A candidate created from cleanup or refresh preparation follows the same hold, permission, commit, and no-same-edge-replacement rules as an active-request candidate."
+        }
+      }
+    }
+  },
+  "after": {
+    "shared": {
+      "events": {
+        "dispatch": {
+          "condition": "At a rising clk edge, rst_n is high, active ownership is absent, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, candidate storage is empty, and a pre-edge FIFO head is selected.",
+          "effect": "Capture the complete pre-edge FIFO head into active ownership and release exactly that waiting entry. Dispatch never coincides with refresh-preparation candidate creation."
+        },
+        "candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, active ownership exists, candidate storage is empty, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge.",
+          "effect": "Create the first active-request candidate from registered active ownership and registered bank state."
+        },
+        "cleanup_candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, PAGE_POLICY is close_page, active ownership is absent, a cleanup reservation exists, candidate storage is empty, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge.",
+          "effect": "Create a PRE candidate for the reserved cleanup bank from registered bank state."
+        },
+        "refresh_candidate_create": {
+          "condition": "At a rising clk edge, rst_n is high, refresh_pending is high, active ownership and cleanup reservation are absent, candidate storage is empty, refresh service is not in tRFC exclusion, and no command commits on that edge.",
+          "effect": "Create exactly one refresh-preparation candidate from registered bank state: PRE for the lowest-index open bank, or REF when all banks are closed."
+        }
+      },
+      "types": {
+        "command": {
+          "kind": "record",
+          "packed_order": "msb_to_lsb",
+          "fields": [
+            {
+              "name": "opcode",
+              "type": "shared.types.opcode"
+            },
+            {
+              "name": "bank",
+              "type": "shared.types.bank"
+            },
+            {
+              "name": "row",
+              "type": "shared.types.row"
+            },
+            {
+              "name": "column",
+              "type": "shared.types.column"
+            },
+            {
+              "name": "wdata",
+              "type": "shared.types.data"
+            }
+          ]
+        },
+        "request": {
+          "kind": "record",
+          "packed_order": "msb_to_lsb",
+          "fields": [
+            {
+              "name": "bank",
+              "type": "shared.types.bank"
+            },
+            {
+              "name": "row",
+              "type": "shared.types.row"
+            },
+            {
+              "name": "column",
+              "type": "shared.types.column"
+            },
+            {
+              "name": "is_write",
+              "type": "shared.types.bit"
+            },
+            {
+              "name": "wdata",
+              "type": "shared.types.data"
+            }
+          ]
+        }
+      }
+    },
+    "execution": {
+      "rules": {
+        "EXEC_REFRESH": {
+          "statement": "The first deadline is the last reset-sampled edge plus tREFI; later deadlines advance by tREFI independently of REF. Pending is sticky. Pending immediately prevents dispatch, waits for already owned active work and cleanup completion, creates ordered refresh-preparation PRE candidates until all banks are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes commands strictly before REF-edge+tRFC."
+        },
+        "EXEC_CONTROL_CREATION": {
+          "statement": "A cleanup reservation creates PRE control work independently of active ownership. Refresh pending creates successive PRE control work for the lowest-index open bank and then REF control work when all banks are closed, independently of active ownership. While refresh pending is asserted, dispatch is inhibited. Control candidates are created only on later edges when the candidate slot is empty, hold while blocked, clear on commit, and do not receive same-edge replacement."
+        }
+      }
+    },
+    "system": {
+      "rules": {
+        "SYS_CONTROL_PRIORITY": {
+          "statement": "With reset inactive, an outstanding candidate holds or commits before other nonreset progress. When candidate storage is empty, active-request candidate creation has priority over cleanup candidate creation, cleanup candidate creation has priority over refresh-preparation candidate creation, and dispatch is permitted only when refresh_pending is low and none of those control conditions applies. A pending refresh therefore inhibits dispatch before refresh-preparation candidate creation and cannot race dispatch. A candidate created from cleanup or refresh preparation follows the same hold, permission, commit, and no-same-edge-replacement rules as an active-request candidate."
+        }
+      }
+    }
+  },
+  "initial_findings": [
+    {
+      "id": "F_REFRESH_PENDING_DISPATCH_RACE",
+      "scope": "system",
+      "resolution": "design_repair",
+      "message": "The dispatch event does not exclude pre-edge refresh_pending, although refresh candidate creation is enabled by that same state. Consequently, when refresh is pending with no active, cleanup, candidate, or service ownership, dispatch and refresh-preparation candidate creation can both occur on one edge. This violates the required refresh drain/priority behavior and can capture new active work instead of beginning refresh preparation. Amend the locked dispatch eligibility/priority definition so dispatch is inhibited whenever pending refresh control work applies, and preserve the defined later-edge candidate-creation behavior.",
+      "references": [
+        "/documents/shared/events/dispatch/condition",
+        "/documents/shared/events/refresh_candidate_create/condition",
+        "/documents/execution/rules/EXEC_REFRESH/statement",
+        "/documents/system/rules/SYS_CONTROL_PRIORITY/statement"
+      ],
+      "requirement_ids": [
+        "R8",
+        "R12",
+        "BASE_REFRESH"
+      ]
+    },
+    {
+      "id": "F_CMD_READY_NOT_GATED_BY_ENGINE_IDLE_OR_CLEANUP",
+      "scope": "architecture",
+      "resolution": "design_repair",
+      "message": "cmd_ready is required to report first-command readiness only while the engine is idle and cleanup/refresh permit. However, command_engine declares probe_valid dependent only on refresh_pending and refresh_busy, and execution_ready dependent only on probe_ok, refresh_pending, and refresh_busy. No declared gate incorporates active ownership, an outstanding candidate, or cleanup reservation; therefore cmd_ready can remain asserted during active service, candidate occupancy, or cleanup, contrary to the diagnostic contract. Define and wire the required idle and cleanup gating into probe_valid/execution_ready while retaining the valid-low probe payload behavior.",
+      "references": [
+        "/documents/modules/contracts/command_engine/combinational_dependencies/probe_valid",
+        "/documents/modules/contracts/command_engine/combinational_dependencies/execution_ready",
+        "/documents/modules/contracts/command_engine/handshakes/probe",
+        "/documents/system/rules/R9/statement",
+        "/documents/execution/rules/EXEC_READY/statement"
+      ],
+      "requirement_ids": [
+        "R9"
+      ]
+    },
+    {
+      "id": "F_PROFILE_PROVENANCE_REQUIRES_EXTERNAL_REVIEW",
+      "scope": "system",
+      "resolution": "external_agreement",
+      "message": "The selected DDR4-3200 timing-library provenance is explicitly marked requires_review, and the recorded open question states that authoritative source acceptance requires external review before RTL generation. The supplied numeric timing table permits compiler implementation, but it does not resolve that external provenance/acceptance decision. Obtain and record external confirmation of the selected timing-library source and paths.",
+      "references": [
+        "/package/assumptions/A_PROFILE",
+        "/package/open_questions/Q_PROFILE_PROVENANCE"
+      ],
+      "requirement_ids": [
+        "BASE_TIMING",
+        "BASE_TRRD",
+        "BASE_TFAW"
+      ]
+    }
+  ],
+  "post_repair_findings": [
+    {
+      "id": "F_REFRESH_DRAIN_DEADLOCK",
+      "scope": "system",
+      "resolution": "design_repair",
+      "message": "The locked candidate-creation event conditions prohibit both active-service candidate creation and close-page cleanup PRE creation whenever refresh_pending is high. This conflicts with the required refresh drain behavior: a refresh becoming pending must allow an already owned active request to finish and must allow an existing cleanup reservation to clear before refresh preparation begins. If refresh becomes pending after an ACT commits but before the later access candidate is created, or during close-page cleanup, no legal candidate can be created, while refresh preparation waits for the blocked active/cleanup ownership; service deadlocks. Correct the shared candidate/control creation conditions and corresponding command-engine control logic so pre-existing active service drains first, then cleanup drains, and only then refresh-preparation candidates are created; dispatch must remain inhibited while pending.",
+      "references": [
+        "/documents/shared/events/candidate_create",
+        "/documents/shared/events/cleanup_candidate_create",
+        "/documents/execution/rules/EXEC_REFRESH",
+        "/documents/execution/rules/EXEC_CONTROL_CREATION",
+        "/documents/modules/contracts/command_engine/update_events/every_clock",
+        "/documents/system/rules/SYS_CONTROL_PRIORITY/statement"
+      ],
+      "requirement_ids": [
+        "R7",
+        "R8",
+        "R12",
+        "BASE_REFRESH",
+        "BASE_SEQUENCE"
+      ]
+    },
+    {
+      "id": "F_PROFILE_PROVENANCE_BLOCKER",
+      "scope": "system",
+      "resolution": "external_agreement",
+      "message": "The DDR4-3200 timing-library provenance and acceptance remains marked requires_review, and the recorded question explicitly states that external review is required before RTL generation. The included numeric timing table permits compiler implementation, but does not resolve the required external evidence/acceptance of the selected timing source. Obtain and record that external review before authorizing RTL generation.",
+      "references": [
+        "/package/assumptions/A_PROFILE",
+        "/package/open_questions/Q_PROFILE_PROVENANCE",
+        "/timing_library/DDR4-3200"
+      ],
+      "requirement_ids": [
+        "BASE_TIMING",
+        "BASE_TRRD",
+        "BASE_TFAW",
+        "R5"
+      ]
+    }
+  ],
+  "before_fingerprint": "3b476a9d258e4965f19fca390cfe62b373d580cba8eae6e947eb6ce6818b84ec",
+  "after_fingerprint": "b5b4f358ee1ddc5ac244e247118d8635f140fef126e53e2f631ced499ab922a4"
+}

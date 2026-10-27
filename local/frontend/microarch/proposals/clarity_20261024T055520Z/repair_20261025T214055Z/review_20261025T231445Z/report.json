@@ -1,0 +1,72 @@
+{
+  "review_version": 1,
+  "review_revision": 4,
+  "status": "changes_required",
+  "model": "protected.gpt-5.6-terra",
+  "mode": "llm",
+  "reviewed_at": "2026-10-25T23:14:50.967575+00:00",
+  "manifest_fingerprint": "f931ab6bd3d4614e35dbf0be5a07dcfdf173c79b0e9e16a5606885fd1e8c765f",
+  "package_fingerprint": "ed582f2fbac5bf2f4896ed71e0b4dd7f10252520571ae5469403c2129f1ac335",
+  "verdict": {
+    "status": "changes_required",
+    "reviewed_aspects": [
+      "request_coverage",
+      "lifecycle_and_progress",
+      "payload_and_dependencies",
+      "verification_consistency",
+      "observation_sufficiency",
+      "unresolved_assumptions"
+    ],
+    "findings": [
+      {
+        "id": "F_REFRESH_PENDING_DISPATCH_RACE",
+        "scope": "system",
+        "resolution": "design_repair",
+        "message": "The dispatch event does not exclude pre-edge refresh_pending, although refresh candidate creation is enabled by that same state. Consequently, when refresh is pending with no active, cleanup, candidate, or service ownership, dispatch and refresh-preparation candidate creation can both occur on one edge. This violates the required refresh drain/priority behavior and can capture new active work instead of beginning refresh preparation. Amend the locked dispatch eligibility/priority definition so dispatch is inhibited whenever pending refresh control work applies, and preserve the defined later-edge candidate-creation behavior.",
+        "references": [
+          "/documents/shared/events/dispatch/condition",
+          "/documents/shared/events/refresh_candidate_create/condition",
+          "/documents/execution/rules/EXEC_REFRESH/statement",
+          "/documents/system/rules/SYS_CONTROL_PRIORITY/statement"
+        ],
+        "requirement_ids": [
+          "R8",
+          "R12",
+          "BASE_REFRESH"
+        ]
+      },
+      {
+        "id": "F_CMD_READY_NOT_GATED_BY_ENGINE_IDLE_OR_CLEANUP",
+        "scope": "architecture",
+        "resolution": "design_repair",
+        "message": "cmd_ready is required to report first-command readiness only while the engine is idle and cleanup/refresh permit. However, command_engine declares probe_valid dependent only on refresh_pending and refresh_busy, and execution_ready dependent only on probe_ok, refresh_pending, and refresh_busy. No declared gate incorporates active ownership, an outstanding candidate, or cleanup reservation; therefore cmd_ready can remain asserted during active service, candidate occupancy, or cleanup, contrary to the diagnostic contract. Define and wire the required idle and cleanup gating into probe_valid/execution_ready while retaining the valid-low probe payload behavior.",
+        "references": [
+          "/documents/modules/contracts/command_engine/combinational_dependencies/probe_valid",
+          "/documents/modules/contracts/command_engine/combinational_dependencies/execution_ready",
+          "/documents/modules/contracts/command_engine/handshakes/probe",
+          "/documents/system/rules/R9/statement",
+          "/documents/execution/rules/EXEC_READY/statement"
+        ],
+        "requirement_ids": [
+          "R9"
+        ]
+      },
+      {
+        "id": "F_PROFILE_PROVENANCE_REQUIRES_EXTERNAL_REVIEW",
+        "scope": "system",
+        "resolution": "external_agreement",
+        "message": "The selected DDR4-3200 timing-library provenance is explicitly marked requires_review, and the recorded open question states that authoritative source acceptance requires external review before RTL generation. The supplied numeric timing table permits compiler implementation, but it does not resolve that external provenance/acceptance decision. Obtain and record external confirmation of the selected timing-library source and paths.",
+        "references": [
+          "/package/assumptions/A_PROFILE",
+          "/package/open_questions/Q_PROFILE_PROVENANCE"
+        ],
+        "requirement_ids": [
+          "BASE_TIMING",
+          "BASE_TRRD",
+          "BASE_TFAW"
+        ]
+      }
+    ]
+  },
+  "readiness_error": "Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']"
+}

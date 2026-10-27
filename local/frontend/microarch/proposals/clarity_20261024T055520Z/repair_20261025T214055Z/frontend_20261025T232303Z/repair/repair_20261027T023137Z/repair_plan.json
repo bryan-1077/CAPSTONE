@@ -1,0 +1,54 @@
+{
+  "repair_version": 1,
+  "max_semantic_cycles": 1,
+  "compiler_attempts_per_stage": 3,
+  "stage": "system",
+  "scopes": [
+    "system"
+  ],
+  "source_manifest_fingerprint": "5339df33ca61538f5a7b029b4b7e6b8d72d949ca6f7d555a4397f9c9f27d758c",
+  "report_fingerprint": "35287352ca1d577fa06ea187d0cc3cdeb6af2f1739f15e8bd4e7aa8915076969",
+  "findings": [
+    {
+      "id": "F_REFRESH_DRAIN_DEADLOCK",
+      "scope": "system",
+      "resolution": "design_repair",
+      "message": "The locked candidate-creation event conditions prohibit both active-service candidate creation and close-page cleanup PRE creation whenever refresh_pending is high. This conflicts with the required refresh drain behavior: a refresh becoming pending must allow an already owned active request to finish and must allow an existing cleanup reservation to clear before refresh preparation begins. If refresh becomes pending after an ACT commits but before the later access candidate is created, or during close-page cleanup, no legal candidate can be created, while refresh preparation waits for the blocked active/cleanup ownership; service deadlocks. Correct the shared candidate/control creation conditions and corresponding command-engine control logic so pre-existing active service drains first, then cleanup drains, and only then refresh-preparation candidates are created; dispatch must remain inhibited while pending.",
+      "references": [
+        "/documents/shared/events/candidate_create",
+        "/documents/shared/events/cleanup_candidate_create",
+        "/documents/execution/rules/EXEC_REFRESH",
+        "/documents/execution/rules/EXEC_CONTROL_CREATION",
+        "/documents/modules/contracts/command_engine/update_events/every_clock",
+        "/documents/system/rules/SYS_CONTROL_PRIORITY/statement"
+      ],
+      "requirement_ids": [
+        "R7",
+        "R8",
+        "R12",
+        "BASE_REFRESH",
+        "BASE_SEQUENCE"
+      ]
+    }
+  ],
+  "external_findings": [
+    {
+      "id": "F_PROFILE_PROVENANCE_BLOCKER",
+      "scope": "system",
+      "resolution": "external_agreement",
+      "message": "The DDR4-3200 timing-library provenance and acceptance remains marked requires_review, and the recorded question explicitly states that external review is required before RTL generation. The included numeric timing table permits compiler implementation, but does not resolve the required external evidence/acceptance of the selected timing source. Obtain and record that external review before authorizing RTL generation.",
+      "references": [
+        "/package/assumptions/A_PROFILE",
+        "/package/open_questions/Q_PROFILE_PROVENANCE",
+        "/timing_library/DDR4-3200"
+      ],
+      "requirement_ids": [
+        "BASE_TIMING",
+        "BASE_TRRD",
+        "BASE_TFAW",
+        "R5"
+      ]
+    }
+  ],
+  "readiness_error": "Resolve blocking decisions/questions before approving RTL: ['Q_PROFILE_PROVENANCE', 'A_PROFILE']"
+}

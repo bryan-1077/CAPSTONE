@@ -1,0 +1,7 @@
+{
+  "status": "stopped",
+  "stage": "system",
+  "semantic_cycles": 1,
+  "rtl_generation": "not_run",
+  "error": "architecture specification failed validation: Validation failed with 1 error(s):\n- Undriven graph sinks ['host_adapter.execution_ready']; unused sources ['command_engine.cleanup_active', 'command_engine.execution_ready']; checked observations ['command_engine.cleanup_active'] may use explicit graph.verification_outputs only if intended solely for verification; functional connections must still be repaired"
+}

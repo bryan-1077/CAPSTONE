@@ -1,0 +1,12 @@
+{
+  "review_version": 1,
+  "review_revision": 1,
+  "status": "failed",
+  "model": "protected.gpt-5.6-terra",
+  "mode": "llm",
+  "reviewed_at": "2026-10-24T06:34:42.774220+00:00",
+  "manifest_fingerprint": "e3ee787f2cd8114326e3ce77da79c5cdf905fcb7c7ac4dc950bbc09c1cfb412c",
+  "package_fingerprint": "ea0e149468731c4749403581559fddbb02bbe1d572ad7949fb74f44cc6b1f2c6",
+  "verdict": null,
+  "readiness_error": "Resolve blocking decisions/questions before approving RTL: ['A_PROFILE']"
+}

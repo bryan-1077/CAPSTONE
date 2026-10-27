@@ -1,0 +1,224 @@
+{
+  "description": "Review-context projection of accepted 20261025T214055Z export and stale reviewer finding; not a complete or approved specification.",
+  "snapshot": {
+    "package": {
+      "assumptions": {
+        "A_CLOCK": {
+          "statement": "clk continues to provide rising edges while rst_n is low so synchronous reset state clearing can occur.",
+          "status": "documented"
+        },
+        "A_HOST_STALL": {
+          "statement": "The host holds txn_valid and all transaction payload fields stable while txn_valid is high and txn_ready is low.",
+          "status": "documented"
+        },
+        "A_PROFILE": {
+          "statement": "The selected timing library supplies the declared DDR4-3200 timing paths.",
+          "status": "requires_review"
+        },
+        "A_PROGRESS": {
+          "statement": "Service progress requires reset to remain inactive and timing and refresh intervals to elapse; no bounded transaction latency is asserted.",
+          "status": "documented"
+        },
+        "A_RESPONSE": {
+          "statement": "The host samples every rsp_valid pulse because no response-backpressure interface is provided.",
+          "status": "documented"
+        }
+      },
+      "open_questions": {
+        "Q_PROFILE_PROVENANCE": {
+          "blocks": "design_review",
+          "question": "The authoritative provenance and acceptance of the selected DDR4-3200 timing-library source requires external review before RTL generation; planned timing-boundary checks cannot establish library correctness."
+        },
+        "Q_RTL_APPROVAL": {
+          "blocks": "rtl_generation",
+          "question": "Approval of this exact draft package is required before RTL generation or downstream implementation export."
+        }
+      },
+      "generation": {
+        "validation_repairs": [
+          {
+            "stage": "semantic_review",
+            "attempt": 1,
+            "error": "Repair the semantic findings from the previous revision below. They are review evidence, not permission to weaken the authoritative request. Only address fields owned by the current stage. Preserve the request IDs/text, constraints and selected configuration. System repair invalidates the old architecture; architecture-only repair must leave the locked system unchanged. Keep every original requires_review assumption and non-rtl_generation blocking question unchanged: do not remove, rename, rewrite or mark them resolved, and do not invent user acceptance, external evidence, test execution or new public ports when existing observations/inference suffice. Unresolved external agreement must remain blocking. References identify the previous snapshot.\n{\"compiler_attempts_per_stage\":3,\"findings\":[{\"id\":\"F_MAINTENANCE_CANDIDATE_PATH\",\"message\":\"The sole shared candidate-creation event requires active request ownership, but both close-page cleanup and refresh preparation require PRE/REF commands after active ownership has been retired or is absent. Consequently, the specified cleanup reservation cannot necessarily produce its legal PRE, and refresh preparation cannot necessarily close banks or commit REF; this can deadlock service and violates required progress. Define system-level candidate/control creation events and priority rules for cleanup PRE and refresh-preparation PRE/REF, reconcile them with the existing active-request candidate rule, and regenerate downstream architecture decomposition against the repaired shared lifecycle.\",\"references\":[\"/documents/shared/events/candidate_create\",\"/documents/execution/rules/EXEC_CLEANUP\",\"/documents/execution/rules/EXEC_REFRESH\",\"/documents/modules/contracts/command_engine/owned_state\",\"/documents/modules/contracts/command_engine/update_events\",\"/documents/modules/contracts/command_engine/handshakes/candidate\"],\"requirement_ids\":[\"R7\",\"R8\",\"R12\",\"BASE_SEQUENCE\",\"BASE_REFRESH\"],\"scope\":\"system\"},{\"id\":\"F_PROBE_PAYLOAD_UNOBSERVABLE\",\"message\":\"The required valid-low probe-payload behavior cannot be verified through the declared observations: probe_command and probe_valid have graph connections but no verification observation bindings, while the payload checks claim to cover independently defined probe payloads when probe validity is low. Add bindings for probe_command and probe_valid and use them in the payload/diagnostic checks, so invalid-low probe payload behavior can be distinguished from valid gating behavior.\",\"references\":[\"/documents/execution/rules/EXEC_PAYLOAD\",\"/documents/system/rules/R13\",\"/documents/verification/checks/execution.verification.X_PAYLOAD\",\"/documents/verification/checks/system.verification.V_PAYLOAD\",\"/documents/verification/observations\",\"/documents/verification/events/candidate_create\"],\"requirement_ids\":[\"R13\"],\"scope\":\"architecture\"},{\"id\":\"F_CLEANUP_VERIFICATION_NOT_DISTINGUISHABLE\",\"message\":\"The cleanup verification binding observes only row state and refresh_pending for a check that claims to establish cleanup reservation, dispatch blocking, and exactly one legal cleanup PRE. Those observations cannot distinguish cleanup ownership from an ordinary timing stall, active service, or another dispatch restriction. Expose an observable cleanup/service-selection state or bind enough command-engine dispatch/candidate/commit state to prove reservation creation, dispatch inhibition, and its single PRE completion under close-page operation.\",\"references\":[\"/documents/execution/verification/X_CLEANUP\",\"/documents/verification/checks/execution.verification.X_CLEANUP\",\"/documents/system/verification/V_PAGE\",\"/documents/verification/checks/system.verification.V_PAGE\",\"/documents/modules/contracts/command_engine/owned_state/cleanup\",\"/documents/modules/contracts/command_engine/handshakes/dispatch\"],\"requirement_ids\":[\"R7\"],\"scope\":\"architecture\"},{\"id\":\"F_PROFILE_PROVENANCE_UNRESOLVED\",\"message\":\"Timing enforcement is required to use the selected DDR4-3200 profile, but the package explicitly leaves the timing-library assumption in requires_review status. Numeric paths are supplied in the snapshot, but their authoritative provenance/acceptance remains an external, non-compiler-checkable assumption. Resolve or explicitly disposition that profile-source review before RTL generation; RTL and planned timing-boundary checks cannot establish external timing-library correctness themselves.\",\"references\":[\"/package/assumptions/A_PROFILE\",\"/documents/shared/timing_profile\",\"/timing_library/DDR4-3200\",\"/documents/system/rules/BASE_TIMING\",\"/documents/system/rules/BASE_TRRD\",\"/documents/system/rules/BASE_TFAW\"],\"requirement_ids\":[\"BASE_TIMING\",\"BASE_TRRD\",\"BASE_TFAW\",\"R5\"],\"scope\":\"system\"}],\"max_semantic_cycles\":1,\"repair_version\":1,\"report_fingerprint\":\"4420db5a76258bc53d79d405ee649f73ba039ba62a2d3a280863016a0598b90f\",\"scopes\":[\"architecture\",\"system\"],\"source_manifest_fingerprint\":\"e3ee787f2cd8114326e3ce77da79c5cdf905fcb7c7ac4dc950bbc09c1cfb412c\",\"stage\":\"system\"}",
+            "diagnostics": [
+              "Repair the semantic findings from the previous revision below. They are review evidence, not permission to weaken the authoritative request. Only address fields owned by the current stage. Preserve the request IDs/text, constraints and selected configuration. System repair invalidates the old architecture; architecture-only repair must leave the locked system unchanged. Keep every original requires_review assumption and non-rtl_generation blocking question unchanged: do not remove, rename, rewrite or mark them resolved, and do not invent user acceptance, external evidence, test execution or new public ports when existing observations/inference suffice. Unresolved external agreement must remain blocking. References identify the previous snapshot.\n{\"compiler_attempts_per_stage\":3,\"findings\":[{\"id\":\"F_MAINTENANCE_CANDIDATE_PATH\",\"message\":\"The sole shared candidate-creation event requires active request ownership, but both close-page cleanup and refresh preparation require PRE/REF commands after active ownership has been retired or is absent. Consequently, the specified cleanup reservation cannot necessarily produce its legal PRE, and refresh preparation cannot necessarily close banks or commit REF; this can deadlock service and violates required progress. Define system-level candidate/control creation events and priority rules for cleanup PRE and refresh-preparation PRE/REF, reconcile them with the existing active-request candidate rule, and regenerate downstream architecture decomposition against the repaired shared lifecycle.\",\"references\":[\"/documents/shared/events/candidate_create\",\"/documents/execution/rules/EXEC_CLEANUP\",\"/documents/execution/rules/EXEC_REFRESH\",\"/documents/modules/contracts/command_engine/owned_state\",\"/documents/modules/contracts/command_engine/update_events\",\"/documents/modules/contracts/command_engine/handshakes/candidate\"],\"requirement_ids\":[\"R7\",\"R8\",\"R12\",\"BASE_SEQUENCE\",\"BASE_REFRESH\"],\"scope\":\"system\"},{\"id\":\"F_PROBE_PAYLOAD_UNOBSERVABLE\",\"message\":\"The required valid-low probe-payload behavior cannot be verified through the declared observations: probe_command and probe_valid have graph connections but no verification observation bindings, while the payload checks claim to cover independently defined probe payloads when probe validity is low. Add bindings for probe_command and probe_valid and use them in the payload/diagnostic checks, so invalid-low probe payload behavior can be distinguished from valid gating behavior.\",\"references\":[\"/documents/execution/rules/EXEC_PAYLOAD\",\"/documents/system/rules/R13\",\"/documents/verification/checks/execution.verification.X_PAYLOAD\",\"/documents/verification/checks/system.verification.V_PAYLOAD\",\"/documents/verification/observations\",\"/documents/verification/events/candidate_create\"],\"requirement_ids\":[\"R13\"],\"scope\":\"architecture\"},{\"id\":\"F_CLEANUP_VERIFICATION_NOT_DISTINGUISHABLE\",\"message\":\"The cleanup verification binding observes only row state and refresh_pending for a check that claims to establish cleanup reservation, dispatch blocking, and exactly one legal cleanup PRE. Those observations cannot distinguish cleanup ownership from an ordinary timing stall, active service, or another dispatch restriction. Expose an observable cleanup/service-selection state or bind enough command-engine dispatch/candidate/commit state to prove reservation creation, dispatch inhibition, and its single PRE completion under close-page operation.\",\"references\":[\"/documents/execution/verification/X_CLEANUP\",\"/documents/verification/checks/execution.verification.X_CLEANUP\",\"/documents/system/verification/V_PAGE\",\"/documents/verification/checks/system.verification.V_PAGE\",\"/documents/modules/contracts/command_engine/owned_state/cleanup\",\"/documents/modules/contracts/command_engine/handshakes/dispatch\"],\"requirement_ids\":[\"R7\"],\"scope\":\"architecture\"},{\"id\":\"F_PROFILE_PROVENANCE_UNRESOLVED\",\"message\":\"Timing enforcement is required to use the selected DDR4-3200 profile, but the package explicitly leaves the timing-library assumption in requires_review status. Numeric paths are supplied in the snapshot, but their authoritative provenance/acceptance remains an external, non-compiler-checkable assumption. Resolve or explicitly disposition that profile-source review before RTL generation; RTL and planned timing-boundary checks cannot establish external timing-library correctness themselves.\",\"references\":[\"/package/assumptions/A_PROFILE\",\"/documents/shared/timing_profile\",\"/timing_library/DDR4-3200\",\"/documents/system/rules/BASE_TIMING\",\"/documents/system/rules/BASE_TRRD\",\"/documents/system/rules/BASE_TFAW\"],\"requirement_ids\":[\"BASE_TIMING\",\"BASE_TRRD\",\"BASE_TFAW\",\"R5\"],\"scope\":\"system\"}],\"max_semantic_cycles\":1,\"repair_version\":1,\"report_fingerprint\":\"4420db5a76258bc53d79d405ee649f73ba039ba62a2d3a280863016a0598b90f\",\"scopes\":[\"architecture\",\"system\"],\"source_manifest_fingerprint\":\"e3ee787f2cd8114326e3ce77da79c5cdf905fcb7c7ac4dc950bbc09c1cfb412c\",\"stage\":\"system\"}"
+            ]
+          },
+          {
+            "stage": "architecture",
+            "attempt": 1,
+            "error": "Validation failed with 4 error(s):\n- command_engine.candidate_command: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation\n- command_engine.candidate_valid: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation\n- command_engine.probe_command: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation\n- command_engine.probe_valid: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation",
+            "diagnostics": [
+              "command_engine.candidate_command: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation",
+              "command_engine.candidate_valid: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation",
+              "command_engine.probe_command: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation",
+              "command_engine.probe_valid: verification-only output already has a functional connection; remove its graph.verification_outputs declaration, retaining the functional connection and verification observation"
+            ]
+          },
+          {
+            "stage": "architecture",
+            "attempt": 2,
+            "error": "Validation failed with 1 error(s):\n- Undriven graph sinks ['top.rsp_rdata', 'top.rsp_valid']; unused sources ['host_adapter.rsp_rdata', 'host_adapter.rsp_valid']",
+            "diagnostics": [
+              "Undriven graph sinks ['top.rsp_rdata', 'top.rsp_valid']; unused sources ['host_adapter.rsp_rdata', 'host_adapter.rsp_valid']"
+            ]
+          }
+        ]
+      },
+      "decisions": {}
+    },
+    "documents": {
+      "graph": {
+        "graph_id": "ddr4_controller_structural_v2",
+        "clock_reset": {
+          "definition": "shared.clock_reset",
+          "clock_source": "top.clk",
+          "reset_source": "top.rst_n",
+          "consumers": [
+            "host_adapter",
+            "waiting_queue",
+            "fifo_scheduler",
+            "command_engine",
+            "row_state",
+            "timing",
+            "memory",
+            "refresh"
+          ]
+        },
+        "connections": {
+          "top.txn_valid": [
+            "host_adapter.txn_valid"
+          ],
+          "top.txn_addr": [
+            "host_adapter.txn_addr"
+          ],
+          "top.txn_bank": [
+            "host_adapter.txn_bank"
+          ],
+          "top.txn_is_write": [
+            "host_adapter.txn_is_write"
+          ],
+          "top.txn_wdata": [
+            "host_adapter.txn_wdata"
+          ],
+          "host_adapter.txn_ready": [
+            "top.txn_ready"
+          ],
+          "host_adapter.cmd_ready": [
+            "top.cmd_ready"
+          ],
+          "host_adapter.enq_valid": [
+            "waiting_queue.enq_valid"
+          ],
+          "host_adapter.enq_request": [
+            "waiting_queue.enq_request",
+            "command_engine.incoming_request"
+          ],
+          "waiting_queue.enq_ready": [
+            "host_adapter.enq_ready"
+          ],
+          "waiting_queue.head_valid": [
+            "fifo_scheduler.head_valid"
+          ],
+          "waiting_queue.head_request": [
+            "fifo_scheduler.head_request"
+          ],
+          "fifo_scheduler.head_take": [
+            "waiting_queue.head_take"
+          ],
+          "fifo_scheduler.dispatch_valid": [
+            "command_engine.dispatch_valid"
+          ],
+          "fifo_scheduler.dispatch_request": [
+            "command_engine.dispatch_request"
+          ],
+          "command_engine.dispatch_ready": [
+            "fifo_scheduler.dispatch_ready"
+          ],
+          "command_engine.candidate_valid": [
+            "timing.candidate_valid"
+          ],
+          "command_engine.candidate_command": [
+            "timing.candidate_command"
+          ],
+          "timing.candidate_ok": [
+            "command_engine.candidate_ok"
+          ],
+          "command_engine.commit_valid": [
+            "row_state.commit_valid",
+            "timing.commit_valid",
+            "memory.commit_valid",
+            "refresh.commit_valid"
+          ],
+          "command_engine.commit_command": [
+            "row_state.commit_command",
+            "timing.commit_command",
+            "memory.commit_command",
+            "refresh.commit_command"
+          ],
+          "command_engine.probe_valid": [
+            "timing.probe_valid"
+          ],
+          "command_engine.probe_command": [
+            "timing.probe_command"
+          ],
+          "timing.probe_ok": [
+            "command_engine.probe_ok"
+          ],
+          "command_engine.execution_ready": [
+            "host_adapter.execution_ready"
+          ],
+          "row_state.open_valid": [
+            "command_engine.open_valid",
+            "timing.open_valid"
+          ],
+          "row_state.open_rows": [
+            "command_engine.open_rows",
+            "timing.open_rows"
+          ],
+          "refresh.pending": [
+            "command_engine.refresh_pending"
+          ],
+          "refresh.service_busy": [
+            "command_engine.refresh_busy"
+          ],
+          "memory.rsp_valid": [
+            "host_adapter.memory_rsp_valid"
+          ],
+          "memory.rsp_data": [
+            "host_adapter.memory_rsp_data"
+          ],
+          "host_adapter.rsp_rdata": [
+            "top.rsp_rdata"
+          ],
+          "host_adapter.rsp_valid": [
+            "top.rsp_valid"
+          ]
+        },
+        "presence": {},
+        "verification_outputs": {
+          "command_engine.cleanup_active": "Observes cleanup-reservation creation, dispatch inhibition, and completion without adding a host-visible port."
+        },
+        "integration": "Top-level logic is structural only. All connections are typed whole-port wiring. Shared clock/reset are implicit child inputs and are not duplicated in ordinary connections."
+      }
+    }
+  },
+  "historical_finding": {
+    "id": "F_RESPONSE_TOP_BINDINGS_MISSING",
+    "scope": "architecture",
+    "message": "The host_adapter response outputs are declared and driven from memory response storage, but the structural graph has no connections from host_adapter.rsp_valid and host_adapter.rsp_rdata to top.rsp_valid and top.rsp_rdata. The recorded architecture validation also identifies those top sinks as undriven and the adapter outputs as unused. Consequently, committed READ responses cannot reach the required host-visible response ports, and response-delivery bindings at the top cannot distinguish the claimed behavior. Add the missing structural top-level response connections and rerun architecture validation.",
+    "references": [
+      "/documents/graph/connections",
+      "/documents/modules/contracts/host_adapter/interfaces/rsp_valid",
+      "/documents/modules/contracts/host_adapter/interfaces/rsp_rdata",
+      "/documents/shared/host_interface/rsp_valid",
+      "/documents/shared/host_interface/rsp_rdata",
+      "/package/generation/validation_repairs/2"
+    ],
+    "requirement_ids": [
+      "R6",
+      "BASE_DATA",
+      "BASE_HOST"
+    ]
+  }
+}

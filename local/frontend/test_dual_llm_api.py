@@ -27,10 +27,14 @@ def response(content="{}", finish_reason="stop", status=200, data=None):
 
 class DualLlmApiTests(unittest.TestCase):
     def setUp(self):
+        pacing = patch.dict("os.environ", {"CAPSTONE_TPM_LIMIT": "0"})
+        pacing.start()
+        self.addCleanup(pacing.stop)
         self.env = patch.dict("os.environ", {
             "TAMUS_AI_CHAT_API_KEY": "test-secret",
             "DUAL_LLM_MAX_TOKENS": "8192",
             "DUAL_LLM_MAX_RETRY_TOKENS": "16384",
+            "DUAL_LLM_TIMEOUT_SECONDS": "180",
         })
         self.env.start()
         self.addCleanup(self.env.stop)
@@ -119,6 +123,25 @@ class DualLlmApiTests(unittest.TestCase):
                         with self.assertRaisesRegex(RuntimeError, "Invalid DUAL_LLM"):
                             self.call()
                         post.assert_not_called()
+
+    def test_default_and_configured_timeouts_reach_http_client(self):
+        for setting, expected in ((None, 180), ('600', 600), ('12.5', 12.5)):
+            with self.subTest(setting=setting), patch.dict(os.environ):
+                if setting is None:
+                    os.environ.pop('DUAL_LLM_TIMEOUT_SECONDS', None)
+                else:
+                    os.environ['DUAL_LLM_TIMEOUT_SECONDS'] = setting
+                with patch.object(generator.requests, 'post', return_value=response()) as post:
+                    self.call()
+                self.assertEqual(post.call_args.kwargs['timeout'], expected)
+
+    def test_invalid_timeouts_fail_before_network(self):
+        for value in ('0', '-1', 'bad', 'nan', 'inf'):
+            with self.subTest(value=value), patch.dict(os.environ, {'DUAL_LLM_TIMEOUT_SECONDS': value}), \
+                 patch.object(generator.requests, 'post') as post:
+                with self.assertRaisesRegex(RuntimeError, 'positive finite'):
+                    self.call()
+                post.assert_not_called()
 
     def test_malformed_provider_envelope_is_runtime_error(self):
         for data in ({"choices": []}, {"choices": None}, {}, {"choices": [None]}):

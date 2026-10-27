@@ -1,0 +1,446 @@
+{
+  "architecture_fingerprint": "d3acf093a9eccca20a11c40495437a4deabec0ab4cc87e39eee0a58b5e5bdc06",
+  "status": "specs_ready_verification_not_run",
+  "modules": [
+    {
+      "instance": "host_protocol",
+      "design_name": "ddr4_controller_top_spec_host_protocol",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_host_protocol.yaml",
+      "roles": [
+        "host_adapter"
+      ],
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Implement global FIFO service in acceptance order, including same-address writes and reads. Admit on every rising-edge txn_valid && txn_ready, independently of command readiness.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.R1\norigin: request.R1\nobligations:\n  V_R1:\n    rules:\n    - R1\n    scenario: Apply consecutive valid requests, including same-address writes followed\n      by reads, while command progress varies independently.\n    expected: Each qualifying ready/valid edge admits one request; service and final\n      completion remain in acceptance order; cmd_ready does not affect admission.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "R9",
+          "text": "cmd_ready is reset-gated diagnostic readiness for the incoming request's first needed command, using independent row/timing probe queries while the engine is idle and cleanup/refresh permit. It is meaningful without txn_valid and must not admit, dispatch, bypass FIFO, mutate history or reserve storage.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.R9\norigin: request.R9\nobligations:\n  V_R9:\n    rules:\n    - R9\n    scenario: Vary incoming address, row state, timing legality, queue fullness, idle/busy\n      state, cleanup, refresh, and txn_valid.\n    expected: cmd_ready reports only the defined first-command diagnostic probe and\n      never changes admission, storage, dispatch, history, or reservations.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "R10",
+          "text": "Use synchronous active-low reset for state, with immediate valid/ready/event gating. Reset clears queued/active/cleanup work, row state, timing history, memory, responses and refresh state; it wins over every simultaneous event. The host holds payload while stalled and samples every response; no response backpressure is provided.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.R10\norigin: request.R10\nobligations:\n  V_R10:\n    rules:\n    - R10\n    scenario: Assert reset during queued, active, stalled, refresh, command-commit,\n      and response conditions.\n    expected: Reset immediately gates visible valid, ready, and events low and synchronously\n      clears specified state at the sampled edge; no pre-reset work reappears.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "R11",
+          "text": "Generate architecture-specific module isolation and system verification intent with exact requirement IDs, independent scenarios/expected results, and declared port/event bindings. Export it alongside RTL for the external UVM/vector stage. Do not execute downstream verification or backend stages in this frontend flow.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.R11\norigin: request.R11\nobligations:\n  V_R11:\n    rules:\n    - R11\n    scenario: Review generated future verification intent against all rule IDs and\n      declared host/event bindings.\n    expected: Every request rule has reciprocal planned verification, declared independent\n      scenarios, and expected outcomes; no downstream execution claim is made.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_HOST",
+          "text": "Preserve the existing host ports and widths listed in the baseline contract. Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload while stalled. Consecutive accepted cycles with txn_valid held high are distinct requests. cmd_ready is execution/timing visibility, not the host acceptance handshake. Deassert txn_ready and rsp_valid during reset.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.BASE_HOST\norigin: request.BASE_HOST\nobligations:\n  V_BASE_HOST:\n    rules:\n    - BASE_HOST\n    scenario: Hold valid high across ready cycles and hold payload stable across stalls\n      and reset.\n    expected: Ports and widths match; each ready/valid edge is distinct; txn_ready\n      and rsp_valid are low during reset; cmd_ready is not an acceptance handshake.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_ADDRESS",
+          "text": "Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0], zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit txn_bank for multi-bank configurations; a single-bank configuration uses bank 0. Internal packed requests retain bank(2), row(10), column(6), write flag(1), write data(32).",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.BASE_ADDRESS\norigin: request.BASE_ADDRESS\nobligations:\n  V_BASE_ADDRESS:\n    rules:\n    - BASE_ADDRESS\n    scenario: Apply every 4-bit address and all four banks.\n    expected: Rows and columns are zero-extended from the specified address slices;\n      internal request fields retain bank, row, column, write flag, and data.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_RESET",
+          "text": "Use top-level clk and active-low rst_n. Reset clears pending requests, active service, row validity, memory and responses. Preserve reusable blocks with either synchronous or asynchronous active-low resets driven by the same rst_n; differing assertion styles do not require rebuilding otherwise reusable blocks. Do not change polarity without an explicit adapter.",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.BASE_RESET\norigin: request.BASE_RESET\nobligations:\n  V_BASE_RESET:\n    rules:\n    - BASE_RESET\n    scenario: Check top clock/reset polarity and reset behavior across all state categories.\n    expected: clk/rst_n polarity is preserved, synchronous reset clears required state,\n      and no polarity adapter is required.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_1",
+          "text": "Requested constraint /design_name = \"ddr4_controller_top\".",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_1\norigin: request.CONSTRAINT_1\nobligations:\n  V_CONSTRAINT_1:\n    rules:\n    - CONSTRAINT_1\n    scenario: Inspect package metadata.\n    expected: design_name is ddr4_controller_top.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_2",
+          "text": "Requested constraint /design_type = \"memory_controller\".",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_2\norigin: request.CONSTRAINT_2\nobligations:\n  V_CONSTRAINT_2:\n    rules:\n    - CONSTRAINT_2\n    scenario: Inspect package metadata.\n    expected: Design type is memory_controller.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_8",
+          "text": "Requested constraint /memory/protocol = \"DDR4\".",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_8\norigin: request.CONSTRAINT_8\nobligations:\n  V_CONSTRAINT_8:\n    rules:\n    - CONSTRAINT_8\n    scenario: Inspect timing profile selection and command vocabulary.\n    expected: Protocol selection is DDR4.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_9",
+          "text": "Requested constraint /memory/speed = \"3200\".",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_9\norigin: request.CONSTRAINT_9\nobligations:\n  V_CONSTRAINT_9:\n    rules:\n    - CONSTRAINT_9\n    scenario: Inspect timing profile selection.\n    expected: Selected profile is DDR4-3200.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_10",
+          "text": "Requested constraint /microarchitecture/baseline = \"current_controller\".",
+          "owners": [
+            "host_protocol"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_10\norigin: request.CONSTRAINT_10\nobligations:\n  V_CONSTRAINT_10:\n    rules:\n    - CONSTRAINT_10\n    scenario: Inspect recorded baseline configuration.\n    expected: Baseline is current_controller.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "waiting_queue",
+      "design_name": "ddr4_controller_top_spec_waiting_queue",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_waiting_queue.yaml",
+      "roles": [
+        "request_queue"
+      ],
+      "requirements": [
+        {
+          "id": "R2",
+          "text": "Provide four waiting entries plus one separately stored active request. Dispatch only previously stored requests, capture the complete pre-edge head before releasing its slot, and permit full-queue simultaneous dispatch/admission including capacity one. No empty-queue bypass or same-edge active replacement at retirement.",
+          "owners": [
+            "waiting_queue"
+          ],
+          "verification": "source: system.rules.R2\norigin: request.R2\nobligations:\n  V_R2:\n    rules:\n    - R2\n    scenario: Exercise empty, partial, and full waiting storage, including capacity\n      one and simultaneous dispatch/admission.\n    expected: Only pre-edge stored entries dispatch; the pre-edge head is captured\n      before release; no bypass or retirement-edge active replacement occurs.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_QUEUE",
+          "text": "Provide 4 WAITING request slots PLUS one separately stored active-service request: waiting plus active capacity is 5. The active request must not consume a waiting slot. Dispatch captures the complete pre-edge request in active registers and frees its waiting slot without retiring the transaction. A full queue may admit on the same edge as dispatch; retirement alone does not free waiting storage. Accepted request fields survive stalls and each accepted request is serviced exactly once within a reset-free epoch. Keep admission, dispatch, retirement and read response delivery distinct. Captured response storage consumes neither waiting nor active capacity.",
+          "owners": [
+            "waiting_queue"
+          ],
+          "verification": "source: system.rules.BASE_QUEUE\norigin: request.BASE_QUEUE\nobligations:\n  V_BASE_QUEUE:\n    rules:\n    - BASE_QUEUE\n    scenario: Fill waiting storage while one active request stalls, then perform dispatch/admission,\n      retirement, and read response delivery independently.\n    expected: Four waiting plus one active request are retained; dispatch frees waiting\n      storage but not transaction ownership; response storage consumes neither capacity.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_11",
+          "text": "Requested constraint /microarchitecture/waiting_capacity = 4.",
+          "owners": [
+            "waiting_queue"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_11\norigin: request.CONSTRAINT_11\nobligations:\n  V_CONSTRAINT_11:\n    rules:\n    - CONSTRAINT_11\n    scenario: Fill waiting storage under the selected configuration.\n    expected: WAITING_CAPACITY is four.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "SYS_SIMULTANEOUS",
+          "text": "At a reset edge, reset wins over admission, dispatch, command commit, retirement, response delivery, refresh due, and refresh acknowledgment. Without reset, a full waiting queue may admit and dispatch on the same edge using the pre-edge head and pre-edge incoming payload. Retirement does not authorize dispatch on its own edge. A refresh due coincident with REF commit leaves refresh pending set for a later service interval.",
+          "owners": [
+            "waiting_queue"
+          ],
+          "verification": "source: system.rules.SYS_SIMULTANEOUS\norigin: model_selected\nobligations:\n  V_SYS_SIMULTANEOUS:\n    rules:\n    - SYS_SIMULTANEOUS\n    scenario: Align reset, full-queue admission/dispatch, retirement, refresh due,\n      and REF commit in separate and combined trials.\n    expected: Specified priority and same-edge outcomes occur with no lost request,\n      duplicate request, or lost refresh due.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "SYS_STORAGE_OWNERSHIP",
+          "text": "Waiting storage, active-service storage, and captured response storage are logically distinct capacities. Active-service storage contains one complete dispatched request until final READ or WRITE commit. Captured response storage contains no request-capacity claim and survives active release, cleanup, and refresh service.",
+          "owners": [
+            "waiting_queue"
+          ],
+          "verification": "source: system.rules.SYS_STORAGE_OWNERSHIP\norigin: model_selected\nobligations:\n  V_SYS_STORAGE_OWNERSHIP:\n    rules:\n    - SYS_STORAGE_OWNERSHIP\n    scenario: Track waiting, active, and response occupancy through dispatch, retirement,\n      cleanup, refresh, and response delivery.\n    expected: The three storage categories remain capacity-independent as specified.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "fifo_scheduler",
+      "design_name": "ddr4_controller_top_spec_fifo_scheduler",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_fifo_scheduler.yaml",
+      "roles": [
+        "scheduler"
+      ],
+      "requirements": [
+        {
+          "id": "R7",
+          "text": "Open-page retains rows. Support close-page as a configurable alternative, retaining a separate cleanup bank reservation after retirement until a legal PRE commits; block new dispatch during cleanup.",
+          "owners": [
+            "fifo_scheduler"
+          ],
+          "verification": "source: system.rules.R7\norigin: request.R7\nobligations:\n  V_R7:\n    rules:\n    - R7\n    scenario: Run identical traffic under open_page and close_page parameter values.\n    expected: Open-page retains serviced rows; close-page reserves cleanup until legal\n      PRE and blocks dispatch during cleanup.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_POLICY",
+          "text": "Honor the requested scheduler policy fifo. Preserve page policy open_page. Open-page retains a serviced row; close-page closes it before subsequent bank use. Preserve request ownership through any setup sequence. Internal module decomposition and command latency may change while these observable contracts hold.",
+          "owners": [
+            "fifo_scheduler"
+          ],
+          "verification": "source: system.rules.BASE_POLICY\norigin: request.BASE_POLICY\nobligations:\n  V_BASE_POLICY:\n    rules:\n    - BASE_POLICY\n    scenario: Compare row-retention and cleanup behavior under configured page-policy\n      values.\n    expected: The default is open_page; close_page behavior remains configurable without\n      loss of request ownership.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_3",
+          "text": "Requested constraint /features/page_policy = \"open_page\".",
+          "owners": [
+            "fifo_scheduler"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_3\norigin: request.CONSTRAINT_3\nobligations:\n  V_CONSTRAINT_3:\n    rules:\n    - CONSTRAINT_3\n    scenario: Inspect selected parameterization.\n    expected: Default page policy is open_page.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_5",
+          "text": "Requested constraint /features/scheduler = \"fifo\".",
+          "owners": [
+            "fifo_scheduler"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_5\norigin: request.CONSTRAINT_5\nobligations:\n  V_CONSTRAINT_5:\n    rules:\n    - CONSTRAINT_5\n    scenario: Observe admission, dispatch, and service ordering under row-hit and\n      row-miss traffic.\n    expected: FIFO policy is retained independent of row-hit preference.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "SYS_ORDERING",
+          "text": "Acceptance order defines global FIFO order. Dispatch transfers only the oldest previously stored request. Physical row state, legality, cleanup, refresh, and timing may delay service but may not select a younger request ahead of the oldest waiting request.",
+          "owners": [
+            "fifo_scheduler"
+          ],
+          "verification": "source: system.rules.SYS_ORDERING\norigin: model_selected\nobligations:\n  V_SYS_ORDERING:\n    rules:\n    - SYS_ORDERING\n    scenario: Place older row misses and conflicts ahead of newer row hits and vary\n      timing stalls.\n    expected: Dispatch and completion follow acceptance order despite different command\n      setup costs.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "command_engine",
+      "design_name": "ddr4_controller_top_spec_command_engine",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_command_engine.yaml",
+      "roles": [
+        "command_engine"
+      ],
+      "requirements": [
+        {
+          "id": "R3",
+          "text": "Use explicit NOP/ACT/PRE/READ/WRITE/REF command semantics, with NOP never committed and at most one command commit per edge. Sequence closed banks with ACT-access, row hits with access, and row conflicts with PRE-ACT-access. PRE/ACT never retire the active request. Keep blocked candidates stable through stalls and newly pending refresh.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: system.rules.R3\norigin: request.R3\nobligations:\n  V_R3:\n    rules:\n    - R3\n    scenario: Service closed-bank, row-hit, and row-conflict reads and writes while\n      timing-blocking each candidate and raising refresh pending.\n    expected: Only NOP, ACT, PRE, READ, WRITE, and REF semantics are used; one command\n      at most commits per edge; setup does not retire; blocked candidates remain stable.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "R4",
+          "text": "Keep separate owners for host mapping, waiting storage, scheduling, command sequencing, row state, timing, functional memory/responses, and refresh control. The top must contain structural connections only.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: system.rules.R4\norigin: request.R4\nobligations:\n  V_R4:\n    rules:\n    - R4\n    scenario: Inspect future architecture contracts and interface-level verification\n      intent.\n    expected: Required behavioral roles are independently contractable with structural\n      top-level integration only; no single owner contract contains all required functions.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_SEQUENCE",
+          "text": "Dispatch captures the complete selected request in separate active-service registers before freeing its waiting queue slot. Hold that active request and payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits. Setup commands never retire the active request. Aggregate service also keeps active-service ownership through completion. Waiting-queue dequeue at dispatch is distinct from active-request retirement. Row state changes only on the responsible committed operation; uncommitted proposals cannot change state.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: system.rules.BASE_SEQUENCE\norigin: request.BASE_SEQUENCE\nobligations:\n  V_BASE_SEQUENCE:\n    rules:\n    - BASE_SEQUENCE\n    scenario: Dispatch a complete request, change host inputs afterward, and stall\n      each setup and final command.\n    expected: Captured active payload survives until final commit; dispatch/dequeue\n      and retirement remain distinct; only committed operations change row state.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_MODULARITY",
+          "text": "Keep request storage, request selection, command sequencing, timing enforcement and functional memory in independently verifiable modules with explicit interfaces. No single controller core may own all these functions. Each mandatory role has distinct module owners with functional inter-module connections. Module names and further decomposition remain design choices.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: system.rules.BASE_MODULARITY\norigin: request.BASE_MODULARITY\nobligations:\n  V_BASE_MODULARITY:\n    rules:\n    - BASE_MODULARITY\n    scenario: Review future decomposition contracts and declared functional interfaces.\n    expected: Request storage, selection, sequencing, timing, and functional memory\n      are independently verifiable and distinct.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_COMMANDS",
+          "text": "Exactly one non-NOP command may commit at a rising edge. Closed-bank service requires ACT then READ or WRITE; matching open-row service requires READ or WRITE; conflicting open-row service requires PRE then ACT then READ or WRITE. PRE and ACT are setup commands and never retire active service. Candidate payload remains stable while blocked, including when refresh becomes pending.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: execution.rules.EXEC_COMMANDS\norigin: model_selected\nobligations:\n  V_EXEC_COMMANDS:\n    rules:\n    - EXEC_COMMANDS\n    scenario: Run closed, hit, and conflict sequences with multi-cycle timing stalls\n      and refresh pending transitions.\n    expected: Committed trace is ACT-access, access, or PRE-ACT-access as applicable;\n      setup never retires and no candidate changes while blocked.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_CLEANUP",
+          "text": "For PAGE_POLICY=open_page, final READ or WRITE retirement retains the serviced row. For PAGE_POLICY=close_page, retirement creates a separate cleanup reservation for the serviced bank; no new dispatch occurs until the required timing-legal PRE commits. Cleanup does not repeat retirement or response delivery.",
+          "owners": [
+            "command_engine"
+          ],
+          "verification": "source: execution.rules.EXEC_CLEANUP\norigin: model_selected\nobligations:\n  V_EXEC_CLEANUP:\n    rules:\n    - EXEC_CLEANUP\n    scenario: Retire accesses under both page policies and raise refresh during close-page\n      cleanup.\n    expected: Open-page retains rows; close-page reserves cleanup and blocks dispatch\n      until PRE commits without duplicate retirement or response.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "bank_state",
+      "design_name": "ddr4_controller_top_spec_bank_state",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_bank_state.yaml",
+      "roles": [
+        "row_state"
+      ],
+      "requirements": [
+        {
+          "id": "CONSTRAINT_12",
+          "text": "Requested constraint /topology/banks = 4.",
+          "owners": [
+            "bank_state"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_12\norigin: request.CONSTRAINT_12\nobligations:\n  V_CONSTRAINT_12:\n    rules:\n    - CONSTRAINT_12\n    scenario: Access every selected bank.\n    expected: BANK_COUNT is four.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_BANK_STATE",
+          "text": "Only committed ACT sets the target bank valid and row, committed PRE clears the target bank validity, and committed REF leaves all banks closed after required preparation. READ and WRITE do not alter row state. Proposals, admissions, dispatch, timing probes, and stalled candidates do not alter row state.",
+          "owners": [
+            "bank_state"
+          ],
+          "verification": "source: execution.rules.EXEC_BANK_STATE\norigin: model_selected\nobligations:\n  V_EXEC_BANK_STATE:\n    rules:\n    - EXEC_BANK_STATE\n    scenario: Commit ACT, PRE, READ, WRITE, and REF in multiple banks and separately\n      issue uncommitted proposals.\n    expected: Only responsible committed commands change only permitted bank-state\n      fields.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "timing_enforcement",
+      "design_name": "ddr4_controller_top_spec_timing_enforcement",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_timing_enforcement.yaml",
+      "roles": [
+        "timing"
+      ],
+      "requirements": [
+        {
+          "id": "R5",
+          "text": "Update bank state and timing history only from committed commands. Enforce tRCD, tRAS, tRP, tRRD, tFAW and tRFC using the selected project profile. A trigger at E permits the blocked command at E+T; tFAW counts earlier ACT commits with age strictly less than its window. Reset creates no synthetic timing history.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.R5\norigin: request.R5\nobligations:\n  V_R5:\n    rules:\n    - R5\n    scenario: Test each timing relation at E+T-1 and E+T, including reset, ACT bursts,\n      and REF exclusion.\n    expected: Only committed history changes timing and bank state; tRCD, tRAS, tRP,\n      tRRD, tFAW, and tRFC use the selected profile and exact edge convention.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_TIMING",
+          "text": "Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate service may retain the existing protected timing envelope instead. Configured tRRD and tFAW gates must use accepted activation events, not host admissions or stalled proposals. Never treat existing basic timing as an unrequested future feature.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.BASE_TIMING\norigin: request.BASE_TIMING\nobligations:\n  V_BASE_TIMING:\n    rules:\n    - BASE_TIMING\n    scenario: Exercise ACT-to-access, ACT-to-PRE, PRE-to-ACT, ACT spacing, and activation-window\n      boundaries.\n    expected: Basic timing remains enforced together with enabled tRRD and tFAW using\n      activation commits rather than admissions or proposals.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_LEGALITY",
+          "text": "Compute command permission from registered timing/bank history and an independent candidate. An accepted ACT pulse is derived from candidate && permission; permission must not combinationally depend on that same accepted pulse. Scheduler selection/validity must be available independently of timing_ok; timing_ok may gate commit but must not create a selection-validity feedback loop. Declare accurate per-output combinational input dependencies.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.BASE_LEGALITY\norigin: request.BASE_LEGALITY\nobligations:\n  V_BASE_LEGALITY:\n    rules:\n    - BASE_LEGALITY\n    scenario: Independently vary candidate, registered history, selection validity,\n      and timing permission.\n    expected: Permission has no same-pulse acceptance feedback; timing may gate commit\n      but cannot create selection-validity feedback; output dependencies are declarable\n      from interface inputs.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_TRRD",
+          "text": "tRRD is enabled; honor that setting and resolve enabled timing values from DDR4-3200.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.BASE_TRRD\norigin: request.BASE_TRRD\nobligations:\n  V_BASE_TRRD:\n    rules:\n    - BASE_TRRD\n    scenario: Commit ACT then attempt another ACT before and at the selected tRRD\n      boundary.\n    expected: The later ACT is blocked before E+tRRD and may proceed at E+tRRD subject\n      to all other permissions.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_TFAW",
+          "text": "tFAW is enabled; honor that setting and resolve enabled timing values from DDR4-3200.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.BASE_TFAW\norigin: request.BASE_TFAW\nobligations:\n  V_BASE_TFAW:\n    rules:\n    - BASE_TFAW\n    scenario: Inject four earlier ACT commits respecting tRRD and probe a fifth before\n      and at expiration of the oldest tFAW history.\n    expected: The fifth ACT is blocked while four earlier ACTs have age strictly below\n      tFAW and is released when the oldest reaches the boundary subject to other constraints.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_6",
+          "text": "Requested constraint /features/tFAW = true.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_6\norigin: request.CONSTRAINT_6\nobligations:\n  V_CONSTRAINT_6:\n    rules:\n    - CONSTRAINT_6\n    scenario: Apply ACT history at the timing boundary.\n    expected: tFAW gating is enabled using the selected-profile binding.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_7",
+          "text": "Requested constraint /features/tRRD = true.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_7\norigin: request.CONSTRAINT_7\nobligations:\n  V_CONSTRAINT_7:\n    rules:\n    - CONSTRAINT_7\n    scenario: Apply successive ACT candidates at the timing boundary.\n    expected: tRRD gating is enabled using the selected-profile binding.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_PERMISSION",
+          "text": "Candidate selection and validity are independently available before timing permission. Permission is computed from registered bank and timing history and the independent candidate. ACT acceptance equals ACT candidate and permission, but permission has no combinational dependency on the accepted ACT pulse or on same-edge committed command outputs.",
+          "owners": [
+            "timing_enforcement"
+          ],
+          "verification": "source: execution.rules.EXEC_PERMISSION\norigin: model_selected\nobligations:\n  V_EXEC_PERMISSION:\n    rules:\n    - EXEC_PERMISSION\n    scenario: Probe permission with fixed registered history while varying candidate\n      and compare against stalled and accepted ACT behavior.\n    expected: Candidate validity remains independently observable; permission is history-based\n      and acceptance feedback-free.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "memory_responses",
+      "design_name": "ddr4_controller_top_spec_memory_responses",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_memory_responses.yaml",
+      "roles": [
+        "memory"
+      ],
+      "requirements": [
+        {
+          "id": "R6",
+          "text": "Preserve functional banked 32-bit memory and compact host address mapping. WRITE commit updates storage; READ commit at E captures pre-edge data and registers valid/data for host sampling at E+1, with no extra adapter response register. Responses survive active release, cleanup and refresh; writes produce no response.",
+          "owners": [
+            "memory_responses"
+          ],
+          "verification": "source: system.rules.R6\norigin: request.R6\nobligations:\n  V_R6:\n    rules:\n    - R6\n    scenario: Write distinct values to all compact addresses in multiple banks, read\n      them, and reset during response visibility.\n    expected: Only committed WRITE changes addressed banked storage; READ captures\n      pre-edge data and produces one E+1 response; responses survive active release\n      and refresh.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_DATA",
+          "text": "Provide functional 32-bit memory storage with 16 addresses per bank, bank isolation and reset-to-zero contents. Accepted writes update only their addressed location at service completion or a committed WRITE. Each accepted read produces exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ commit, using the existing one-cycle response stage. Writes produce no host response. Selection and stalled candidates cannot mutate memory; mere command output without storage and read responses is insufficient.",
+          "owners": [
+            "memory_responses"
+          ],
+          "verification": "source: system.rules.BASE_DATA\norigin: request.BASE_DATA\nobligations:\n  V_BASE_DATA:\n    rules:\n    - BASE_DATA\n    scenario: Scoreboard bank-isolated writes and reads over all sixteen locations\n      per bank and inject blocked proposals.\n    expected: Reset data are zero; only committed writes update data; every committed\n      read yields exactly one response; proposals do not mutate storage.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_RESPONSE",
+          "text": "At READ commit edge E, response storage captures the addressed pre-edge memory word and rsp_valid is asserted after E. The host samples that response at E+1. In the absence of replacement, rsp_valid clears after the delivery edge while rsp_rdata may retain its last value. A delivery and a new READ commit may share an edge: old response data is delivered before new response state replaces it. WRITE produces no response.",
+          "owners": [
+            "memory_responses"
+          ],
+          "verification": "source: execution.rules.EXEC_RESPONSE\norigin: model_selected\nobligations:\n  V_EXEC_RESPONSE:\n    rules:\n    - EXEC_RESPONSE\n    scenario: Commit reads on adjacent edges, read after writes, issue writes, and\n      reset during a response pulse.\n    expected: Each read returns captured pre-edge data exactly once at E+1, writes\n      return no response, and old data is delivered before same-edge replacement.\n    status: planned_not_executed\n"
+        }
+      ]
+    },
+    {
+      "instance": "refresh_control",
+      "design_name": "ddr4_controller_top_spec_refresh_control",
+      "spec_path": "module_specs/d3acf093a9eccca2/ddr4_controller_top_spec_refresh_control.yaml",
+      "roles": [
+        "refresh"
+      ],
+      "requirements": [
+        {
+          "id": "R8",
+          "text": "Generate periodic refresh deadlines from the last sampled reset edge using tREFI. Coalesce missed deadlines into sticky pending; a due deadline wins over simultaneous REF acknowledgment. Drain active work and cleanup, PRE remaining open banks in ascending order, respect all-bank tRP, commit REF once, and exclude commands strictly before REF-edge+tRFC. Retain queued traffic and resume service afterward.",
+          "owners": [
+            "refresh_control"
+          ],
+          "verification": "source: system.rules.R8\norigin: request.R8\nobligations:\n  V_R8:\n    rules:\n    - R8\n    scenario: Create refresh due conditions while idle, active, cleanup-reserved,\n      and during refresh service; leave multiple banks open.\n    expected: Pending coalesces, due wins over simultaneous acknowledgment, active\n      and cleanup drain before ascending PRE, REF commits once, tRFC exclusion holds,\n      and queued traffic resumes.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "BASE_REFRESH",
+          "text": "Retain periodic refresh requests using profile tREFI, refresh priority and request/acknowledgment handling without dropping queued traffic. Refresh must make progress and normal requests must resume. Existing refresh is simplified; full REF/tRFC servicing remains later feature work. If explicit REF is proposed, describe drain/row-state interaction and acknowledge once at commit.",
+          "owners": [
+            "refresh_control"
+          ],
+          "verification": "source: system.rules.BASE_REFRESH\norigin: request.BASE_REFRESH\nobligations:\n  V_BASE_REFRESH:\n    rules:\n    - BASE_REFRESH\n    scenario: Generate periodic due events under queued traffic and defer service\n      through active work.\n    expected: Refresh progresses without dropping traffic, acknowledges at REF commit,\n      and normal requests resume.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "CONSTRAINT_4",
+          "text": "Requested constraint /features/refresh = true.",
+          "owners": [
+            "refresh_control"
+          ],
+          "verification": "source: system.rules.CONSTRAINT_4\norigin: request.CONSTRAINT_4\nobligations:\n  V_CONSTRAINT_4:\n    rules:\n    - CONSTRAINT_4\n    scenario: Inspect refresh behavior and profile bindings.\n    expected: Periodic refresh behavior is included.\n    status: planned_not_executed\n"
+        },
+        {
+          "id": "EXEC_REFRESH",
+          "text": "Refresh deadlines are measured from the last sampled reset edge. The first due edge is E0+tREFI and later deadlines advance by tREFI independently of REF commit. Pending is sticky and coalesces later due edges. Once pending is visible, no new dispatch occurs; active service and required cleanup complete, then open banks PRE in ascending bank order, respecting timing. REF commits once after all banks are closed and all-bank tRP is satisfied. Commands are excluded at candidate edges strictly before REF-edge+tRFC; queued traffic remains retained and resumes after service when no pending refresh remains.",
+          "owners": [
+            "refresh_control"
+          ],
+          "verification": "source: execution.rules.EXEC_REFRESH\norigin: model_selected\nobligations:\n  V_EXEC_REFRESH:\n    rules:\n    - EXEC_REFRESH\n    scenario: Observe first due from reset, delayed REF, coincident due/REF, multiple\n      open banks, and post-tRFC restart.\n    expected: Deadlines do not drift, pending is sticky and coalesced, preparation\n      ordering is ascending, REF is singular, and exclusion ends exactly at E+tRFC.\n    status: planned_not_executed\n"
+        }
+      ]
+    }
+  ]
+}

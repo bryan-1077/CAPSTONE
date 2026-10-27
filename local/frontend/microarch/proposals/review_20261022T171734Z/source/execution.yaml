@@ -1,0 +1,119 @@
+slice_id: execution_behavior
+rules:
+  EXEC_COMMANDS:
+    origin: model_selected
+    statement: Exactly one non-NOP command may commit at a rising edge. Closed-bank
+      service requires ACT then READ or WRITE; matching open-row service requires
+      READ or WRITE; conflicting open-row service requires PRE then ACT then READ
+      or WRITE. PRE and ACT are setup commands and never retire active service. Candidate
+      payload remains stable while blocked, including when refresh becomes pending.
+    verification:
+    - V_EXEC_COMMANDS
+    owners:
+    - command_engine
+  EXEC_PERMISSION:
+    origin: model_selected
+    statement: Candidate selection and validity are independently available before
+      timing permission. Permission is computed from registered bank and timing history
+      and the independent candidate. ACT acceptance equals ACT candidate and permission,
+      but permission has no combinational dependency on the accepted ACT pulse or
+      on same-edge committed command outputs.
+    verification:
+    - V_EXEC_PERMISSION
+    owners:
+    - timing_enforcement
+  EXEC_BANK_STATE:
+    origin: model_selected
+    statement: Only committed ACT sets the target bank valid and row, committed PRE
+      clears the target bank validity, and committed REF leaves all banks closed after
+      required preparation. READ and WRITE do not alter row state. Proposals, admissions,
+      dispatch, timing probes, and stalled candidates do not alter row state.
+    verification:
+    - V_EXEC_BANK_STATE
+    owners:
+    - bank_state
+  EXEC_CLEANUP:
+    origin: model_selected
+    statement: For PAGE_POLICY=open_page, final READ or WRITE retirement retains the
+      serviced row. For PAGE_POLICY=close_page, retirement creates a separate cleanup
+      reservation for the serviced bank; no new dispatch occurs until the required
+      timing-legal PRE commits. Cleanup does not repeat retirement or response delivery.
+    verification:
+    - V_EXEC_CLEANUP
+    owners:
+    - command_engine
+  EXEC_RESPONSE:
+    origin: model_selected
+    statement: 'At READ commit edge E, response storage captures the addressed pre-edge
+      memory word and rsp_valid is asserted after E. The host samples that response
+      at E+1. In the absence of replacement, rsp_valid clears after the delivery edge
+      while rsp_rdata may retain its last value. A delivery and a new READ commit
+      may share an edge: old response data is delivered before new response state
+      replaces it. WRITE produces no response.'
+    verification:
+    - V_EXEC_RESPONSE
+    owners:
+    - memory_responses
+  EXEC_REFRESH:
+    origin: model_selected
+    statement: Refresh deadlines are measured from the last sampled reset edge. The
+      first due edge is E0+tREFI and later deadlines advance by tREFI independently
+      of REF commit. Pending is sticky and coalesces later due edges. Once pending
+      is visible, no new dispatch occurs; active service and required cleanup complete,
+      then open banks PRE in ascending bank order, respecting timing. REF commits
+      once after all banks are closed and all-bank tRP is satisfied. Commands are
+      excluded at candidate edges strictly before REF-edge+tRFC; queued traffic remains
+      retained and resumes after service when no pending refresh remains.
+    verification:
+    - V_EXEC_REFRESH
+    owners:
+    - refresh_control
+verification:
+  V_EXEC_COMMANDS:
+    rules:
+    - EXEC_COMMANDS
+    scenario: Run closed, hit, and conflict sequences with multi-cycle timing stalls
+      and refresh pending transitions.
+    expected: Committed trace is ACT-access, access, or PRE-ACT-access as applicable;
+      setup never retires and no candidate changes while blocked.
+    status: planned_not_executed
+  V_EXEC_PERMISSION:
+    rules:
+    - EXEC_PERMISSION
+    scenario: Probe permission with fixed registered history while varying candidate
+      and compare against stalled and accepted ACT behavior.
+    expected: Candidate validity remains independently observable; permission is history-based
+      and acceptance feedback-free.
+    status: planned_not_executed
+  V_EXEC_BANK_STATE:
+    rules:
+    - EXEC_BANK_STATE
+    scenario: Commit ACT, PRE, READ, WRITE, and REF in multiple banks and separately
+      issue uncommitted proposals.
+    expected: Only responsible committed commands change only permitted bank-state
+      fields.
+    status: planned_not_executed
+  V_EXEC_CLEANUP:
+    rules:
+    - EXEC_CLEANUP
+    scenario: Retire accesses under both page policies and raise refresh during close-page
+      cleanup.
+    expected: Open-page retains rows; close-page reserves cleanup and blocks dispatch
+      until PRE commits without duplicate retirement or response.
+    status: planned_not_executed
+  V_EXEC_RESPONSE:
+    rules:
+    - EXEC_RESPONSE
+    scenario: Commit reads on adjacent edges, read after writes, issue writes, and
+      reset during a response pulse.
+    expected: Each read returns captured pre-edge data exactly once at E+1, writes
+      return no response, and old data is delivered before same-edge replacement.
+    status: planned_not_executed
+  V_EXEC_REFRESH:
+    rules:
+    - EXEC_REFRESH
+    scenario: Observe first due from reset, delayed REF, coincident due/REF, multiple
+      open banks, and post-tRFC restart.
+    expected: Deadlines do not drift, pending is sticky and coalesced, preparation
+      ordering is ascending, REF is singular, and exclusion ends exactly at E+tRFC.
+    status: planned_not_executed

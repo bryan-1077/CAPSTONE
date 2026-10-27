@@ -21,6 +21,14 @@ class SpecificationError(ValueError):
     pass
 
 
+class SpecificationErrors(SpecificationError):
+    """Independent diagnostics from one candidate, with stable deduplication."""
+    def __init__(self, errors):
+        self.errors = list(dict.fromkeys(errors))
+        super().__init__(f'Validation failed with {len(self.errors)} error(s):\n' +
+                         '\n'.join('- ' + error for error in self.errors))
+
+
 class _UniqueLoader(yaml.SafeLoader):
     pass
 
@@ -250,20 +258,59 @@ def elaborate_type_layouts(types, parameters, widths):
     return result
 
 
-def validate_ownership(documents):
-    contracts, rules, obligations = documents['modules']['contracts'], {}, {}
+def _contract_shapes(documents):
+    """Collect independent shape errors before running any relational checks."""
+    contracts = documents['modules']['contracts']
     contract_fields = ('status', 'role', 'owned_state', 'interfaces', 'handshakes', 'reset', 'update_events', 'stalls', 'simultaneous_events', 'invariants', 'verification', 'combinational_dependencies')
+    errors = []
+
+    def check(function):
+        try:
+            return function()
+        except SpecificationError as exc:
+            errors.extend(getattr(exc, 'errors', [str(exc)]))
+            return None
+
     for name, contract in contracts.items():
-        fields(contract, contract_fields, ('dependency_note',), name)
+        if check(lambda: fields(contract, contract_fields, ('dependency_note',), name)) is None:
+            continue  # Do not dereference missing/malformed contract fields.
         for field in ('owned_state', 'handshakes', 'update_events', 'simultaneous_events'):
-            fields(contract[field], (), None, name + '.' + field)
+            check(lambda: fields(contract[field], (), None, name + '.' + field))
         for field in ('status', 'role', 'reset', 'stalls'):
-            text_value(contract[field], name + '.' + field)
-        names(contract['invariants'], name + '.invariants')
-        names(contract['verification'], name + '.verification')
+            check(lambda: text_value(contract[field], name + '.' + field))
+        check(lambda: names(contract['invariants'], name + '.invariants'))
+        check(lambda: names(contract['verification'], name + '.verification'))
+        interfaces = check(lambda: fields(contract['interfaces'], (), None, name + '.interfaces'))
+        if interfaces is not None:
+            for port, spec in interfaces.items():
+                if check(lambda: fields(spec, ('direction', 'type'), ('when',), name + '.' + port)) is not None:
+                    if spec['direction'] not in ('input', 'output'):
+                        errors.append(f'{name}.{port}: invalid direction')
+        dependencies = check(lambda: fields(contract['combinational_dependencies'], (), None, name + '.dependencies'))
+        if dependencies is not None:
+            for out, inputs in dependencies.items():
+                check(lambda: names(inputs, name + '.' + out))
+    if errors:
+        raise SpecificationErrors(errors)
+    return contracts
+
+
+def _graph_shape(documents):
+    """Graph shape is independent of contract shapes and endpoint relationships."""
+    graph = fields(documents['graph'], ('graph_id', 'clock_reset', 'connections', 'presence', 'integration'), ('verification_outputs',), 'graph')
+    declarations = fields(graph.get('verification_outputs', {}), (), None, 'graph.verification_outputs')
+    for endpoint, reason in declarations.items():
+        text_value(reason, endpoint + '.verification output reason')
+    return fields(graph['clock_reset'], ('definition', 'clock_source', 'reset_source', 'consumers'), (), 'graph.clock_reset')
+
+
+def validate_ownership(documents):
+    contracts, rules, obligations = _contract_shapes(documents), {}, {}
+    errors = []
+    for name, contract in contracts.items():
         for event in contract['update_events']:
             if event != 'every_clock' and event not in {'shared.events.' + e for e in documents['shared']['events']}:
-                raise SpecificationError(f'{name}: unknown update event {event}')
+                errors.append(f'{name}: unknown update event {event}')
     for slice_name in ('system', 'execution'):
         doc = documents[slice_name]
         fields(doc, ('slice_id', 'rules', 'verification'), (), slice_name)
@@ -273,9 +320,9 @@ def validate_ownership(documents):
             text_value(rule['origin'], ref + '.origin')
             text_value(rule['statement'], ref + '.statement')
             if not names(rule['owners'], ref) or set(rule['owners']) - contracts.keys():
-                raise SpecificationError(f'{ref}: missing or unknown rule owners')
+                errors.append(f'{ref}: missing or unknown rule owners')
             if not names(rule['verification'], ref):
-                raise SpecificationError(f'{ref}: missing verification obligations')
+                errors.append(f'{ref}: missing verification obligations')
             rules[ref] = rule
         for vid, obligation in fields(doc['verification'], (), None, slice_name + '.verification').items():
             ref = f'{slice_name}.verification.{vid}'
@@ -290,36 +337,60 @@ def validate_ownership(documents):
         for vid in rule['verification']:
             verification_ref = f'{prefix}.verification.{vid}'
             if verification_ref not in obligations or rid not in obligations[verification_ref]['rules']:
-                raise SpecificationError(f'{ref}: nonreciprocal verification reference {vid}')
+                errors.append(f'{ref}: nonreciprocal verification reference {vid}')
             for owner in rule['owners']:
+                if owner not in contracts:
+                    continue  # The unknown owner is already reported above.
                 if ref not in contracts[owner]['invariants'] or verification_ref not in contracts[owner]['verification']:
-                    raise SpecificationError(f'{ref}: owner {owner} lacks invariant/verification obligation')
+                    errors.append(f'{ref}: owner {owner} lacks invariant/verification obligation '
+                                  f'(requires invariant {ref} and verification {verification_ref})')
     for ref, obligation in obligations.items():
         prefix, _, vid = ref.split('.')
         for rid in obligation['rules']:
             rule = rules.get(f'{prefix}.rules.{rid}')
             if rule is None or vid not in rule['verification']:
-                raise SpecificationError(f'{ref}: nonreciprocal rule reference {rid}')
+                errors.append(f'{ref}: nonreciprocal rule reference {rid}')
     for name, contract in contracts.items():
         for ref in contract['invariants']:
             if ref not in rules or name not in rules[ref]['owners']:
-                raise SpecificationError(f'{name}: unknown or unowned invariant {ref}')
+                errors.append(f'{name}: unknown or unowned invariant {ref}')
         for ref in contract['verification']:
             if ref not in obligations:
-                raise SpecificationError(f'{name}: unknown verification reference {ref}')
+                errors.append(f'{name}: unknown verification reference {ref}')
+                continue
             prefix = ref.split('.')[0]
-            if not any(name in rules[f'{prefix}.rules.{rid}']['owners'] for rid in obligations[ref]['rules']):
-                raise SpecificationError(f'{name}: unowned verification obligation {ref}')
+            if not any(name in rules.get(f'{prefix}.rules.{rid}', {}).get('owners', []) for rid in obligations[ref]['rules']):
+                errors.append(f'{name}: unowned verification obligation {ref}')
+    if errors:
+        raise SpecificationErrors(errors)
     return len(rules), len(obligations)
 
 
-def validate_graph(documents, parameters, widths):
+def validate_dependencies(documents):
+    """Check every module dependency declaration independently of graph wiring."""
+    modules, errors = {}, []
+    for name, contract in _contract_shapes(documents).items():
+        dependencies = contract['combinational_dependencies']
+        outputs = {p for p, spec in contract['interfaces'].items() if spec['direction'] == 'output'}
+        if set(dependencies) != outputs:
+            errors.append(f'{name}: dependencies must describe every output '
+                          f'(missing {sorted(outputs - dependencies.keys())}, extra {sorted(dependencies.keys() - outputs)})')
+        for out, inputs in dependencies.items():
+            for port in inputs:
+                if port not in contract['interfaces'] or contract['interfaces'][port]['direction'] != 'input':
+                    errors.append(f'{name}.{out}: dependency must name an input; {port!r} is not an input')
+        modules[name] = {'dependencies': dependencies}
+    if errors:
+        raise SpecificationErrors(errors)
+    return modules
+
+
+def validate_graph(documents, parameters, widths, bindings=None):
     graph, shared = documents['graph'], documents['shared']
     contracts = documents['modules']['contracts']
-    fields(graph, ('graph_id', 'clock_reset', 'connections', 'presence', 'integration'), (), 'graph')
+    wiring = _graph_shape(documents)
     reset = shared['clock_reset']
     validate_clock_reset(reset)
-    wiring = fields(graph['clock_reset'], ('definition', 'clock_source', 'reset_source', 'consumers'), (), 'graph.clock_reset')
     if wiring['definition'] != 'shared.clock_reset' or wiring['clock_source'] != 'top.' + reset['clock'] or wiring['reset_source'] != 'top.' + reset['reset']:
         raise SpecificationError('Clock/reset source differs from shared definition')
     if set(names(wiring['consumers'], 'clock/reset consumers')) != set(contracts):
@@ -356,42 +427,83 @@ def validate_graph(documents, parameters, widths):
     if any(reset['clock'] in c['interfaces'] or reset['reset'] in c['interfaces'] for c in contracts.values()):
         raise SpecificationError('Implicit clock/reset ports must not be redeclared')
     edges, driven, used = [], set(), {wiring['clock_source'], wiring['reset_source']}
+    connection_errors = []
     for source, targets in fields(graph['connections'], (), None, 'graph.connections').items():
-        if source not in endpoints and source not in absent:
-            raise SpecificationError(f'Unknown graph endpoint {source}')
-        if not names(targets, source):
-            raise SpecificationError(f'{source}: connection needs at least one sink')
-        for target in names(targets, source):
-            for endpoint in (source, target):
-                if endpoint not in endpoints and endpoint not in absent:
-                    raise SpecificationError(f'Unknown graph endpoint {endpoint}')
+        source_known = source in endpoints or source in absent
+        if not source_known:
+            connection_errors.append(f'Unknown graph endpoint {source}')
+        try:
+            targets = names(targets, source)
+        except SpecificationError as exc:
+            connection_errors.append(str(exc))
+            continue
+        if not targets:
+            connection_errors.append(f'{source}: connection needs at least one sink')
+        for target in targets:
+            target_known = target in endpoints or target in absent
+            if not target_known:
+                connection_errors.append(f'Unknown graph endpoint {target}')
+            if not source_known or not target_known:
+                continue
             if source not in endpoints or target not in endpoints:
                 if source not in endpoints and target not in endpoints:
                     continue
-                raise SpecificationError(f'Conditional connection must omit both ends: {source} -> {target}')
+                connection_errors.append(f'Conditional connection must omit both ends: {source} -> {target}')
+                continue
             src, dst = endpoints[source], endpoints[target]
             if not src['source'] or dst['source']:
-                raise SpecificationError(f'Wrong graph direction: {source} -> {target}')
+                connection_errors.append(f'Wrong graph direction: {source} -> {target}')
+                continue
             if src['type'] != dst['type'] or src['width'] != dst['width']:
-                raise SpecificationError(f'Type/width mismatch: {source} -> {target}')
+                connection_errors.append(f'Type/width mismatch: {source} -> {target}')
+                continue
             if target in driven:
-                raise SpecificationError(f'Multiple drivers for {target}')
+                connection_errors.append(f'Multiple drivers for {target}')
+                continue
             driven.add(target)
             used.add(source)
             edges.append({'from': source, 'to': target})
+    if connection_errors:
+        # Invalid edges make coverage, output-use and cycle conclusions unsafe.
+        # Collect local wiring faults, but do not diagnose the partial graph.
+        raise SpecificationErrors(connection_errors)
+    declarations = graph.get('verification_outputs', {})
+    if declarations and bindings is None:
+        raise SpecificationError('graph.verification_outputs requires valid verification bindings')
+    observed = set()
+    if bindings is not None:
+        for check in bindings['checks'].values():
+            observed.update(bindings['observations'][alias]['endpoint'] for alias in check['observations'])
+    verification_only, declaration_errors = set(), []
+    for endpoint in sorted(declarations):
+        if endpoint not in endpoints or endpoint.startswith('top.') or not endpoints[endpoint]['source']:
+            declaration_errors.append(f'{endpoint}: verification-only declaration requires a present child output')
+            continue
+        if endpoint in used:
+            declaration_errors.append(f'{endpoint}: verification-only output already has a functional connection; '
+                                      'remove its graph.verification_outputs declaration, retaining the functional '
+                                      'connection and verification observation')
+            continue
+        if endpoint not in observed:
+            declaration_errors.append(f'{endpoint}: verification-only output must be an observation used by a verification check')
+            continue
+        verification_only.add(endpoint)
+    if declaration_errors:
+        # All endpoints and connections are valid here. Each declaration can be
+        # checked independently; invalid declarations never grant an exemption.
+        # Defer coverage/cycle checks until declarations themselves are usable.
+        raise SpecificationErrors(declaration_errors)
     missing = {n for n, p in endpoints.items() if not p['source']} - driven
-    unused = {n for n, p in endpoints.items() if p['source']} - used
+    unused = {n for n, p in endpoints.items() if p['source']} - used - verification_only
     if missing or unused:
-        raise SpecificationError(f'Undriven graph sinks {sorted(missing)}; unused sources {sorted(unused)}')
-    for name, contract in contracts.items():
-        dependencies = fields(contract['combinational_dependencies'], (), None, name + '.dependencies')
-        outputs = {p for p, v in contract['interfaces'].items() if v['direction'] == 'output'}
-        if set(dependencies) != outputs:
-            raise SpecificationError(f'{name}: dependencies must describe every output')
-        for out, inputs in dependencies.items():
-            for port in names(inputs, name + '.' + out):
-                if port not in contract['interfaces'] or contract['interfaces'][port]['direction'] != 'input':
-                    raise SpecificationError(f'{name}.{out}: dependency must name an input')
+        message = f'Undriven graph sinks {sorted(missing)}; unused sources {sorted(unused)}'
+        monitors = sorted(endpoint for endpoint in unused & observed if not endpoint.startswith('top.'))
+        if monitors:
+            message += (f'; checked observations {monitors} may use explicit graph.verification_outputs '
+                        'only if intended solely for verification; functional connections must still be repaired')
+        raise SpecificationError(message)
+    for name, spec in validate_dependencies(documents).items():
+        dependencies = spec['dependencies']
         modules[name] = {'dependencies': {out: [p for p in inputs if name + '.' + p in endpoints]
                                            for out, inputs in dependencies.items()}}
     cycle = dependency_cycle(edges, modules)
@@ -468,7 +580,10 @@ def validate_shared(shared, library, overrides=None, profile=None):
     for name, ref in fields(timing['bindings'], (), None, 'timing bindings').items():
         value = library[profile]
         if not isinstance(ref, str):
-            raise SpecificationError(f'{name}: timing reference must be a string')
+            raise SpecificationError(
+                f'shared.timing_profile.bindings.{name}: timing reference must be a string path '
+                f'relative to timing_library[{profile!r}]; received {type(ref).__name__} {ref!r}. '
+                'Keep the library path in bindings; the compiler resolves cycle values for each profile.')
         for part in ref.split('.'):
             if not isinstance(value, dict) or part not in value:
                 raise SpecificationError(f'{name}: unresolved timing binding {ref}')
@@ -503,13 +618,23 @@ def validate_metadata(package):
         text_value(package['scope'][name], 'scope.' + name)
     for name in ('covered', 'pending'):
         names(package['scope'][name], 'scope.' + name)
+    errors = []
     for group, required in (('decisions', ('origin', 'status', 'value', 'reason')),
                             ('assumptions', ('statement', 'status')),
                             ('open_questions', ('blocks', 'question'))):
         for name, value in fields(package[group], (), None, group).items():
-            fields(value, required, (), group + '.' + name)
+            try:
+                fields(value, required, (), group + '.' + name)
+            except SpecificationError as exc:
+                errors.append(str(exc))
+                continue  # Field checks require a usable entry shape.
             for field in required:
-                text_value(value[field], group + '.' + name + '.' + field)
+                try:
+                    text_value(value[field], group + '.' + name + '.' + field)
+                except SpecificationError as exc:
+                    errors.append(str(exc))
+    if errors:
+        raise SpecificationErrors(errors)
     strategy = fields(package['verification_strategy'], ('status', 'configurations', 'module_checks', 'system_scenario', 'system_evidence'), (), 'verification_strategy')
     configuration_axes(strategy['configurations'])
     if 'review' in package:
@@ -529,15 +654,34 @@ def validate_contents(package, documents, library, overrides=None, profile=None)
     fields(documents['modules'], ('contracts',), (), 'modules')
     fields(documents['modules']['contracts'], (), None, 'contracts')
     parameters, widths, profile, timing_values = validate_shared(shared, library, overrides, profile)
-    rules, obligations = validate_ownership(documents)
-    edges = validate_graph(documents, parameters, widths)
+    errors = []
+
+    def check(function):
+        try:
+            return function()
+        except SpecificationError as exc:
+            errors.extend(getattr(exc, 'errors', [str(exc)]))
+            return None
+
+    check(lambda: _contract_shapes(documents))
+    check(lambda: _graph_shape(documents))
+    if errors:
+        raise SpecificationErrors(errors)  # No relational checks on malformed shapes.
+
+    counts = check(lambda: validate_ownership(documents))
+    check(lambda: validate_dependencies(documents))
+    bindings = None
     if 'verification' in documents:
         from verification_bindings import elaborate_bindings
-        elaborate_bindings(documents, parameters, widths)
-    validate_metadata(package)
-    if 'generation' in package:
+        bindings = check(lambda: elaborate_bindings(documents, parameters, widths))
+    edges = check(lambda: validate_graph(documents, parameters, widths, bindings))
+    check(lambda: validate_metadata(package))
+    if not errors and 'generation' in package:
         from specification_request import validate_generated_package
-        validate_generated_package(package, documents)
+        check(lambda: validate_generated_package(package, documents))
+    if errors:
+        raise SpecificationErrors(errors)
+    rules, obligations = counts
     return {'package_id': package['package_id'], 'revision': package['revision'],
             'specification_validation': 'passed', 'behavioral_verification': 'not_run',
             'parameters': parameters, 'type_widths': widths, 'profile': profile, 'timing_cycles': timing_values,

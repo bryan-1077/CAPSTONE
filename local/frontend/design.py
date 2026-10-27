@@ -244,13 +244,19 @@ def parse_args():
         action="store_true",
         help="Skip dual-LLM single-file lint.",
     )
-    parser.add_argument(
+    cache_mode = parser.add_mutually_exclusive_group()
+    cache_mode.add_argument(
         "--cache",
         action="store_true",
         help="Use cached dual-LLM RTL and avoid LLM calls for dual-LLM modules.",
     )
+    cache_mode.add_argument('--resume', action='store_true',
+                            help='Reuse matching reviewed RTL, generating on cache miss; requires --output-root.')
     parser.add_argument("--output-root", help="Isolated build root for IR, RTL and reviewed cache.")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.resume and not args.output_root:
+        parser.error('--resume requires --output-root for specification-keyed caches')
+    return args
 
 
 # ---------- main ----------
@@ -330,6 +336,8 @@ def _run_design(args):
             yaml_text = f.read()
         if args.cache:
             print(f"[FLOW] Using cached DUAL LLM RTL for {module_name}")
+        elif args.resume:
+            print(f'[FLOW] Resuming DUAL LLM RTL for {module_name}')
         else:
             print(f"[FLOW] Using DUAL LLM generator for {module_name}")
         rtl = dual_rtlgen.run_dual_llm_rtlgen(
@@ -337,6 +345,7 @@ def _run_design(args):
             yaml_text,
             lint_enabled=not args.no_lint,
             use_cache=args.cache,
+            resume=args.resume,
         )
         rtl = enforce_width_safety(rtl, module_name)
         sv_path = os.path.join(work_dir, module_name + ".sv")

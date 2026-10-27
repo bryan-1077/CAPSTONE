@@ -1,0 +1,168 @@
+{
+  "audit_version": 1,
+  "scope": "canonical system projections; metadata included, architecture contracts excluded",
+  "parent_export": "local/frontend/microarch/proposals/clarity_20261024T055520Z/repair_20261025T214055Z/architecture.yaml",
+  "repaired_export": "local/frontend/microarch/proposals/clarity_20261024T055520Z/repair_20261025T214055Z/frontend_20261025T232303Z/repair/architecture.yaml",
+  "parent_manifest_fingerprint": "f931ab6bd3d4614e35dbf0be5a07dcfdf173c79b0e9e16a5606885fd1e8c765f",
+  "repaired_manifest_fingerprint": "5339df33ca61538f5a7b029b4b7e6b8d72d949ca6f7d555a4397f9c9f27d758c",
+  "before_system_fingerprint": "5c2c1f1ff5f0f1167c006445373895292c8332ccb8b2a7cf9a78d1bc682737bb",
+  "after_system_fingerprint": "9eaf17f94a1ccbec5799d1973ddf7649c4aaecd6bfc3a71a389426da33690fd3",
+  "changes": [
+    {
+      "op": "replace",
+      "path": "/execution/rules/EXEC_CONTROL_CREATION/statement",
+      "before": "A cleanup reservation creates PRE control work independently of active ownership. Refresh pending creates successive PRE control work for the lowest-index open bank and then REF control work when all banks are closed, independently of active ownership. Control candidates are created only on later edges when the candidate slot is empty, hold while blocked, clear on commit, and do not receive same-edge replacement.",
+      "after": "A cleanup reservation creates PRE control work independently of active ownership. Refresh pending creates successive PRE control work for the lowest-index open bank and then REF control work when all banks are closed, independently of active ownership. While refresh pending is asserted, dispatch is inhibited. Control candidates are created only on later edges when the candidate slot is empty, hold while blocked, clear on commit, and do not receive same-edge replacement."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/rules/EXEC_READY/statement",
+      "before": "txn_ready reflects only waiting admission capacity including same-edge dispatch release. cmd_ready is reset-gated diagnostic first-command readiness using independent row and timing probes while idle and permitted by cleanup and refresh state. Neither diagnostic alters state.",
+      "after": "txn_ready reflects only waiting admission capacity including same-edge dispatch release. cmd_ready is reset-gated diagnostic first-command readiness only while the engine is idle: active ownership is absent, candidate storage is empty, no cleanup reservation exists, and refresh is neither pending nor in service. It uses independent row and timing probes, remains meaningful without txn_valid, and neither diagnostic alters state."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/rules/EXEC_REFRESH/statement",
+      "before": "The first deadline is the last reset-sampled edge plus tREFI; later deadlines advance by tREFI independently of REF. Pending is sticky. Pending blocks dispatch after active work resolves, waits for cleanup completion, creates ordered refresh-preparation PRE candidates until all banks are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes commands strictly before REF-edge+tRFC.",
+      "after": "The first deadline is the last reset-sampled edge plus tREFI; later deadlines advance by tREFI independently of REF. Pending is sticky. Pending immediately prevents dispatch, waits for already owned active work and cleanup completion, creates ordered refresh-preparation PRE candidates until all banks are closed, waits all-bank tRP, creates and commits one REF candidate, and excludes commands strictly before REF-edge+tRFC."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/verification/X_CONTROL/expected",
+      "before": "Cleanup and refresh preparation create independently distinguishable PRE or REF candidates after active retirement or with no active request; each candidate holds when blocked and is not replaced on its commit edge.",
+      "after": "Cleanup and refresh preparation create independently distinguishable PRE or REF candidates after active retirement or with no active ownership; pending refresh blocks dispatch; each candidate holds when blocked and is not replaced on its commit edge."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/verification/X_CONTROL/scenario",
+      "before": "Retire close-page work without active ownership, then initiate refresh with multiple open banks and no active ownership.",
+      "after": "Retire close-page work without active ownership, then initiate refresh with multiple open banks and no active ownership while FIFO traffic is waiting."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/verification/X_READY/expected",
+      "before": "txn_ready tracks admission capacity only and cmd_ready is side-effect-free diagnostic readiness.",
+      "after": "txn_ready tracks admission capacity only; cmd_ready is side-effect-free diagnostic readiness and remains low whenever active ownership, candidate occupancy, cleanup reservation, pending refresh, refresh preparation, or refresh service makes the engine non-idle."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/verification/X_READY/scenario",
+      "before": "Vary occupancy, dispatch opportunity, incoming command type, row/timing state, txn_valid, cleanup, refresh, and reset.",
+      "after": "Vary occupancy, dispatch opportunity, incoming command type, row/timing state, txn_valid, active ownership, candidate occupancy, cleanup, refresh, and reset."
+    },
+    {
+      "op": "replace",
+      "path": "/execution/verification/X_REFRESH/expected",
+      "before": "Pending coalesces without traffic loss; close order is ascending; no command commits early after REF; service resumes afterward.",
+      "after": "Pending coalesces without traffic loss, inhibits dispatch before refresh preparation, closes banks in ascending order, commits REF once, excludes commands early after REF, and resumes service afterward."
+    },
+    {
+      "op": "replace",
+      "path": "/package/revision",
+      "before": "draft_002",
+      "after": "draft_003"
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/candidate_create/condition",
+      "before": "At a rising clk edge, rst_n is high, active ownership exists, candidate storage is empty, cleanup reservation and refresh preparation or service are absent, and no command commits on that edge.",
+      "after": "At a rising clk edge, rst_n is high, active ownership exists, candidate storage is empty, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/cleanup_candidate_create/condition",
+      "before": "At a rising clk edge, rst_n is high, PAGE_POLICY is close_page, active ownership is absent, a cleanup reservation exists, candidate storage is empty, refresh preparation or service is absent, and no command commits on that edge.",
+      "after": "At a rising clk edge, rst_n is high, PAGE_POLICY is close_page, active ownership is absent, a cleanup reservation exists, candidate storage is empty, refresh_pending is low, refresh preparation and refresh service are absent, and no command commits on that edge."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/cleanup_candidate_create/effect",
+      "before": "Create a PRE candidate for the reserved cleanup bank from registered bank state. This candidate is not an active-request candidate.",
+      "after": "Create a PRE candidate for the reserved cleanup bank from registered bank state."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/dispatch/condition",
+      "before": "At a rising clk edge, rst_n is high, active ownership is absent, cleanup reservation is absent, refresh preparation or service is absent, candidate storage is empty, and a pre-edge FIFO head is selected.",
+      "after": "At a rising clk edge, rst_n is high, active ownership is absent, cleanup reservation is absent, refresh_pending is low, refresh preparation and refresh service are absent, candidate storage is empty, and a pre-edge FIFO head is selected."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/dispatch/effect",
+      "before": "Capture the complete pre-edge FIFO head into active ownership and release exactly that waiting entry.",
+      "after": "Capture the complete pre-edge FIFO head into active ownership and release exactly that waiting entry. Dispatch never coincides with refresh-preparation candidate creation."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/refresh_candidate_create/condition",
+      "before": "At a rising clk edge, rst_n is high, refresh pending is asserted, active ownership and cleanup reservation are absent, candidate storage is empty, refresh service is not in tRFC exclusion, and no command commits on that edge.",
+      "after": "At a rising clk edge, rst_n is high, refresh_pending is high, active ownership and cleanup reservation are absent, candidate storage is empty, refresh service is not in tRFC exclusion, and no command commits on that edge."
+    },
+    {
+      "op": "replace",
+      "path": "/shared/events/refresh_due/effect",
+      "before": "Set sticky refresh pending. A simultaneous REF acknowledgment cannot clear newly due pending.",
+      "after": "Set sticky refresh_pending. A simultaneous REF acknowledgment cannot clear newly due pending."
+    },
+    {
+      "op": "remove",
+      "path": "/shared/types/command/semantics",
+      "before": {
+        "NOP": "Canonical all-zero payload; never commits.",
+        "ACT": "Open bank at row; column and wdata are zero.",
+        "PRE": "Close bank; row, column, and wdata are zero.",
+        "READ": "Access matching open bank row and column; wdata is zero.",
+        "WRITE": "Access matching open bank row and column with wdata.",
+        "REF": "All-bank refresh; bank, row, column, and wdata are zero."
+      }
+    },
+    {
+      "op": "remove",
+      "path": "/shared/types/request/legal_values",
+      "before": "bank is less than BANK_COUNT; host-originated row[9:2] and column[5:2] are zero."
+    },
+    {
+      "op": "remove",
+      "path": "/shared/types/request/mapping",
+      "before": {
+        "bank": "Zero-extend txn_bank.",
+        "row": "Zero-extend txn_addr[3:2].",
+        "column": "Zero-extend txn_addr[1:0].",
+        "is_write": "txn_is_write.",
+        "wdata": "txn_wdata."
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/system/rules/SYS_CONTROL_PRIORITY/statement",
+      "before": "With reset inactive, an outstanding candidate holds or commits before other nonreset progress. When candidate storage is empty, active-request candidate creation has priority over cleanup candidate creation, cleanup candidate creation has priority over refresh-preparation candidate creation, and dispatch is permitted only when none of those control conditions applies. A candidate created from cleanup or refresh preparation follows the same hold, permission, commit, and no-same-edge-replacement rules as an active-request candidate.",
+      "after": "With reset inactive, an outstanding candidate holds or commits before other nonreset progress. When candidate storage is empty, active-request candidate creation has priority over cleanup candidate creation, cleanup candidate creation has priority over refresh-preparation candidate creation, and dispatch is permitted only when refresh_pending is low and none of those control conditions applies. A pending refresh therefore inhibits dispatch before refresh-preparation candidate creation and cannot race dispatch. A candidate created from cleanup or refresh preparation follows the same hold, permission, commit, and no-same-edge-replacement rules as an active-request candidate."
+    },
+    {
+      "op": "replace",
+      "path": "/system/verification/V_CANDIDATE/expected",
+      "before": "Dispatch creates no candidate; blocked candidates hold; commit clears the slot; later creation uses updated state; active, cleanup, and refresh-preparation candidates follow the declared priority and never replace on the commit edge.",
+      "after": "Dispatch creates no candidate; blocked candidates hold; commit clears the slot; later creation uses updated state; active, cleanup, and refresh-preparation candidates follow the declared priority; pending refresh inhibits dispatch and candidates never replace on the commit edge."
+    },
+    {
+      "op": "replace",
+      "path": "/system/verification/V_DIAGNOSTIC/expected",
+      "before": "cmd_ready is reset-gated first-command diagnostic readiness, meaningful without txn_valid, and has no admission, dispatch, storage, history, or commit side effect.",
+      "after": "cmd_ready is reset-gated first-command diagnostic readiness only when the engine is idle and cleanup and refresh permit; it is meaningful without txn_valid and has no admission, dispatch, storage, history, or commit side effect."
+    },
+    {
+      "op": "replace",
+      "path": "/system/verification/V_DIAGNOSTIC/scenario",
+      "before": "Vary incoming request, row state, timing, txn_valid, engine busy state, cleanup, refresh, reset, and queue occupancy.",
+      "after": "Vary incoming request, row state, timing, txn_valid, engine-idle state, active ownership, candidate occupancy, cleanup, refresh, reset, and queue occupancy."
+    },
+    {
+      "op": "replace",
+      "path": "/system/verification/V_REFRESH/expected",
+      "before": "Deadlines coalesce; active and cleanup drain; remaining banks close in ascending order through refresh-preparation PRE candidates; REF occurs after all-bank tRP; due with REF leaves pending; traffic resumes after tRFC.",
+      "after": "Deadlines coalesce; pending refresh inhibits dispatch; active and cleanup drain; remaining banks close in ascending order through refresh-preparation PRE candidates; REF occurs after all-bank tRP; due with REF leaves pending; traffic resumes after tRFC."
+    }
+  ],
+  "behavioral_verification": "not_run",
+  "approval": "not_granted"
+}

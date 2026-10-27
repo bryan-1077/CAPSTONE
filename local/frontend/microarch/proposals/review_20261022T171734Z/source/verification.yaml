@@ -1,0 +1,535 @@
+binding_version: 1
+sampling:
+  phase: pre_edge
+  reset_gates_events: true
+events:
+  admission:
+    status: bound
+    when:
+      all:
+      - endpoint: top.txn_valid
+        equals: 1
+      - endpoint: top.txn_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: host_protocol.mapped_request
+  dispatch:
+    status: bound
+    when:
+      all:
+      - endpoint: fifo_scheduler.dispatch_valid
+        equals: 1
+      - endpoint: command_engine.dispatch_ready
+        equals: 1
+    payload:
+      request:
+        endpoint: fifo_scheduler.dispatch_request
+  command_commit:
+    status: bound
+    when:
+      endpoint: command_engine.commit_valid
+      equals: 1
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  retirement:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - any:
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: READ
+        - endpoint: command_engine.commit_command
+          field: opcode
+          equals: WRITE
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  response_delivery:
+    status: bound
+    when:
+      endpoint: top.rsp_valid
+      equals: 1
+    payload:
+      data:
+        endpoint: top.rsp_rdata
+  refresh_start:
+    status: bound
+    when:
+      all:
+      - endpoint: command_engine.commit_valid
+        equals: 1
+      - endpoint: command_engine.commit_command
+        field: opcode
+        equals: REF
+    payload:
+      command:
+        endpoint: command_engine.commit_command
+  refresh_due:
+    status: unbound
+    reason: The periodic deadline is owned internally by refresh_control. Downstream
+      checking derives due edges from reset and shared timing profile and observes
+      refresh_pending independently.
+  refresh_end:
+    status: unbound
+    reason: No public end pulse exists. Downstream checking derives the tRFC boundary
+      from committed REF and observes refresh_busy independently.
+observations:
+  host_ready:
+    endpoint: top.txn_ready
+  cmd_ready:
+    endpoint: top.cmd_ready
+  response_valid:
+    endpoint: top.rsp_valid
+  response_data:
+    endpoint: top.rsp_rdata
+  queue_head_valid:
+    endpoint: waiting_queue.head_valid
+  queue_head_request:
+    endpoint: waiting_queue.head_request
+  dispatch_ready:
+    endpoint: command_engine.dispatch_ready
+  candidate_valid:
+    endpoint: command_engine.candidate_valid
+  candidate_command:
+    endpoint: command_engine.candidate_command
+  candidate_ok:
+    endpoint: timing_enforcement.candidate_ok
+  probe_valid:
+    endpoint: command_engine.probe_valid
+  probe_command:
+    endpoint: command_engine.probe_command
+  probe_ok:
+    endpoint: timing_enforcement.probe_ok
+  open_valid:
+    endpoint: bank_state.open_valid
+  open_rows:
+    endpoint: bank_state.open_rows
+  refresh_pending:
+    endpoint: refresh_control.refresh_pending
+  refresh_busy:
+    endpoint: refresh_control.refresh_busy
+checks:
+  system.verification.V_BASE_HOST:
+    scope: both
+    events:
+    - admission
+    - response_delivery
+    observations:
+    - host_ready
+    - cmd_ready
+    - response_valid
+    note: Check preserved host handshake and reset-gated visibility.
+  system.verification.V_BASE_ADDRESS:
+    scope: module
+    events:
+    - admission
+    observations: []
+    note: Check compact mapped request fields against host address and bank inputs.
+  system.verification.V_BASE_QUEUE:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    - response_delivery
+    observations:
+    - host_ready
+    - queue_head_valid
+    note: Track waiting, active, and response capacity independently.
+  system.verification.V_BASE_DATA:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations:
+    - response_valid
+    - response_data
+    note: Use an independent banked compact-address memory scoreboard.
+  system.verification.V_BASE_TIMING:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    note: Check all configured timing boundaries from commit timestamps.
+  system.verification.V_BASE_SEQUENCE:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    - retirement
+    observations:
+    - candidate_valid
+    - candidate_command
+    - dispatch_ready
+    note: Check active ownership through setup and stalls.
+  system.verification.V_BASE_MODULARITY:
+    scope: system
+    events:
+    - dispatch
+    observations:
+    - queue_head_valid
+    - candidate_valid
+    note: Review distinct declared role contracts and structural connectivity.
+  system.verification.V_BASE_LEGALITY:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - probe_valid
+    - probe_command
+    - probe_ok
+    note: Check independently visible selection and feedback-free permission.
+  system.verification.V_BASE_RESET:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - command_commit
+    - response_delivery
+    observations:
+    - host_ready
+    - response_valid
+    - open_valid
+    - refresh_pending
+    note: Check synchronous clearing and immediate visible-event gating.
+  system.verification.V_BASE_POLICY:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    observations:
+    - open_valid
+    - dispatch_ready
+    note: Compare open_page retention and close_page cleanup configurations.
+  system.verification.V_BASE_REFRESH:
+    scope: both
+    events:
+    - refresh_start
+    - dispatch
+    - command_commit
+    observations:
+    - refresh_pending
+    - refresh_busy
+    note: Check retained queued traffic and resumption.
+  system.verification.V_BASE_TFAW:
+    scope: module
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - candidate_ok
+    note: Check fifth ACT exclusion and exact tFAW boundary.
+  system.verification.V_BASE_TRRD:
+    scope: module
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - candidate_ok
+    note: Check later ACT at E+tRRD boundary.
+  system.verification.V_CONSTRAINT_1:
+    scope: module
+    events:
+    - admission
+    observations: []
+    note: Inspect declared design identity through this package binding.
+  system.verification.V_CONSTRAINT_2:
+    scope: system
+    events:
+    - dispatch
+    observations: []
+    note: Inspect memory-controller structural role bindings.
+  system.verification.V_CONSTRAINT_3:
+    scope: module
+    events:
+    - retirement
+    observations:
+    - open_valid
+    note: Inspect default open_page behavior.
+  system.verification.V_CONSTRAINT_4:
+    scope: module
+    events:
+    - refresh_start
+    observations:
+    - refresh_pending
+    - refresh_busy
+    note: Inspect enabled periodic refresh behavior.
+  system.verification.V_CONSTRAINT_5:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    observations:
+    - queue_head_request
+    note: Check FIFO selection independent of row-hit preference.
+  system.verification.V_CONSTRAINT_6:
+    scope: module
+    events:
+    - command_commit
+    observations:
+    - candidate_ok
+    note: Check enabled tFAW profile binding.
+  system.verification.V_CONSTRAINT_7:
+    scope: module
+    events:
+    - command_commit
+    observations:
+    - candidate_ok
+    note: Check enabled tRRD profile binding.
+  system.verification.V_CONSTRAINT_8:
+    scope: system
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    note: Inspect DDR4 command vocabulary binding.
+  system.verification.V_CONSTRAINT_9:
+    scope: system
+    events:
+    - command_commit
+    observations:
+    - candidate_ok
+    note: Inspect DDR4-3200 timing-profile binding.
+  system.verification.V_CONSTRAINT_10:
+    scope: system
+    events:
+    - admission
+    observations: []
+    note: Inspect current_controller baseline provenance.
+  system.verification.V_CONSTRAINT_11:
+    scope: module
+    events:
+    - admission
+    - dispatch
+    observations:
+    - host_ready
+    note: Fill selected four-entry waiting capacity.
+  system.verification.V_CONSTRAINT_12:
+    scope: module
+    events:
+    - command_commit
+    observations:
+    - open_valid
+    - open_rows
+    note: Exercise all four selected banks.
+  system.verification.V_R1:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - cmd_ready
+    - queue_head_request
+    note: Scoreboard acceptance order including same-address writes and reads.
+  system.verification.V_R2:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - queue_head_valid
+    - dispatch_ready
+    note: Check pre-edge-only dispatch, full replacement, and no retirement-edge replacement.
+  system.verification.V_R3:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    - retirement
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    note: Check explicit command sequences, one commit maximum, and stable blocking.
+  system.verification.V_R4:
+    scope: system
+    events:
+    - dispatch
+    observations:
+    - queue_head_valid
+    - candidate_valid
+    - open_valid
+    - refresh_pending
+    note: Review separate module contracts for every required functional owner.
+  system.verification.V_R5:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_command
+    - candidate_ok
+    - open_valid
+    note: Check committed-only timing and bank history at E+T-1 and E+T.
+  system.verification.V_R6:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations:
+    - response_valid
+    - response_data
+    note: Use independent storage scoreboard and exact read response edge.
+  system.verification.V_R7:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    - dispatch
+    observations:
+    - open_valid
+    - dispatch_ready
+    note: Check configurable cleanup reservation behavior.
+  system.verification.V_R8:
+    scope: both
+    events:
+    - refresh_start
+    - command_commit
+    - dispatch
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - open_valid
+    note: Check deadline, coalescing, drain, ascending preparation, REF, and restart.
+  system.verification.V_R9:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    observations:
+    - cmd_ready
+    - host_ready
+    - probe_valid
+    - probe_command
+    - probe_ok
+    note: Check diagnostic probe independence from admission and state mutation.
+  system.verification.V_R10:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - command_commit
+    - response_delivery
+    - refresh_start
+    observations:
+    - host_ready
+    - response_valid
+    - open_valid
+    - refresh_pending
+    note: Assert reset across all phases and check cancellation.
+  system.verification.V_R11:
+    scope: system
+    events:
+    - admission
+    - command_commit
+    observations:
+    - host_ready
+    - candidate_valid
+    note: Review reciprocal rule coverage and planned-only verification intent.
+  system.verification.V_SYS_ORDERING:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - retirement
+    observations:
+    - queue_head_request
+    - candidate_command
+    note: Ensure younger row hits cannot pass older requests.
+  system.verification.V_SYS_SIMULTANEOUS:
+    scope: both
+    events:
+    - admission
+    - dispatch
+    - command_commit
+    - refresh_start
+    observations:
+    - host_ready
+    - refresh_pending
+    note: Check reset priority, full queue replacement, retirement separation, and
+      due/REF priority.
+  system.verification.V_SYS_STORAGE_OWNERSHIP:
+    scope: both
+    events:
+    - dispatch
+    - retirement
+    - response_delivery
+    observations:
+    - queue_head_valid
+    - response_valid
+    note: Track logically distinct waiting, active, and response capacities.
+  execution.verification.V_EXEC_BANK_STATE:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - open_valid
+    - open_rows
+    note: Check only committed responsible commands change bank state.
+  execution.verification.V_EXEC_CLEANUP:
+    scope: both
+    events:
+    - retirement
+    - command_commit
+    - dispatch
+    observations:
+    - open_valid
+    - dispatch_ready
+    note: Check page-policy-dependent cleanup without duplicate retirement.
+  execution.verification.V_EXEC_COMMANDS:
+    scope: both
+    events:
+    - dispatch
+    - command_commit
+    - retirement
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    note: Check closed, hit, and conflict command traces under stalls.
+  execution.verification.V_EXEC_PERMISSION:
+    scope: both
+    events:
+    - command_commit
+    observations:
+    - candidate_valid
+    - candidate_command
+    - candidate_ok
+    - probe_valid
+    - probe_command
+    - probe_ok
+    note: Check permission is registered-history based and acceptance-feedback-free.
+  execution.verification.V_EXEC_REFRESH:
+    scope: both
+    events:
+    - refresh_start
+    - command_commit
+    - dispatch
+    observations:
+    - refresh_pending
+    - refresh_busy
+    - open_valid
+    note: Check deadline schedule, coalescing, ordered preparation, singular REF,
+      and tRFC exclusion.
+  execution.verification.V_EXEC_RESPONSE:
+    scope: both
+    events:
+    - command_commit
+    - response_delivery
+    observations:
+    - response_valid
+    - response_data
+    note: Check pre-edge read data at E+1, write suppression, and same-edge replacement
+      ordering.

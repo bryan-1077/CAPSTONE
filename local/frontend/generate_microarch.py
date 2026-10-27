@@ -10,6 +10,7 @@ import re
 
 import token_usage
 import requests
+from tpm_pacing import paced_post, PacingError
 import yaml
 
 from architecture import (ArchitectureError, ROOT, COMPILER_REVISION, fingerprint, library_context,
@@ -177,7 +178,7 @@ def call_llm(prompt, model, *, max_tokens=14000, label='Architecture'):
         raise ArchitectureError("TAMUS_AI_CHAT_API_KEY is not set")
     recorded = False
     try:
-        response = requests.post(API_URL, headers={"Authorization": f"Bearer {key}"},
+        response = paced_post(API_URL, pacing_label=label, headers={"Authorization": f"Bearer {key}"},
                                  json={"model": model, "messages": [{"role": "user", "content": prompt}],
                                        "max_tokens": max_tokens, "stream": False}, timeout=180)
         token_usage.record_response(model, label, response)
@@ -190,6 +191,8 @@ def call_llm(prompt, model, *, max_tokens=14000, label='Architecture'):
         if not isinstance(content, str) or not content.strip():
             raise ArchitectureError(f'{label} LLM returned no text content')
         return content
+    except PacingError as exc:
+        raise ArchitectureError(str(exc)) from exc
     except ArchitectureError:
         raise
     except requests.HTTPError as exc:

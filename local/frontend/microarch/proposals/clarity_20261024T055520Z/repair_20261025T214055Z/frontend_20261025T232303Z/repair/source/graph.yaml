@@ -1,0 +1,94 @@
+graph_id: ddr4_controller_fresh_structural
+clock_reset:
+  definition: shared.clock_reset
+  clock_source: top.clk
+  reset_source: top.rst_n
+  consumers:
+  - host_adapter
+  - waiting_queue
+  - fifo_scheduler
+  - command_engine
+  - row_state
+  - timing_enforcer
+  - functional_memory
+  - refresh_control
+connections:
+  top.txn_valid:
+  - host_adapter.txn_valid
+  top.txn_is_write:
+  - host_adapter.txn_is_write
+  top.txn_addr:
+  - host_adapter.txn_addr
+  top.txn_wdata:
+  - host_adapter.txn_wdata
+  top.txn_bank:
+  - host_adapter.txn_bank
+  host_adapter.txn_ready:
+  - top.txn_ready
+  host_adapter.cmd_ready:
+  - top.cmd_ready
+  host_adapter.rsp_valid:
+  - top.rsp_valid
+  host_adapter.rsp_rdata:
+  - top.rsp_rdata
+  host_adapter.incoming_request:
+  - waiting_queue.enqueue_request
+  - command_engine.incoming_request
+  host_adapter.enqueue_valid:
+  - waiting_queue.enqueue_valid
+  waiting_queue.enqueue_ready:
+  - host_adapter.queue_ready
+  waiting_queue.head_request:
+  - fifo_scheduler.head_request
+  waiting_queue.head_valid:
+  - fifo_scheduler.head_valid
+  fifo_scheduler.head_take:
+  - waiting_queue.head_take
+  fifo_scheduler.dispatch_request:
+  - command_engine.dispatch_request
+  fifo_scheduler.dispatch_valid:
+  - command_engine.dispatch_valid
+  command_engine.dispatch_ready:
+  - fifo_scheduler.dispatch_ready
+  command_engine.candidate_command:
+  - timing_enforcer.candidate_command
+  command_engine.candidate_valid:
+  - timing_enforcer.candidate_valid
+  timing_enforcer.candidate_ok:
+  - command_engine.candidate_ok
+  command_engine.probe_command:
+  - timing_enforcer.probe_command
+  command_engine.probe_valid:
+  - timing_enforcer.probe_valid
+  timing_enforcer.probe_ok:
+  - command_engine.probe_ok
+  command_engine.execution_ready:
+  - host_adapter.execution_ready
+  command_engine.commit_command:
+  - row_state.commit_command
+  - timing_enforcer.commit_command
+  - functional_memory.commit_command
+  - refresh_control.commit_command
+  command_engine.commit_valid:
+  - row_state.commit_valid
+  - timing_enforcer.commit_valid
+  - functional_memory.commit_valid
+  - refresh_control.commit_valid
+  row_state.open_rows:
+  - command_engine.open_rows
+  - timing_enforcer.open_rows
+  row_state.open_valid:
+  - command_engine.open_valid
+  - timing_enforcer.open_valid
+  refresh_control.refresh_pending:
+  - command_engine.refresh_pending
+  refresh_control.refresh_busy:
+  - command_engine.refresh_busy
+  functional_memory.rsp_valid:
+  - host_adapter.memory_rsp_valid
+  functional_memory.rsp_data:
+  - host_adapter.memory_rsp_data
+presence: {}
+integration: The top is structural only. All functional behavior is owned by contracts.
+  Shared clock and reset are implicit child inputs and are not duplicated in ordinary
+  connections.

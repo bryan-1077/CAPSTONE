@@ -1,0 +1,56 @@
+{
+  "package_id": "ddr4_controller_top_spec",
+  "revision": "draft_001",
+  "specification_validation": "passed",
+  "behavioral_verification": "not_run",
+  "parameters": {
+    "DATA_WIDTH": 32,
+    "HOST_ADDR_WIDTH": 4,
+    "HOST_BANK_WIDTH": 2,
+    "REQUEST_BANK_WIDTH": 2,
+    "REQUEST_ROW_WIDTH": 10,
+    "REQUEST_COLUMN_WIDTH": 6,
+    "COMMAND_OPCODE_WIDTH": 3,
+    "BANK_COUNT": 4,
+    "WAITING_CAPACITY": 4,
+    "ACTIVE_CAPACITY": 1,
+    "PAGE_POLICY": "open_page",
+    "TFAW_ACT_LIMIT": 4,
+    "READ_RESPONSE_LATENCY": 1,
+    "MEMORY_WORDS_PER_BANK": 16
+  },
+  "type_widths": {
+    "bit": 1,
+    "data": 32,
+    "host_address": 4,
+    "host_bank": 2,
+    "bank": 2,
+    "row": 10,
+    "column": 6,
+    "opcode": 3,
+    "request": 51,
+    "command": 53,
+    "bank_rows": 40,
+    "bank_valid": 4
+  },
+  "profile": "DDR4-3200",
+  "timing_cycles": {
+    "tRCD": 22,
+    "tRAS": 52,
+    "tRP": 22,
+    "tRRD": 6,
+    "tFAW": 40,
+    "tREFI": 12480,
+    "tRFC": 560
+  },
+  "modules": 8,
+  "rules": 45,
+  "verification_obligations": 45,
+  "connections": 42,
+  "blocking_questions": [
+    "Q_EXPORT_APPROVAL"
+  ],
+  "architecture_validation": "passed",
+  "module_ir_validation": "passed",
+  "rtl_generation": "not_run"
+}

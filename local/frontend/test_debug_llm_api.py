@@ -21,6 +21,9 @@ def response(content="NO_PATCH", reason="stop", status=200, data=None):
 
 class DebugApiTests(unittest.TestCase):
     def setUp(self):
+        pacing = patch.dict("os.environ", {"CAPSTONE_TPM_LIMIT": "0"})
+        pacing.start()
+        self.addCleanup(pacing.stop)
         env = patch.dict("os.environ", {
             "TAMUS_AI_CHAT_API_KEY": "test-secret",
             "DEBUG_LLM_MAX_TOKENS": "8192",
