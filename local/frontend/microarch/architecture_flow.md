@@ -2253,3 +2253,145 @@ unpacked dimensions after it. This addresses the first timing campaign's review
 nonconvergence without suppressing issues, extending round limits, approving the
 saved candidate or changing legacy/FSM defaults. See the
 [campaign stage-boundary notes](../campaigns/README.md#rtl-review-stage-boundaries-campaign-version-2).
+
+## Planned top-orchestrator integration (October 27, 2026)
+
+**Status: proposed, not implemented.** This records the integration plan for
+[`shared/top_orchestrator`](../../../shared/top_orchestrator). The frontend can
+already produce isolated microarchitecture builds; selecting and carrying those
+builds through the top orchestrator still requires the work below. Example flags
+in this section describe the proposed interface, not commands available today.
+
+### Explicit route selection and legacy preservation
+
+Add an orchestrator selector:
+
+```text
+--frontend-flow expand-spec   # default: existing frontend route
+--frontend-flow microarch     # explicit opt-in: new LLM specification route
+```
+
+Keep the existing expand-spec scripts, generation nodes, publication path, BIST
+and repair behavior unchanged. Introduce small dispatch points in the shared
+orchestrator and separate microarchitecture adapters. Persist the selection and
+build identity in run state; preserve them through retries, debug/recheck,
+verification and backend transitions. Existing positional `RunConfig` construction
+must remain compatible when adding configuration fields.
+
+The new route should start with text intake followed by
+`run_flow.py --specification`, which generates the system specification and then
+decomposes its architecture. Do not blindly forward `--microarch`: that frontend
+flag selects the distinct direct architecture-proposal route. Approved
+architecture resume should be an explicit supported input mode.
+
+### Inputs, run ownership and local checks
+
+Add separate input preparation alongside the existing `frequency.py` preparation.
+Support plain text and specification request YAML, and snapshot all referenced
+inputs for package-based requests. Copying only one YAML file is insufficient
+when it references other documents. Use a stable build directory owned by the
+orchestrator run, for example:
+
+```text
+runs/<run-id>/frontend/
+  input/
+  source/
+  architecture.yaml
+  review/
+  repair/
+  build/
+    microarch/gen_exp/           # generated module YAML contracts
+    rtl_output/                 # functional modules and structural top
+    verification_handoff.json
+```
+
+Artifacts must be located from the actual selected build and repair result;
+repair can produce the final approved architecture under `repair/`. Do not copy
+results into global legacy output directories to satisfy existing consumers.
+Frequency selection must use the controller clock declared by the selected
+design, or an explicit user choice; DDR transfer rate is not controller frequency.
+
+The microarchitecture generation/check adapter should validate the selected
+build's integration lint and authenticated handoff. Local simulation requires an
+explicit compatible profile. Unsupported or unexecuted checks must be reported
+truthfully and must not count as verification passes. The legacy BIST runner,
+global lint helper and legacy controller-manifest refresh must not run on this
+route.
+
+Repairs and rechecks must address the selected build, preserve intentional RTL
+patches, and publish a new revision when content changes. Frontend semantic repair
+and RTL response recovery retain their own bounded budgets. The outer
+orchestrator must not repeatedly restart the entire paid frontend flow after
+those budgets are exhausted.
+
+### Publication and downstream verification
+
+Add a separate microarchitecture mailbox publisher; retain the existing
+`publish(...)` behavior for expand-spec. Publish the complete validated handoff
+and its referenced artifacts: module YAML/SV pairs, structural top, approved
+architecture/package, approval evidence, IR, compile order, requirements and event
+bindings. Preserve hashes and revision identity. If existing consumers require
+`rtl/`, `specs/` and `rtl/manifest.json`, create explicit authenticated projections
+while retaining the original richer contracts.
+
+Each functional module already has a lowered YAML contract and matching SV file.
+The structural wrapper is currently described by the architecture, rather than a
+separate expanded module YAML. Decide its downstream representation explicitly:
+either support an architecture-backed structural entry, or add a wrapper contract
+if the consumer requires YAML for every SV module. Never silently omit it from
+the verification inventory.
+
+First exercise one generated YAML/SV pair through the existing verification
+agent's module mode. The lowered YAML shares the old base schema, but also has
+structured contracts, specification context and verification obligations. The
+current local requirement reader does not extract all of those fields. Extend
+the consumer or add an adapter that retains source requirement IDs and full
+obligations; schema similarity alone does not establish compatibility. The
+deployed verification entry points must also be checked, since their versions and
+capabilities are not established by the local helper code.
+
+Multi-module verification needs explicit structural, interface and behavioral
+coverage. Existing controller reference semantics cannot automatically verify an
+arbitrary timing module, AXI interface or new scheduler. Module passes and local
+simulation passes are separate evidence from complete system verification;
+missing requirements or unsupported system checks must block backend readiness.
+Verification repairs and frontend-revision checks must use the selected build,
+never the legacy global frontend directory.
+
+Backend mailbox transport appears reusable because it reads a manifest and
+dynamic top name. Confirm compile order, top, clock and manifest compatibility
+before relying on it. Verification receipts, backend inputs and GDSII evidence
+must all refer to the exact same immutable published revision.
+
+### Orchestrator change map
+
+| Area | Required integration |
+| --- | --- |
+| `contracts.py`, `__main__.py` | Route selection, persisted configuration, mode-specific argument validation and truthful `--plan` output. |
+| `frequency.py` and new input adapter | New text/request preparation and complete input snapshots; retain existing preparation for expand-spec. |
+| `nodes.py` and new frontend adapter | Isolated generation, local checks, bounded failure handling and build-scoped repair/recheck. |
+| `orchestrator.py` | Dispatch preparation, nodes and publication by route; retain build identity across transitions. |
+| `mailbox.py` and new publisher | Authenticate and publish the full microarchitecture handoff with explicit compatibility projections. |
+| `validation.py`, `validation_runner.py`, verification consumer | Validate module compatibility, consume all obligations, select supported system checks and bind results/repairs to the correct revision. |
+| Backend mailbox input and GDSII validation | Confirm manifest/top/clock compatibility and exact-revision evidence through physical validation. |
+
+### Implementation checkpoints and acceptance evidence
+
+1. **Selectable isolated frontend.** Add the selector, new adapter, owned output
+   directory and accurate dry-run plan. Complete a frontend-only microarchitecture
+   run. Regression tests must show that the default route retains its existing
+   commands, paths, controls and repair behavior.
+2. **Mailbox and one-module verification.** Publish an authenticated build and run
+   one real generated YAML/SV pair through the existing verification agent. Resolve
+   requirement extraction and wrapper representation before claiming compatibility.
+3. **Multi-module verification and repair.** Exercise complete module inventories,
+   integration requirements, scoped repair/recheck and revision-bound receipts.
+   Verify that incomplete coverage cannot become backend readiness.
+4. **Backend and GDSII handoff.** Carry the exact accepted snapshot through backend
+   staging and physical validation, confirming top, compile order and clock.
+
+Across these checkpoints, test missing YAML/SV pairs, tampered files, stale
+approvals and verification results, unsupported check profiles, and accidental
+reads from global legacy outputs. Live paid LLM runs remain user-operated; offline
+adapter and regression tests should not contact model endpoints. No orchestrator
+implementation or live run was performed when recording this plan.
