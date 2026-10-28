@@ -2,8 +2,13 @@
 __pycache__/
 *.py[cod]
 
-# Server checkout/reference files
-/server/
+# Keep experimental validation sources; exclude other server checkout files.
+/server/*
+!/server/validation/
+
+# Local credentials and environment settings
+.env
+.env.*
 
 # Flow/runtime logs
 *.log

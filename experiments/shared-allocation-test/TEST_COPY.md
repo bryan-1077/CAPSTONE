@@ -1,5 +1,21 @@
 # Shared-allocation test copy
 
+## Current validation recovery status
+
+The validation recovery is incomplete. This directory is not a complete replacement
+for the deleted server validation directory and is not ready for a full-system run.
+Seven older entrypoint/support files were restored from Git commit `3bcec95`; the
+newer system-pipeline dispatch and controller UVM templates still need recovery or
+reconstruction. The copied Agent 4 runtime also requires six missing modules:
+`agent4_progress`, `agent4_orchestration`, `agent4_producers`, `agent4_completion`,
+`agent4_proof_context`, and `agent4_supervisor`.
+
+Agent 4 test results described below were obtained before the remote validation
+directory disappeared, when those dependencies were available. They do not verify
+the completeness of the current recovered directory. The remote-source assumptions
+in the original setup instructions below no longer hold until recovery is finished.
+See `server/validation/VALIDATION_RECOVERY_MANIFEST.json` for recovered file origins.
+
 This directory is an independent source snapshot of the current CAPSTONE workspace,
 including the uncommitted LEC integration, queue handling and resume command.
 The original working version remains at `/home/antgamez1203/CAPSTONE`.

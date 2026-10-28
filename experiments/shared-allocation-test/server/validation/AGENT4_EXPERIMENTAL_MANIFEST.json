@@ -1,0 +1,32 @@
+{
+  "remote_directory": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation",
+  "original_hashes": {
+    "agent4_lec.py": "8118ba20d00b4c027af848b69921ec52093309c02ad2aa2e9275f96daaedbbfe",
+    "test_agent4_preparation.py": "f64f0995bf08b424a265776048e957331cbe524f3d5b4959fefee8bdea7a3e66",
+    "test_system_agent4.py": "00e09f1b1717df353b34cdb0b8060139f293c17842f157ba1bacf4dd8ff6ee0e"
+  },
+  "experimental_hashes": {
+    "agent4_lec_experimental.py": "9e3d0bda91cee02fc9943c718f3ec56e84718699e99e54c6097cb9b2cd417f3d",
+    "run_agent4_experimental_tests.py": "5b6a384d1a2c249ac323287076fea1065b43ced6969fd79e2a40a7bf2dd15434",
+    "experimental_test_agent4_preparation.py": "f64f0995bf08b424a265776048e957331cbe524f3d5b4959fefee8bdea7a3e66",
+    "experimental_test_system_agent4.py": "6c09154cdfa71fac223f5a0feb72fa6ed0ac4104b037e80b326c3b69fabbd120"
+  },
+  "status": "Experimental fixes deployed and verified: 347 Agent 4 regressions pass, real saved-reference preparation passes; originals unchanged",
+  "verification": {
+    "real_saved_reference_preparation": {
+      "return_code": 0,
+      "reference_files": 11,
+      "reference_unchanged": true,
+      "prepared_json": true,
+      "experimental_agent_sha256": "9e3d0bda91cee02fc9943c718f3ec56e84718699e99e54c6097cb9b2cd417f3d"
+    },
+    "saved_failed_run_repair_responses_parsed": 4,
+    "full_controller_proof_rerun": false,
+    "agent4_regressions": {
+      "tests": 347,
+      "seconds": 550.118,
+      "result": "OK",
+      "python": "/usr/bin/python3"
+    }
+  }
+}
