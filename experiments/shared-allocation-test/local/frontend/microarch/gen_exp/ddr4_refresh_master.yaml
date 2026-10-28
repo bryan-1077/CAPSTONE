@@ -1,0 +1,9 @@
+design_name: ddr4_refresh
+design_type: top_level
+source_feature: refresh_controller
+jedec_profile: DDR4-3200
+submodules:
+- name: refresh_controller
+  spec: ddr4_refresh_refresh_controller.yaml
+  design_name: ddr4_refresh_refresh_controller
+interfaces: []

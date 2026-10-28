@@ -1,0 +1,80 @@
+behavior:
+  combinational_behavior: "tFAW_ok is purely combinational (always_comb):\n  if (act_count\
+    \ < 4):\n    tFAW_ok = 1'b1\n  else:\n    tFAW_ok = ((cycle_counter - act_timestamps[3])\
+    \ >= 30)\nact_count output is a direct connection to the internal act_count register.\n"
+  correctness_criteria:
+  - tFAW_ok must be 1 when act_count < 4, regardless of timestamp values
+  - tFAW_ok must be 0 when act_count == 4 AND (cycle_counter - act_timestamps[3])
+    < 30
+  - tFAW_ok must be 1 when act_count == 4 AND (cycle_counter - act_timestamps[3])
+    >= 30
+  - act_count must never exceed 4
+  - cycle_counter must be exactly 8 bits wide
+  - all 4 timestamp registers must be reset to 0 on synchronous reset
+  - "tFAW_ok must not be registered \u2014 it must be combinational"
+  - act_timestamps[0] must always hold the most recently captured timestamp
+  - act_timestamps[3] must always hold the oldest captured timestamp
+  cycle_counter_width: 8
+  internal_signals:
+    act_count:
+      description: 'Counts how many valid timestamp entries are present (0 to 4).
+        Increments on act_valid while act_count < 4. Saturates at 4. Reset value:
+        0.
+
+        '
+      type: logic
+      width: 3
+    act_timestamps:
+      count: 4
+      description: 'Shift register of cycle_counter values captured at the moment
+        each ACTIVATE was issued. Index [0] holds the most recent activation; index
+        [3] holds the oldest. On each act_valid pulse the register shifts: [3]<=[2],
+        [2]<=[1], [1]<=[0], [0]<=cycle_counter. All four registers reset to 0.
+
+        '
+      type: logic
+      width: 8
+    cycle_counter:
+      description: "Free-running counter. Increments by 1 on every rising clock edge.\
+        \ Wraps at 255 back to 0. Must be 8 bits wide \u2014 an 8-bit counter cannot\
+        \ wrap within a single tFAW window (max 30 cycles). Reset value: 0.\n"
+      type: logic
+      width: 8
+  sequential_behavior: "On every rising clock edge:\n  1. cycle_counter increments\
+    \ unconditionally (wraps 255->0).\n  2. If act_valid is high:\n     a. Shift timestamps:\
+    \ [3]<=[2], [2]<=[1], [1]<=[0], [0]<=cycle_counter.\n     b. If act_count < 4:\
+    \ act_count <= act_count + 1.\n        (When act_count == 4, it stays at 4; oldest\
+    \ entry silently overwritten.)\nOn synchronous reset (rst_n low):\n  cycle_counter\
+    \    <= 0\n  act_timestamps[0] <= 0\n  act_timestamps[1] <= 0\n  act_timestamps[2]\
+    \ <= 0\n  act_timestamps[3] <= 0\n  act_count        <= 0\n"
+  tFAW_cycles: '30'
+  timestamp_count: 4
+  timestamp_width: 8
+  window_size: 4
+clock:
+  name: clk
+design_name: ddr4_tFAW_tFAW_tracker
+design_type: datapath
+ports:
+- description: Asserted for exactly one cycle when an ACTIVATE command is issued
+  direction: input
+  name: act_valid
+  width: 1
+- description: 'Combinational output. High when the tFAW window constraint allows
+    another ACTIVATE to be issued this cycle. Must be driven by always_comb, not always_ff.
+
+    '
+  direction: output
+  name: tFAW_ok
+  width: 1
+- description: 'Number of ACTIVATE commands currently tracked inside the rolling window
+    (0 to 4). Saturates at 4; never exceeds 4.
+
+    '
+  direction: output
+  name: act_count
+  width: 3
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: true

@@ -1,0 +1,23 @@
+{
+  "method": "Local deterministic prep reviewer with saved prep artifact context and each archive RTL; no remote run or AI call.",
+  "results": {
+    "MemoryController_logic_faults.zip": {
+      "pass": true,
+      "errors": [],
+      "prep_dependency_errors": [],
+      "failure_class": null,
+      "failure_stage_owner": null
+    },
+    "MemoryController.zip": {
+      "pass": false,
+      "errors": [
+        "Prepared RTL instantiates module 'ddr4_request_queue_missing' in 'rtl/ddr4_controller_top.sv', but no module definition for it exists in the prepared bundle."
+      ],
+      "prep_dependency_errors": [
+        "Prepared RTL instantiates module 'ddr4_request_queue_missing' in 'rtl/ddr4_controller_top.sv', but no module definition for it exists in the prepared bundle."
+      ],
+      "failure_class": "prep_bundle_completeness_problem",
+      "failure_stage_owner": "prep"
+    }
+  }
+}

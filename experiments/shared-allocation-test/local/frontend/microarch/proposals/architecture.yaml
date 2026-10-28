@@ -1,0 +1,1145 @@
+architecture_version: 1
+design_name: ddr4_controller_top
+profile: DDR4-3200
+rationale: The controller separates waiting-request storage, row-hit selection, active-request
+  command sequencing, timing legality, row state, refresh generation, and functional
+  memory. The queue owns exactly four waiting entries while the command engine owns
+  a distinct active-service register. Scheduler selection is independent of timing
+  permission. The command engine proposes commands from registered state and commits
+  only when the timing owner permits them. Row state changes only from committed ACT
+  or PRE commands. Simplified refresh has priority when the command engine is idle
+  and does not overwrite active or queued traffic.
+top_ports:
+- name: clk
+  direction: input
+  width: 1
+- name: rst_n
+  direction: input
+  width: 1
+- name: txn_valid
+  direction: input
+  width: 1
+- name: txn_is_write
+  direction: input
+  width: 1
+- name: txn_addr
+  direction: input
+  width: 4
+- name: txn_wdata
+  direction: input
+  width: 32
+- name: txn_bank
+  direction: input
+  width: 2
+- name: txn_ready
+  direction: output
+  width: 1
+- name: cmd_ready
+  direction: output
+  width: 1
+- name: rsp_valid
+  direction: output
+  width: 1
+- name: rsp_rdata
+  direction: output
+  width: 32
+modules:
+- instance: u_host_adapter
+  roles:
+  - host_adapter
+  responsibility: Own host handshake presentation, address expansion, packed request
+    construction, reset masking, and host response forwarding.
+  spec:
+    design_name: ddr4_host_adapter
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: txn_valid
+      direction: input
+      width: 1
+    - name: txn_is_write
+      direction: input
+      width: 1
+    - name: txn_addr
+      direction: input
+      width: 4
+    - name: txn_wdata
+      direction: input
+      width: 32
+    - name: txn_bank
+      direction: input
+      width: 2
+    - name: queue_ready
+      direction: input
+      width: 1
+    - name: engine_cmd_ready
+      direction: input
+      width: 1
+    - name: mem_rsp_valid
+      direction: input
+      width: 1
+    - name: mem_rsp_rdata
+      direction: input
+      width: 32
+    - name: enq_valid
+      direction: output
+      width: 1
+    - name: enq_req
+      direction: output
+      width: 51
+    - name: txn_ready
+      direction: output
+      width: 1
+    - name: cmd_ready
+      direction: output
+      width: 1
+    - name: rsp_valid
+      direction: output
+      width: 1
+    - name: rsp_rdata
+      direction: output
+      width: 32
+    behavior:
+      description: Packed request layout is bank[50:49], row[48:39], column[38:33],
+        is_write[32], wdata[31:0]. Row is zero-extended from txn_addr[3:2] and column
+        is zero-extended from txn_addr[1:0]. enq_valid equals txn_valid when rst_n
+        is high. txn_ready equals queue_ready when rst_n is high. A host request is
+        accepted only on a rising edge with txn_valid and txn_ready high; no edge
+        detector is used, so consecutive qualifying cycles are distinct requests.
+        The host holds payload stable while txn_valid is high and txn_ready is low.
+        cmd_ready forwards engine execution visibility and does not affect admission.
+        rsp_valid forwards the one-cycle memory response stage when rst_n is high.
+        Reset forces outputs low.
+      invariants:
+      - txn_ready is independent of cmd_ready
+      - txn_bank is retained for the four-bank topology
+      - no request bypasses the waiting queue
+      - rsp_valid is low during reset
+    invariants:
+    - row[9:2] is zero and row[1:0] equals txn_addr[3:2]
+    - column[5:2] is zero and column[1:0] equals txn_addr[1:0]
+    combinational_dependencies:
+      enq_valid:
+      - txn_valid
+      - rst_n
+      enq_req:
+      - txn_is_write
+      - txn_addr
+      - txn_wdata
+      - txn_bank
+      txn_ready:
+      - queue_ready
+      - rst_n
+      cmd_ready:
+      - engine_cmd_ready
+      - rst_n
+      rsp_valid:
+      - mem_rsp_valid
+      - rst_n
+      rsp_rdata:
+      - mem_rsp_rdata
+      - rst_n
+- instance: u_request_queue
+  roles:
+  - request_queue
+  responsibility: Own four indexed waiting slots, host admission, same-cycle dispatch-slot
+    reuse, and explicit removal at dispatch.
+  spec:
+    design_name: ddr4_waiting_request_queue
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: enq_valid
+      direction: input
+      width: 1
+    - name: enq_req
+      direction: input
+      width: 51
+    - name: enq_ready
+      direction: output
+      width: 1
+    - name: req_array
+      direction: output
+      width: 204
+    - name: req_valid
+      direction: output
+      width: 4
+    - name: deq_en
+      direction: input
+      width: 1
+    - name: deq_idx
+      direction: input
+      width: 2
+    behavior:
+      description: Four independent waiting slots store 51-bit requests and four valid
+        bits. A request is admitted on a rising edge when enq_valid and enq_ready
+        are high. enq_ready is high if any slot is invalid or if deq_en permits same-cycle
+        reuse of deq_idx. The insertion target is the lowest-index invalid slot; when
+        all slots are valid and deq_en is high, insertion target is deq_idx. deq_en
+        clears only deq_idx except same-cycle insertion to that index wins and leaves
+        the new entry valid. Entries never shift. req_array and req_valid expose registered
+        storage. Reset clears valid bits and request storage.
+      invariants:
+      - There are exactly four waiting slots
+      - Dispatch dequeue removes only a waiting slot and never indicates service retirement
+      - At most one enqueue and one dequeue occur per cycle
+      - Accepted requests remain stored until explicit dequeue
+    invariants:
+    - enq_ready is asserted on same-cycle dequeue reuse even when all slots were valid
+    - same-index enqueue takes priority over dequeue clear
+    combinational_dependencies:
+      enq_ready:
+      - deq_en
+      - deq_idx
+      req_array: []
+      req_valid: []
+- instance: u_row_state
+  roles:
+  - row_state
+  responsibility: Own registered open-row state for four banks and update it only
+    on committed ACT or PRE commands.
+  spec:
+    design_name: ddr4_row_state
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: commit_valid
+      direction: input
+      width: 1
+    - name: commit_opcode
+      direction: input
+      width: 3
+    - name: commit_bank
+      direction: input
+      width: 2
+    - name: commit_row
+      direction: input
+      width: 10
+    - name: bank_active
+      direction: output
+      width: 4
+    - name: bank_open_row
+      direction: output
+      width: 40
+    behavior:
+      description: Four row-valid bits and four 10-bit open-row registers reset to
+        zero. On committed ACT opcode 1, the selected bank valid bit is set and its
+        open-row register captures commit_row. On committed PRE opcode 2, the selected
+        bank valid bit is cleared. READ opcode 3, WRITE opcode 4, REF opcode 5, stalled
+        candidates, and uncommitted proposals do not modify row state. bank_open_row
+        packs bank 0 in [9:0], bank 1 in [19:10], bank 2 in [29:20], and bank 3 in
+        [39:30].
+      invariants:
+      - Only committed ACT and PRE modify row state
+      - At most one bank row state changes on one clock edge
+      - REF does not alter simplified row state
+    invariants:
+    - bank_active reflects registered row-valid state
+    combinational_dependencies:
+      bank_active: []
+      bank_open_row: []
+- instance: u_scheduler
+  roles:
+  - scheduler
+  responsibility: Own simple row-hit-first selection and stable selected waiting-slot
+    identity until command-engine dispatch.
+  spec:
+    design_name: ddr4_simple_scheduler
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: req_array
+      direction: input
+      width: 204
+    - name: req_valid
+      direction: input
+      width: 4
+    - name: bank_active
+      direction: input
+      width: 4
+    - name: bank_open_row
+      direction: input
+      width: 40
+    - name: dispatch_fire
+      direction: input
+      width: 1
+    - name: sel_valid
+      direction: output
+      width: 1
+    - name: sel_idx
+      direction: output
+      width: 2
+    - name: sel_req
+      direction: output
+      width: 51
+    behavior:
+      description: When not locked, select the lowest-index valid row-hit request.
+        A row hit requires the addressed bank_active bit and equality between that
+        bank open row and request row. If no row hit exists, select the lowest-index
+        valid request. When a selected request cannot dispatch, register and hold
+        the selected index and request. dispatch_fire clears the lock on the rising
+        edge. Selection depends only on queue and registered row state; it does not
+        consume timing_ok and does not dequeue storage.
+      invariants:
+      - Lowest-index row hit wins over non-hits
+      - Lowest-index valid fallback is used when no row hit exists
+      - Locked selection remains stable until dispatch_fire
+      - No oldest-first, fairness, or same-address ordering guarantee
+    invariants:
+    - sel_valid implies req_valid for the selected slot unless dispatch_fire completes
+      selected dispatch on that edge
+    combinational_dependencies:
+      sel_valid:
+      - req_array
+      - req_valid
+      - bank_active
+      - bank_open_row
+      sel_idx:
+      - req_array
+      - req_valid
+      - bank_active
+      - bank_open_row
+      sel_req:
+      - req_array
+      - req_valid
+      - bank_active
+      - bank_open_row
+- instance: u_refresh
+  roles:
+  - refresh
+  responsibility: Generate periodic persistent simplified refresh requests using DDR4-3200
+    tREFI.
+  reuse:
+    feature: refresh_controller
+    submodule: refresh_controller
+    design_name: ddr4_refresh_controller
+- instance: u_command_engine
+  roles:
+  - command_engine
+  responsibility: Own separately stored active-service request, setup sequencing,
+    refresh arbitration, command candidacy, command commit, and service retirement.
+  spec:
+    design_name: ddr4_command_engine
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: sel_valid
+      direction: input
+      width: 1
+    - name: sel_idx
+      direction: input
+      width: 2
+    - name: sel_req
+      direction: input
+      width: 51
+    - name: ref_req
+      direction: input
+      width: 1
+    - name: timing_ok
+      direction: input
+      width: 1
+    - name: bank_active
+      direction: input
+      width: 4
+    - name: bank_open_row
+      direction: input
+      width: 40
+    - name: dispatch_fire
+      direction: output
+      width: 1
+    - name: dispatch_idx
+      direction: output
+      width: 2
+    - name: cmd_ready
+      direction: output
+      width: 1
+    - name: candidate_valid
+      direction: output
+      width: 1
+    - name: candidate_opcode
+      direction: output
+      width: 3
+    - name: candidate_bank
+      direction: output
+      width: 2
+    - name: candidate_row
+      direction: output
+      width: 10
+    - name: cmd_commit
+      direction: output
+      width: 1
+    - name: commit_opcode
+      direction: output
+      width: 3
+    - name: commit_bank
+      direction: output
+      width: 2
+    - name: commit_row
+      direction: output
+      width: 10
+    - name: rw_commit
+      direction: output
+      width: 1
+    - name: active_req
+      direction: output
+      width: 51
+    - name: service_done
+      direction: output
+      width: 1
+    - name: ref_ack
+      direction: output
+      width: 1
+    behavior:
+      description: The engine has IDLE, PREPARE_PRE, PREPARE_ACT, ACCESS, and REFRESH
+        states. It owns one active 51-bit request register and active-valid bit separate
+        from waiting slots. In IDLE, ref_req has priority. A pending refresh enters
+        REFRESH without capturing a transaction. Otherwise sel_valid produces dispatch_fire;
+        on that edge sel_req is captured, active-valid is set, and dispatch_idx frees
+        the queue slot. With active state, a conflicting open row causes PRE, a closed
+        bank causes ACT, and a matching open row causes READ or WRITE. PRE commit
+        advances to ACT, ACT commit advances to ACCESS, and a committed READ or WRITE
+        asserts rw_commit and service_done, clears active-valid, and returns IDLE.
+        REFRESH proposes opcode 5 and ref_ack only when REF commits. candidate signals
+        derive only from registered engine state, active request, ref_req, and registered
+        row state. cmd_commit equals candidate_valid and timing_ok. A stalled candidate
+        changes no row state, timing history, memory, refresh state, or active state.
+        cmd_ready is high only in IDLE without ref_req.
+      invariants:
+      - Active request does not consume a waiting queue slot
+      - Dispatch captures all request fields before slot free
+      - PRE and ACT never retire active request
+      - READ or WRITE is the only normal retirement point
+      - Refresh cannot overwrite queued or active traffic
+      - Open-page operation retains the active row after READ or WRITE
+    invariants:
+    - cmd_commit never occurs without candidate_valid
+    - dispatch_fire occurs only in IDLE without ref_req
+    - ref_ack occurs exactly once per committed simplified REF
+    combinational_dependencies:
+      dispatch_fire:
+      - sel_valid
+      - sel_idx
+      - sel_req
+      - ref_req
+      dispatch_idx:
+      - sel_idx
+      cmd_ready:
+      - ref_req
+      candidate_valid:
+      - ref_req
+      - bank_active
+      - bank_open_row
+      candidate_opcode:
+      - ref_req
+      - bank_active
+      - bank_open_row
+      candidate_bank:
+      - sel_req
+      - bank_active
+      - bank_open_row
+      candidate_row:
+      - sel_req
+      - bank_open_row
+      cmd_commit:
+      - timing_ok
+      - ref_req
+      - bank_active
+      - bank_open_row
+      commit_opcode:
+      - timing_ok
+      - ref_req
+      - bank_active
+      - bank_open_row
+      commit_bank:
+      - timing_ok
+      - sel_req
+      - bank_active
+      - bank_open_row
+      commit_row:
+      - timing_ok
+      - sel_req
+      - bank_open_row
+      rw_commit:
+      - timing_ok
+      - bank_active
+      - bank_open_row
+      active_req: []
+      service_done:
+      - timing_ok
+      - bank_active
+      - bank_open_row
+      ref_ack:
+      - timing_ok
+      - ref_req
+- instance: u_timing
+  roles:
+  - timing
+  responsibility: Own registered per-bank and global DDR4-3200 timing history and
+    independently computed command permission.
+  spec:
+    design_name: ddr4_timing_guard
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: candidate_valid
+      direction: input
+      width: 1
+    - name: candidate_opcode
+      direction: input
+      width: 3
+    - name: candidate_bank
+      direction: input
+      width: 2
+    - name: cmd_commit
+      direction: input
+      width: 1
+    - name: commit_opcode
+      direction: input
+      width: 3
+    - name: commit_bank
+      direction: input
+      width: 2
+    - name: timing_ok
+      direction: output
+      width: 1
+    behavior:
+      description: Opcode 1 is ACT, 2 PRE, 3 READ, 4 WRITE, and 5 simplified REF.
+        Registered per-bank ACT-to-CAS cooldowns load to 22 on committed ACT; READ
+        or WRITE requires zero. Per-bank ACT-to-PRE cooldowns load to 52 on committed
+        ACT; PRE requires zero. Per-bank PRE-to-ACT cooldowns load to 22 on committed
+        PRE; ACT requires zero. Global tRRD cooldown loads to 5 on committed ACT and
+        blocks ACT while nonzero. A registered 40-cycle ACT history window permits
+        ACT only when fewer than four preceding committed ACTs are in the window.
+        Cooldowns decrement once per cycle unless reloaded. timing_ok is combinationally
+        computed from registered histories and independent candidate. cmd_commit updates
+        histories but does not feed timing_ok combinationally. Simplified REF is permitted
+        whenever candidate_valid is asserted and does not model tRFC.
+      invariants:
+      - ACT-to-READ/WRITE waits tRCD=22 cycles
+      - ACT-to-PRE waits tRAS=52 cycles
+      - PRE-to-next-ACT waits tRP=22 cycles
+      - Committed ACT events are the only tRRD and tFAW history source
+      - tRRD=6 uses reload value 5 after ACT commit
+      - No accepted-ACT feedback appears in timing_ok logic
+    invariants:
+    - Stalled or proposed ACT never reloads tRRD or enters tFAW history
+    - tFAW history contains only prior committed ACTs
+    - timing_ok is false when candidate_valid is false
+    combinational_dependencies:
+      timing_ok:
+      - candidate_valid
+      - candidate_opcode
+      - candidate_bank
+- instance: u_memory
+  roles:
+  - memory
+  responsibility: Own resettable four-bank functional storage, write commitment, read
+    data capture, and one-cycle response staging.
+  spec:
+    design_name: ddr4_functional_memory
+    design_type: datapath
+    clock:
+      name: clk
+    reset:
+      name: rst_n
+      active_low: true
+      synchronous: true
+    ports:
+    - name: rw_commit
+      direction: input
+      width: 1
+    - name: commit_opcode
+      direction: input
+      width: 3
+    - name: active_req
+      direction: input
+      width: 51
+    - name: rsp_valid
+      direction: output
+      width: 1
+    - name: rsp_rdata
+      direction: output
+      width: 32
+    behavior:
+      description: Storage is four isolated banks of sixteen 32-bit words reset to
+        zero. active_req is decoded as bank[50:49], row[48:39], column[38:33], is_write[32],
+        wdata[31:0]. Functional address within a bank is {row[1:0],column[1:0]}. On
+        rw_commit with WRITE opcode 4, only addressed bank and location update and
+        no response is generated. On rw_commit with READ opcode 3, the stored word
+        is captured into the registered response stage and rsp_valid is set for the
+        following cycle. rsp_valid otherwise clears each cycle. Stalled candidates,
+        dispatch, ACT, PRE, REF, and uncommitted proposals cannot modify storage or
+        create a response.
+      invariants:
+      - Each committed read produces exactly one rsp_valid pulse
+      - Writes produce no host response
+      - Storage is bank-isolated
+      - Reset clears every word and response stage
+    invariants:
+    - Memory write enable is rw_commit and commit_opcode==4 only
+    combinational_dependencies:
+      rsp_valid: []
+      rsp_rdata: []
+connections:
+- from: top.clk
+  to: u_host_adapter.clk
+- from: top.rst_n
+  to: u_host_adapter.rst_n
+- from: top.txn_valid
+  to: u_host_adapter.txn_valid
+- from: top.txn_is_write
+  to: u_host_adapter.txn_is_write
+- from: top.txn_addr
+  to: u_host_adapter.txn_addr
+- from: top.txn_wdata
+  to: u_host_adapter.txn_wdata
+- from: top.txn_bank
+  to: u_host_adapter.txn_bank
+- from: u_host_adapter.txn_ready
+  to: top.txn_ready
+- from: u_host_adapter.cmd_ready
+  to: top.cmd_ready
+- from: u_host_adapter.rsp_valid
+  to: top.rsp_valid
+- from: u_host_adapter.rsp_rdata
+  to: top.rsp_rdata
+- from: top.clk
+  to: u_request_queue.clk
+- from: top.rst_n
+  to: u_request_queue.rst_n
+- from: u_host_adapter.enq_valid
+  to: u_request_queue.enq_valid
+- from: u_host_adapter.enq_req
+  to: u_request_queue.enq_req
+- from: u_request_queue.enq_ready
+  to: u_host_adapter.queue_ready
+- from: u_command_engine.dispatch_fire
+  to: u_request_queue.deq_en
+- from: u_command_engine.dispatch_idx
+  to: u_request_queue.deq_idx
+- from: top.clk
+  to: u_row_state.clk
+- from: top.rst_n
+  to: u_row_state.rst_n
+- from: u_command_engine.cmd_commit
+  to: u_row_state.commit_valid
+- from: u_command_engine.commit_opcode
+  to: u_row_state.commit_opcode
+- from: u_command_engine.commit_bank
+  to: u_row_state.commit_bank
+- from: u_command_engine.commit_row
+  to: u_row_state.commit_row
+- from: top.clk
+  to: u_scheduler.clk
+- from: top.rst_n
+  to: u_scheduler.rst_n
+- from: u_request_queue.req_array
+  to: u_scheduler.req_array
+- from: u_request_queue.req_valid
+  to: u_scheduler.req_valid
+- from: u_row_state.bank_active
+  to: u_scheduler.bank_active
+- from: u_row_state.bank_open_row
+  to: u_scheduler.bank_open_row
+- from: u_command_engine.dispatch_fire
+  to: u_scheduler.dispatch_fire
+- from: top.clk
+  to: u_refresh.clk
+- from: top.rst_n
+  to: u_refresh.rst_n
+- from: u_command_engine.ref_ack
+  to: u_refresh.ref_ack
+- from: top.clk
+  to: u_command_engine.clk
+- from: top.rst_n
+  to: u_command_engine.rst_n
+- from: u_scheduler.sel_valid
+  to: u_command_engine.sel_valid
+- from: u_scheduler.sel_idx
+  to: u_command_engine.sel_idx
+- from: u_scheduler.sel_req
+  to: u_command_engine.sel_req
+- from: u_refresh.ref_req
+  to: u_command_engine.ref_req
+- from: u_timing.timing_ok
+  to: u_command_engine.timing_ok
+- from: u_row_state.bank_active
+  to: u_command_engine.bank_active
+- from: u_row_state.bank_open_row
+  to: u_command_engine.bank_open_row
+- from: u_command_engine.cmd_ready
+  to: u_host_adapter.engine_cmd_ready
+- from: top.clk
+  to: u_timing.clk
+- from: top.rst_n
+  to: u_timing.rst_n
+- from: u_command_engine.candidate_valid
+  to: u_timing.candidate_valid
+- from: u_command_engine.candidate_opcode
+  to: u_timing.candidate_opcode
+- from: u_command_engine.candidate_bank
+  to: u_timing.candidate_bank
+- from: u_command_engine.cmd_commit
+  to: u_timing.cmd_commit
+- from: u_command_engine.commit_opcode
+  to: u_timing.commit_opcode
+- from: u_command_engine.commit_bank
+  to: u_timing.commit_bank
+- from: top.clk
+  to: u_memory.clk
+- from: top.rst_n
+  to: u_memory.rst_n
+- from: u_command_engine.rw_commit
+  to: u_memory.rw_commit
+- from: u_command_engine.commit_opcode
+  to: u_memory.commit_opcode
+- from: u_command_engine.active_req
+  to: u_memory.active_req
+- from: u_memory.rsp_valid
+  to: u_host_adapter.mem_rsp_valid
+- from: u_memory.rsp_rdata
+  to: u_host_adapter.mem_rsp_rdata
+requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_HOST
+  text: Preserve the existing host ports and widths listed in the baseline contract.
+    Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold payload
+    while stalled. Consecutive accepted cycles with txn_valid held high are distinct
+    requests. cmd_ready is execution/timing visibility, not the host acceptance handshake.
+    Deassert txn_ready and rsp_valid during reset.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Drive txn_valid high for consecutive ready cycles and verify distinct
+    queue entries; stall with txn_ready low and verify no admission; assert reset
+    and verify txn_ready and rsp_valid are low.
+- id: BASE_ADDRESS
+  text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+    zero-extended into the internal 10-bit row and 6-bit column fields. Preserve explicit
+    txn_bank for multi-bank configurations; a single-bank configuration uses bank
+    0. Internal packed requests retain bank(2), row(10), column(6), write flag(1),
+    write data(32).'
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_command_engine
+  - u_memory
+  verification: Submit all sixteen txn_addr values in two banks and inspect packed
+    fields and independent memory locations.
+- id: BASE_QUEUE
+  text: 'Preserve four WAITING request slots PLUS one separately stored active-service
+    request: total capacity is five outstanding requests. The active request must
+    not consume one of the four waiting slots. Dispatch transfers a queued request
+    into active registers and frees its waiting slot without retiring the transaction.
+    Full queues backpressure the host; a same-cycle transfer/retirement may reuse
+    a slot. Accepted request fields survive stalls and each accepted request is serviced
+    exactly once. Keep admission, dispatch/retirement, service completion and read
+    response delivery distinct.'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_memory
+  verification: Fill four waiting slots, dispatch one into active service, refill
+    the freed slot, and verify five outstanding requests with exactly one eventual
+    completion per accepted request.
+- id: BASE_DATA
+  text: Provide functional 32-bit memory storage with 16 addresses per bank, bank
+    isolation and reset-to-zero contents. Accepted writes update only their addressed
+    location at service completion or a committed WRITE. Each accepted read produces
+    exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ
+    commit, using the existing one-cycle response stage. Writes produce no host response.
+    Selection and stalled candidates cannot mutate memory; mere command output without
+    storage and read responses is insufficient.
+  owners:
+  - u_command_engine
+  - u_memory
+  - u_host_adapter
+  verification: Write distinct values to equal addresses in separate banks, read both
+    back, verify one delayed response pulse per read, no response for writes, and
+    reset-to-zero behavior.
+- id: BASE_TIMING
+  text: Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC
+    profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and PRE-to-next-ACT
+    must respect tRP if explicit commands are used. Aggregate service may retain the
+    existing protected timing envelope instead. Configured tRRD and tFAW gates must
+    use accepted activation events, not host admissions or stalled proposals. Never
+    treat existing basic timing as an unrequested future feature.
+  owners:
+  - u_command_engine
+  - u_timing
+  verification: Force row misses and verify ACT-to-access waits 22 cycles, ACT-to-PRE
+    waits 52 cycles, PRE-to-ACT waits 22 cycles, and stalled candidates do not advance
+    history.
+- id: BASE_SEQUENCE
+  text: Dispatch captures the complete selected request in separate active-service
+    registers before freeing its waiting queue slot. Hold that active request and
+    payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+    Setup commands never retire the active request. Aggregate service also keeps active-service
+    ownership through completion. Waiting-queue dequeue at dispatch is distinct from
+    active-request retirement. Row state changes only on the responsible committed
+    operation; uncommitted proposals cannot change state.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  - u_timing
+  verification: Dispatch a row-miss request, hold timing permission low through PRE
+    and ACT candidates, and verify active payload remains unchanged until committed
+    READ or WRITE.
+- id: BASE_MODULARITY
+  text: Keep request storage, request selection, command sequencing, timing enforcement
+    and functional memory in independently verifiable modules with explicit interfaces.
+    No single controller core may own all these functions. Each mandatory role has
+    distinct module owners with functional inter-module connections. Module names
+    and further decomposition remain design choices.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  verification: Independently simulate queue admission and removal, scheduler selection,
+    engine sequencing, timing permission, and memory response modules through declared
+    interfaces.
+- id: BASE_LEGALITY
+  text: Compute command permission from registered timing/bank history and an independent
+    candidate. An accepted ACT pulse is derived from candidate && permission; permission
+    must not combinationally depend on that same accepted pulse. Scheduler selection/validity
+    must be available independently of timing_ok; timing_ok may gate commit but must
+    not create a selection-validity feedback loop. Declare accurate per-output combinational
+    input dependencies.
+  owners:
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  verification: Hold an ACT candidate while timing_ok is false and verify history
+    is unchanged; verify scheduler selection remains present regardless of timing
+    permission.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.
+- id: BASE_POLICY
+  text: Preserve page policy open_page and scheduler simple. Simple scheduling prefers
+    a row hit then the lowest-index valid request; do not claim oldest-first fairness
+    or same-address ordering is already implemented. Open-page retains a serviced
+    row; close-page closes it before subsequent bank use. Preserve request ownership
+    through any setup sequence.
+  owners:
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  verification: Queue a lower-index row miss and higher-index row hit; verify row
+    hit dispatches first and serviced row remains open after READ or WRITE.
+- id: BASE_REFRESH
+  text: Retain periodic refresh requests using profile tREFI, refresh priority and
+    request/acknowledgment handling without dropping queued traffic. Refresh must
+    make progress and normal requests must resume. Existing refresh is simplified;
+    full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+    describe drain/row-state interaction and acknowledge once at commit.
+  owners:
+  - u_refresh
+  - u_command_engine
+  - u_timing
+  - u_request_queue
+  verification: Reach tREFI=12480 with queued traffic, verify ref_req persists until
+    one REF commit and ref_ack, then verify queued transaction dispatch resumes.
+- id: BASE_TRRD
+  text: tRRD is enabled; honor that setting and resolve enabled timing values from
+    DDR4-3200.
+  owners:
+  - u_timing
+  - u_command_engine
+  verification: Commit an ACT and verify subsequent ACT candidates are blocked for
+    the DDR4-3200 tRRD interval.
+- id: BASE_TFAW
+  text: tFAW is enabled; honor that setting and resolve enabled timing values from
+    DDR4-3200.
+  owners:
+  - u_timing
+  - u_command_engine
+  verification: Commit four ACT commands within fewer than 40 cycles and verify a
+    fifth ACT candidate is blocked until the oldest committed ACT exits the 40-cycle
+    window.
+assumptions:
+- The controller clock is the DDR4-3200 command clock at 1600 MHz, yielding tRCD=22,
+  tRP=22, tRAS=52, tRRD=6, tFAW=40, and tREFI=12480 cycles.
+- Functional 16-address bank storage uses simplified address {row[1:0],column[1:0]};
+  higher zero-extended bits affect row state and sequencing but not compact storage
+  indexing.
+- Simplified refresh issues one committed REF only while the command engine is idle;
+  it does not preempt an active request and does not implement tRFC drain, all-bank
+  precharge, or physical DRAM signaling.
+limitations:
+- This is a functional controller architecture, not a full DDR4 PHY, DFI interface,
+  burst engine, ECC engine, or calibration implementation.
+- Open-page policy does not proactively close rows; PRE occurs only when a new active
+  request targets a different row in the same bank.
+- Simple scheduling is row-hit-first then lowest-index and intentionally provides
+  no fairness, age ordering, or same-address ordering guarantee.
+- Structural module separation and combinational-dependency declarations support integration
+  validation but do not establish behavioral correctness; RTL simulation, assertions,
+  timing tests, and formal verification remain required.
+unused_outputs:
+- endpoint: u_command_engine.candidate_row
+  reason: Timing legality depends only on candidate opcode and bank because row value
+    does not affect the implemented tRCD, tRAS, tRP, tRRD, or tFAW checks.
+- endpoint: u_command_engine.service_done
+  reason: Service completion is internally represented by rw_commit and active-state
+    retirement; no integration consumer requires the optional completion indication.
+baseline_contract: &id014
+  id: current_controller_v1
+  design_name: ddr4_controller_top
+  profile: DDR4-3200
+  config:
+    design_name: ddr4_controller
+    profile:
+      type: basic
+    memory:
+      protocol: DDR4
+      speed: '3200'
+    topology:
+      banks: 4
+    features:
+      scheduler: simple
+      page_policy: open_page
+      refresh: true
+      tFAW: true
+      tRRD: true
+  host_ports:
+  - name: clk
+    direction: input
+    width: 1
+  - name: rst_n
+    direction: input
+    width: 1
+  - name: txn_valid
+    direction: input
+    width: 1
+  - name: txn_is_write
+    direction: input
+    width: 1
+  - name: txn_addr
+    direction: input
+    width: 4
+  - name: txn_wdata
+    direction: input
+    width: 32
+  - name: txn_bank
+    direction: input
+    width: 2
+  - name: txn_ready
+    direction: output
+    width: 1
+  - name: cmd_ready
+    direction: output
+    width: 1
+  - name: rsp_valid
+    direction: output
+    width: 1
+  - name: rsp_rdata
+    direction: output
+    width: 32
+  requirements:
+  - &id001
+    id: BASE_HOST
+    text: Preserve the existing host ports and widths listed in the baseline contract.
+      Accept a request only on a rising clk edge with txn_valid && txn_ready. Hold
+      payload while stalled. Consecutive accepted cycles with txn_valid held high
+      are distinct requests. cmd_ready is execution/timing visibility, not the host
+      acceptance handshake. Deassert txn_ready and rsp_valid during reset.
+  - &id002
+    id: BASE_ADDRESS
+    text: 'Preserve the simplified 4-bit txn_addr mapping: row=txn_addr[3:2], column=txn_addr[1:0],
+      zero-extended into the internal 10-bit row and 6-bit column fields. Preserve
+      explicit txn_bank for multi-bank configurations; a single-bank configuration
+      uses bank 0. Internal packed requests retain bank(2), row(10), column(6), write
+      flag(1), write data(32).'
+  - &id003
+    id: BASE_QUEUE
+    text: 'Preserve four WAITING request slots PLUS one separately stored active-service
+      request: total capacity is five outstanding requests. The active request must
+      not consume one of the four waiting slots. Dispatch transfers a queued request
+      into active registers and frees its waiting slot without retiring the transaction.
+      Full queues backpressure the host; a same-cycle transfer/retirement may reuse
+      a slot. Accepted request fields survive stalls and each accepted request is
+      serviced exactly once. Keep admission, dispatch/retirement, service completion
+      and read response delivery distinct.'
+  - &id004
+    id: BASE_DATA
+    text: Provide functional 32-bit memory storage with 16 addresses per bank, bank
+      isolation and reset-to-zero contents. Accepted writes update only their addressed
+      location at service completion or a committed WRITE. Each accepted read produces
+      exactly one one-cycle rsp_valid pulse with the stored rsp_rdata after read service/READ
+      commit, using the existing one-cycle response stage. Writes produce no host
+      response. Selection and stalled candidates cannot mutate memory; mere command
+      output without storage and read responses is insufficient.
+  - &id005
+    id: BASE_TIMING
+    text: Retain existing tRCD, tRAS and tRP timing protection from the selected JEDEC
+      profile. ACT-to-READ/WRITE must wait tRCD, ACT-to-PRE must respect tRAS, and
+      PRE-to-next-ACT must respect tRP if explicit commands are used. Aggregate service
+      may retain the existing protected timing envelope instead. Configured tRRD and
+      tFAW gates must use accepted activation events, not host admissions or stalled
+      proposals. Never treat existing basic timing as an unrequested future feature.
+  - &id006
+    id: BASE_SEQUENCE
+    text: Dispatch captures the complete selected request in separate active-service
+      registers before freeing its waiting queue slot. Hold that active request and
+      payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+      Setup commands never retire the active request. Aggregate service also keeps
+      active-service ownership through completion. Waiting-queue dequeue at dispatch
+      is distinct from active-request retirement. Row state changes only on the responsible
+      committed operation; uncommitted proposals cannot change state.
+  - &id007
+    id: BASE_MODULARITY
+    text: Keep request storage, request selection, command sequencing, timing enforcement
+      and functional memory in independently verifiable modules with explicit interfaces.
+      No single controller core may own all these functions. Each mandatory role has
+      distinct module owners with functional inter-module connections. Module names
+      and further decomposition remain design choices.
+  - &id008
+    id: BASE_LEGALITY
+    text: Compute command permission from registered timing/bank history and an independent
+      candidate. An accepted ACT pulse is derived from candidate && permission; permission
+      must not combinationally depend on that same accepted pulse. Scheduler selection/validity
+      must be available independently of timing_ok; timing_ok may gate commit but
+      must not create a selection-validity feedback loop. Declare accurate per-output
+      combinational input dependencies.
+  - &id009
+    id: BASE_RESET
+    text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+      service, row validity, memory and responses. Preserve reusable blocks with either
+      synchronous or asynchronous active-low resets driven by the same rst_n; differing
+      assertion styles do not require rebuilding otherwise reusable blocks. Do not
+      change polarity without an explicit adapter.
+  - &id010
+    id: BASE_POLICY
+    text: Preserve page policy open_page and scheduler simple. Simple scheduling prefers
+      a row hit then the lowest-index valid request; do not claim oldest-first fairness
+      or same-address ordering is already implemented. Open-page retains a serviced
+      row; close-page closes it before subsequent bank use. Preserve request ownership
+      through any setup sequence.
+  - &id011
+    id: BASE_REFRESH
+    text: Retain periodic refresh requests using profile tREFI, refresh priority and
+      request/acknowledgment handling without dropping queued traffic. Refresh must
+      make progress and normal requests must resume. Existing refresh is simplified;
+      full REF/tRFC servicing remains later feature work. If explicit REF is proposed,
+      describe drain/row-state interaction and acknowledge once at commit.
+  - &id012
+    id: BASE_TRRD
+    text: tRRD is enabled; honor that setting and resolve enabled timing values from
+      DDR4-3200.
+  - &id013
+    id: BASE_TFAW
+    text: tFAW is enabled; honor that setting and resolve enabled timing values from
+      DDR4-3200.
+design_kind: memory_controller
+provenance:
+  source: llm
+  model: protected.gpt-5.6-terra
+  input_fingerprint: 7662b9bd7502a73339d6ef6f251ef2706a7a873d0b4ed86f95e8de4a670c25b9
+  request:
+    constraints:
+      design_name: ddr4_controller
+      profile:
+        type: basic
+      memory:
+        protocol: DDR4
+        speed: '3200'
+      topology:
+        banks: 4
+      features:
+        scheduler: simple
+        page_policy: open_page
+        refresh: true
+        tFAW: true
+        tRRD: true
+    requirements:
+    - id: R1
+      text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+        "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+        "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+        "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+    - *id001
+    - *id002
+    - *id003
+    - *id004
+    - *id005
+    - *id006
+    - *id007
+    - *id008
+    - *id009
+    - *id010
+    - *id011
+    - *id012
+    - *id013
+    baseline_contract: *id014
+    design_kind: memory_controller
+  validation_repairs:
+  - attempt: 1
+    error: 'Unused child outputs need explicit unused_outputs reasons: [''u_command_engine.candidate_row'',
+      ''u_command_engine.service_done'']'

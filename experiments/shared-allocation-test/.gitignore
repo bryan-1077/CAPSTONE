@@ -1,0 +1,23 @@
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+
+# Server checkout/reference files
+/server/
+
+# Flow/runtime logs
+*.log
+shared/mailbox/
+
+# Simulator and waveform artifacts
+obj_dir/
+*.vcd
+*.fst
+*.vvp
+
+# LLM/generated repair scratch space
+.llm_cache/
+local/frontend/microarch/builds/
+local/frontend/rtl_output/
+debug/failures/*
+!debug/failures/.gitkeep

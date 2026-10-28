@@ -1,0 +1,78 @@
+slice_id: requests_fifo
+rules:
+  REQ_ADMIT:
+    origin: plan.2A
+    owners: [host_adapter, waiting_queue]
+    statement: Each admission captures every request field once. Consecutive qualifying cycles are distinct requests. A backpressured host holds valid and payload; no admission occurs without ready.
+    verification: [V_ADMIT, V_STALL]
+  REQ_CAPACITY:
+    origin: plan.1B_and_2A
+    owners: [waiting_queue, command_engine]
+    statement: Waiting capacity and active capacity are independent shared parameters. Queue occupancy changes by admission minus dispatch. Retirement never dequeues waiting storage. A response pending after retirement consumes neither capacity.
+    verification: [V_CAPACITY, V_SIMULTANEOUS]
+  REQ_DISPATCH:
+    origin: plan.2A
+    owners: [waiting_queue, fifo_scheduler, command_engine]
+    statement: Dispatch transfers the complete pre-edge oldest request atomically from waiting to active storage. An empty queue cannot dispatch a newly admitted request on that edge. Full waiting storage may admit when dispatch frees its head on the same edge.
+    verification: [V_SIMULTANEOUS, V_FIFO]
+  REQ_ACTIVE:
+    origin: plan.2A
+    owners: [command_engine]
+    statement: Hold active payload through PRE, ACT, and all stalls. Only final READ/WRITE commit retires it. Read data/response state is captured before release. Dispatch readiness is false while active, during cleanup, or during refresh exclusion; retirement cannot enable same-edge replacement in this draft.
+    verification: [V_ACTIVE]
+  REQ_FIFO:
+    origin: plan.2A
+    owners: [waiting_queue, fifo_scheduler, command_engine]
+    statement: Dispatch and final READ/WRITE commits preserve global acceptance order, hence same-bank/address order. Acceptance age is independent of physical slot index. FIFO head selection does not depend on row hits or timing legality.
+    verification: [V_FIFO, V_ACTIVE]
+  REQ_RESPONSE:
+    origin: plan.2A_and_2B
+    owners: [memory, host_adapter]
+    statement: Every retired read produces exactly one response delivery with captured data; retired writes produce no response. WRITE commit alone mutates memory. Pending response storage survives active release and is cleared on reset. Exact edges are defined in execution.rules.RESPONSE_EDGE.
+    verification: [V_RESPONSE]
+  REQ_RESET:
+    origin: plan.2A
+    owners: [host_adapter, waiting_queue, fifo_scheduler, command_engine, memory]
+    statement: Reset overrides simultaneous events, clears waiting/active/response validity, and cancels pre-reset requests without later commits or responses. Exactly-once obligations apply only within reset-free epochs.
+    verification: [V_RESET]
+verification:
+  V_ADMIT:
+    rules: [REQ_ADMIT]
+    scenario: Keep valid high across consecutive ready edges with distinct bank/address/write/data fields.
+    expected: Independent acceptance scoreboard records each edge and each complete payload once.
+    status: planned_not_executed
+  V_STALL:
+    rules: [REQ_ADMIT]
+    scenario: Fill waiting storage, block dispatch, hold a valid payload, then release dispatch.
+    expected: No extra acceptance during backpressure; accepted and head payloads survive unchanged.
+    status: planned_not_executed
+  V_CAPACITY:
+    rules: [REQ_CAPACITY]
+    scenario: Dispatch one request into a stalled active engine, then fill all waiting entries.
+    expected: Waiting occupancy equals WAITING_CAPACITY independently of one active request; next admission stalls.
+    status: planned_not_executed
+  V_SIMULTANEOUS:
+    rules: [REQ_CAPACITY, REQ_DISPATCH]
+    scenario: Exercise neither event, enqueue only, dispatch only, and both events at empty, partial, and full occupancy; repeat with WAITING_CAPACITY=1 and a non-power-of-two capacity.
+    expected: No empty bypass; full dispatch/enqueue captures old head and appends new tail with unchanged occupancy. Retirement alone cannot free waiting storage.
+    status: planned_not_executed
+  V_FIFO:
+    rules: [REQ_DISPATCH, REQ_FIFO]
+    scenario: Reuse storage repeatedly; place a newer row hit behind an older miss, including same-bank/address write/read pairs.
+    expected: Dispatch matches scoreboard admission order regardless of physical placement, row hits, or downstream readiness.
+    status: planned_not_executed
+  V_ACTIVE:
+    rules: [REQ_ACTIVE, REQ_FIFO]
+    scenario: Dispatch a row-conflict request; block setup and final commands, then permit commits.
+    expected: Active payload remains constant, PRE/ACT do not retire, and final READ/WRITE retires once in order; no replacement dispatch on retirement edge.
+    status: planned_not_executed
+  V_RESPONSE:
+    rules: [REQ_RESPONSE]
+    scenario: Commit writes and reads with distinguishable data, release active storage, and observe host responses.
+    expected: One matching response per retired read at the edge defined by execution.rules.RESPONSE_EDGE, none per write; no mutation from proposals/stalls.
+    status: planned_not_executed
+  V_RESET:
+    rules: [REQ_RESET]
+    scenario: Assert reset with full waiting storage, active setup, pending response, and attempted simultaneous admission/dispatch.
+    expected: Handshakes are suppressed; at the reset edge validity clears, and no pre-reset request later commits or responds.
+    status: planned_not_executed

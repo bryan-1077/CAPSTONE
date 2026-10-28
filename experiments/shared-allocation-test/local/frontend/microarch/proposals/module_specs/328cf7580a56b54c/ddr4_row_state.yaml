@@ -1,0 +1,106 @@
+design_name: ddr4_row_state
+design_type: datapath
+clock:
+  name: clk
+reset:
+  name: rst_n
+  active_low: true
+  synchronous: true
+ports:
+- name: commit_valid
+  direction: input
+  width: 1
+- name: commit_opcode
+  direction: input
+  width: 3
+- name: commit_bank
+  direction: input
+  width: 2
+- name: commit_row
+  direction: input
+  width: 10
+- name: bank_active
+  direction: output
+  width: 4
+- name: bank_open_row
+  direction: output
+  width: 40
+behavior:
+  description: Four row-valid bits and four 10-bit open-row registers reset to zero.
+    On committed ACT opcode 1, the selected bank valid bit is set and its open-row
+    register captures commit_row. On committed PRE opcode 2, the selected bank valid
+    bit is cleared. READ opcode 3, WRITE opcode 4, REF opcode 5, stalled candidates,
+    and uncommitted proposals do not modify row state. bank_open_row packs bank 0
+    in [9:0], bank 1 in [19:10], bank 2 in [29:20], and bank 3 in [39:30].
+  invariants:
+  - Only committed ACT and PRE modify row state
+  - At most one bank row state changes on one clock edge
+  - REF does not alter simplified row state
+invariants:
+- bank_active reflects registered row-valid state
+combinational_dependencies:
+  bank_active: []
+  bank_open_row: []
+verification_requirements:
+- id: R1
+  text: 'Implement the controller constraints: {"design_name": "ddr4_controller",
+    "features": {"page_policy": "open_page", "refresh": true, "scheduler": "simple",
+    "tFAW": true, "tRRD": true}, "memory": {"protocol": "DDR4", "speed": "3200"},
+    "profile": {"type": "basic"}, "topology": {"banks": 4}}'
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_memory
+  - u_row_state
+  - u_refresh
+  verification: Run directed accesses across all four banks with DDR4-3200 timing
+    counters enabled and confirm simple selection, open rows, refresh, tRRD, and tFAW
+    behavior.
+- id: BASE_SEQUENCE
+  text: Dispatch captures the complete selected request in separate active-service
+    registers before freeing its waiting queue slot. Hold that active request and
+    payload across setup PRE/ACT and timing stalls until its final READ/WRITE commits.
+    Setup commands never retire the active request. Aggregate service also keeps active-service
+    ownership through completion. Waiting-queue dequeue at dispatch is distinct from
+    active-request retirement. Row state changes only on the responsible committed
+    operation; uncommitted proposals cannot change state.
+  owners:
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  - u_timing
+  verification: Dispatch a row-miss request, hold timing permission low through PRE
+    and ACT candidates, and verify active payload remains unchanged until committed
+    READ or WRITE.
+- id: BASE_RESET
+  text: Use top-level clk and active-low rst_n. Reset clears pending requests, active
+    service, row validity, memory and responses. Preserve reusable blocks with either
+    synchronous or asynchronous active-low resets driven by the same rst_n; differing
+    assertion styles do not require rebuilding otherwise reusable blocks. Do not change
+    polarity without an explicit adapter.
+  owners:
+  - u_host_adapter
+  - u_request_queue
+  - u_scheduler
+  - u_command_engine
+  - u_timing
+  - u_row_state
+  - u_memory
+  - u_refresh
+  verification: Assert rst_n low and verify queue valids, active service, row valids,
+    timing counters, memory words, refresh state, and response stage clear.
+- id: BASE_POLICY
+  text: Preserve page policy open_page and scheduler simple. Simple scheduling prefers
+    a row hit then the lowest-index valid request; do not claim oldest-first fairness
+    or same-address ordering is already implemented. Open-page retains a serviced
+    row; close-page closes it before subsequent bank use. Preserve request ownership
+    through any setup sequence.
+  owners:
+  - u_scheduler
+  - u_command_engine
+  - u_row_state
+  verification: Queue a lower-index row miss and higher-index row hit; verify row
+    hit dispatches first and serviced row remains open after READ or WRITE.

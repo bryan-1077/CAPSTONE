@@ -1,0 +1,1284 @@
+# feature_templates.yaml
+# FSM Skeletons for DDR4 Memory Controller Features
+#
+# Purpose:
+#   Parametric FSM definitions consumed by expand_spec.py.
+#   Each template uses symbolic placeholders (e.g. {tRCD_cycles}) that
+#   expand_spec.py substitutes with real cycle counts from jedec_dictionary.yaml
+#   before emitting concrete FSM YAMLs for validator.py.
+#
+# Placeholder syntax:  {PARAM_NAME}
+#   expand_spec.py replaces these using the timing_cycles block of the
+#   requested JEDEC profile. Example:
+#     {tRCD_cycles} -> 17   (DDR4-2400)
+#     {tRCD_cycles} -> 22   (DDR4-3200)
+#
+# Submodule strategy:
+#   Each feature is decomposed into independent submodule FSMs, one timer
+#   per submodule. This keeps each submodule compatible with the existing
+#   fsm_generator.py (single-counter assumption) without modification.
+#   A top-level bank_sequencer FSM uses handshake (done) signals as
+#   transition conditions — no counters, no parser changes needed.
+#
+# Timer naming convention (must match expand_spec.py):
+#   <jedec_param>_counter   e.g. tRCD_counter, tRAS_counter, tRP_counter
+#   This convention enables automatic width inference in validator.py.
+#
+# Scope for demo (Week 10):
+#   - Feature: basic_commands
+#   - Protocol: DDR4
+#   - Module:   single bank (bank 0)
+#   - READ and WRITE are collapsed into a single ACTIVE state.
+#     cmd_type input selects read vs write in output logic, not in FSM transitions.
+#
+# Do NOT modify:
+#   - validator.py
+#   - fsm_generator.py
+# -------------------------------------------------------------------------------
+
+basic_commands:
+  description: >
+    Core DDR4 single-bank operations: ACTIVATE, ACTIVE (READ/WRITE), PRECHARGE.
+    READ and WRITE are collapsed into one ACTIVE state. The bank FSM tracks row
+    activation status only; data path direction is determined by cmd_type output logic.
+  protocol: "DDR4"
+
+  # ---------------------------------------------------------------------------
+  # Submodule 1: activate_fsm
+  # Responsibility: Count tRCD cycles after an ACTIVATE command is issued.
+  # One timer: tRCD_counter
+  # ---------------------------------------------------------------------------
+  submodules:
+
+    - name: "activate_fsm"
+      description: "Counts tRCD cycles. Asserts tRCD_done when RAS-to-CAS delay is satisfied."
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "start"
+          direction: "input"
+          width: 1
+          description: "Pulse high for one cycle to begin tRCD count"
+        - name: "tRCD_done"
+          direction: "output"
+          width: 1
+          description: "Held high once tRCD cycles have elapsed, until ack"
+        - name: "ack"
+          direction: "input"
+          width: 1
+          description: "Pulse high to reset back to IDLE after done is received"
+
+      state_machine:
+        states:
+          - "IDLE"
+          - "COUNTING"
+          - "DONE"
+        reset_state: "IDLE"
+        transitions:
+          - from: "IDLE"
+            to: "COUNTING"
+            condition: "start == 1"
+
+          - from: "COUNTING"
+            to: "DONE"
+            condition: "tRCD_counter >= {tRCD_cycles}"
+            # expand_spec.py substitutes {tRCD_cycles} with the integer from
+            # jedec_dictionary.yaml timing_cycles.tRCD for the requested profile.
+
+          - from: "DONE"
+            to: "IDLE"
+            condition: "ack == 1"
+
+    # ---------------------------------------------------------------------------
+    # Submodule 2: tRAS_fsm
+    # Responsibility: Count tRAS cycles after a row is activated.
+    # Ensures the row has been active long enough before precharge is allowed.
+    # One timer: tRAS_counter
+    # ---------------------------------------------------------------------------
+    - name: "tRAS_fsm"
+      description: "Counts tRAS cycles. Asserts tRAS_done when minimum row active time is met."
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "start"
+          direction: "input"
+          width: 1
+          description: "Pulse high for one cycle to begin tRAS count"
+        - name: "tRAS_done"
+          direction: "output"
+          width: 1
+          description: "Held high once tRAS cycles have elapsed, until ack"
+        - name: "ack"
+          direction: "input"
+          width: 1
+          description: "Pulse high to reset back to IDLE after done is received"
+
+      state_machine:
+        states:
+          - "IDLE"
+          - "COUNTING"
+          - "DONE"
+        reset_state: "IDLE"
+        transitions:
+          - from: "IDLE"
+            to: "COUNTING"
+            condition: "start == 1"
+
+          - from: "COUNTING"
+            to: "DONE"
+            condition: "tRAS_counter >= {tRAS_cycles}"
+
+          - from: "DONE"
+            to: "IDLE"
+            condition: "ack == 1"
+
+    # ---------------------------------------------------------------------------
+    # Submodule 3: precharge_fsm
+    # Responsibility: Count tRP cycles after a PRECHARGE command.
+    # One timer: tRP_counter
+    # ---------------------------------------------------------------------------
+    - name: "precharge_fsm"
+      description: "Counts tRP cycles. Asserts tRP_done when row precharge time is satisfied."
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "start"
+          direction: "input"
+          width: 1
+          description: "Pulse high for one cycle to begin tRP count"
+        - name: "tRP_done"
+          direction: "output"
+          width: 1
+          description: "Held high once tRP cycles have elapsed, until ack"
+        - name: "ack"
+          direction: "input"
+          width: 1
+          description: "Pulse high to reset back to IDLE after done is received"
+
+      state_machine:
+        states:
+          - "IDLE"
+          - "COUNTING"
+          - "DONE"
+        reset_state: "IDLE"
+        transitions:
+          - from: "IDLE"
+            to: "COUNTING"
+            condition: "start == 1"
+
+          - from: "COUNTING"
+            to: "DONE"
+            condition: "tRP_counter >= {tRP_cycles}"
+
+          - from: "DONE"
+            to: "IDLE"
+            condition: "ack == 1"
+
+    # ---------------------------------------------------------------------------
+    # Submodule 4: bank_sequencer
+    # Responsibility: Top-level bank state machine. Sequences the three timing
+    # submodules above using their done signals as transition conditions.
+    # No counters — handshake signals only. Parser handles "signal == 1" natively.
+    # ---------------------------------------------------------------------------
+    - name: "bank_sequencer"
+      description: >
+        Top-level single-bank FSM. Sequences ACTIVATE -> ACTIVE -> PRECHARGE
+        using done signals from activate_fsm, tRAS_fsm, and precharge_fsm.
+        No timers in this module.
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        # Inputs from command decode layer
+        - name: "cmd_valid"
+          direction: "input"
+          width: 1
+          description: "Command is valid and ready to issue"
+        - name: "cmd_type"
+          direction: "input"
+          width: 2
+          description: "0=ACTIVATE, 1=READ, 2=WRITE, 3=PRECHARGE"
+
+        # Handshake inputs from timing submodules
+        - name: "tRCD_done"
+          direction: "input"
+          width: 1
+          description: "From activate_fsm: tRCD delay satisfied"
+        - name: "tRAS_done"
+          direction: "input"
+          width: 1
+          description: "From tRAS_fsm: minimum row active time satisfied"
+        - name: "tRP_done"
+          direction: "input"
+          width: 1
+          description: "From precharge_fsm: row precharge time satisfied"
+
+        # Status outputs
+        - name: "bank_idle"
+          direction: "output"
+          width: 1
+          description: "High when bank is precharged and ready for ACTIVATE"
+        - name: "bank_active"
+          direction: "output"
+          width: 1
+          description: "High when a row is open and ready for READ or WRITE"
+        - name: "cmd_ready"
+          direction: "output"
+          width: 1
+          description: "High when the bank can accept a new command"
+
+        # Outputs (Mar 24 update)
+        - name: "tRCD_start"
+          direction: "output"
+          width: 1
+          description: "Start signal to activate_fsm — asserted while ACTIVATING"
+        - name: "tRAS_start"
+          direction: "output"
+          width: 1
+          description: "Start signal to tRAS_fsm — asserted while row is open"
+        - name: "tRP_start"
+          direction: "output"
+          width: 1
+          description: "Start signal to precharge_fsm — asserted while PRECHARGING"
+        - name: "tRCD_ack"
+          direction: "output"
+          width: 1
+          description: "Ack to activate_fsm — clears its DONE state"
+        - name: "tRAS_ack"
+          direction: "output"
+          width: 1
+          description: "Ack to tRAS_fsm — clears its DONE state"
+        - name: "tRP_ack"
+          direction: "output"
+          width: 1
+          description: "Ack to precharge_fsm — clears its DONE state"
+
+      state_machine:
+        states:
+          - "IDLE"        # Bank precharged, ready for ACTIVATE
+          - "ACTIVATING"  # Waiting for tRCD (and tRAS count to start)
+          - "ACTIVE"      # Row open, READ or WRITE can proceed
+          - "PRECHARGING" # Waiting for tRP
+        reset_state: "IDLE"
+        transitions:
+          # IDLE: accept ACTIVATE command only when valid and ready.
+          - from: "IDLE"
+            to: "ACTIVATING"
+            condition: "cmd_valid == 1 && cmd_ready == 1"
+
+          # ACTIVATING: wait for tRCD to be satisfied
+          - from: "ACTIVATING"
+            to: "ACTIVE"
+            condition: "tRCD_done == 1"
+
+          # ACTIVE: wait for tRAS before allowing precharge
+          - from: "ACTIVE"
+            to: "PRECHARGING"
+            condition: "tRAS_done == 1"
+
+          # PRECHARGING: wait for tRP then return to idle
+          - from: "PRECHARGING"
+            to: "IDLE"
+            condition: "tRP_done == 1"
+            
+      output_overrides:
+        cmd_ready:  "(current_state == IDLE)"
+        tRCD_start: "(current_state == ACTIVATING)"
+        tRAS_start: "(current_state == ACTIVE)"
+        tRP_start:  "(current_state == PRECHARGING)"
+        tRCD_ack:   "(current_state == ACTIVE)"
+        tRAS_ack:   "(current_state == PRECHARGING)"
+        tRP_ack:    "(current_state == IDLE)"
+
+  # ---------------------------------------------------------------------------
+  # Interface declarations
+  # Describes how submodules connect. Used by a future check_interfaces.py
+  # and by expand_spec.py to wire the top-level wrapper correctly.
+  # ---------------------------------------------------------------------------
+  interfaces:
+    - signal: "activate_start"
+      from_module: "bank_sequencer"
+      from_port: "cmd_valid"        # bank_sequencer drives start on ACTIVATE cmd
+      to_module: "activate_fsm"
+      to_port: "start"
+      width: 1
+      note: "Gated by cmd_type == 0 (ACTIVATE) in top-level wrapper"
+
+    - signal: "tRAS_start"
+      from_module: "bank_sequencer"
+      from_port: "cmd_valid"        # tRAS starts counting at same time as tRCD
+      to_module: "tRAS_fsm"
+      to_port: "start"
+      width: 1
+      note: "Starts in parallel with activate_fsm — same start condition"
+
+    - signal: "precharge_start"
+      from_module: "bank_sequencer"
+      from_port: "tRAS_done"        # precharge triggered once tRAS satisfied
+      to_module: "precharge_fsm"
+      to_port: "start"
+      width: 1
+
+    - signal: "tRCD_done"
+      from_module: "activate_fsm"
+      from_port: "tRCD_done"
+      to_module: "bank_sequencer"
+      to_port: "tRCD_done"
+      width: 1
+
+    - signal: "tRAS_done"
+      from_module: "tRAS_fsm"
+      from_port: "tRAS_done"
+      to_module: "bank_sequencer"
+      to_port: "tRAS_done"
+      width: 1
+
+    - signal: "tRP_done"
+      from_module: "precharge_fsm"
+      from_port: "tRP_done"
+      to_module: "bank_sequencer"
+      to_port: "tRP_done"
+      width: 1
+
+  # ---------------------------------------------------------------------------
+  # Timer registry
+  # Maps symbolic placeholder names to JEDEC dictionary keys.
+  # expand_spec.py uses this to know which values to substitute.
+  # ---------------------------------------------------------------------------
+  timer_parameters:
+    tRCD_cycles: "timing_cycles.tRCD"   # jedec_dictionary key path
+    tRAS_cycles: "timing_cycles.tRAS"
+    tRP_cycles:  "timing_cycles.tRP"
+
+# -------------------------------------------------------------------------------
+# Feature: tFAW_tracker
+#
+# Four Activation Window constraint tracker.
+# Enforces JEDEC DDR4 tFAW: no more than 4 ACTIVATE commands may be issued
+# within any rolling tFAW-cycle window.
+#
+# Design type: "datapath" — NOT an FSM skeleton. This feature routes entirely
+# through the LLM generation path (dual_llm_rtlgen.py / rtlGen.py). It will
+# never be processed by fsm_generator.py.
+#
+# Single submodule: one YAML in, one .sv out.
+#
+# Implementation strategy: cycle-based sliding window using a shift register.
+#   - act_window[tFAW_cycles-1:0]: one bit per cycle in the rolling tFAW window.
+#     Bit 0 holds the newest sampled cycle after each clock edge.
+#   - act_count: 3-bit saturated registered count of ACTs in act_window after
+#     the most recent clock edge. It is loaded from the saturated population
+#     count of next_window on the same edge that act_window captures
+#     next_window. Saturates at 4 because the controller only needs to know
+#     whether the four-activate limit has been reached.
+#   - next_count: full combinational population count of next_window used before
+#     saturation. Width must scale with TFAW_CYCLES so the count can represent
+#     any value from 0 through TFAW_CYCLES.
+#
+# Sequential behavior:
+#   - Before each rising edge, form next_window by shifting act_window left by
+#     one and inserting act_pulse in bit 0.
+#   - On that same rising edge, update act_window <= next_window and
+#     act_count <= saturating_popcount(next_window).
+#   - Therefore, after the sequential update, act_count equals the saturated
+#     population count of act_window.
+#
+# Outputs:
+#   - tFAW_block = 1 when next_count >= 4
+#   - tFAW_ok    = !tFAW_block
+#
+# Known LLM failure modes (for reviewer to catch):
+#   1. Timestamp-based implementation instead of a cycle-based shift register
+#   2. Missing current-cycle act_pulse in the effective window count
+#   3. Incorrectly counting the shifted-out oldest bit in the same cycle
+#   4. act_count not saturated at 4
+#   5. Separate decrement or aging logic outside the shift register
+#   6. Non-parameterized window length
+#   7. Reset not clearing act_window and act_count
+# -------------------------------------------------------------------------------
+
+tFAW_tracker:
+  description: >
+    Four Activation Window (tFAW) constraint tracker for DDR4.
+    Single datapath module; no FSM submodule decomposition.
+    Uses a cycle-based shift register window to track recent ACT commands
+    across the last {tFAW_cycles} clock cycles.
+  protocol: "DDR4"
+
+  timing:
+    TFAW_CYCLES: "{tFAW_cycles}"
+    ACT_LIMIT: 4
+
+  submodules:
+
+    # -------------------------------------------------------------------------
+    # Submodule: tFAW_tracker
+    # One module, one .sv file. Routes to LLM path via design_type "datapath".
+    # -------------------------------------------------------------------------
+    - name: "tFAW_tracker"
+      description: >
+        Tracks ACT commands in a cycle-based sliding window shift register.
+        Computes a saturated registered count of ACTs inside the last
+        {tFAW_cycles} cycles and asserts block/ok outputs from the updated
+        window count.
+
+      design_type: "datapath"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: false
+
+      ports:
+        - name: "act_pulse"
+          direction: "input"
+          width: 1
+          description: "Asserted for exactly one cycle when an ACT command is issued"
+
+        - name: "tFAW_ok"
+          direction: "output"
+          width: 1
+          description: >
+            High when the number of ACT pulses in the next window
+            (including the current cycle) would remain below 4.
+
+        - name: "tFAW_block"
+          direction: "output"
+          width: 1
+          description: >
+            High when the number of ACT pulses in the next window
+            (including the current cycle) would be 4 or greater.
+
+        - name: "act_count"
+          direction: "output"
+          width: 3
+          description: >
+            Saturated registered number of ACTIVATE commands in the rolling
+            cycle window after the most recent clock edge (0 to 4).
+
+      implementation_constraints:
+        - "use shift register only"
+        - "use cycle-based window"
+        - "include current cycle in the effective count"
+        - "use saturation at 4"
+        - "parameterize window size"
+        - "reset behavior must match the specification exactly"
+        - "all parameter-based arithmetic and comparisons must use explicit width matching"
+
+      invariants:
+        - "act_window width == TFAW_CYCLES"
+        - "next_window width == TFAW_CYCLES"
+        - "act_count <= 4"
+        - "after each sequential update, act_count equals the saturated population count of act_window"
+        - "the current cycle's act_pulse is included in the updated window count"
+        - "the oldest pre-shift bit is excluded from the updated window count"
+        - "next_count is computed from next_window, not from the full pre-shift act_window plus act_pulse"
+        - "next_count is the unsaturated population count of next_window"
+        - "next_count width == $clog2(TFAW_CYCLES + 1)"
+        - "on each rising edge, act_window captures next_window and act_count captures the saturated population count of next_window"
+        - "tFAW_block == (next_count >= 4)"
+        - "tFAW_ok == !tFAW_block"
+        - "reset clears act_window and act_count"
+
+      forbidden_patterns:
+        - "timestamp tracking"
+        - "decrement logic"
+        - "aging logic outside the shift register"
+        - "wraparound handling"
+        - "alternate non-shift-register tracking structures"
+        - "counting the shifted-out oldest bit"
+
+      # -----------------------------------------------------------------------
+      # Behavior specification
+      # Passed to the LLM as supplemental context via the raw YAML path.
+      # validator.py stores unrecognised top-level keys in metadata.
+      # -----------------------------------------------------------------------
+      behavior:
+        rtl_parameters:
+          TFAW_CYCLES: "{tFAW_cycles}"
+          TFAW_LIMIT: 4
+        window_size: "{tFAW_cycles}"
+        tFAW_cycles: "{tFAW_cycles}"
+        tFAW_limit: 4
+        count_source: "next_window"
+        updated_window_expression: "{act_window[TFAW_CYCLES-2:0], act_pulse}"
+        block_expression: "(next_count >= 4)"
+
+        internal_signals:
+          act_window:
+            width: "TFAW_CYCLES"
+            type: "logic"
+            description: >
+              One bit per cycle in the rolling tFAW window. On each clock edge
+              the register shifts left and inserts act_pulse into bit 0.
+              Reset value: 0.
+
+          next_window:
+            width: "TFAW_CYCLES"
+            type: "logic"
+            description: >
+              Updated shift-register value for the next cycle. It must equal
+              {act_window[TFAW_CYCLES-2:0], act_pulse}, which drops the oldest
+              pre-shift bit and inserts act_pulse into bit 0.
+
+          act_count:
+            width: 3
+            type: "logic"
+            description: >
+              Registered saturated count of ACT commands. On each clock edge,
+              act_count captures the saturated population count of next_window;
+              therefore, after the update, it equals the saturated population
+              count of act_window.
+              Reset value: 0.
+
+          next_count:
+            width: "$clog2(TFAW_CYCLES + 1)"
+            type: "logic"
+            description: >
+              Full unsaturated population count of the updated shift register.
+              This count includes the current cycle's act_pulse via next_window,
+              is the source for tFAW_block, and therefore must be wide enough
+              to represent any value from 0 through TFAW_CYCLES.
+
+        sequential_behavior: >
+          On every rising clock edge:
+            1. Form next_window = {act_window[TFAW_CYCLES-2:0], act_pulse}
+               from the pre-update act_window and the current act_pulse.
+            2. Update act_window <= next_window.
+            3. On the same clock edge, update act_count <= saturated population
+               count of next_window.
+            4. Therefore, after the sequential update, act_count equals the
+               saturated population count of act_window.
+          On asynchronous reset (rst_n low):
+            act_window <= 0
+            act_count  <= 0
+
+        combinational_behavior: >
+          next_window must be computed first as
+          {act_window[TFAW_CYCLES-2:0], act_pulse}. next_count is then the
+          full unsaturated population count of next_window. Do not count the shifted-out
+          pre-shift bit act_window[TFAW_CYCLES-1].
+          act_count is a registered post-update quantity captured on the clock
+          edge from the saturated population count of next_window, so do not
+          require act_count to equal next_count in the same pre-update
+          combinational instant.
+          tFAW_block is asserted when the number of ACT pulses in the next
+          window, including the current cycle, would be 4 or greater.
+          Use the direct comparison (next_count >= 4), not (act_count >= 4).
+          tFAW_ok is the inverse of tFAW_block.
+
+        correctness_criteria:
+          - "act_window must be TFAW_CYCLES bits wide"
+          - "next_window must be TFAW_CYCLES bits wide"
+          - "act_window must shift every cycle and insert act_pulse into bit 0"
+          - "the effective count must include the current cycle's act_pulse sample"
+          - "the effective count must exclude the shifted-out oldest bit from the pre-shift act_window"
+          - "next_count must be computed from next_window"
+          - "next_count must equal the unsaturated population count of next_window"
+          - "next_count must be wide enough to represent values from 0 through TFAW_CYCLES"
+          - "act_count must never exceed 4"
+          - "on each rising edge, act_count must capture the saturated population count of next_window on the same edge that act_window captures next_window"
+          - "after each sequential update, act_count must equal the saturated population count of act_window"
+          - "tFAW_block must be 1 when next_count >= 4"
+          - "tFAW_ok must be 1 when next_count < 4"
+          - "act_window and act_count must reset to 0 on asynchronous reset"
+          - "all constants and parameters must be explicitly cast or sized to the consuming signal width"
+
+  # ---------------------------------------------------------------------------
+  # Timer registry — maps placeholder names to jedec_dictionary key paths.
+  # expand_spec.py uses this to build the substitution map.
+  # ---------------------------------------------------------------------------
+  timer_parameters:
+    tFAW_cycles: "timing_cycles.tFAW"
+
+  # No inter-submodule interfaces (single module).
+  interfaces: []
+
+# -------------------------------------------------------------------------------
+# Feature: tRRD
+#
+# Row-to-Row Delay tracker.
+# Enforces a minimum spacing between ACT commands with a simple cooldown counter.
+#
+# Design type: "datapath" — NOT an FSM skeleton. This feature routes entirely
+# through the LLM generation path (dual_llm_rtlgen.py / rtlGen.py).
+#
+# Single submodule: one YAML in, one .sv out.
+#
+# Implementation strategy: cycle-based cooldown counter.
+#   - counter holds the remaining blocked cycles after an ACT command.
+#   - When act_pulse occurs, counter reloads to TRRD_CYCLES - 1.
+#   - While counter > 0, ACT commands are blocked.
+# -------------------------------------------------------------------------------
+
+tRRD:
+  description: "Minimum delay between ACT commands"
+  protocol: "DDR4"
+
+  timing:
+    TRRD_CYCLES: "{tRRD_cycles}"
+
+  implementation:
+    type: "cooldown_counter"
+
+  inputs:
+    - "clk"
+    - "rst_n"
+    - "act_pulse"
+
+  outputs:
+    - "tRRD_block"
+
+  implementation_constraints:
+    required:
+      - "use_cooldown_counter"
+      - "cycle_based_model"
+    forbidden:
+      - "timestamp_tracking"
+      - "shift_register_window"
+      - "decrement_outside_counter"
+
+  invariants:
+    - "counter == 0 allows ACT"
+    - "counter > 0 blocks ACT"
+
+  submodules:
+    - name: "simple_tRRD"
+      description: >
+        Simple row-to-row delay tracker using a cooldown counter. When an
+        ACT command is accepted, the counter reloads and blocks new ACTs
+        until the cooldown expires.
+
+      design_type: "datapath"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: false
+
+      ports:
+        - name: "act_pulse"
+          direction: "input"
+          width: 1
+          description: "Asserted for exactly one cycle when an ACT command is issued"
+
+        - name: "tRRD_block"
+          direction: "output"
+          width: 1
+          description: "High while the cooldown counter is non-zero"
+
+      implementation_constraints:
+        required:
+          - "use_cooldown_counter"
+          - "cycle_based_model"
+          - "decrement once per cycle while counter > 0"
+          - "reset counter to 0"
+          - "parameterize delay"
+          - "explicitly resize parameter-based arithmetic to counter width"
+        forbidden:
+          - "timestamp_tracking"
+          - "shift_register_window"
+          - "multi_event_counting"
+          - "decrement_outside_counter"
+
+      invariants:
+        - "counter == 0 allows ACT"
+        - "counter > 0 blocks ACT"
+        - "act_pulse reloads counter to TRRD_CYCLES - 1"
+        - "counter decrements by exactly 1 per cycle while counter > 0 and no ACT occurs"
+        - "reset clears counter to 0"
+
+      forbidden_patterns:
+        - "timestamp tracking"
+        - "window tracking"
+        - "multi-event counting"
+
+      behavior:
+        rtl_parameters:
+          TRRD_CYCLES: "{tRRD_cycles}"
+        tRRD_cycles: "{tRRD_cycles}"
+        implementation_type: "cooldown_counter"
+
+        internal_signals:
+          counter:
+            width: "$clog2(TRRD_CYCLES+1)"
+            type: "logic"
+            description: >
+              Cooldown counter. When act_pulse is asserted, the counter is loaded
+              to TRRD_CYCLES - 1.
+              Decrement by 1 each cycle while non-zero. Reset value: 0.
+
+        sequential_behavior: >
+          On every rising clock edge:
+            1. If act_pulse is high, counter <= TRRD_CYCLES - 1.
+            2. Else if counter > 0, counter <= counter - 1.
+            3. Else counter remains 0.
+          On asynchronous reset (rst_n low):
+            counter <= 0
+
+        combinational_behavior: >
+          tRRD_block is asserted whenever counter > 0.
+
+        correctness_criteria:
+          - "counter must reload to TRRD_CYCLES - 1 on act_pulse"
+          - "counter must decrement once per cycle while counter > 0 and no ACT occurs"
+          - "counter must never go below 0"
+          - "tRRD_block must equal (counter > 0)"
+          - "counter must reset to 0 on asynchronous reset"
+          - "all constants and parameters must be explicitly cast or sized to the consuming signal width"
+
+  interfaces: []
+
+  timer_parameters:
+    tRRD_cycles: "timing_cycles.tRRD"
+
+# -------------------------------------------------------------------------------
+# Feature: refresh_controller
+#
+# Standalone DDR4 refresh request FSM.
+# Periodically asserts a refresh request, waits for acknowledgement, then
+# restarts the interval counter.
+# -------------------------------------------------------------------------------
+
+refresh_controller:
+  description: >
+    Generates a periodic refresh request every tREFI_CYCLES. Asserts ref_req
+    until ref_ack is received, then resets the interval counter and resumes
+    counting.
+  protocol: "DDR4"
+
+  submodules:
+    - name: "refresh_controller"
+      description: >
+        Generates a periodic refresh request every tREFI_CYCLES. Asserts ref_req
+        until ref_ack is received, then resets the interval counter and resumes
+        counting.
+
+      design_type: "fsm"
+      type: "fsm"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "ref_ack"
+          direction: "input"
+          width: 1
+          description: "Refresh acknowledge pulse from the downstream scheduler"
+        - name: "ref_req"
+          direction: "output"
+          width: 1
+          description: "Refresh request signal asserted while waiting for acknowledge"
+
+      parameters:
+        - name: "tREFI_CYCLES"
+          default: 7800
+
+      counters:
+        - name: "counter"
+          width: "auto"
+          increment_condition: "state == IDLE"
+          reset_on_transition: true
+
+      outputs:
+        ref_req: "state == REQUEST"
+
+      state_machine:
+        states:
+          - "IDLE"
+          - "REQUEST"
+        reset_state: "IDLE"
+        transitions:
+          # Use the literal default value here because validator.py and
+          # fsm_generator.py accept integer-literal comparisons directly after
+          # expand_spec.py substitutes the JEDEC-derived cycle count.
+          - from: "IDLE"
+            to: "REQUEST"
+            condition: "counter >= {tREFI_cycles}"
+
+          - from: "REQUEST"
+            to: "IDLE"
+            condition: "ref_ack == 1"
+
+      output_overrides:
+        ref_req: "(current_state == REQUEST)"
+
+      implementation_constraints:
+        - "exactly two states"
+        - "counter increments only while in IDLE"
+        - "counter resets on any state transition"
+        - "ref_req asserted only in REQUEST"
+        - "no queues or scheduling logic"
+        - "fully self-contained FSM"
+
+      invariants:
+        - "FSM has exactly 2 states"
+        - "ref_req == (current_state == REQUEST)"
+        - "counter increments only in IDLE"
+        - "counter resets after REQUEST -> IDLE transition"
+        - "counter resets after IDLE -> REQUEST transition"
+
+  timer_parameters:
+    tREFI_cycles: "timing_cycles.tREFI"
+
+  interfaces: []
+
+# -------------------------------------------------------------------------------
+# Feature: request_queue
+#
+# Indexed request buffer used between wrapper-level address decode and the
+# scheduler. This is intentionally not a strict FIFO; scheduler can select any
+# valid slot in later phases.
+# -------------------------------------------------------------------------------
+
+request_queue:
+  description: >
+    Parameterized indexed request queue. Incoming transactions are decoded into
+    request_t before enqueue. Entries persist until the scheduler-selected index
+    is explicitly dequeued.
+  protocol: "DDR4"
+
+  submodules:
+    - name: "request_queue"
+      module_design_name: "ddr4_request_queue"
+      description: >
+        Fixed-depth indexed request queue with first-free insertion and
+        explicit index-based removal. No shifting and no FIFO ordering guarantee.
+
+      design_type: "datapath"
+      type: "datapath"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "clk"
+          direction: "input"
+          width: 1
+          description: "Controller clock"
+        - name: "rst_n"
+          direction: "input"
+          width: 1
+          description: "Active-low synchronous reset"
+        - name: "enq_valid"
+          direction: "input"
+          width: 1
+          description: "Valid enqueue request"
+        - name: "enq_req"
+          direction: "input"
+          width: 51
+          description: "Packed request_t enqueue payload; validity is carried only by req_valid"
+        - name: "enq_ready"
+          direction: "output"
+          width: 1
+          description: "High when any queue slot is free"
+        - name: "req_array"
+          direction: "output"
+          width: 204
+          description: "DEPTH-entry request_t array, DEPTH defaults to 4"
+        - name: "req_valid"
+          direction: "output"
+          width: 4
+          description: "Per-entry valid bits"
+        - name: "sel_idx"
+          direction: "input"
+          width: 2
+          description: "Scheduler-selected entry index"
+        - name: "deq_en"
+          direction: "input"
+          width: 1
+          description: "Clear selected entry when asserted"
+
+      request_struct:
+        typedef_name: "request_t"
+        packed: true
+        fields:
+          - {name: "bank", width: 2}
+          - {name: "row", width: 10}
+          - {name: "col", width: 6}
+          - {name: "is_write", width: 1}
+          - {name: "wdata", width: 32}
+
+      behavior:
+        depth_default: 4
+        request_struct:
+          typedef_name: "request_t"
+          packed: true
+          fields:
+            - {name: "bank", width: 2}
+            - {name: "row", width: 10}
+            - {name: "col", width: 6}
+            - {name: "is_write", width: 1}
+            - {name: "wdata", width: 32}
+        rules:
+          - "request_t does not contain a valid field; req_valid is the only validity source"
+          - "enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx in the same cycle"
+          - "enqueue inserts into the lowest-index free slot; if the queue is full and deq_en is asserted, enqueue inserts at sel_idx"
+          - "if enqueue and dequeue target the same index in one clock cycle, enqueue wins and the new request remains valid"
+          - "define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)"
+          - "suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)"
+          - "deq_en clears req_valid[sel_idx] only when no same-index enqueue wins"
+          - "entries never shift"
+          - "entries persist until explicitly dequeued"
+
+      implementation_constraints:
+        - "DEPTH parameter defaults to 4"
+        - "use request_t for enq_req and req_array entries"
+        - "do not include a valid field inside request_t"
+        - "do not implement FIFO shifting"
+        - "do not drop a request unless deq_en clears its selected slot"
+        - "update entry data and req_valid with explicit next-state ordering so same-index enqueue/dequeue is deterministic"
+        - "generated RTL must include an explicit reuse_slot signal; do not rely on assignment ordering between deq and enq writes"
+
+      invariants:
+        - "req_valid is the sole validity source"
+        - "enq_ready == OR of free slots, plus same-cycle deq slot reuse"
+        - "first free slot receives enq_req; full queue plus deq_en inserts at sel_idx"
+        - "same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload"
+        - "reuse_slot suppresses the dequeue clear so the target entry never has an intermediate invalid state"
+        - "one enqueue per cycle maximum"
+        - "one dequeue per cycle maximum"
+
+  timer_parameters: {}
+
+  interfaces: []
+
+# -------------------------------------------------------------------------------
+# Feature: scheduler
+#
+# Queue scheduler. Step 2 policy selects the first row-hit request when one is
+# present, otherwise falls back to the first valid request. It holds the
+# selected index while downstream command/timing readiness blocks issue.
+# -------------------------------------------------------------------------------
+
+scheduler:
+  description: >
+    Queue-aware scheduler. It selects the lowest-index row-hit request when any
+    row-hit entry is present, otherwise selects the lowest-index valid request,
+    and holds the selected index stable while command or timing readiness
+    blocks issue.
+  protocol: "DDR4"
+
+  submodules:
+    - name: "scheduler"
+      description: >
+        Step-2 row-hit-aware request scheduler. It exposes the request queue
+        arrays plus wrapper-provided open-row state, selects the first row-hit
+        entry when available, falls back to the first valid entry, and retries
+        the same selected entry until the wrapper reports command and timing
+        success.
+
+      design_type: "datapath"
+      type: "datapath"
+      scheduler_mode: "queue_row_hit_first"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "ref_req"
+          direction: "input"
+          width: 1
+          description: "Refresh request input"
+        - name: "cmd_ready"
+          direction: "input"
+          width: 1
+          description: "Command interface ready signal"
+        - name: "timing_ok"
+          direction: "input"
+          width: 1
+          description: "Timing checks allow selected request to issue"
+        - name: "bank_active"
+          direction: "input"
+          width: 4
+          description: "Wrapper-provided per-bank row-open status used for row-hit detection"
+        - name: "bank_open_row"
+          direction: "input"
+          width: 40
+          description: "Wrapper-provided open row per bank; four 10-bit rows indexed by request bank"
+        - name: "req_array"
+          direction: "input"
+          width: 204
+          description: "DEPTH-entry request_t array from request queue"
+        - name: "req_valid"
+          direction: "input"
+          width: 4
+          description: "Per-entry request-valid bits from request queue"
+        - name: "sel_idx"
+          direction: "output"
+          width: 2
+          description: "Selected queue entry index"
+        - name: "issue_valid"
+          direction: "output"
+          width: 1
+          description: "Selected request is valid and should be retried until accepted"
+        - name: "issue_ref"
+          direction: "output"
+          width: 1
+          description: "Refresh issue pulse gated by cmd_ready and timing_ok"
+        - name: "issue_txn"
+          direction: "output"
+          width: 1
+          description: "Selected queue transaction issue pulse gated by cmd_ready and timing_ok"
+
+      request_struct:
+        typedef_name: "request_t"
+        packed: true
+        fields:
+          - {name: "bank", width: 2}
+          - {name: "row", width: 10}
+          - {name: "col", width: 6}
+          - {name: "is_write", width: 1}
+          - {name: "wdata", width: 32}
+
+      behavior:
+        depth_default: 4
+        num_banks: 4
+        policy: "row_hit_then_first_valid_lowest_index"
+        row_hit_condition: "row_hit[i] = req_valid[i] && bank_active[req_array[i].bank] && (bank_open_row[req_array[i].bank] == req_array[i].row)"
+        priority_rule:
+          - "select the lowest-index row-hit request if any row-hit request exists"
+          - "otherwise select the lowest-index valid request"
+        blocking_policy: "lock selected index and hold it until issue_valid && cmd_ready && timing_ok succeeds"
+        request_struct:
+          typedef_name: "request_t"
+          packed: true
+          fields:
+            - {name: "bank", width: 2}
+            - {name: "row", width: 10}
+            - {name: "col", width: 6}
+            - {name: "is_write", width: 1}
+            - {name: "wdata", width: 32}
+
+      implementation_constraints:
+        - "compute row_hit[i] from req_valid[i], req_array[i].bank, req_array[i].row, bank_active, and bank_open_row"
+        - "select the lowest-index row-hit request when any row-hit request exists"
+        - "fallback to the lowest-index valid request when no row-hit request exists"
+        - "scan queue entries in ascending index order"
+        - "do not implement reordering beyond row-hit selection versus first-valid fallback"
+        - "do not switch selected request while blocked"
+        - "do not unlock or reselect merely because req_valid changes; lock clears only on successful_issue"
+        - "do not remove queue entries in scheduler"
+        - "do not use txn_valid or any direct transaction input as a bypass"
+        - "all transaction issues must come from req_array plus req_valid"
+        - "issue_ref must be gated by ref_req && cmd_ready && timing_ok"
+        - "issue_ref and issue_txn must be mutually exclusive"
+        - "when ref_req, issue_valid, cmd_ready, and timing_ok are all true, refresh has priority and issue_txn must be 0"
+        - "refresh priority cycles must not create a new transaction lock"
+        - "transaction lock acquisition requires !ref_req"
+        - "candidate_success is candidate_valid && cmd_ready && timing_ok && !ref_req"
+        - "candidate_blocked is candidate_valid && !ref_req && !candidate_success"
+        - "new transaction lock acquisition requires candidate_blocked"
+        - "do not create a transaction lock when the selected request issues immediately"
+        - "issue_valid remains asserted for the selected valid entry while blocked"
+
+      invariants:
+        - "sel_idx holds stable while issue_valid && (!cmd_ready || !timing_ok)"
+        - "successful transaction issue is issue_valid && cmd_ready && timing_ok"
+        - "row_hit[i] is true only when req_valid[i] is true, bank_active[req_array[i].bank] is true, and bank_open_row[req_array[i].bank] equals req_array[i].row"
+        - "lowest row-hit index is selected when at least one row-hit request exists and no request is already locked"
+        - "lowest valid index is selected when no row-hit request exists and no request is already locked"
+        - "locked selection clears only after successful transaction issue"
+        - "refresh issue is ref_req && cmd_ready && timing_ok"
+        - "issue_txn is issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref"
+        - "successful transaction issue is issue_valid && cmd_ready && timing_ok && !ref_req && !issue_ref"
+        - "successful transaction issue must not assert in a refresh-priority cycle"
+        - "if already locked and refresh arrives, the lock may remain but no transaction issue occurs until refresh is no longer winning arbitration"
+        - "an unlocked selected request that issues immediately must not be retained as a stale lock"
+        - "scheduler has no legacy transaction bypass path"
+        - "scheduler never writes req_array or req_valid"
+        - "issue_txn is a one-cycle successful-issue pulse for the selected queue entry"
+
+  timer_parameters: {}
+
+  interfaces: []
+
+# -------------------------------------------------------------------------------
+# Feature: scheduler_round_robin
+#
+# 2-input arbiter between refresh and normal transactions with round-robin
+# fairness applied only when both requestors contend and cmd_ready is asserted.
+# The turn flips only after a successful contested issue.
+# -------------------------------------------------------------------------------
+
+scheduler_round_robin:
+  description: >
+    Two-input arbiter with round-robin contention resolution. Refresh and
+    transaction requests are served directly when uncontended. When both
+    requestors are valid and cmd_ready is asserted, the winner is selected
+    by a one-bit turn encoded in the FSM state. The turn flips only after
+    a successful contested issue.
+  protocol: "DDR4"
+
+  submodules:
+    - name: "scheduler"
+      description: >
+        Two-input arbiter with round-robin contention resolution. Reset
+        deterministically prefers refresh for the first contention after
+        reset. Uncontested issues do not rotate the turn.
+
+      design_type: "fsm"
+      type: "fsm"
+      scheduler_mode: "round_robin"
+
+      clock:
+        name: "clk"
+
+      reset:
+        name: "rst_n"
+        active_low: true
+        synchronous: true
+
+      ports:
+        - name: "ref_req"
+          direction: "input"
+          width: 1
+          description: "Refresh request input"
+        - name: "txn_valid"
+          direction: "input"
+          width: 1
+          description: "Normal transaction valid input"
+        - name: "cmd_ready"
+          direction: "input"
+          width: 1
+          description: "Command interface ready signal"
+        - name: "issue_ref"
+          direction: "output"
+          width: 1
+          description: "One-cycle pulse to issue a refresh command"
+        - name: "issue_txn"
+          direction: "output"
+          width: 1
+          description: "One-cycle pulse to issue a normal transaction command"
+
+      state_machine:
+        states:
+          - "PREFER_REF"
+          - "PREFER_TXN"
+          - "ISSUE_REF_TO_REF"
+          - "ISSUE_REF_TO_TXN"
+          - "ISSUE_TXN_TO_REF"
+          - "ISSUE_TXN_TO_TXN"
+        reset_state: "PREFER_REF"
+        transitions:
+          - from: "PREFER_REF"
+            to: "ISSUE_REF_TO_TXN"
+            condition: "ref_req == 1 && txn_valid == 1 && cmd_ready == 1"
+
+          - from: "PREFER_REF"
+            to: "ISSUE_REF_TO_REF"
+            condition: "ref_req == 1 && cmd_ready == 1"
+
+          - from: "PREFER_REF"
+            to: "ISSUE_TXN_TO_REF"
+            condition: "txn_valid == 1 && cmd_ready == 1"
+
+          - from: "PREFER_TXN"
+            to: "ISSUE_TXN_TO_REF"
+            condition: "ref_req == 1 && txn_valid == 1 && cmd_ready == 1"
+
+          - from: "PREFER_TXN"
+            to: "ISSUE_REF_TO_TXN"
+            condition: "ref_req == 1 && cmd_ready == 1"
+
+          - from: "PREFER_TXN"
+            to: "ISSUE_TXN_TO_TXN"
+            condition: "txn_valid == 1 && cmd_ready == 1"
+
+          - from: "ISSUE_REF_TO_REF"
+            to: "PREFER_REF"
+            condition: "1"
+
+          - from: "ISSUE_REF_TO_TXN"
+            to: "PREFER_TXN"
+            condition: "1"
+
+          - from: "ISSUE_TXN_TO_REF"
+            to: "PREFER_REF"
+            condition: "1"
+
+          - from: "ISSUE_TXN_TO_TXN"
+            to: "PREFER_TXN"
+            condition: "1"
+
+      output_overrides:
+        issue_ref: "(current_state == ISSUE_REF_TO_REF) || (current_state == ISSUE_REF_TO_TXN)"
+        issue_txn: "(current_state == ISSUE_TXN_TO_REF) || (current_state == ISSUE_TXN_TO_TXN)"
+
+      implementation_constraints:
+        - "no queues"
+        - "no buffering"
+        - "no counters"
+        - "keep FSM minimal"
+        - "cmd_ready gates all issuance"
+        - "round-robin fairness applies only when ref_req and txn_valid are both asserted"
+        - "rotate the turn only after a successful contested issue"
+        - "do not rotate the turn after uncontested issues"
+        - "do not embed timing-enforcement logic in the scheduler"
+
+      invariants:
+        - "PREFER_REF and PREFER_TXN encode the round-robin turn"
+        - "reset enters PREFER_REF so refresh wins the first contention after reset"
+        - "if ref_req == 0 and txn_valid == 0, no issue state is entered"
+        - "if ref_req == 1 and txn_valid == 0 and cmd_ready == 1, issue_ref is asserted"
+        - "if ref_req == 0 and txn_valid == 1 and cmd_ready == 1, issue_txn is asserted"
+        - "if cmd_ready == 0, no issue state is entered"
+        - "under contention in PREFER_REF, refresh wins and the next contention preference becomes transaction"
+        - "under contention in PREFER_TXN, transaction wins and the next contention preference becomes refresh"
+        - "uncontested issues do not change the contention preference"
+        - "ISSUE_REF_TO_REF and ISSUE_REF_TO_TXN are one-cycle states"
+        - "ISSUE_TXN_TO_REF and ISSUE_TXN_TO_TXN are one-cycle states"
+        - "issue_ref is asserted only in ISSUE_REF_TO_REF or ISSUE_REF_TO_TXN"
+        - "issue_txn is asserted only in ISSUE_TXN_TO_REF or ISSUE_TXN_TO_TXN"
+
+  timer_parameters: {}
+
+  interfaces: []

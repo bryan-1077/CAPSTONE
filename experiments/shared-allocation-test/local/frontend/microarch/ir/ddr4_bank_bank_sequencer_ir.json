@@ -1,0 +1,198 @@
+{
+  "design_name": "ddr4_bank_bank_sequencer",
+  "design_type": "fsm",
+  "clock": {
+    "name": "clk",
+    "frequency_mhz": null
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": true
+  },
+  "ports": [
+    {
+      "name": "cmd_valid",
+      "direction": "input",
+      "width": 1,
+      "description": "Command is valid and ready to issue"
+    },
+    {
+      "name": "cmd_type",
+      "direction": "input",
+      "width": 2,
+      "description": "0=ACTIVATE, 1=READ, 2=WRITE, 3=PRECHARGE"
+    },
+    {
+      "name": "tRCD_done",
+      "direction": "input",
+      "width": 1,
+      "description": "From activate_fsm: tRCD delay satisfied"
+    },
+    {
+      "name": "tRAS_done",
+      "direction": "input",
+      "width": 1,
+      "description": "From tRAS_fsm: minimum row active time satisfied"
+    },
+    {
+      "name": "tRP_done",
+      "direction": "input",
+      "width": 1,
+      "description": "From precharge_fsm: row precharge time satisfied"
+    },
+    {
+      "name": "bank_idle",
+      "direction": "output",
+      "width": 1,
+      "description": "High when bank is precharged and ready for ACTIVATE"
+    },
+    {
+      "name": "bank_active",
+      "direction": "output",
+      "width": 1,
+      "description": "High when a row is open and ready for READ or WRITE"
+    },
+    {
+      "name": "cmd_ready",
+      "direction": "output",
+      "width": 1,
+      "description": "High when the bank can accept a new command"
+    },
+    {
+      "name": "tRCD_start",
+      "direction": "output",
+      "width": 1,
+      "description": "Start signal to activate_fsm \u2014 asserted while ACTIVATING"
+    },
+    {
+      "name": "tRAS_start",
+      "direction": "output",
+      "width": 1,
+      "description": "Start signal to tRAS_fsm \u2014 asserted while row is open"
+    },
+    {
+      "name": "tRP_start",
+      "direction": "output",
+      "width": 1,
+      "description": "Start signal to precharge_fsm \u2014 asserted while PRECHARGING"
+    },
+    {
+      "name": "tRCD_ack",
+      "direction": "output",
+      "width": 1,
+      "description": "Ack to activate_fsm \u2014 clears its DONE state"
+    },
+    {
+      "name": "tRAS_ack",
+      "direction": "output",
+      "width": 1,
+      "description": "Ack to tRAS_fsm \u2014 clears its DONE state"
+    },
+    {
+      "name": "tRP_ack",
+      "direction": "output",
+      "width": 1,
+      "description": "Ack to precharge_fsm \u2014 clears its DONE state"
+    }
+  ],
+  "fsm": {
+    "states": [
+      "IDLE",
+      "ACTIVATING",
+      "ACTIVE",
+      "PRECHARGING"
+    ],
+    "transitions": [
+      {
+        "src": "IDLE",
+        "dst": "ACTIVATING",
+        "condition": {
+          "op": "&&",
+          "conditions": [
+            {
+              "left": {
+                "name": "cmd_valid"
+              },
+              "op": "==",
+              "right": {
+                "value": 1
+              }
+            },
+            {
+              "left": {
+                "name": "cmd_ready"
+              },
+              "op": "==",
+              "right": {
+                "value": 1
+              }
+            }
+          ]
+        },
+        "raw_condition": "cmd_valid == 1 && cmd_ready == 1"
+      },
+      {
+        "src": "ACTIVATING",
+        "dst": "ACTIVE",
+        "condition": {
+          "left": {
+            "name": "tRCD_done"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "tRCD_done == 1"
+      },
+      {
+        "src": "ACTIVE",
+        "dst": "PRECHARGING",
+        "condition": {
+          "left": {
+            "name": "tRAS_done"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "tRAS_done == 1"
+      },
+      {
+        "src": "PRECHARGING",
+        "dst": "IDLE",
+        "condition": {
+          "left": {
+            "name": "tRP_done"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "tRP_done == 1"
+      }
+    ],
+    "reset_state": "IDLE"
+  },
+  "metadata": {
+    "output_overrides": {
+      "cmd_ready": "(current_state == IDLE)",
+      "tRAS_ack": "(current_state == PRECHARGING)",
+      "tRAS_start": "(current_state == ACTIVE)",
+      "tRCD_ack": "(current_state == ACTIVE)",
+      "tRCD_start": "(current_state == ACTIVATING)",
+      "tRP_ack": "(current_state == IDLE)",
+      "tRP_start": "(current_state == PRECHARGING)"
+    },
+    "inferred_signal_widths": {
+      "cmd_valid": 1,
+      "cmd_ready": 1,
+      "tRCD_done": 1,
+      "tRAS_done": 1,
+      "tRP_done": 1
+    }
+  }
+}
