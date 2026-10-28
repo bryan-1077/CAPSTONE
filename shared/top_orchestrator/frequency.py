@@ -154,12 +154,41 @@ def select_frequency(config: RunConfig, run_dir: Path) -> RunConfig:
 def prepare_generation(config: RunConfig, run_dir: Path) -> RunConfig:
     """Select/snapshot specs, then choose frequency, before generation starts."""
     snapshot = run_dir / "approved_specs.yaml"
+    if config.intake is not None:
+        import yaml
+        from .specification_frontend import read_intake
+        record = read_intake(config.intake, "expand-spec", config.target_mhz)
+        from .timing_model import apply_timing_model
+        apply_timing_model({"timing_model": record["timing_model"]} if "timing_model" in record else {}, standard=True)
+        (run_dir / "intake.json").write_text(json.dumps(record, indent=2) + "\n")
+        description = run_dir / "description.txt"
+        description.write_text(record["original_text"], encoding="utf-8")
+        code = stream_command(spec_command(snapshot) + ["--text-file", str(description)],
+                              run_dir / "spec_selection.log")
+        if code or not snapshot.is_file():
+            raise ValueError("Standard interpretation did not produce confirmed specs")
+        spec = yaml.safe_load(snapshot.read_text())
+        frequency = positive_mhz(str(record["target_mhz"]))
+        if any(not math.isclose(value, frequency, rel_tol=1e-6)
+               for _, value in clock_requirements(spec)):
+            raise ValueError("Interpreted controller clock conflicts with confirmed intake")
+        spec["controller_clock"] = {"frequency_mhz": frequency}
+        spec = apply_timing_model(spec, standard=True)
+        snapshot.write_text(yaml.safe_dump(spec, sort_keys=False))
+        return replace(config, input_yaml=snapshot, intake=run_dir / "intake.json", target_mhz=frequency,
+                       target_mhz_source=record.get("target_mhz_source", "confirmed intake"))
     if config.input_yaml is None:
         code = stream_command(spec_command(snapshot), run_dir / "spec_selection.log")
         if code or not snapshot.is_file():
             raise ValueError("Spec selection did not produce approved specs; generation stopped.")
     else:
         snapshot.write_bytes(config.input_yaml.read_bytes())
+    import yaml
+    from .timing_model import apply_timing_model
+    # Preserve legacy input snapshots byte-for-byte; record their established
+    # expansion semantics separately rather than rewriting supplied configs.
+    timing = apply_timing_model(yaml.safe_load(snapshot.read_text()), standard=True)["timing_model"]
+    (run_dir / "timing_model.json").write_text(json.dumps(timing, indent=2) + "\n")
     selected = replace(config, input_yaml=snapshot)
     if config.skip_verification and config.no_backend:
         return selected

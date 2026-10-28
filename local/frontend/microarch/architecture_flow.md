@@ -2256,38 +2256,313 @@ saved candidate or changing legacy/FSM defaults. See the
 
 ## Planned top-orchestrator integration (October 27, 2026)
 
-**Status: proposed, not implemented.** This records the integration plan for
+**Status: checkpoint 1 of 4 complete; checkpoint 2 publication, consumer preflight and module invocation/receipt adapters implemented and tested offline; deployed acceptance pending.** This records the integration plan for
 [`shared/top_orchestrator`](../../../shared/top_orchestrator). The frontend can
 already produce isolated microarchitecture builds; selecting and carrying those
-builds through the top orchestrator still requires the work below. Example flags
-in this section describe the proposed interface, not commands available today.
+builds through downstream verification/backend still requires the work below.
+The implementation status below distinguishes available commands from planned behavior.
 
-### Explicit route selection and legacy preservation
+### Two frontend routes and shared CLI terminology
 
 Add an orchestrator selector:
 
 ```text
---frontend-flow expand-spec   # default: existing frontend route
---frontend-flow microarch     # explicit opt-in: new LLM specification route
+--frontend-flow expand-spec     # default: existing expand_spec frontend
+--frontend-flow specification   # full system-specification/microarchitecture frontend
 ```
+
+These are the only two top-orchestrator frontend routes. Present **Standard**
+(`expand-spec`) and **Experimental** (`specification`) to users. Keep the internal
+values in CLI arguments and state; help and logs should show the friendly names
+alongside those values so users can identify their artifacts.
+`expand_spec` remains the existing implementation/script name; its CLI spelling
+is `expand-spec`. Microarchitecture is an internal design stage of the
+`specification` route, not a third orchestrator route or selector alias.
 
 Keep the existing expand-spec scripts, generation nodes, publication path, BIST
 and repair behavior unchanged. Introduce small dispatch points in the shared
-orchestrator and separate microarchitecture adapters. Persist the selection and
+orchestrator and separate specification-route adapters. Persist the selection and
 build identity in run state; preserve them through retries, debug/recheck,
 verification and backend transitions. Existing positional `RunConfig` construction
 must remain compatible when adding configuration fields.
 
-The new route should start with text intake followed by
+The `specification` route should start with text intake followed by
 `run_flow.py --specification`, which generates the system specification and then
-decomposes its architecture. Do not blindly forward `--microarch`: that frontend
-flag selects the distinct direct architecture-proposal route. Approved
-architecture resume should be an explicit supported input mode.
+decomposes its architecture, performs the required review/approval stages, and
+generates module RTL and structural integration. The standalone frontend's
+`--microarch` direct-proposal flag is outside the orchestrator interface;
+`--microarch-only` is an export/review stop control, not a frontend route.
+Approved architecture resume should be a supported input mode within
+`specification`, preserving its approval gates and revision identity.
+
+Both routes should present the same normal user journey:
+
+```text
+Text description + constraints + target controller frequency
+    → selected frontend → frontend checks → verification → backend → GDSII checks
+```
+
+Share text-description intake, target-frequency selection, run controls, progress
+vocabulary and artifact discovery. Route-specific adapters translate these inputs
+into the existing expansion or full specification/microarchitecture process.
+Users should not need to supply internal frontend flags to obtain the full flow.
+Both routes retain their supported design scope; an unsupported request must
+produce a clear diagnostic rather than silently change routes or requirements.
+
+#### Shared intake and implementation boundaries
+
+Use one interaction shell with route-specific guidance and interpreters. Standard
+retains its supported-feature list, existing slowest/medium/fastest presets and
+interpreted configuration preview. Presets remain scoped to Standard and must
+not silently select a controller frequency. Experimental accepts open-ended text:
+"Describe what you want to build and any requirements that matter. Leave
+implementation choices open; planning will propose them for review." Interfaces,
+buffering, ordering, reset and timing are optional examples, not required fields.
+Ask follow-up questions only when missing information prevents meaningful planning.
+
+Preserve the original description intact. Experimental passes it to the existing
+specification planner without another LLM summarization/extraction step. Capture
+the route, explicit constraints, selected frequency and its source, and input
+references in a shared intake record. Confirm the submitted request and allow
+revision before continuing. This confirmation is separate from generated system
+specification/architecture approval; proposed defaults and unspecified choices
+must be visible at that later review. Normal execution should guide users through
+the gates; manual export/resume commands are advanced input modes.
+
+Interactive intake offers Standard/Experimental; Standard is the default and
+existing noninteractive commands retain their meaning. Shared intake changes may
+wrap legacy preparation while preserving its generation, checks and repair
+semantics. Resume retains route and approved inputs; conflicting changes require
+a new revision. Selected frequency is design intent, not achieved timing evidence.
+
+Before downstream integration, define a common frontend result identifying the
+selected build/revision, top, clock, ordered RTL inventory, contracts, requirements
+and check evidence, with route-specific evidence attached. Resolve structural
+wrapper representation and deployed verification capabilities at the downstream
+compatibility checkpoint. Incomplete verification must block backend readiness.
+
+**Checkpoint 1 implementation:** normal terminal generation now offers shared
+Standard/Experimental intake. Enter a multiline description, select a controller
+clock, then confirm or edit the request. Explicit `--input YAML`, checks-only and
+scripted legacy commands retain their established entry behavior. Text files use
+the same intake through `--input description.txt`. Standalone preparation remains
+available through
+`python -m shared.top_orchestrator --prepare-intake request.json`, optionally with
+`--frontend-flow expand-spec|specification`, `--input description.txt` and
+`--target-mhz MHZ`. It saves the original text and confirmed request metadata
+without design approval. Numeric/default frequency selection makes no model
+calls; typing `discuss` explicitly requests model advice and may incur cost. The
+advisor never selects a frequency. `--plan` performs no writes or prompts.
+Standard execution without shared intake remains on its existing path. Confirmed
+Standard records now work with `--intake request.json`: the original description
+is snapshotted and passed to the existing feature interpreter using `--text-file`,
+which retains its interpreted YAML preview and confirmation. Declining or failing
+interpretation stops rather than repeating paid extraction of unchanged text.
+The intake clock is checked against interpreted clock constraints and added to the
+confirmed configuration; it is also retained as the backend target. Shared
+frequency advice and confirmation/edit are implemented.
+Confirmed Experimental intake can feed the isolated frontend adapter:
+
+```sh
+python -m shared.top_orchestrator --intake request.json --no-verif --no-backend --plan
+python -m shared.top_orchestrator --intake request.json --no-verif --no-backend
+```
+
+The second command starts paid frontend generation and remains user-operated.
+The adapter snapshots the record and full description, adds the controller clock
+as an explicit request constraint, and uses run-owned source/review/repair/build
+directories. It invokes the existing automated specification review and bounded
+semantic repair gates, then requires generation, approval, integration-lint and
+authenticated RTL-phase handoff evidence. It does not execute local behavioral
+simulation, legacy BIST, legacy publication, remote verification, backend or outer
+repair retries. Route/frequency overrides conflicting with intake are rejected.
+Both shared-intake routes now emit `frontend_result.json` after successful checks:
+Standard indexes its authenticated published mailbox, while Experimental indexes
+its authenticated handoff/build. The common index records route, top, target clock,
+revision, hashed RTL/contracts, requirements references and check evidence without
+claiming backend readiness. Experimental retains handoff compile order; Standard
+references its native manifest without claiming sorted files are a compile order.
+Existing Standard commands without intake retain their publication behavior.
+Fresh Experimental `--cache` is rejected because the underlying frontend forbids
+combining cache with automated review/semantic repair. Approved architecture input
+can use native cache-only mode, or `--resume-build` to copy reviewed caches from a
+prior build and generate only missing modules. Cache misses under resume can make
+paid calls; resume is not an offline guarantee. Conflicting cache/resume flags are
+rejected. The current text adapter uses the existing default
+`ddr4_controller_top` memory-controller design category; YAML requests may supply
+a different design name/category.
+
+Experimental supports `--input` request YAML, specification package YAML, and
+specification-derived architecture YAML. YAML mode requires `--target-mhz` so a
+DDR data rate is never used as the controller clock. Request clocks are checked
+before generation; the selected clock is injected into new requests. Package and
+approved inputs preserve their contracts and reject conflicts with explicit
+controller-clock constraints in their generation provenance; a target alone does
+not prove cycle-based timing contracts or achieved physical timing. Package
+snapshots retain all compiler-consumed documents plus the timing library with
+relative paths intact and record file hashes. Documentation-only scope links are
+metadata, not compiler inputs.
+
+```sh
+# Package: deterministic lowering, then paid automated review/repair and RTL.
+python -m shared.top_orchestrator --frontend-flow specification \
+  --input local/frontend/microarch/specification/ddr4_fifo/package.yaml \
+  --target-mhz 200 --no-verif --no-backend --plan
+
+# Approved architecture: exact revision-bound approval, optional copied build.
+python -m shared.top_orchestrator --frontend-flow specification \
+  --input /path/to/architecture.yaml --spec-approval /path/to/approval.json \
+  --resume-build /path/to/prior/build --target-mhz 200 --no-verif --no-backend --plan
+```
+
+Approved inputs are validated by the native compiler before execution and again
+from the owned snapshot. Resume requires a matching architecture and rejects
+symlinked builds, altered structural tops and module RTL differing from its
+reviewed cache. It leaves original builds untouched and stops for scoped recheck
+rather than overwriting intentional patches. Usage evidence for explicit build
+directories is stored beside the build, within the orchestrator-owned frontend.
+
+Offline acceptance includes real package snapshot/lowering, exact approval and
+resume, cached module RTL, Verilator integration lint, authenticated handoff and
+common result export using a small register fixture with networking disabled.
+It rejects stale approval and tampered RTL; this is integration evidence, not
+controller behavior or system-verification coverage. Legacy manifest-refresh tests
+now create their own controller fixture instead of depending on global generated
+files. The three saved-controller handoff tests now explicitly declare their
+generated-snapshot prerequisite; with the existing mailbox fixture test, four
+tests skip when that legacy snapshot is absent. The full orchestrator suite runs
+127 tests successfully (four skips), and 28 focused frontend intake/resume/handoff
+regressions pass. The interactive cleanup/plan checks also pass after the final
+CLI cleanup change. Python compilation and whitespace checks pass.
+These implementation checks made no paid calls. Subsequent user-operated live
+acceptance completed through resume; see the live acceptance update below.
+Checkpoint 1 is complete, with behavioral verification reserved for later stages.
+
+To start the normal shared interactive frontend-only experience:
+
+```sh
+python -m shared.top_orchestrator --no-verif --no-backend
+```
+
+This prompts for Standard/Experimental and then continues into generation after
+confirmation; it can make paid calls. For the already saved Experimental request,
+the earlier `--intake request.json --no-verif --no-backend` command remains valid.
+Adding `--plan` previews without running. No additional preparation run is needed
+for an already confirmed intake record.
+
+Planned common CLI terms:
+
+| Option | Shared meaning |
+| --- | --- |
+| `--frontend-flow expand-spec\|specification` | Choose the frontend implementation; default to `expand-spec`. |
+| `--input PATH` | Supply a text description or route-compatible YAML; omission starts the shared interactive intake. |
+| `--target-mhz MHZ` | Select the target controller clock for frontend design constraints and backend implementation; omission uses the shared frequency-selection interaction. |
+| `--plan` | Show the selected route, input preparation, checks and downstream stages without execution or writes. |
+
+Keep existing verification/backend skip controls and cache controls available
+where supported, with consistent help text. A control whose existing meaning is
+route-specific (for example `--no-bist`) must be documented and validated rather
+than silently repurposed. Checks-only, debug and resume must resolve the selected
+build without asking users to reconstruct internal output paths.
 
 ### Inputs, run ownership and local checks
 
-Add separate input preparation alongside the existing `frequency.py` preparation.
-Support plain text and specification request YAML, and snapshot all referenced
+#### Functional controller timing scope
+
+**Live acceptance update:** run `20261027T233850Z_47d4ee60` completed the approved
+design after two earlier provider HTTP 524 interruptions. It reused prior reviewed
+module caches, completed the missing RTL, passed Verilator integration lint,
+exported/authenticated the RTL-phase handoff and emitted `frontend_result.json`.
+Its RTL revision is
+`bbbfb0bd5b51f003f52fd74cdeeec0af9c9e3c3db41b4249c503309fa0d1fc2c`.
+The successful invocation recorded six calls and estimated cost $0.987079;
+this excludes earlier invocations and unknown usage on timed-out calls.
+Behavioral verification remains `not_run`, consumer compatibility remains
+`adapter_required`, and backend readiness is not established. Checkpoint 2 remains
+mailbox publication and one-module verification compatibility.
+
+**Follow-up: provider timeout resilience (planned).** Earlier runs
+`20261027T232243Z_92d77b7f` and `20261027T233250Z_75a902cd` received HTTP 524 during
+command-engine and timing RTL generation respectively, approximately 125–126
+seconds into requests with a 180-second client timeout. Both logged a
+`Retry-After: 120` header. These observations do not establish rate limiting as
+the root cause; increasing the client timeout alone cannot prevent a returned
+upstream HTTP error. Preserve status, elapsed time, response headers and provider
+request IDs when available. Investigate request latency/prompt size and provider
+streaming/async capabilities before selecting a mitigation. Any automatic retry
+should be narrowly scoped to the failed request, use bounded attempts/wall time
+and backoff informed by Retry-After, report uncertain/possibly duplicated billing,
+and preserve reviewed caches and exact architecture identity. Keep transient
+transport handling distinct from semantic repair and malformed-response recovery;
+define one shared outer budget to avoid multiplying retry loops. Model fallback
+requires an explicit policy; all recovered RTL must still pass normal lint/review.
+Exercise transport recovery offline before another paid experiment. No automatic
+524 retry or model fallback was added as part of checkpoint 1.
+
+The first live orchestrator trial (`20261027T230928Z_884ecd0b`) stopped during
+system planning: the model interpreted DDR4-3200 plus a 200 MHz controller target
+as a request for a physical 1600 MHz DDR domain and an unspecified 8:1 PHY ratio.
+One call was recorded (estimated $0.028248); no system stage was accepted and no
+RTL was generated. Its evidence remains unchanged. The trial exposed an implicit
+scope in Standard: `expand_spec.py` substitutes stored profile cycle counts while
+backend frequency selection separately sets implementation timing.
+
+Both orchestrator controller routes now explicitly use the versioned
+`project-functional-controller-v1` timing contract defined in
+[`timing_model.py`](../../../shared/top_orchestrator/timing_model.py):
+
+| Quantity | Meaning in this project model |
+| --- | --- |
+| DDR speed/profile | Select the project timing dictionary profile. |
+| Stored `timing_cycles` | Counts of controller clock edges, used unchanged for delays, windows, refresh intervals and refresh recovery. |
+| Dictionary clock/ns fields | Provenance for the stored profile counts; they do not introduce another RTL clock domain. |
+| Target controller MHz | Implementation/backend clock target; changing it does not rescale profile counts. |
+| Physical DDR throughput/timing | Requires a separate explicit contract; this model supplies no PHY, CDC, rate conversion or physical JEDEC compliance claim. |
+
+For example, DDR4-3200 `tRCD=22` remains 22 controller cycles, or 110 ns at
+200 MHz. Refresh intervals follow the same cycle abstraction; treating minimum
+delays conservatively does not establish valid physical refresh timing.
+
+New shared intake displays and records this scope. Existing saved intake records
+without it receive the same default when preparing a fresh controller request;
+their original description and frequency remain unchanged. New Experimental
+controller requests carry the complete versioned definition in `timing_model`,
+so ordinary constraint traceability includes it in planning, review and generated
+package/module context. Request fingerprints consequently change; previous failed
+responses are not treated as results for the new request. No global generator
+revision change is needed because the complete definition is part of request
+identity. Generic YAML requests receive no implicit DDR model.
+
+Standard shared-intake configuration records the same definition. Original
+Standard YAML inputs remain byte-for-byte snapshots, with their established scope
+recorded in a run-local `timing_model.json`. Both common frontend result indexes
+carry declared timing scope; historical Experimental packages without a declaration
+remain undeclared rather than being retroactively labeled. Existing package and
+approved-architecture sources are never rewritten to adopt this default.
+
+Explicit alternative timing scopes are preserved for Experimental planning.
+Standard rejects an explicit incompatible scope. A modified definition claiming
+the same version ID is rejected. Full original requirements remain authoritative:
+physical signaling, real link throughput, additional clocks or absolute-time
+requirements must be evaluated and reported as conflicting/unsupported when
+necessary. The existing unsupported-response path remains terminal; this change
+does not suppress the rejection or fabricate support for a PHY.
+
+Offline tests cover the original 3200/200 request, scope traceability in both
+planning prompts, unchanged Standard delay/refresh substitutions, input identity,
+explicit physical requirements and terminal unsupported responses. The original failed
+paid trial remains immutable. A later fresh request and resumed build completed
+live acceptance as recorded above. The
+orchestrator suite now runs 131 tests successfully (the same four missing-legacy-
+snapshot skips). Seven focused timing/Standard tests pass after the final input
+validation and prompt-budget assertions; compilation and whitespace checks pass.
+The saved `request.json` can be reused for a new user-operated run with the same
+command; the default timing contract is attached during fresh request preparation.
+
+Use shared intake and frequency selection with route-specific input preparation
+alongside the existing `frequency.py` preparation. Both routes accept a text
+description and constraints; preserve existing expand-spec YAML support and add
+specification request/package YAML support for the new route. Snapshot all referenced
 inputs for package-based requests. Copying only one YAML file is insufficient
 when it references other documents. Use a stable build directory owned by the
 orchestrator run, for example:
@@ -2308,10 +2583,16 @@ runs/<run-id>/frontend/
 Artifacts must be located from the actual selected build and repair result;
 repair can produce the final approved architecture under `repair/`. Do not copy
 results into global legacy output directories to satisfy existing consumers.
-Frequency selection must use the controller clock declared by the selected
-design, or an explicit user choice; DDR transfer rate is not controller frequency.
+Resolve the target controller frequency before generation and record its source.
+Pass the same selected value into frontend constraints and backend configuration;
+preserve existing expand-spec generation behavior while checking its declared
+clock constraints. Use an explicit user choice or the shared selection interaction
+informed by declared controller clocks. Surface conflicts with supplied or approved
+specifications explicitly; do not silently override locked operating requirements.
+DDR transfer rate is not controller frequency. Resume and direct downstream entry
+must validate the selected target against the published design's clock contract.
 
-The microarchitecture generation/check adapter should validate the selected
+The specification-route generation/check adapter should validate the selected
 build's integration lint and authenticated handoff. Local simulation requires an
 explicit compatible profile. Unsupported or unexecuted checks must be reported
 truthfully and must not count as verification passes. The legacy BIST runner,
@@ -2326,7 +2607,137 @@ those budgets are exhausted.
 
 ### Publication and downstream verification
 
-Add a separate microarchitecture mailbox publisher; retain the existing
+#### Checkpoint 2 implementation status
+
+`specification_mailbox.py` now publishes a separate immutable Experimental
+snapshot. New successful orchestrator Experimental generations automatically use
+this publisher and retain the mailbox in run state; Standard publication remains
+unchanged. Already completed builds can be published without regeneration:
+
+```sh
+python -m shared.top_orchestrator.specification_mailbox \
+  /path/to/completed/build /path/to/new/mailbox/revision_001 --target-mhz 200 \
+  --module MODULE_NAME --module-output /path/to/new/module-input
+```
+
+Publication checks native handoff authentication, revision-bound approval,
+generation/build status and actual integration-lint evidence. The portable native
+handoff and every referenced input are copied under `handoff/`, including embedded
+source/package snapshot, approval/review evidence, module YAML/IR/RTL, structural
+top, filelist and verification plan. Original hashes and revision identity remain
+intact. Explicit `rtl/` and `specs/` projections are checked against these native
+inputs. `verification_inventory.json` and `rtl/manifest.json` use the distinct
+`capstone.specification_rtl_inventory` schema, retain compile order and identify
+the wrapper as an **architecture-backed structural contract**. No wrapper YAML is
+invented and the wrapper is not omitted from inventory. This schema does not yet
+claim compatibility with the legacy controller system verifier or backend.
+
+The completed live build was published at
+`shared/mailbox/20261027T233850Z_47d4ee60/revision_001` with the same RTL revision
+`bbbfb0bd5b51f003f52fd74cdeeec0af9c9e3c3db41b4249c503309fa0d1fc2c`.
+One real host-adapter YAML/SV pair was prepared under
+`runs/20261027T233850Z_47d4ee60/module_compatibility/host_adapter/input/`.
+Its `source_context.json` retains full shared context, system obligations and
+parent identity; `snapshot.json` binds the pair to the full mailbox digest.
+
+The local `server/validation/requirement_verification.py` catalog now consumes
+structured source requirements, full verification obligations and behavioral
+contracts. Existing agent-facing `REQ-NNN` IDs remain available, with original
+source IDs and complete source objects retained through combined requirement
+results. The new fields do not earn static passes: they require explicit
+verification evidence. Legacy behavior/structure/FSM catalogs retain their prior
+IDs and results. The real host-adapter local catalog audit retained all seven
+source requirements and nine obligations; its report is
+`module_compatibility/host_adapter/local_catalog_audit.json` beside the run.
+This report explicitly records `agent_execution: not_run` and is not an agent pass.
+
+The deployed `server/validation/run_pipeline.py` entry point is absent from this
+checkout. A new explicit module-probe route checks its installed consumer before
+running agents. Ordinary legacy validation and backend paths continue to reject
+Experimental snapshots/module probes; module-only evidence never becomes system
+or backend approval. No real remote upload, agent invocation, paid call or backend
+run was performed while implementing these adapters.
+The full orchestrator suite passes 135 tests with the same four legacy-fixture
+skips; five focused publisher/consumer guard tests pass after the final guard
+addition. The real saved build's publication and module preparation used native
+handoff/approval validation. Python compilation and whitespace checks pass.
+
+#### Deployed preflight and one-module verification
+
+Use the full immutable mailbox as the source; the adapter prepares a fresh
+module-only YAML/SV/context snapshot for each invocation:
+
+```sh
+python -m shared.top_orchestrator validation \
+  --mailbox shared/mailbox/20261027T233850Z_47d4ee60/revision_001 \
+  --module-probe ddr4_controller_functional_3200_host_adapter \
+  --preflight-only
+```
+
+`--plan` previews with no writes/prompts/connections. `--preflight-only` uses the
+existing SSH/Slurm settings (and optional `--remote-config`) and asks for SSH
+credentials through the existing flow. It creates an isolated remote workspace
+and uploads the module inputs plus the runner/preflight helper; it does not
+deploy or overwrite the server's application code. The explicit probe selects
+module mode regardless of the ordinary system-verification default.
+
+The helper disables Python socket connections before importing the deployed
+reader and executing conventional pipeline `--help` discovery. It requires
+`SPECIFICATION_CATALOG_VERSION=1` and tests actual catalog/combined-result behavior
+against every source requirement, obligation and the full behavioral contract.
+Missing metadata or unexecuted obligations marked as passes stop before agents.
+The deployed entry point must advertise the module `--jobs` interface; this is
+CLI discovery, not proof of behavioral compatibility. Reader and pipeline hashes
+are recorded and checked for changes. Preflight has a 45-second helper bound and
+uses the shorter existing preflight Slurm/client budgets. A successful capability
+receipt has phase `consumer_preflight_complete`, no pipeline return code/summary,
+`system_verification: not_run` and `backend_ready: false`.
+
+After deployed preflight succeeds, run the same command **without**
+`--preflight-only` to execute the existing verification agents. That can make paid
+calls. Every executed invocation repeats preflight, then requires the normal
+stage/summary PASS gates plus one complete source-linked PASS requirement catalog
+in the actual generated reports. The local adapter independently reconstructs
+the expected catalog from the selected YAML and verifies the retrieved coverage
+and report digest. Missing obligations, changed source objects, unknown/untested
+statuses or a summary-only PASS do not establish module compatibility.
+Source-linked PASS rows must identify the simulation method and contain nonempty
+execution evidence; static-only or empty-evidence rows cannot satisfy this gate.
+
+Receipts bind invocation ID, isolated snapshot digest, parent mailbox digest,
+parent RTL revision, module name, reader/pipeline/helper hashes and reports.
+Parent authentication and exact YAML/SV/context projection checks occur before
+transfer and after collection. An executed PASS records `one_module_only` scope;
+it does not unlock backend or satisfy multi-module/system requirements. Existing
+module-agent report code may require deployment changes to retain source metadata;
+the adapter reports that incompatibility instead of weakening the coverage gate.
+
+Ten offline transport/receipt tests use real uploads/runner/report collection
+against local fake agents, including successful preflight and module execution,
+old-reader rejection, blocked network access during help, missing source evidence,
+NOT_TESTED obligations, input/consumer mutations, replayed identity and dry-run
+side effects. The full orchestrator suite passes 146 tests with the same four
+legacy-fixture skips. A separate local check of the real saved host-adapter pair
+retains all 17 source entries (seven requirements, nine obligations and one
+behavioral contract); `local_consumer_preflight_v1.json` explicitly identifies its
+CLI as an argparse-only fixture, not the deployed pipeline. Compilation and
+whitespace checks pass. Eleven focused probe/evidence tests pass after the final
+receipt-scope and executed-evidence checks. Step 2 live acceptance remains open until deployed
+preflight and a real one-module verification invocation succeed.
+
+The first user-operated deployed preflight, run
+`20261028T000324Z_ca955527` (October 27, 2026, 19:03 CDT), reached a Python 3.6.8
+Slurm worker and correctly rejected the installed reader for missing
+`SPECIFICATION_CATALOG_VERSION=1`. No verification agents ran. Deployment must
+include the complete updated `server/validation/requirement_verification.py`, not
+just the version constant. Result collection also reported a missing remote
+`result.json`; the reason is unconfirmed. Retrieval now retries only missing-file
+errors up to three fetches with 0.25/0.75-second delays, to tolerate possible
+cross-node filesystem visibility lag. It never restarts jobs/agents and does not
+retry permission/authentication failures. No remote deployment or rerun was made
+while adding this handling.
+
+Add a separate specification-route mailbox publisher; retain the existing
 `publish(...)` behavior for expand-spec. Publish the complete validated handoff
 and its referenced artifacts: module YAML/SV pairs, structural top, approved
 architecture/package, approval evidence, IR, compile order, requirements and event
@@ -2367,8 +2778,8 @@ must all refer to the exact same immutable published revision.
 
 | Area | Required integration |
 | --- | --- |
-| `contracts.py`, `__main__.py` | Route selection, persisted configuration, mode-specific argument validation and truthful `--plan` output. |
-| `frequency.py` and new input adapter | New text/request preparation and complete input snapshots; retain existing preparation for expand-spec. |
+| `contracts.py`, `__main__.py` | Two route names (`expand-spec`, `specification`), shared CLI help/intake, persisted configuration, mode-specific argument validation and truthful `--plan` output. |
+| `frequency.py` and new input adapter | Shared description/constraints/frequency journey, route-specific preparation, complete input snapshots and consistent frontend/backend clock constraints; retain existing expand-spec behavior. |
 | `nodes.py` and new frontend adapter | Isolated generation, local checks, bounded failure handling and build-scoped repair/recheck. |
 | `orchestrator.py` | Dispatch preparation, nodes and publication by route; retain build identity across transitions. |
 | `mailbox.py` and new publisher | Authenticate and publish the full microarchitecture handoff with explicit compatibility projections. |
@@ -2377,10 +2788,320 @@ must all refer to the exact same immutable published revision.
 
 ### Implementation checkpoints and acceptance evidence
 
-1. **Selectable isolated frontend.** Add the selector, new adapter, owned output
-   directory and accurate dry-run plan. Complete a frontend-only microarchitecture
+#### Explicit module verification scope protocol
+
+The frontend/orchestrator side now implements
+[module execution plans and scoped result validation](../../../shared/top_orchestrator/VERIFICATION_SCOPE_PROTOCOL.md)
+in `shared/top_orchestrator/verification_scope.py`. An authenticated draft starts
+unresolved; plan construction requires explicit routing review, full source
+coverage, method-specific checks and complete local-contract facet coverage.
+The plan retains rich requirement/obligation/contract records plus legacy YAML
+invariants/constraints/forbidden patterns. It records environment assumptions
+and local contributions separately from full-source dispositions. Multi-owner
+sources cannot be certified by isolated module simulation. Metadata and structural
+records no longer need fabricated simulation assertions under this new protocol.
+
+The version-1 scoped-result validator requires exact plan/revision/capability,
+every assigned check, resolved completed simulation test IDs and hashed contained
+artifact evidence. Deferred system records must explicitly remain `unverified`.
+It emits only local body-validation evidence, not remote invocation authentication
+or system/backend acceptance. This is a separate protocol: the current deployed
+all-source simulation collector remains unchanged until consumer support exists.
+
+The frontend-reviewed example for the real host-adapter publication preserves
+30 source records, assigns seven checks, and defers 17 full-source records to
+system verification. The portable bundle at
+`/tmp/capstone-host-scoped-consumer-bundle-20261028` keeps the original isolated
+YAML/SV/context snapshot unchanged, with an identity-bound execution plan beside
+it. The required consumer capability is `capstone.module_execution_plan.v1`, not
+the earlier requirement-reader version marker. Other modules need their own
+explicitly reviewed routing; no prose-classification heuristic was introduced.
+
+Single-module capability negotiation and request/result transport are now
+implemented behind `validation --module-probe MODULE --scope-plan PLAN.json`.
+The wrapper probes `--scope-capabilities` with Python networking disabled and
+requires `capstone.module_execution_plan.v1` plus the agreed
+`--execution-request`/`--execution-results` flags. It freezes plan/request bytes,
+binds helper and consumer-code hashes, and checks unchanged inputs/sidecars.
+The client validates downloaded archive/body/artifacts and the normal successful
+module summary/exit before saving authenticated `module_checks_only` evidence.
+`--preflight-only` and read-only `--plan` are supported, without legacy fallback.
+The uploaded helper/wrapper syntax is checked against Python 3.6 grammar.
+
+Scoped batch/repair integration and real deployed/system acceptance remain
+pending. The legacy batch and repair paths reject scoped receipts/configuration
+until their new evidence mapping is implemented. No unsupported batch is launched
+and no scoped failure loses its plan through legacy repair preparation.
+No remote calls or paid verification runs were made while implementing this
+protocol, and no published mailbox or RTL was rewritten.
+Validation completed with 190 orchestrator tests and four existing fixture skips,
+including 12 new scope-protocol tests. The real host bundle's plan/file/snapshot
+digest bindings and local documentation links were checked independently.
+The subsequent live-transport implementation passed the full 200-test suite
+with four existing skips, including ten synthetic-consumer transport tests.
+Those tests cover preflight without agents, absent capability/network attempts,
+mutated inputs/sidecars/consumer code, failed or forged scoped evidence and
+receipt/archive mismatch. This is local transport validation, not deployed
+Olympus acceptance or real simulation of the scoped checks.
+
+Live run `20261028T015818Z_c4983cb9` passed the deployed Agent 1 reset fix but
+stopped in Agent 2 testbench generation. The
+[host-adapter investigation](../../../shared/top_orchestrator/HOST_ADAPTER_INVESTIGATION.md)
+traces 11 audit blockers to metadata/structural/system requirements being treated
+as isolated module simulation obligations. Independent local RTL simulation
+passed 4,096 vectors/20,480 assertions and detected an inverted-reset mutation;
+this is limited local evidence, not complete system acceptance. The next fix must
+coordinate explicit verification scope/method planning with the consumer and
+module receipt policy, preserving global obligations as unverified until their
+proper checks execute. No acceptance policy or published RTL was changed by
+this investigation.
+
+The proposed [Experimental verification integration agreement](../../../shared/top_orchestrator/EXPERIMENTAL_VERIFICATION.md)
+is the handoff for the verification owner. It separates the implemented module
+catalog/invocation contract from the unimplemented system result interface,
+documents reset-checker regressions, native system source IDs and timing scope,
+and assigns the remaining consumer/adapter acceptance work. Its proposed system
+result envelope and evidence rules require agreement before implementation; they
+do not enable readiness or replace deployed capability checks.
+
+#### Build-scoped RTL repair workspace
+
+`shared.top_orchestrator.specification_repair` now provides an offline, explicit
+repair lifecycle for a failed Experimental module invocation with
+`preflight_only=false`:
+
+```bash
+python -m shared.top_orchestrator.specification_repair prepare --mailbox PARENT_MAILBOX --failed-run FAILED_RUN --output NEW_WORKSPACE
+python -m shared.top_orchestrator.specification_repair check WORKSPACE
+# After an intentional RTL edit to the selected functional module:
+python -m shared.top_orchestrator.specification_repair recheck WORKSPACE --build NEW_BUILD
+python -m shared.top_orchestrator.specification_repair publish WORKSPACE --build NEW_BUILD --mailbox NEW_MAILBOX
+```
+
+Preparation reauthenticates the full source publication and failed invocation's
+isolated inputs, parent/module identities, request, receipt and report archive.
+Preflight-only evidence, stale/mismatched inputs, modified archives and existing
+or nested destinations are rejected. It freezes the full publication in
+`baseline/`, native handoff inputs in `candidate/`, and selected failure evidence
+in `evidence/`, with a revision-bound `repair_request.json`. Candidate copies
+exclude old build status, integration lint and verification handoff pass evidence.
+The failure remains triage evidence: a failed consumer gate is not automatically
+classified as an RTL bug and no RTL edit or model call is performed.
+
+Only the failed functional module's RTL is editable in this workflow. Changes to
+other modules, structural wiring, contracts, IR, architecture or approval are
+blocked. Contract/architecture repairs must use a new approved frontend build;
+this path does not manufacture approval or weaken the submitted requirements.
+Workspace checks compare the entire candidate file/hash map with its baseline,
+and reject symlinks and out-of-scope additions/removals as well as edits.
+
+Native `local/frontend/recheck_specification.py` validates the exact approved
+architecture, regenerates contracts/IR/structural wiring, compares them with the
+candidate, and runs fresh integration lint on the candidate RTL without using
+old generator caches or making model calls. Approved serialization is preserved
+after semantic comparison. A new handoff and build status are emitted only after
+lint and native authentication pass. The orchestrator rechecks candidate identity,
+requires a changed RTL revision and stores candidate/build hashes in a new local
+recheck receipt. Existing/partial output builds are never resumed or overwritten.
+
+Publication requires that receipt and unchanged candidate/build hashes, uses the
+existing native authenticated publisher, and writes a publication receipt plus
+the old/new revision recheck plan. Old module results cannot transfer; all modules
+and structural/system coverage require fresh verification. Backend readiness
+remains false. This is a manual patch/recheck/publication path, not an autonomous
+verification-driven model repair loop or a replacement for the verification
+owner's consumer fix.
+
+Offline acceptance used the saved host-adapter failure to prepare
+`/tmp/capstone-repair-workspace-20261027`, with a comment-only candidate edit
+explicitly labelled as a workflow fixture rather than an RTL bug fix. Fresh
+lowering, Verilator lint, native handoff authentication and publication to
+`/tmp/capstone-repaired-mailbox-test-20261027` succeeded. The resulting RTL revision
+is `6e377dc02d48a4a99d828a3870e99fd48a5b024eac34dc210a4467688547a32a`;
+the recheck plan identifies only host-adapter RTL as changed, requires all eight
+functional module checks plus structural/system checks, and rejects old receipts.
+The original repository mailbox and RTL were not edited. A real generic-register
+fixture additionally exercises native repair/republication and stale-approval
+rejection with networking disabled. No verification agents or model calls ran.
+The full orchestrator regression suite passed: 178 tests, with four existing
+fixture-dependent skips. Focused repair tests cover scope violations, stale
+parent identity, changed evidence, symlinks, missing patches, failed native
+recheck and edits after recheck preventing publication.
+
+#### Offline backend handoff preparation
+
+`shared.top_orchestrator.specification_backend` authenticates a full Experimental
+mailbox and prepares a new local staging tree without SSH, model calls, synthesis
+or physical design. The same `freeze_mailbox` implementation is used by the real
+backend transport and this offline adapter; Standard upload behavior retains its
+existing top, file tree and transport digest calculation.
+
+```bash
+python -m shared.top_orchestrator.specification_backend MAILBOX --output NEW_DIRECTORY
+python -m shared.top_orchestrator.specification_backend MAILBOX --verify NEW_DIRECTORY
+```
+
+The output contains `rtl/` with byte-identical transport inputs and
+`backend_handoff.json`. Checks authenticate the source publication, unique top
+declaration, explicit scalar top clock/reset ports from the approved contract,
+complete RTL compile inventory and ordered `filelist.f`. An optional
+`--target-mhz` must match the published controller target. The period is computed
+from that controller target, independently of the functional DDR timing profile.
+Existing destinations and destinations inside the immutable source are rejected.
+Publication uses a temporary directory and reauthenticates the source after
+freezing. Recheck rejects changed staged files, extra files or altered handoff
+metadata, including an attempted `backend_ready=true` change.
+
+The backend's `mailbox_revision` is a digest of its RTL transport file/hash map;
+it is distinct from the native `rtl_revision` and full `snapshot_sha256`. All
+three are retained. Compile-order paths in the source inventory are relative to
+the mailbox root (`rtl/...`); the transported `rtl/` contents and its filelist use
+paths relative to that RTL directory. The source manifest is not rewritten or
+presented as a different authenticated revision.
+
+The existing real publication `20261027T233850Z_47d4ee60/revision_001` passed
+offline preparation: nine RTL sources, top `ddr4_controller_top`, target 200 MHz,
+period 5 ns; transport digest
+`c5521c5ab0668a120840d4879f05e1a9765a9748e3bb6813691c626a81578018`.
+The initial review artifact is `/tmp/capstone-offline-backend-20261027`.
+Remote prepare compatibility, use of the ordered filelist in the deployed
+backend, resulting clock constraints and exact-revision GDSII evidence are still
+unestablished. The report records physical design as `not_run` and backend
+readiness as false; existing Experimental backend execution gates remain active.
+All 17 focused offline-handoff/publication and existing backend transport tests
+passed. The real build's staged handoff also passed the read-only recheck.
+
+#### Main CLI integration for prepared operations
+
+The main entry point now exposes the existing bounded adapters directly:
+
+```bash
+# Pure local preview, no artifact writes or credential prompts.
+python -m shared.top_orchestrator backend --mailbox MAILBOX --offline-handoff --plan
+
+# Create a new local run with state.json and backend_handoff/; no SSH/tools.
+python -m shared.top_orchestrator backend --mailbox MAILBOX --offline-handoff --run-dir NEW_RUN
+
+# Preview the module inventory and remote capability-check route, without SSH.
+python -m shared.top_orchestrator validation --mailbox MAILBOX --module-batch --preflight-only --plan
+
+# User-operated remote capability checks; no verification agents.
+python -m shared.top_orchestrator validation --mailbox MAILBOX --module-batch --preflight-only
+
+# User-operated paid verification agents, after deployed compatibility fixes.
+python -m shared.top_orchestrator validation --mailbox MAILBOX --module-batch
+```
+
+These are operations on a published Experimental snapshot, not additional
+frontend routes. Both support `--plan` and an optional new `--run-dir`. Batch
+supports `--remote-config`; offline staging accepts an optional matching
+`--target-mhz` and rejects remote options. Generation/debug controls and bypass
+flags are rejected rather than silently ignored. Existing Standard entry routing
+and the one-module probe remain unchanged.
+
+`state.json` uses `capstone.experimental_integration_state` for these bounded
+operations. Status explicitly distinguishes `offline_checks_passed`,
+`consumer_preflights_passed`, `module_checks_passed` and `needs_attention`.
+Execution requires complete collected module evidence in addition to successful
+dispatch; a capability preflight is never module acceptance. All statuses retain
+`system_verification=not_accepted` and `backend_ready=false`. This does not enable
+automatic generation-to-system-verification/backend execution. The offline
+handoff remains separately recheckable using its `backend_handoff/` directory.
+Validation: the full orchestrator suite completed with 170 tests, four existing
+fixture-dependent skips, and no failures. The real published build also passed
+the main CLI offline-handoff `--plan` path without credentials or remote setup.
+
+Checkpoint 3 offline preparation can proceed while checkpoint 2 live acceptance
+waits on the verification owner's reset-checker investigation. The deployed
+consumer preflight passed in `20261028T000836Z_1ce9b2a1`; the subsequent module run
+`20261028T001145Z_9665a3ac` passed syntax and compilation but Agent 1 rejected
+reset detection on the stateless host adapter. Combinational ternary reset gating
+is present; the checker limitation remains a diagnosis to confirm with its owner.
+Agents 2/3 did not run and no behavioral acceptance is claimed.
+
+`python -m shared.top_orchestrator.specification_verification_plan MAILBOX`
+now authenticates the immutable snapshot and prints an offline JSON coverage
+plan. It retains every functional module's exact source requirements, obligations
+and behavioral contract, includes the architecture-backed structural top, and
+binds the inventory and compile order to the snapshot digest and RTL revision.
+Every check starts as `not_run`, system consumer support is `not_established`, and
+backend readiness remains false. This is preparation for a future receipt and
+system-consumer adapter, not an executable multi-module verification workflow.
+Repairs must publish a new revision and recheck affected coverage. No model calls,
+SSH deployment or verification-agent modifications are part of this preparation.
+
+#### Checkpoint 3 module dispatch and evidence collection
+
+The `shared.top_orchestrator.specification_validation` adapter now supports:
+
+```bash
+# Read-only, authenticated inventory; no SSH or model calls.
+python -m shared.top_orchestrator.specification_validation MAILBOX plan
+
+# Read-only collection of explicitly selected previous module runs.
+python -m shared.top_orchestrator.specification_validation MAILBOX collect RUN_DIR [RUN_DIR ...]
+
+# Remote capability checks for all functional modules; no verification agents.
+python -m shared.top_orchestrator.specification_validation MAILBOX run --output NEW_RUN_DIR --preflight-only
+
+# Paid verification-agent execution; user-operated after consumer fixes deploy.
+python -m shared.top_orchestrator.specification_validation MAILBOX run --output NEW_RUN_DIR
+
+# Compare two authenticated publications, without executing repair.
+python -m shared.top_orchestrator.specification_validation NEW_MAILBOX repair-plan --previous OLD_MAILBOX
+```
+
+Batch dispatch preserves inventory order, owns a new output directory, uses the
+existing one-module invocation path, and stops on the first unsuccessful module.
+It does not retry failures or publish/repair RTL. Each module has separate input,
+request, report archive and receipt evidence. SSH credentials are held in the
+existing in-memory password session. `collection.json` explicitly separates
+dispatch outcome, module coverage, system coverage and backend readiness.
+
+Collection reauthenticates module inputs against the selected parent, binds both
+local/remote receipts to module name and parent revision/digest, checks invocation
+and input snapshot identities, and reopens the hashed report archive. The full
+source catalog, simulation evidence and normal pipeline summary must pass again.
+Preflight-only, stale, duplicate, changed or incomplete evidence is rejected;
+missing modules remain pending. All module passes still leave structural/system
+verification pending and backend readiness false. The plan includes the native
+handoff's full `verification_intent` and `shared` event/type context so integration
+requirements are not reduced to a union of module checks.
+
+Repair comparison identifies added/removed/changed module RTL and contracts and
+records old/new snapshot identities. For now it conservatively requires all
+functional modules and structural/system checks on the new publication; old
+receipts cannot transfer. Automated scoped repair and narrower dependency-based
+recheck are not implemented.
+
+**Still required to finish checkpoint 3:** the verification owner must provide a
+compatible system consumer, with explicit support for this functional timing
+model and architecture-backed top. The acceptance interface must retain the
+native handoff's system requirements, verification obligations and event
+bindings, and return executed evidence for structural connectivity, interface
+handshakes, reset, simultaneous events and end-to-end behavior. Results must bind
+to the immutable snapshot digest, RTL revision and complete compile inventory;
+unsupported or unexecuted obligations must remain incomplete. The orchestrator
+system invocation/receipt adapter must then be implemented and exercised against
+that interface. The manual build-scoped RTL patch/recheck/publication lifecycle
+above is implemented; automated verification-driven model repair remains future
+work. Existing Standard controller
+reference semantics must not be silently reused for arbitrary Experimental
+architectures. No claim of checkpoint-3 completion is made by module collection.
+
+Offline validation: 51 module-probe, publication and existing validation tests
+passed; an additional focused rerun verified multi-module stop-on-first-failure
+behavior after strengthening that case. Local collection of the existing failed
+`20261028T001145Z_9665a3ac` run correctly leaves all eight functional modules
+pending and backend readiness false. It did not launch a remote job or paid call.
+
+1. **Selectable isolated frontend.** Add the two-route selector, shared text and
+   frequency intake, new adapter, owned output directory and accurate dry-run
+   plan. Complete a frontend-only specification-route
    run. Regression tests must show that the default route retains its existing
-   commands, paths, controls and repair behavior.
+   commands, paths, controls and repair behavior. Check equivalent text/frequency
+   entry on both routes, explicit clock conflicts, consistent route names in state
+   and plans, and absence of a third direct-microarchitecture orchestrator route.
 2. **Mailbox and one-module verification.** Publish an authenticated build and run
    one real generated YAML/SV pair through the existing verification agent. Resolve
    requirement extraction and wrapper representation before claiming compatibility.
@@ -2393,5 +3114,5 @@ must all refer to the exact same immutable published revision.
 Across these checkpoints, test missing YAML/SV pairs, tampered files, stale
 approvals and verification results, unsupported check profiles, and accidental
 reads from global legacy outputs. Live paid LLM runs remain user-operated; offline
-adapter and regression tests should not contact model endpoints. No orchestrator
-implementation or live run was performed when recording this plan.
+adapter and regression tests should not contact model endpoints. Initial
+orchestrator implementation and subsequent user-operated live acceptance are described above.

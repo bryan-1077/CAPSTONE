@@ -1,0 +1,395 @@
+{
+  "schema": "capstone.module_scope_routing",
+  "schema_version": 1,
+  "identity": {
+    "snapshot_sha256": "4be9df654218754869e56558e85bec61c81e2d693d1292ca5e378f4d93ada82a",
+    "rtl_revision": "bbbfb0bd5b51f003f52fd74cdeeec0af9c9e3c3db41b4249c503309fa0d1fc2c",
+    "module_name": "ddr4_controller_functional_3200_host_adapter",
+    "specification_sha256": "d51fee0970221c48f75d080cdddfd1e07af7439ba33659fbf3acde5ef1df15ff"
+  },
+  "review": {
+    "status": "approved",
+    "reviewer": "frontend-integration",
+    "rationale": "Frontend-side review of this exact stateless host contract. Proposed for verification-owner agreement; no consumer support or executed acceptance is asserted. Full system statements remain deferred; local checks only establish explicit adapter contributions."
+  },
+  "required_contract_facets": [
+    "/behavior/contract/combinational_dependencies",
+    "/behavior/contract/handshakes",
+    "/behavior/contract/interfaces",
+    "/behavior/contract/invariants",
+    "/behavior/contract/owned_state",
+    "/behavior/contract/reset",
+    "/behavior/contract/role",
+    "/behavior/contract/simultaneous_events",
+    "/behavior/contract/stalls",
+    "/behavior/contract/status",
+    "/behavior/contract/update_events",
+    "/behavior/contract/verification"
+  ],
+  "sources": {
+    "CONSTRAINT_2": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "CONSTRAINT_3": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "SYS_HOST_ADMISSION": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "SYS_REQUEST_STORAGE": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "SYS_RESET": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "EXEC_RESPONSE_EDGE": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "EXEC_INVALID_OUTPUTS": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "execution.verification.V_EXEC_INVALID_OUTPUTS": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "execution.verification.V_EXEC_RESPONSE_EDGE": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "system.verification.V_CONSTRAINT_DESIGN_NAME": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "system.verification.V_CONSTRAINT_DESIGN_TYPE": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "system.verification.V_HOST_ADMISSION": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "system.verification.V_REQUEST_STORAGE": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "system.verification.V_RESET_EPOCH": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "system.verification.V_RESET_GATING": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "system.verification.V_SIMULTANEOUS_CAPACITY": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "behavior.contract": {
+      "scope": "module",
+      "checks": [
+        "adapter_structure",
+        "admission",
+        "packing",
+        "response_forwarding",
+        "reset_gating",
+        "simultaneous_and_stateless"
+      ],
+      "reason": "Verify local contract and implementation choices using structural evidence plus the complete explicit adapter simulation check set; shared referenced rules retain separate pending system dispositions."
+    },
+    "yaml.invariants.0": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "yaml.invariants.1": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "yaml.invariants.2": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "yaml.invariants.3": {
+      "scope": "metadata",
+      "checks": [
+        "package_identity"
+      ],
+      "reason": "Compare the authenticated package/architecture identity constraints; this is not the lowered module name/type and needs no HDL stimulus."
+    },
+    "yaml.invariants.4": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "yaml.invariants.5": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "yaml.invariants.6": {
+      "scope": "system",
+      "checks": [],
+      "reason": "Complete source statement/obligation describes composed controller behavior; local adapter checks contribute but cannot certify the full source."
+    },
+    "yaml.implementation_constraints.0": {
+      "scope": "structural",
+      "checks": [
+        "adapter_structure"
+      ],
+      "reason": "Verify exact declared interface, absence of owned storage, and explicit present/absent port set against approved architecture."
+    },
+    "yaml.implementation_constraints.1": {
+      "scope": "module",
+      "checks": [
+        "adapter_structure",
+        "admission",
+        "packing",
+        "response_forwarding",
+        "reset_gating",
+        "simultaneous_and_stateless"
+      ],
+      "reason": "Verify local contract and implementation choices using structural evidence plus the complete explicit adapter simulation check set; shared referenced rules retain separate pending system dispositions."
+    },
+    "yaml.implementation_constraints.2": {
+      "scope": "structural",
+      "checks": [
+        "adapter_structure"
+      ],
+      "reason": "Verify exact declared interface, absence of owned storage, and explicit present/absent port set against approved architecture."
+    },
+    "yaml.implementation_constraints.3": {
+      "scope": "module",
+      "checks": [
+        "adapter_structure",
+        "admission",
+        "packing",
+        "response_forwarding",
+        "reset_gating",
+        "simultaneous_and_stateless"
+      ],
+      "reason": "Verify local contract and implementation choices using structural evidence plus the complete explicit adapter simulation check set; shared referenced rules retain separate pending system dispositions."
+    },
+    "yaml.implementation_constraints.4": {
+      "scope": "module",
+      "checks": [
+        "adapter_structure",
+        "admission",
+        "packing",
+        "response_forwarding",
+        "reset_gating",
+        "simultaneous_and_stateless"
+      ],
+      "reason": "Verify local contract and implementation choices using structural evidence plus the complete explicit adapter simulation check set; shared referenced rules retain separate pending system dispositions."
+    },
+    "yaml.implementation_constraints.5": {
+      "scope": "structural",
+      "checks": [
+        "adapter_structure"
+      ],
+      "reason": "Verify exact declared interface, absence of owned storage, and explicit present/absent port set against approved architecture."
+    }
+  },
+  "checks": [
+    {
+      "id": "package_identity",
+      "scope": "metadata",
+      "method": "metadata",
+      "description": "Verify approved design_name=ddr4_controller_top and requested package design_type=memory_controller against preserved request/provenance; do not compare them with module design_name/design_type.",
+      "source_ids": [
+        "CONSTRAINT_2",
+        "CONSTRAINT_3",
+        "system.verification.V_CONSTRAINT_DESIGN_NAME",
+        "system.verification.V_CONSTRAINT_DESIGN_TYPE",
+        "yaml.invariants.2",
+        "yaml.invariants.3"
+      ],
+      "contract_facets": [],
+      "assumptions": []
+    },
+    {
+      "id": "adapter_structure",
+      "scope": "structural",
+      "method": "structural",
+      "description": "Compare all exact ports/directions/widths and contract references with the approved architecture; confirm host_protocol role and no owned state; enforce public interface and ownership boundaries.",
+      "source_ids": [
+        "yaml.implementation_constraints.0",
+        "yaml.implementation_constraints.2",
+        "yaml.implementation_constraints.5",
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4"
+      ],
+      "contract_facets": [
+        "/behavior/contract/status",
+        "/behavior/contract/role",
+        "/behavior/contract/owned_state",
+        "/behavior/contract/interfaces",
+        "/behavior/contract/invariants",
+        "/behavior/contract/verification"
+      ],
+      "assumptions": []
+    },
+    {
+      "id": "admission",
+      "scope": "module",
+      "method": "simulation",
+      "description": "Check txn_ready=rst_n&&queue_ready and enq_valid=rst_n&&txn_valid for all input combinations; qualifying edges are independent of response traffic.",
+      "source_ids": [
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4",
+        "SYS_HOST_ADMISSION",
+        "system.verification.V_HOST_ADMISSION"
+      ],
+      "contract_facets": [
+        "/behavior/contract/handshakes",
+        "/behavior/contract/stalls",
+        "/behavior/contract/combinational_dependencies"
+      ],
+      "assumptions": [
+        "queue_ready is driven by the queue environment; queue occupancy and dispatch semantics are not proven by this adapter check.",
+        "Host holds transaction payload stable when presenting a stalled valid request."
+      ]
+    },
+    {
+      "id": "packing",
+      "scope": "module",
+      "method": "simulation",
+      "description": "Compare all packed payload field offsets and values against independently driven bank/row/column/write/data values, including boundary values; no state or capture latency is introduced here.",
+      "source_ids": [
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4",
+        "SYS_REQUEST_STORAGE",
+        "system.verification.V_REQUEST_STORAGE"
+      ],
+      "contract_facets": [
+        "/behavior/contract/combinational_dependencies"
+      ],
+      "assumptions": [
+        "The queue, not the adapter, captures admitted payloads and preserves them while blocked."
+      ]
+    },
+    {
+      "id": "response_forwarding",
+      "scope": "module",
+      "method": "simulation",
+      "description": "Check rsp_valid=rst_n&&rsp_valid_in and rsp_rdata=rst_n?rsp_data:0, including rsp_valid_in low; do not infer READ latency/retention from a stateless forwarding stage.",
+      "source_ids": [
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4",
+        "EXEC_RESPONSE_EDGE",
+        "EXEC_INVALID_OUTPUTS",
+        "execution.verification.V_EXEC_RESPONSE_EDGE",
+        "execution.verification.V_EXEC_INVALID_OUTPUTS"
+      ],
+      "contract_facets": [
+        "/behavior/contract/handshakes",
+        "/behavior/contract/combinational_dependencies"
+      ],
+      "assumptions": [
+        "Response inputs represent the independently registered memory response; its generation, hold behavior and one-cycle READ latency require separate memory/system checks."
+      ]
+    },
+    {
+      "id": "reset_gating",
+      "scope": "module",
+      "method": "simulation",
+      "description": "Toggle transaction, queue and response inputs throughout asserted reset; require txn_ready/enq_valid/rsp_valid=0 and rsp_rdata=0. Check release and reset coincident with offered transaction/response.",
+      "source_ids": [
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4",
+        "SYS_RESET",
+        "system.verification.V_RESET_GATING"
+      ],
+      "contract_facets": [
+        "/behavior/contract/reset",
+        "/behavior/contract/simultaneous_events",
+        "/behavior/contract/combinational_dependencies"
+      ],
+      "assumptions": [
+        "No internal waiting, active, memory, refresh or timing state exists in this module."
+      ]
+    },
+    {
+      "id": "simultaneous_and_stateless",
+      "scope": "module",
+      "method": "simulation",
+      "description": "Check admission and response forwarding independently and simultaneously, including reset suppression; outputs follow the declared combinational inputs without extra clocked state or event updates.",
+      "source_ids": [
+        "behavior.contract",
+        "yaml.implementation_constraints.1",
+        "yaml.implementation_constraints.3",
+        "yaml.implementation_constraints.4",
+        "SYS_HOST_ADMISSION",
+        "EXEC_RESPONSE_EDGE"
+      ],
+      "contract_facets": [
+        "/behavior/contract/update_events",
+        "/behavior/contract/simultaneous_events",
+        "/behavior/contract/stalls"
+      ],
+      "assumptions": [
+        "System request/response accounting is deferred; this test verifies only independent local interface behavior."
+      ]
+    }
+  ],
+  "composition_sources": [
+    "CONSTRAINT_3",
+    "EXEC_INVALID_OUTPUTS",
+    "EXEC_RESPONSE_EDGE",
+    "SYS_HOST_ADMISSION",
+    "SYS_REQUEST_STORAGE",
+    "SYS_RESET",
+    "execution.verification.V_EXEC_INVALID_OUTPUTS",
+    "execution.verification.V_EXEC_RESPONSE_EDGE",
+    "system.verification.V_CONSTRAINT_DESIGN_TYPE",
+    "system.verification.V_HOST_ADMISSION",
+    "system.verification.V_REQUEST_STORAGE",
+    "system.verification.V_RESET_EPOCH",
+    "system.verification.V_RESET_GATING",
+    "system.verification.V_SIMULTANEOUS_CAPACITY"
+  ]
+}

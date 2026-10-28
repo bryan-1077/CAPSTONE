@@ -3,6 +3,7 @@
 import getpass
 import hashlib
 import json
+import time
 import shlex
 import shutil
 import sys
@@ -22,6 +23,21 @@ from .remote import RemoteConfig, slurm_command
 
 REQUIRED_STAGES = {"agent1", "agent2", "agent3"}
 GAPS = ("failed_requirements", "untested_requirements", "failed_tests", "untested_tests", "coverage_limitations")
+
+
+def fetch_result_file(ssh, remote_name, local_name):
+    """Bounded retrieval retry for cross-node shared-filesystem visibility.
+
+    Never rerun the job or retry authentication/permission failures here.
+    """
+    for attempt in range(3):
+        fetched = ssh.fetch_file(remote_name, local_name)
+        if fetched.get('ok'):
+            return fetched
+        error = str(fetched.get('error', ''))
+        if attempt == 2 or not ('No such file' in error or '[Errno 2]' in error):
+            return fetched
+        time.sleep((0.25, 0.75)[attempt])
 
 
 def expected_designs(snapshot: Path) -> dict[str, str]:
@@ -107,7 +123,9 @@ def check_readiness(report: dict) -> None:
 
 def verify_backend_handoff(result_path: Path, mailbox: Path) -> dict:
     """Bind the accepted verification decision to the snapshot sent to backend."""
-    verify(mailbox)
+    metadata = verify(mailbox)
+    if metadata.get("frontend_flow") in ("specification", "specification-module"):
+        raise ValueError("Experimental backend readiness requires the future system verification adapter")
     record = json.loads(result_path.read_text())
     if record.get("status") != "passed" or record.get("phase") != "complete":
         raise ValueError("Validation did not accept this snapshot for backend")
@@ -152,6 +170,16 @@ def unpack_reports(archive: Path, destination: Path, report_relative: str = "ver
 
 
 def validation_node(config, run_dir: Path) -> StageResult:
+    if config.scope_plan and not (config.module_probe or config.module_probe_parent):
+        return StageResult('validation', 'needs_attention', 'Scoped transport requires an explicit Experimental module probe.')
+    if config.module_probe:
+        from .specification_mailbox import prepare_module
+        try:
+            pair = prepare_module(config.mailbox, config.module_probe, run_dir / 'module_input')
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            return StageResult('validation', 'needs_attention', f'Module preparation stopped: {exc}')
+        return validation_node(replace(config, mailbox=pair, module_probe=None,
+                                       module_probe_parent=config.mailbox), run_dir)
     artifacts = {}
     if config.mailbox is None:
         return StageResult("validation", "needs_attention", "Validation requires --mailbox or a successful frontend snapshot.")
@@ -175,7 +203,21 @@ def validation_node(config, run_dir: Path) -> StageResult:
             (sys.stderr if name == "stderr" else sys.stdout).flush()
 
         try:
+            module_probe = config.module_probe_parent is not None
+            if module_probe:
+                from .specification_mailbox import verify_module_probe
+                parent = verify_module_probe(config.mailbox, config.module_probe_parent)
+                record.update(scope='one_module_only', backend_ready=False,
+                              system_verification='not_run',
+                              parent_mailbox=str(config.module_probe_parent),
+                              parent_snapshot_digest=parent['source_snapshot_digest'],
+                              parent_rtl_revision=parent['parent_rtl_revision'], module_name=parent['module_name'],
+                              preflight_only=config.preflight_only)
+            elif json.loads((config.mailbox / "snapshot.json").read_text()).get("frontend_flow") in ("specification", "specification-module"):
+                raise ValueError("Experimental verification requires its module/system consumer adapter; legacy validation is disabled.")
             remote = RemoteConfig.load(config.remote_config)
+            if module_probe:
+                remote = replace(remote, validation_mode='modules')
             record.update(host=remote.host, username=remote.username, python=remote.python)
             if not remote.allow_validation_output_dirs:
                 raise ValueError(
@@ -188,8 +230,23 @@ def validation_node(config, run_dir: Path) -> StageResult:
             snapshot = run_dir / "validation_input"
             shutil.copytree(config.mailbox, snapshot, symlinks=True)
             metadata = verify(snapshot)
+            scoped_plan = None
+            if config.scope_plan:
+                from .verification_scope import validate_plan, execution_request
+                plan_bytes = config.scope_plan.read_bytes()
+                scoped_plan = json.loads(plan_bytes)
+                validate_plan(config.module_probe_parent, scoped_plan)
+                if scoped_plan['identity']['module_name'] != metadata['module_name']:
+                    raise ValueError('Scope plan differs from selected module')
+                plan_path = run_dir / 'execution_plan.json'
+                plan_path.write_bytes(plan_bytes)
+                scope_request = execution_request(scoped_plan, plan_path, snapshot)
+                scope_request_path = run_dir / 'scope_request.json'
+                scope_request_path.write_text(json.dumps(scope_request, indent=2) + '\n')
+                artifacts.update(scope_plan=str(plan_path), scope_request=str(scope_request_path))
+                record.update(scope_protocol=scoped_plan['consumer_capability'], plan_sha256=scoped_plan['plan_sha256'])
             expected = expected_designs(snapshot)
-            top_module = json.loads((snapshot / "rtl/manifest.json").read_text())["top_module"]
+            top_module = metadata['module_name'] if module_probe else json.loads((snapshot / "rtl/manifest.json").read_text())["top_module"]
             snapshot_digest = hashlib.sha256((snapshot / "snapshot.json").read_bytes()).hexdigest()
             token = uuid4().hex
             job_name = "capstone-verif-" + token
@@ -202,6 +259,17 @@ def validation_node(config, run_dir: Path) -> StageResult:
             request = {"invocation_id": token, "snapshot_digest": snapshot_digest,
                        "pipeline": str(pipeline), "jobs": remote.validation_jobs,
                        "validation_mode": remote.validation_mode}
+            if module_probe:
+                request.update(specification_module_probe=True, preflight_only=config.preflight_only,
+                               module_name=metadata['module_name'], parent_rtl_revision=metadata['parent_rtl_revision'],
+                               parent_snapshot_digest=metadata['source_snapshot_digest'],
+                               module_probe_digest=hashlib.sha256(Path(__file__).with_name('module_probe.py').read_bytes()).hexdigest())
+                if scoped_plan:
+                    request.update(scope_protocol=scoped_plan['consumer_capability'],
+                                   plan_sha256=scoped_plan['plan_sha256'],
+                                   plan_file_digest=hashlib.sha256(plan_bytes).hexdigest(),
+                                   scope_request_digest=hashlib.sha256(scope_request_path.read_bytes()).hexdigest(),
+                                   scope_probe_digest=hashlib.sha256(Path(__file__).with_name('scope_probe.py').read_bytes()).hexdigest())
             request_path = run_dir / "validation_request.json"
             request_path.write_text(json.dumps(request, indent=2) + "\n")
             record.update(request, remote_directory=str(invocation), expected_designs=expected,
@@ -263,7 +331,8 @@ def validation_node(config, run_dir: Path) -> StageResult:
             for directory in (invocation / "input", invocation / "work"):
                 checked(f"test -z \"$(find {shlex.quote(str(directory))} -mindepth 1 ! -type d -print -quit)\" || "
                         "{ echo 'Remote input/work directories must contain no files' >&2; exit 1; }")
-            for name in ("runner.py", "request.json", "result.json", "reports.zip", "input/verification_reports"):
+            for name in ("runner.py", "request.json", "result.json", "reports.zip", "input/verification_reports", "module_probe.py", "consumer_preflight.json",
+                         'scope_probe.py', 'scope_request.json', 'execution_plan.json'):
                 quoted = shlex.quote(str(invocation / name))
                 checked(f"test ! -e {quoted} && test ! -L {quoted} || "
                         "{ echo 'Remote workspace already used; select a fresh workspace' >&2; exit 1; }")
@@ -271,18 +340,24 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 ssh.upload_file(path, str(invocation / "input" / path.relative_to(snapshot).as_posix()), exclusive=True)
             ssh.upload_file(request_path, str(invocation / "request.json"), exclusive=True)
             ssh.upload_file(Path(__file__).with_name("validation_runner.py"), str(invocation / "runner.py"), exclusive=True)
-            job_config = replace(remote, job_seconds=remote.validation_job_seconds)
+            if module_probe:
+                ssh.upload_file(Path(__file__).with_name('module_probe.py'), str(invocation / 'module_probe.py'), exclusive=True)
+                if scoped_plan:
+                    for local, remote_name in ((plan_path, 'execution_plan.json'), (scope_request_path, 'scope_request.json'),
+                                               (Path(__file__).with_name('scope_probe.py'), 'scope_probe.py')):
+                        ssh.upload_file(local, str(invocation / remote_name), exclusive=True)
+            job_config = replace(remote, job_seconds=remote.job_seconds if config.preflight_only else remote.validation_job_seconds)
             command = slurm_command(job_config, [remote.python, "-u", str(invocation / "runner.py"), str(invocation)], job_name)
             record["command"] = command
             record["phase"] = "execution"
             launched = True
-            execution = ssh.run(command, timeout=remote.validation_timeout_seconds, on_output=output)
+            execution = ssh.run(command, timeout=remote.timeout_seconds if config.preflight_only else remote.validation_timeout_seconds, on_output=output)
             record["execution"] = execution
             code = execution["exit_code"]
             finished = code >= 0
             record["phase"] = "report_collection"
             for remote_name, local_name in (("result.json", "remote_validation_result.json"), ("reports.zip", "reports.zip")):
-                fetched = ssh.fetch_file(str(invocation / remote_name), run_dir / local_name)
+                fetched = fetch_result_file(ssh, str(invocation / remote_name), run_dir / local_name)
                 if not fetched["ok"]:
                     detail = (execution.get("stderr") or "").strip()[-8000:]
                     raise RuntimeError(
@@ -307,6 +382,63 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 "Published module YAML specs; wrappers without specs are not individually verified.")
             if payload.get("error") or payload.get("input_unchanged") is not True:
                 raise ValueError(payload.get("error") or "Input identity was not verified after validation")
+            if module_probe:
+                from .specification_mailbox import verify_module_probe
+                verify_module_probe(config.mailbox, config.module_probe_parent)
+                if (payload.get('scope') != 'one_module_only' or payload.get('backend_ready') is not False
+                        or payload.get('module_name') != metadata['module_name']
+                        or payload.get('parent_rtl_revision') != metadata['parent_rtl_revision']
+                        or payload.get('parent_snapshot_digest') != metadata['source_snapshot_digest']
+                        or payload.get('preflight_only') is not config.preflight_only):
+                    raise ValueError('Remote module receipt differs from the selected parent revision/scope')
+                checked = payload.get('consumer_preflight', {})
+                if checked.get('status') != 'passed' or checked.get('module_name') != metadata['module_name']:
+                    raise ValueError('Missing deployed consumer capability evidence')
+                if scoped_plan:
+                    from .verification_scope import validate_plan
+                    validate_plan(config.module_probe_parent, scoped_plan)
+                    if (payload.get('scope_protocol') != scoped_plan['consumer_capability']
+                            or payload.get('plan_sha256') != scoped_plan['plan_sha256']
+                            or checked.get('consumer_capability') != scoped_plan['consumer_capability']
+                            or checked.get('plan_sha256') != scoped_plan['plan_sha256']
+                            or payload.get('plan_file_digest') != request['plan_file_digest']
+                            or payload.get('scope_request_digest') != request['scope_request_digest']):
+                        raise ValueError('Scoped consumer receipt differs from reviewed plan/request')
+                    if (hashlib.sha256(plan_path.read_bytes()).hexdigest() != request['plan_file_digest']
+                            or hashlib.sha256(scope_request_path.read_bytes()).hexdigest() != request['scope_request_digest']):
+                        raise ValueError('Local scoped plan/request changed during invocation')
+                else:
+                    import yaml
+                    from .module_probe import expected_source_catalog
+                    spec_path = next((snapshot / 'specs').glob('*.yaml'))
+                    if checked.get('source_catalog') != expected_source_catalog(yaml.safe_load(spec_path.read_text())):
+                        raise ValueError('Consumer preflight source catalog differs from selected module')
+                if config.preflight_only:
+                    if code != 0 or payload.get('pipeline_returncode') is not None or payload.get('summary') is not None:
+                        raise ValueError('Preflight-only receipt unexpectedly contains agent execution')
+                    record.update(phase='consumer_preflight_complete', verification_scope='consumer_preflight_only')
+                    status = 'passed'
+                    message = 'Deployed module consumer preflight passed; no verification agents ran and backend readiness is false.'
+                    # Continue through the normal finally/receipt path without
+                    # interpreting this capability check as a verification pass.
+                    return StageResult('validation', status, message, artifacts, code)
+                if scoped_plan:
+                    from .verification_scope import accept_results
+                    body_path = reports / report_relative / 'module_execution_results.json'
+                    if (payload.get('scoped_result_file') != report_relative + '/module_execution_results.json'
+                            or hashlib.sha256(body_path.read_bytes()).hexdigest() != payload.get('scoped_result_digest')):
+                        raise ValueError('Scoped result path/hash differs from downloaded archive')
+                    body = json.loads(body_path.read_text())
+                    if body != payload.get('scoped_result'):
+                        raise ValueError('Scoped result body differs from its invocation receipt')
+                    acceptance = accept_results(config.module_probe_parent, scoped_plan, body, reports / report_relative)
+                    record['scoped_acceptance'] = acceptance
+                    artifacts['scoped_results'] = str(body_path)
+                else:
+                    from .module_probe import verify_source_coverage
+                    checked_coverage = verify_source_coverage(reports / report_relative, checked['source_catalog'])
+                    if checked_coverage != payload.get('source_coverage'):
+                        raise ValueError('Retrieved module source coverage differs from its remote receipt')
             relative = PurePosixPath(payload.get("summary_file", ""))
             prefix = PurePosixPath(report_relative).parts
             if relative.is_absolute() or ".." in relative.parts or relative.parts[:len(prefix)] != prefix:
@@ -347,6 +479,13 @@ def validation_node(config, run_dir: Path) -> StageResult:
             message = ("Controller system verification reports Readiness: READY_FOR_BACKEND for the published RTL snapshot. Backend was not run."
                        if remote.validation_mode == "system" else
                        f"Verification passed for {len(expected)} published YAML designs. Backend was not run.")
+            if module_probe:
+                record.update(verification_scope='one_module_only', backend_ready=False)
+                message = 'One-module verification compatibility passed for ' + metadata['module_name'] + '; system verification and backend readiness remain pending.'
+                if scoped_plan:
+                    record['verification_scope'] = 'module_checks_only'
+                    record['scoped_acceptance']['remote_invocation_authentication'] = 'checked_by_validation_adapter'
+                    message = 'Scoped module checks passed for ' + metadata['module_name'] + '; deferred system coverage and backend readiness remain pending.'
             missing = metadata.get("modules_without_specs", [])
             if missing and remote.validation_mode == "modules":
                 message += " No individual YAML verification for: " + ", ".join(missing) + "."

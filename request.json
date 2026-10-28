@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "frontend_flow": "specification",
+  "frontend_label": "Experimental",
+  "original_text": "I want 3200 speed, 4 banks, open policy, standard timing trackers",
+  "source_files": [],
+  "target_mhz": 200.0,
+  "target_mhz_source": "user",
+  "status": "confirmed_request",
+  "design_approved": false
+}

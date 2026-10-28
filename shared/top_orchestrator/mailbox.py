@@ -84,6 +84,9 @@ def publish(frontend: Path, destination: Path, approved_specs: Path | None = Non
 def verify(mailbox: Path) -> dict:
     """Reject changed or incomplete published snapshots before launching backend."""
     metadata = json.loads((mailbox / "snapshot.json").read_text())
+    if metadata.get("frontend_flow") == "specification":
+        from .specification_mailbox import verify_specification
+        return verify_specification(mailbox)
     actual = file_hashes(mailbox)
     actual.pop("snapshot.json", None)
     if actual != metadata["files"]:

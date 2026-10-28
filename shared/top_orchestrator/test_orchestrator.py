@@ -39,7 +39,10 @@ class OrchestratorTests(unittest.TestCase):
 
     def test_no_bist_runs_lint_without_simulation(self):
         with tempfile.TemporaryDirectory() as temporary, patch(
+                "shared.top_orchestrator.nodes.FRONTEND", Path(temporary)), patch(
                 "shared.top_orchestrator.nodes.stream_command", return_value=0) as command:
+            (Path(temporary) / "rtl_output").mkdir()
+            (Path(temporary) / "rtl_output/ddr4_controller_top.sv").write_text("module ddr4_controller_top; endmodule")
             result = generate_node(RunConfig("generate", recheck_only=True, no_bist=True), Path(temporary))
         self.assertEqual(result.status, "passed")
         self.assertEqual(result.artifacts["bist"], "not_run")
@@ -268,8 +271,12 @@ class OrchestratorTests(unittest.TestCase):
             def successful_command(command, log):
                 log.write_text("=========== TEST PASS ===========\n")
                 return 0
-            with patch("shared.top_orchestrator.nodes.stream_command",
-                       side_effect=successful_command) as command:
+            frontend = Path(temporary) / "frontend"
+            (frontend / "rtl_output").mkdir(parents=True)
+            (frontend / "rtl_output/ddr4_controller_top.sv").write_text("module ddr4_controller_top; endmodule")
+            with patch("shared.top_orchestrator.nodes.FRONTEND", frontend), patch(
+                    "shared.top_orchestrator.nodes.stream_command",
+                    side_effect=successful_command) as command:
                 state = run(RunConfig("generate", input_yaml=Path("/input.yaml")), run_dir)
             self.assertEqual(command.call_count, 3)
             self.assertTrue(command.call_args_list[1].args[0][1].endswith("run_sim.sh"))

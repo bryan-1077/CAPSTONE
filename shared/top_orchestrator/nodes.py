@@ -22,6 +22,8 @@ FRONTEND = REPO_ROOT / "local" / "frontend"
 
 
 def frontend_command(stage: Stage, config: RunConfig) -> list[str]:
+    if config.frontend_flow != "expand-spec":
+        raise ValueError("Experimental execution awaits the isolated specification adapter")
     if stage == "generate":
         if config.input_yaml is None:
             raise ValueError("Select specs before starting generation.")
@@ -181,6 +183,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
         return StageResult("backend", "needs_attention", "Backend requires an explicit mailbox snapshot.")
     mailbox = config.mailbox.resolve()
     metadata = verify(mailbox)
+    if metadata.get("frontend_flow") in ("specification", "specification-module"):
+        raise ValueError("Experimental backend integration is not enabled")
     validation_record = None
     if config.validation_result is not None:
         try:

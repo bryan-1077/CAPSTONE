@@ -828,7 +828,8 @@ def run_architecture_flow(input_path: Path, args: argparse.Namespace) -> int:
 def main() -> int:
     from token_usage import UsageRun
     args = parse_args()
-    with UsageRun(SCRIPT_DIR / 'microarch/usage') as usage:
+    usage_root = args.build_dir.resolve().parent / 'usage' if args.build_dir else SCRIPT_DIR / 'microarch/usage'
+    with UsageRun(usage_root) as usage:
         result = _run_flow(args)
         usage.status = 'completed' if result == 0 else 'failed'
         return result

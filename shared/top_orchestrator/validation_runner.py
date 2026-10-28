@@ -73,10 +73,27 @@ def execute(invocation):
               "validation_mode": mode,
               "python_executable": sys.executable,
               "pipeline_returncode": None, "summary": None, "input_unchanged": False}
+    module_probe = request.get('specification_module_probe') is True
+    preflight_only = request.get('preflight_only') is True
+    scoped = request.get('scope_protocol')
     try:
+        if scoped and (not module_probe or scoped != 'capstone.module_execution_plan.v1'):
+            raise ValueError('Unsupported scoped transport protocol')
         if mode not in ("system", "modules"):
             raise ValueError("Unsupported validation mode")
-        check_inputs(inputs, request["snapshot_digest"], report_relative)
+        metadata = check_inputs(inputs, request["snapshot_digest"], report_relative)
+        if module_probe:
+            if (mode != 'modules' or metadata.get('frontend_flow') != 'specification-module'
+                    or metadata.get('parent_rtl_revision') != request.get('parent_rtl_revision')
+                    or metadata.get('source_snapshot_digest') != request.get('parent_snapshot_digest')
+                    or metadata.get('module_name') != request.get('module_name')):
+                raise ValueError('Module invocation identity mismatch')
+            result.update(scope='one_module_only', backend_ready=False, module_name=metadata['module_name'],
+                          system_verification='not_run',
+                          parent_rtl_revision=metadata['parent_rtl_revision'],
+                          parent_snapshot_digest=metadata['source_snapshot_digest'], preflight_only=preflight_only)
+        elif preflight_only:
+            raise ValueError('Preflight-only requires a specification module probe')
         if reports.exists():
             raise ValueError("Reports already exist before this invocation")
         pipeline = Path(request["pipeline"])
@@ -108,6 +125,42 @@ def execute(invocation):
         except ValueError:
             result["python_environment"] = {"diagnostic_error": "Python environment probe failed",
                                             "returncode": probe.returncode}
+        if module_probe:
+            helper = invocation / ('scope_probe.py' if scoped else 'module_probe.py')
+            if digest(helper) != request.get('scope_probe_digest' if scoped else 'module_probe_digest'):
+                raise ValueError('Module preflight helper digest mismatch')
+            preflight_path = invocation / 'consumer_preflight.json'
+            probe_command = [sys.executable, str(helper), str(pipeline), str(inputs)]
+            if scoped:
+                if (digest(invocation / 'execution_plan.json') != request.get('plan_file_digest')
+                        or digest(invocation / 'scope_request.json') != request.get('scope_request_digest')):
+                    raise ValueError('Scoped plan/request upload digest mismatch')
+                result.update(scope_protocol=scoped, plan_sha256=request['plan_sha256'],
+                              plan_file_digest=request['plan_file_digest'], scope_request_digest=request['scope_request_digest'])
+                probe_command.extend([str(invocation / 'execution_plan.json'), str(invocation / 'scope_request.json')])
+            probe_command.append(str(preflight_path))
+            checked = subprocess.run(probe_command,
+                                     cwd=work, env=environment, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, universal_newlines=True, timeout=45)
+            result['consumer_preflight'] = json.loads(preflight_path.read_text()) if preflight_path.is_file() else {}
+            if checked.returncode or result['consumer_preflight'].get('status') != 'passed':
+                raise ValueError(result['consumer_preflight'].get('error', 'Consumer preflight failed'))
+            if result['consumer_preflight'].get('pipeline_digest') != result['pipeline_digest']:
+                raise ValueError('Consumer preflight pipeline mismatch')
+            if scoped:
+                if (result['consumer_preflight'].get('consumer_capability') != scoped
+                        or result['consumer_preflight'].get('plan_sha256') != request['plan_sha256']):
+                    raise ValueError('Scoped capability/plan mismatch')
+                if (digest(helper) != request['scope_probe_digest']
+                        or digest(invocation / 'execution_plan.json') != request['plan_file_digest']
+                        or digest(invocation / 'scope_request.json') != request['scope_request_digest']):
+                    raise ValueError('Scoped helper/plan/request changed during discovery')
+                command.extend(['--execution-request', str(invocation / 'scope_request.json'),
+                                '--execution-results', str(reports / 'module_execution_results.json')])
+            if preflight_only:
+                check_inputs(inputs, request['snapshot_digest'], report_relative)
+                result['input_unchanged'] = True
+                return 0
         # Preserve startup tracebacks in the result while still streaming them live.
         stderr_tail = deque(maxlen=40)
         with subprocess.Popen(command, cwd=work, env=environment, stderr=subprocess.PIPE,
@@ -117,6 +170,18 @@ def execute(invocation):
                 print(line, end="", file=sys.stderr, flush=True)
             result["pipeline_returncode"] = process.wait()
         result["pipeline_stderr_tail"] = "".join(stderr_tail)[-8000:]
+        if module_probe:
+            if scoped:
+                from scope_probe import consumer_hashes
+                declared = result['consumer_preflight']['consumer_files']
+                if (consumer_hashes(pipeline, list(declared)) != declared
+                        or digest(helper) != request['scope_probe_digest']
+                        or digest(invocation / 'execution_plan.json') != request['plan_file_digest']
+                        or digest(invocation / 'scope_request.json') != request['scope_request_digest']):
+                    raise ValueError('Scoped consumer/plan/request changed during invocation')
+            elif (digest(pipeline) != result['pipeline_digest'] or
+                    digest(pipeline.parent / 'requirement_verification.py') != result['consumer_preflight']['consumer_digest']):
+                raise ValueError('Deployed pipeline/requirement reader changed during invocation')
         check_inputs(inputs, request["snapshot_digest"], report_relative)
         result["input_unchanged"] = True
         # A fresh input directory has exactly one top-level run; never use global latest.
@@ -131,6 +196,17 @@ def execute(invocation):
             raise ValueError(f"Expected one invocation summary, found {len(summaries)}")
         result["summary"] = json.loads(summaries[0].read_text())
         result["summary_file"] = str(summaries[0].relative_to(inputs))
+        if module_probe:
+            if scoped:
+                scoped_result = reports / 'module_execution_results.json'
+                if scoped_result.is_symlink():
+                    raise ValueError('Symlinked scoped result')
+                result.update(scoped_result=json.loads(scoped_result.read_text()),
+                              scoped_result_file=scoped_result.relative_to(inputs).as_posix(),
+                              scoped_result_digest=digest(scoped_result))
+            else:
+                from module_probe import verify_source_coverage
+                result['source_coverage'] = verify_source_coverage(reports, result['consumer_preflight']['source_catalog'])
     except Exception as exc:
         result["error"] = f"{type(exc).__name__}: {exc}"
         print(result["error"], file=sys.stderr, flush=True)

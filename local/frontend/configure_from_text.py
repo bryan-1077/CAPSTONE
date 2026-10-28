@@ -80,6 +80,8 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use cached dual-LLM RTL when used with --run-flow.",
     )
+    parser.add_argument("--text-file", type=Path,
+                        help="Interpret a saved description; retain the normal configuration confirmation.")
     return parser.parse_args()
 
 
@@ -342,7 +344,8 @@ Supported options:
 """
 
     while warning_count < MAX_CLARIFICATION_WARNINGS:
-        user_text = collect_user_description(prompt)
+        user_text = (args.text_file.read_text(encoding="utf-8") if args.text_file
+                     else collect_user_description(prompt))
         if not user_text:
             print("[ERROR] No description provided.")
             return 1
@@ -356,6 +359,9 @@ Supported options:
             print("[ERROR] No file written.")
             return 1
         except ConfigTextError as exc:
+            if args.text_file:
+                print(f"[ERROR] {exc}; revise the saved description before retrying.")
+                return 1
             warning_count += 1
             remaining = MAX_CLARIFICATION_WARNINGS - warning_count
             print(f"[WARN] {exc}")
@@ -375,6 +381,9 @@ Supported options:
             print("Trying to interpret your request, is this something you're happy with?")
 
         if not prompt_yes_no(f"Write this configuration to {output_path}? (y/n): "):
+            if args.text_file:
+                print("[INFO] Configuration declined; revise intake before retrying. No file written.")
+                return 1
             rejection_count += 1
             remaining = MAX_CONFIRMATION_REJECTIONS - rejection_count
             if remaining == 0:

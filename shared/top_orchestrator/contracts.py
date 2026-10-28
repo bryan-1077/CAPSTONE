@@ -40,6 +40,14 @@ class RunConfig:
     no_bist: bool = False
     validation_result: Path | None = None
     backend_result: Path | None = None
+    frontend_flow: Literal["expand-spec", "specification"] = "expand-spec"
+    intake: Path | None = None
+    spec_approval: Path | None = None
+    resume_build: Path | None = None
+    module_probe: str | None = None
+    preflight_only: bool = False
+    module_probe_parent: Path | None = None
+    scope_plan: Path | None = None
 
 
 @dataclass

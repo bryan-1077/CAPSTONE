@@ -14,6 +14,8 @@ from shared.top_orchestrator.mailbox import publish, verify
 FRONTEND = Path(__file__).resolve().parents[2] / "local/frontend"
 
 
+@unittest.skipUnless((FRONTEND / "rtl_output/manifest.json").is_file(),
+                     "Requires a generated legacy controller snapshot in local/frontend/rtl_output")
 class ControllerHandoffTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()

@@ -1,7 +1,36 @@
 """Shared requirement IDs and conservative, evidence-based verification (Python 3.6)."""
 import re
+import copy
+import json
+
+
+def extract_specification_requirements(spec, behavior, requirements):
+    """Retain source identity/obligations while using legacy REQ IDs for agents.
+
+    This adds catalog coverage, not executable verification or system readiness.
+    """
+    if not isinstance(behavior.get('specification_context'), dict):
+        return
+    for index, source in enumerate(spec.get('verification_requirements', [])):
+        if not isinstance(source, dict) or not source.get('id') or not isinstance(source.get('text'), str):
+            raise ValueError('Malformed specification verification requirement')
+        requirements.append({'category': 'specification_requirement',
+            'source': 'verification_requirements[{}]'.format(index),
+            'text': source['text'], 'source_id': source['id'],
+            'source_requirement': copy.deepcopy(source)})
+    for reference, obligation in sorted(behavior.get('verification_obligations', {}).items()):
+        requirements.append({'category': 'specification_obligation',
+            'source': 'behavior.verification_obligations.' + reference,
+            'text': reference + ': ' + json.dumps(obligation, sort_keys=True),
+            'source_id': reference, 'source_obligation': copy.deepcopy(obligation)})
+    contract = behavior.get('contract')
+    if contract is not None:
+        requirements.append({'category': 'specification_contract', 'source': 'behavior.contract',
+            'text': json.dumps(contract, sort_keys=True), 'source_id': 'behavior.contract',
+            'source_contract': copy.deepcopy(contract)})
 
 REQUIREMENT_ID_PATTERN = r'(?:SYS-)?REQ-\d{3,}'
+SPECIFICATION_CATALOG_VERSION = 1
 
 
 def build_system_requirement_catalog(configuration, contract):
@@ -484,11 +513,12 @@ def build_requirement_catalog(spec):
 
     # Append new schema coverage so existing behavior-based IDs stay stable.
     extract_fsm_requirements(spec, requirements, seen)
+    extract_specification_requirements(spec, behavior, requirements)
 
     split_rows = []
     for row in requirements:
         parts = row["text"].split(";", 1)
-        if len(parts) == 2 and "does not contain a valid field" in parts[0]:
+        if not row.get('source_id') and len(parts) == 2 and "does not contain a valid field" in parts[0]:
             for part in parts:
                 child = dict(row)
                 child["text"] = part.strip()
@@ -521,6 +551,11 @@ def attach_static_results(requirements, rtl_text):
         structs.setdefault(m.group(3), []).append((bool(m.group(1)), fields if valid else None, m.group(0)))
 
     for req in requirements:
+        if req.get('category', '').startswith('specification_'):
+            req['verification_method'] = 'simulation'
+            req['static_result'] = {'status': 'NOT_TESTED', 'method': 'static',
+                'evidence': 'Structured specification obligations require explicit verification evidence.'}
+            continue
         text = req['text']
         normalized = re.sub(r'[_\s-]+', ' ', text.lower()).strip()
         # These describe how the source is implemented, not port behavior.
@@ -599,6 +634,9 @@ def combine_requirement_results(requirements, simulation_report):
         rows.append({'id': req['id'], 'requirement': req['text'], 'source': req['source'],
                      'method': req['verification_method'], 'status': status,
                      'evidence': selected['evidence'], 'static': static, 'simulation': sim})
+        for key in ('source_id', 'source_requirement', 'source_obligation', 'source_contract'):
+            if key in req:
+                rows[-1][key] = copy.deepcopy(req[key])
     failed = sum(r['status'] == 'FAIL' for r in rows)
     gaps = sum(r['status'] == 'NOT_TESTED' for r in rows)
     overall = 'FAIL' if failed or simulation_report['overall_status'] == 'FAIL' else ('INCOMPLETE' if gaps or not rows else 'PASS')

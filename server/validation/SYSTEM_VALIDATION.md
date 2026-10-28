@@ -1,6 +1,11 @@
 Full-system controller validation (Phases 2, 3 and 4)
 ================================================
 
+For the Experimental specification route, see the proposed
+[verification integration agreement](../../shared/top_orchestrator/EXPERIMENTAL_VERIFICATION.md).
+The Standard controller system interface described below does not establish
+Experimental system compatibility.
+
 Run from the repository root, with the HDL tool environment loaded:
 
 ```sh
