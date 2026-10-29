@@ -241,6 +241,76 @@ class AIClosureTests(unittest.TestCase):
         self.assertEqual(result["timing_closure_status"], "passed")
         self.assertIn(self.states[3]["remote_gdsii_dir"], self.states[4]["timing_closure_eco_plan"]["checkpoint"])
 
+    def test_hold_recovery_advances_only_with_passing_setup_and_improved_hold(self):
+        class HoldRecoverySSH(EvidenceSSH):
+            def __init__(self, setup, hold):
+                super().__init__([-0.023, -0.016, 0.008, setup, 0.002])
+                self.hold = hold
+                self.setup_reports = {}
+
+            def fetch_file(self, remote, local):
+                if remote in self.setup_reports:
+                    Path(local).write_text(self.setup_reports[remote])
+                    return {"ok": True, "remote_path": remote}
+                result = super().fetch_file(remote, local)
+                if remote.endswith('timing_postroute.rpt'):
+                    self.setup_reports[remote] = Path(local).read_text()
+                elif remote.endswith('eco_library.rpt'):
+                    with Path(local).open('a') as handle:
+                        handle.write('sky130_fd_sc_hd__buf_1\n')
+                elif remote.endswith('hold_postroute.rpt'):
+                    ai = '_ai_' in remote
+                    slack = self.hold if ai and '_01/' in remote else 0.002 if ai else -0.035
+                    text = Path(local).read_text().replace('0.020', f'{slack:.3f}')
+                    if ai:
+                        text = text.replace('rsp_rdata_q_reg[17]', 'rsp_rdata_q_reg[25]')
+                    Path(local).write_text(text)
+                return result
+
+        for setup, hold, advances in ((0.003, -0.001, True),
+                                       (-0.001, -0.001, False),
+                                       (0.010, -0.050, False),
+                                       (0.010, -0.035, False)):
+            with self.subTest(setup=setup, hold=hold):
+                self.states.clear()
+                contexts = []
+
+                def decide(context, **kwargs):
+                    contexts.append(context)
+                    pin = ('rsp_rdata_q_reg[25]/D' if len(contexts) == 2 and advances
+                           else 'rsp_rdata_q_reg[17]/D')
+                    return {'summary': 'Repair the measured hold endpoint.', 'actions': [{
+                        'operation': 'insert_buffer', 'pin': pin,
+                        'cell': 'sky130_fd_sc_hd__buf_1', 'reason': 'Add local delay.',
+                    }]} if advances else plan(4 if len(contexts) == 1 else 8)
+
+                with patch.object(closure, 'plan_timing_recovery', side_effect=decide):
+                    result = self.run_closure(HoldRecoverySSH(setup, hold))
+                self.assertEqual(result['timing_closure_status'], 'passed', result.get('last_error'))
+                self.assertEqual(contexts[1]['source_attempt']['attempt'], 4 if advances else 3)
+                source = contexts[1]['source_attempt']['outdir']
+                self.assertIn(source, self.states[4]['timing_closure_eco_plan']['checkpoint'])
+                if advances:
+                    self.assertEqual(contexts[1]['source_attempt']['setup_status'], 'passed')
+                    self.assertEqual(contexts[1]['source_attempt']['hold_wns_ns'], -0.001)
+                    self.assertIn('rsp_rdata_q_reg[25]/D', contexts[1]['buffer_choices'])
+                    self.assertNotIn('rsp_rdata_q_reg[17]/D', contexts[1]['buffer_choices'])
+                    for report in contexts[1]['report_evidence']['best_build']['reports'].values():
+                        self.assertEqual(report['source_build'], source)
+                    self.assertIn('rsp_rdata_q_reg[25]/D', contexts[1]['report_evidence']['best_build']['reports']['hold']['content'])
+
+    def test_resume_prefers_hold_progress_with_passing_setup(self):
+        self.state.update(timing_closure_recover_best=True, timing_closure_attempts=[{
+            'attempt': i, 'status': 'hold_violated', 'setup_status': 'passed',
+            'wns_ns': setup, 'hold_wns_ns': hold, 'target_period_ns': 4.762,
+            'settings': closure.backend_settings({}, 1), 'outdir': f'old_{i}',
+            'mapped_snapshot': 'old_snapshot',
+        } for i, setup, hold in ((3, 0.008, -0.035), (5, 0.003, -0.001))])
+        result = self.run_closure(EvidenceSSH([0.003]))
+        self.assertEqual(result['timing_closure_status'], 'passed')
+        self.assertEqual(self.states[0]['timing_closure_eco_plan']['checkpoint'],
+                         '/remote/project/old_5/db/06_final.enc')
+
     def test_passing_timing_over_budget_is_rejected_and_best_preserved(self):
         for overrides in ({"ai_power": MAX_POWER_W + 0.01}, {"ai_area": MAX_DIE_AREA_MM2 + 0.01}, {"hold_slack": -0.03}):
             with self.subTest(overrides=overrides):

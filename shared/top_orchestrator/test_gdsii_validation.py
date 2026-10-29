@@ -86,6 +86,11 @@ class GDSIIValidationTests(unittest.TestCase):
         before = self.gds.read_bytes()
         result, record = self.execute()
         self.assertEqual(result.status, 'needs_attention', result.message)
+        lines = Path(result.artifacts['log']).read_text().splitlines()
+        self.assertTrue(any('[GDSII] Result: PASS_WITH_GAPS' in line for line in lines))
+        for line in lines:
+            if line:
+                self.assertRegex(line, r'^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [^\]]+\] ')
         remote = record['remote_result']
         self.assertEqual(remote['report']['status'], 'PASS_WITH_GAPS')
         self.assertTrue(remote['input_unchanged'])
@@ -96,6 +101,16 @@ class GDSIIValidationTests(unittest.TestCase):
         self.assertTrue((reports / 'gdsii_validation_report.json').is_file())
         self.assertEqual(next((reports / 'backend_reports').iterdir()).read_text(), 'slack 0.1')
         self.assertFalse((self.gds_dir / 'verification_reports').exists())
+
+    def test_shared_allocation_validates_gdsii_without_requesting_new_resources(self):
+        from shared.top_orchestrator.allocation import ENVIRONMENT
+        lease = dict(job_id='777', cpus=6, host='fake', username='fake', port=22)
+        with patch.dict('os.environ', {ENVIRONMENT: json.dumps(lease)}):
+            result, record = self.execute()
+        self.assertEqual(result.status, 'needs_attention', result.message)
+        self.assertEqual(record['remote_result']['report']['status'], 'PASS_WITH_GAPS')
+        self.assertIn('--jobid=777', record['command'])
+        self.assertIn('/shared/allocations/777/gdsii_validation_runs/', record['remote_directory'])
 
     def test_ambiguous_gds_stops_before_agent(self):
         (self.gds_dir / 'results/old.gds').write_bytes(b'old')

@@ -11,6 +11,7 @@ from uuid import uuid4
 from shared.remote.ssh_executor import SSHExecutor
 from .auth import cached_password, run_with_password_retries
 from .contracts import StageResult
+from .display import TimestampedOutput
 from .mailbox import verify
 from .remote import RemoteConfig, slurm_command
 from .validation import unpack_reports
@@ -92,7 +93,9 @@ def gdsii_validation_node(config, run_dir):
     ssh = None
     launched = finished = False
     with log_path.open("w", encoding="utf-8") as log:
+        timestamps = {name: TimestampedOutput() for name in ("stdout", "stderr")}
         def output(name, text):
+            text = timestamps["stderr" if name == "stderr" else "stdout"].format(text)
             log.write(text)
             log.flush()
             stream = sys.stderr if name == "stderr" else sys.stdout
@@ -106,7 +109,8 @@ def gdsii_validation_node(config, run_dir):
             token = uuid4().hex
             request["invocation_id"] = token
             job_name = "capstone-gdsii-" + token
-            invocation = PurePosixPath(remote.project_dir) / "shared/gdsii_validation_runs" / ("run_" + token)
+            from .allocation import workspace
+            invocation = workspace(remote) / 'gdsii_validation_runs' / ('run_' + token)
             record.update(host=remote.host, username=remote.username, remote_directory=str(invocation),
                           backend_result=str(config.backend_result), request=request)
             request_path = run_dir / "gdsii_validation_request.json"
@@ -163,7 +167,8 @@ def gdsii_validation_node(config, run_dir):
             if ssh is not None:
                 if launched and not finished:
                     try:
-                        record["cancellation"] = ssh.run(shlex.join(["scancel", "--name", job_name]), timeout=15)
+                        from .allocation import cancellation_command
+                        record["cancellation"] = ssh.run(shlex.join(cancellation_command(remote, job_name)), timeout=15)
                     except Exception as exc:
                         record["cancellation_error"] = f"{type(exc).__name__}: {exc}"
                 ssh.close()

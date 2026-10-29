@@ -6,6 +6,7 @@ StageName = Literal[
     "rtl_prep",
     "netlist",
     "mapped_netlist",
+    "lec",
     "gdsii",
     "done",
     "failed",
@@ -14,6 +15,15 @@ StageStatus = str
 
 
 class FlowState(TypedDict, total=False):
+    shared_allocation_id: str
+    shared_allocation_cpus: int
+    lec_enabled: bool
+    lec_validation_result: str
+    lec_remote_config: Optional[str]
+    lec_status: str
+    lec_result: str
+    lec_report_dir: str
+    lec_input_hashes: Dict[str, str]
     project_name: str
     top_module: str
     stop_after_stage: Optional[StageName]

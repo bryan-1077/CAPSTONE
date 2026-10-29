@@ -68,6 +68,8 @@ def backend_command(config: RunConfig, mailbox: Path) -> list[str]:
                "--mailbox", str(mailbox.expanduser().resolve()), "--target-mhz", str(target)]
     if config.ask_password:
         command.append("--ask-password")
+    if config.backend_resume_state is not None:
+        command.extend(["--resume-state", str(config.backend_resume_state)])
     return command
 
 
@@ -85,13 +87,24 @@ def stream_command(command: list[str], log: Path, *, cwd: Path | None = None,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True, encoding="utf-8", errors="replace") as process:
             assert process.stdout is not None
-            while chunk := process.stdout.read(1):
-                if timestamps is not None:
-                    chunk = timestamps.format(chunk)
-                sys.stdout.write(chunk)
-                sys.stdout.flush()
-                handle.write(chunk)
-                handle.flush()
+            try:
+                while chunk := process.stdout.read(1):
+                    if timestamps is not None:
+                        chunk = timestamps.format(chunk)
+                    sys.stdout.write(chunk)
+                    sys.stdout.flush()
+                    handle.write(chunk)
+                    handle.flush()
+            except BaseException:
+                # Popen's context manager otherwise waits indefinitely before
+                # the allocation owner's finally block can release remote CPUs.
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+                raise
             return process.wait()
 
 
@@ -193,10 +206,15 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     log = run_dir / "backend.log"
     reports = run_dir / "backend_reports"
     command = backend_command(config, mailbox) + ["--result-json", str(result_path), "--log-dir", str(reports)]
+    if config.skip_lec:
+        command.append("--skip-lec")
     artifacts = {"log": str(log), "reports": str(reports), "mailbox": str(mailbox),
                  "validation": "passed" if validation_record is not None else "not_run"}
     if validation_record is not None:
         artifacts["validation_result"] = str(config.validation_result)
+        command.extend(["--lec-validation-result", str(config.validation_result)])
+        if config.remote_config is not None:
+            command.extend(["--lec-remote-config", str(config.remote_config)])
     try:
         env_overrides = None
         if validation_record is not None:
@@ -204,6 +222,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
             host, username = remote.host, remote.username
             env_overrides = {"CAPSTONE_SSH_HOST": host, "CAPSTONE_SSH_USER": username,
                              "CAPSTONE_SSH_PORT": str(remote.port), "CAPSTONE_SSH_KEY": remote.key_filename or ""}
+            from .allocation import backend_environment
+            env_overrides.update(backend_environment(remote))
         else:
             host = os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu"
             username = os.getenv("CAPSTONE_SSH_USER") or "antgamez1203"
@@ -232,11 +252,22 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
         artifacts["failure_category"] = "missing_result"
         return StageResult("backend", "failed", f"Backend produced no usable result: {exc}", artifacts, code)
     artifacts["result"] = str(result_path)
+    artifacts["lec"] = payload.get("lec_status", "not_run")
+    if payload.get("lec_result"):
+        artifacts["lec_result"] = str(payload["lec_result"])
+        artifacts["lec_reports"] = str(payload.get("lec_report_dir", ""))
     stages = payload.get("stage_status", {})
     same_input = payload.get("mailbox_revision") == metadata["rtl_revision"]
     same_target = payload.get("timing_target_clock_period_ns") == 1000 / config.target_mhz
+    lec_accepted = (validation_record is None or
+                    (payload.get("lec_status") == "passed" and isinstance(stages, dict)
+                     and stages.get("lec") == "success"))
+    if config.skip_lec:
+        lec_accepted = (payload.get("lec_enabled") is False and payload.get("lec_status") == "not_run"
+                        and isinstance(stages, dict) and stages.get("lec") == "not_run")
     passed = (code == 0 and payload.get("current_stage") == "done" and same_input and same_target
               and isinstance(stages, dict)
+              and lec_accepted
               and all(stages.get(stage) == "success" for stage in ("rtl_prep", "netlist", "mapped_netlist", "gdsii"))
               and payload.get("timing_closure_status") in (None, "passed")
               and (not payload.get("timing_closure_enabled") or payload.get("timing_closure_status") == "passed")
@@ -244,6 +275,8 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
     message = ("Backend completed on the verified snapshot." if validation_record is not None else
                "Backend completed on an unvalidated snapshot.") if passed else str(
         payload.get("last_error") or "Backend incomplete, failed, or returned mismatched input/target evidence.")
+    if config.skip_lec:
+        message += " Agent 4 LEC skipped (not_run)."
     if not passed:
         artifacts["failure_category"] = str(payload.get("rtl_failure_category") or "unknown")
     # Preserve native triage in result JSON. PD intake normalization is separate work.

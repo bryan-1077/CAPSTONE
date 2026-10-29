@@ -50,6 +50,16 @@ def backend_settings(state: dict, attempt: int) -> dict:
     }
 
 
+def recovery_rank(entry: dict) -> tuple:
+    """Preserve passing setup, then repair hold before seeking more setup margin."""
+    setup = entry["wns_ns"]
+    hold = entry.get("hold_wns_ns", -math.inf)
+    setup_passed = entry.get("setup_status", "passed" if setup >= 0 else "violated") == "passed"
+    # Extra positive hold margin must not outrank setup improvement once hold passes.
+    hold = min(hold, 0)
+    return (setup_passed, hold, setup) if setup_passed else (False, setup, hold)
+
+
 def run_setup_closure(state, ssh, implementation_runner, merge):
     log_path = Path(state.get("backend_log_dir") or Path(__file__).resolve().parents[1] / "logs") / "timing_closure" / "timing_closure.log"
     run_id = uuid4().hex
@@ -148,7 +158,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                         and entry.get("outdir") and entry.get("mapped_snapshot")]
             if not eligible:
                 return fail("Saved state has no measured checkpoint at the requested clock period to recover.")
-            recovery_source = max(eligible, key=lambda entry: entry["wns_ns"])
+            recovery_source = max(eligible, key=recovery_rank)
             limit = 1  # Re-measure the saved best checkpoint before asking AI for edits.
         project_root = state["remote_project_root"]
         prep_dir, _ = resolve_prepare_dir(state.get("prep_candidate_path"), state.get("remote_prepare_dir"))
@@ -200,7 +210,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                     working["timing_closure_best_attempt"] = candidates[0]["entry"]
                     (run_log_dir / "physical_selection.json").write_text(json.dumps(source_selection, indent=2) + "\n")
                     record("selected", f"Physical agent selected preset {source_selection['selected_attempt']} for resizing: {source_selection['summary']}")
-                best = max(candidates, key=lambda item: item["entry"]["wns_ns"])
+                best = max(candidates, key=lambda item: recovery_rank(item["entry"]))
                 source_entry = best["entry"]
                 library_paths, _ = fetch_remote_reports(
                     ssh=ssh, remote_project_root=project_root,
@@ -356,7 +366,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             analysis = analyze_reports([report], target_period=target)
             analysis["remote_fetch"] = fetched
             status, message = evaluate_setup_report(report, target)
-            entry.update(status=status, wns_ns=report.wns, report=str(paths[0]))
+            entry.update(status=status, setup_status=status, wns_ns=report.wns, report=str(paths[0]))
             if status == "error":
                 record(status, message, analysis)
                 return fail(message)
@@ -394,9 +404,12 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 status = "hold_violated"
                 message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
             entry["status"] = status
-            if (status in {"passed", "violated"} or (not is_ai and status == "hold_violated")) and entry["limits"]["within_limits"]:
+            improved_hold = (is_ai and entry["setup_status"] == "passed"
+                             and hold.wns > source_entry["hold_wns_ns"])
+            if (status in {"passed", "violated"} or
+                    (status == "hold_violated" and (not is_ai or improved_hold))) and entry["limits"]["within_limits"]:
                 candidates.append({"entry": dict(entry), "state": dict(working)})
-                working["timing_closure_best_attempt"] = max(candidates, key=lambda item: item["entry"]["wns_ns"])["entry"]
+                working["timing_closure_best_attempt"] = max(candidates, key=lambda item: recovery_rank(item["entry"]))["entry"]
             record(status, message, analysis)
             (attempt_log_dir / f"attempt_{attempt}_state.json").write_text(json.dumps(working, indent=2) + "\n")
             if status == "passed":

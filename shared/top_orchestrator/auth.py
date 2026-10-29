@@ -30,7 +30,7 @@ def prepare_password(config):
     if config.entry == "remote-check" or (
             config.entry in ("generate", "debug") and config.skip_verification and config.no_backend):
         return
-    if config.entry == "backend" or config.skip_verification:
+    if (config.entry == "backend" and config.validation_result is None) or config.skip_verification:
         host = os.getenv("CAPSTONE_SSH_HOST") or "olympus.ece.tamu.edu"
         username = os.getenv("CAPSTONE_SSH_USER") or "antgamez1203"
     else:

@@ -40,6 +40,12 @@ class RunConfig:
     no_bist: bool = False
     validation_result: Path | None = None
     backend_result: Path | None = None
+    backend_resume_state: Path | None = None
+    shared_allocation: bool = False
+    shared_allocation_cpus: int = 6
+    shared_allocation_hours: int = 4
+    shared_allocation_queue_hours: int = 4
+    skip_lec: bool = False
 
 
 @dataclass

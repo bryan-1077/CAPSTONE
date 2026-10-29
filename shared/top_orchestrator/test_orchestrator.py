@@ -15,6 +15,52 @@ from shared.top_orchestrator.orchestrator import run
 
 
 class OrchestratorTests(unittest.TestCase):
+    def test_skip_lec_cli_aliases_and_plan(self):
+        from shared.top_orchestrator.__main__ import main
+        for flag in ("--skip-lec", "--no-lec"):
+            with self.subTest(flag=flag), patch("sys.argv", ["orchestrator", flag, "--plan"]), patch(
+                    "sys.stdout", io.StringIO()) as output:
+                self.assertEqual(main(), 0)
+                self.assertIn("mapped netlist -> GDSII generation", output.getvalue())
+                self.assertIn("LEC: not_run", output.getvalue())
+            with patch("sys.argv", ["orchestrator", flag]), patch(
+                    "shared.top_orchestrator.remote.RemoteConfig.load"), patch(
+                    "shared.top_orchestrator.__main__.run") as execute:
+                execute.return_value.status = "complete"
+                self.assertEqual(main(), 0)
+                self.assertTrue(execute.call_args.args[0].skip_lec)
+                self.assertFalse(execute.call_args.args[0].skip_verification)
+
+    def test_backend_skip_lec_requires_explicit_not_run_evidence(self):
+        from types import SimpleNamespace
+        from shared.top_orchestrator.nodes import backend_node
+        for skip, recorded_skip, expected in ((True, True, "passed"), (False, True, "failed"),
+                                              (True, False, "failed"), (False, False, "passed")):
+            with self.subTest(skip=skip, recorded_skip=recorded_skip), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                config = RunConfig("generate", mailbox=root / "mailbox", target_mhz=200,
+                                   validation_result=root / "validation.json", skip_lec=skip)
+                payload = dict(current_stage="done", mailbox_revision="revision",
+                               timing_target_clock_period_ns=5.0, lec_enabled=not recorded_skip,
+                               lec_status="not_run" if recorded_skip else "passed",
+                               stage_status={**dict.fromkeys(("rtl_prep", "netlist", "mapped_netlist", "gdsii"),
+                                                            "success"), "lec": "not_run" if recorded_skip else "success"})
+                def execute(command, *args, **kwargs):
+                    self.assertEqual("--skip-lec" in command, skip)
+                    self.assertIn("--lec-validation-result", command)
+                    (root / "backend_result.json").write_text(json.dumps(payload))
+                    return 0
+                with patch("shared.top_orchestrator.mailbox.verify", return_value={"rtl_revision": "revision"}), patch(
+                        "shared.top_orchestrator.nodes.verify_backend_handoff", return_value={}), patch(
+                        "shared.top_orchestrator.nodes.RemoteConfig.load",
+                        return_value=SimpleNamespace(host="fake", username="fake", port=22, key_filename=None)), patch(
+                        "shared.top_orchestrator.allocation.backend_environment", return_value={}), patch(
+                        "shared.top_orchestrator.nodes.cached_password", return_value=None), patch(
+                        "shared.top_orchestrator.nodes.stream_command", side_effect=execute):
+                    result = backend_node(config, root)
+                self.assertEqual(result.status, expected, result.message)
+                self.assertEqual(result.artifacts["validation"], "passed")
+
     def test_frontend_only_stops_after_repair_and_recheck(self):
         seen = []
         def generate(config, directory):

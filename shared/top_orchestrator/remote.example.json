@@ -27,5 +27,15 @@
   "gdsii_netlist": null,
   "gdsii_top": null,
   "gdsii_libraries": [],
-  "gdsii_report_dirs": []
+  "gdsii_report_dirs": [],
+  "lec_script": "server/validation/agent4_lec.py",
+  "lec_libraries": [],
+  "lec_netlist": null,
+  "lec_eqy": "eqy",
+  "lec_yosys": "yosys",
+  "lec_job_seconds": 7200,
+  "lec_queue_wait_seconds": 14400,
+  "lec_timeout_seconds": 21690,
+  "lec_proof_seconds": 3600,
+  "lec_cpus": 6
 }
