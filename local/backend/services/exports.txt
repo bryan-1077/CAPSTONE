@@ -1,4 +1,4 @@
-export OPENAI_API_KEY="sk-5313881325b54fafbd4cd59417bedf56"
+# OPENAI_API_KEY is inherited from your shell; configure it in ~/.bashrc.
 
 export OPENAI_BASE_URL="https://chat-api.tamu.ai/openai"
 

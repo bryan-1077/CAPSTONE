@@ -7,7 +7,11 @@ def final_summary(state: RunState, run_dir) -> str:
     import yaml
 
     config = state.config
-    lines = ["SYSTEM RUN COMPLETE — GDSII VALIDATION PASSED", "",
+    latest = {result.stage: result for result in state.results}
+    gdsii = latest.get("gdsii-validation")
+    with_gaps = (gdsii is not None and gdsii.status == "passed" and
+                 gdsii.artifacts.get("validation_status") == "PASS_WITH_GAPS")
+    lines = ["SYSTEM RUN COMPLETE — GDSII VALIDATION PASSED" + (" WITH GAPS" if with_gaps else ""), "",
              "Specifications used for RTL generation:"]
     # Prefer the exact specification published alongside the implemented RTL.
     source = config.mailbox / "approved_specs.yaml" if config.mailbox is not None else config.input_yaml
@@ -32,10 +36,10 @@ def final_summary(state: RunState, run_dir) -> str:
     lines.append(f"  Selection source: {config.target_mhz_source or 'not recorded'}")
     lines.append("  Selected clock target; achieved frequency requires timing-report evidence.")
 
-    latest = {result.stage: result for result in state.results}
-
     def status(stage):
         result = latest.get(stage)
+        if stage == "gdsii-validation" and with_gaps:
+            return "PASS_WITH_GAPS"
         return result.status.upper() if result is not None else "NOT RECORDED IN THIS RUN"
 
     generated = latest.get("generate")

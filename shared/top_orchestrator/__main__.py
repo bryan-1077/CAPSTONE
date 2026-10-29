@@ -173,7 +173,7 @@ def main() -> int:
             if args.skip_lec:
                 print("Agent 4 LEC skipped; records LEC: not_run.")
             print("After backend success: SSH/srun GDSII validation -> retrieve reports; "
-                  "PASS_WITH_GAPS requires review (needs_attention).")
+                  "PASS_WITH_GAPS completes the run with gaps recorded in the summary.")
         print("Frontend failures with supported evidence -> debug -> recheck -> publish -> "
               + ("stop" if args.skip_verification and args.no_backend else
                  "backend" if args.skip_verification else

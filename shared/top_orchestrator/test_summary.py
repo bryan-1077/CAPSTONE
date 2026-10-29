@@ -65,16 +65,23 @@ class FinalSummaryTests(unittest.TestCase):
                 self.assertIn(str(source), output)
 
     def test_only_successful_gdsii_validation_prints_final_summary(self):
-        for final_status in ("passed", "needs_attention", "failed"):
+        for final_status in ("passed", "PASS_WITH_GAPS", "needs_attention", "failed"):
             with self.subTest(final_status=final_status), tempfile.TemporaryDirectory() as temporary:
+                passed = final_status in ("passed", "PASS_WITH_GAPS")
+                result = StageResult("gdsii-validation", "passed" if passed else final_status, "checked",
+                                     {"validation_status": final_status})
                 with patch("shared.top_orchestrator.orchestrator.prepare_password"), patch.dict(
                         "shared.top_orchestrator.orchestrator.NODES", {
                             "backend": lambda c, d: StageResult("backend", "passed", "done"),
-                            "gdsii-validation": lambda c, d: StageResult("gdsii-validation", final_status, "checked")
+                            "gdsii-validation": lambda c, d: result
                         }), patch("sys.stdout", io.StringIO()) as output:
                     state = run(RunConfig("backend", target_mhz=200), Path(temporary) / "run")
-                self.assertEqual("SYSTEM RUN COMPLETE" in output.getvalue(), final_status == "passed")
-                self.assertEqual(state.status, "complete" if final_status == "passed" else final_status)
+                self.assertEqual("SYSTEM RUN COMPLETE" in output.getvalue(), passed)
+                self.assertEqual(state.status, "complete" if passed else final_status)
+                if final_status == "PASS_WITH_GAPS":
+                    self.assertIn("GDSII VALIDATION PASSED WITH GAPS", output.getvalue())
+                    self.assertIn("GDSII validation:     PASS_WITH_GAPS", output.getvalue())
+                    self.assertNotIn("needs_attention", output.getvalue())
 
 
 if __name__ == "__main__":

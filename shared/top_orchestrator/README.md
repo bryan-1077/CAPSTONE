@@ -36,7 +36,8 @@ the run artifact directory. All approved specification fields are included;
 missing specifications or stage evidence are identified explicitly. Skipped BIST
 or Agents 1–3 verification are labeled as skipped. The frequency is the selected
 clock target, not a claim of measured achieved frequency. No Agent 4 line is
-included. Failed validation or `PASS_WITH_GAPS` does not print a success summary.
+included. GDSII `PASS_WITH_GAPS` completes the run and prints a summary identifying
+the gaps. Failed validation does not print a success summary.
 
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
@@ -377,7 +378,8 @@ between the layout and netlist.
 The deployed verifier performs structural inspection and imports backend report
 findings. Its successful result is currently `PASS_WITH_GAPS`, with
 `needs_review: true` and `allow_signoff: false`. The orchestrator preserves that
-result as `needs_attention` (CLI exit 2). Native `FAIL` or `ERROR` results become
+native report and accepts `PASS_WITH_GAPS` as `passed` (CLI exit 0), with the final
+summary displaying `PASS_WITH_GAPS`. Native `FAIL` or `ERROR` results become
 `failed`; missing reports, transport problems, or inconsistent evidence stop for
 attention. GDSII failures do not trigger automatic frontend repair.
 
