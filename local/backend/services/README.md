@@ -13,3 +13,9 @@ Notes:
 - Agent review and edit modules live in `agents/`.
 - Worker orchestration and remote command construction live in `workers/`.
 - `__pycache__/` contains generated Python bytecode and is not part of the service logic.
+
+API credentials:
+
+- Set `export OPENAI_API_KEY="your-replacement-key"` in `~/.bashrc`, then run `source ~/.bashrc` before starting the backend.
+- Keep credentials out of `exports.txt`; it is tracked by Git. The backend inherits the key from the shell.
+- If a key was published, revoke it with the API provider and create a replacement. Removing it here does not remove it from Git history.

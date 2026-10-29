@@ -101,6 +101,12 @@ def _parse_args(argv=None):
     parser.add_argument("--ask-password", action="store_true",
                         help="Prompt securely for the SSH password; reuse it for staging and backend execution.")
     parser.add_argument("--ssh-password-fd", type=int, help=argparse.SUPPRESS)
+    parser.add_argument("--lec-validation-result", type=Path,
+                        help="Gate GDSII on Agent 4 using this accepted system verification receipt.")
+    parser.add_argument("--lec-remote-config", type=Path, help="SSH/Slurm and Agent 4 configuration.")
+    parser.add_argument("--skip-lec", action="store_true", help="Skip Agent 4 LEC and record it as not_run.")
+    parser.add_argument("--resume-state", type=Path,
+                        help="Resume a saved backend result at LEC; preserve successful synthesis and mapping.")
     parser.add_argument(
         "--target-mhz", type=_positive_mhz, metavar="MHZ",
         help="target frequency, e.g. 230; overrides the environment period and disables inherited overconstraint",
@@ -115,9 +121,13 @@ def _parse_args(argv=None):
         help="disable overconstraint, including any environment setting",
     )
     args = parser.parse_args(argv)
+    if args.skip_lec and args.resume_state is not None:
+        parser.error("--skip-lec cannot be combined with --resume-state (resumes at LEC)")
     if args.command and args.command != ["max", "clocking"]:
         parser.error("unknown command; use 'max clocking'")
     args.max_clocking = args.max_clocking or bool(args.command)
+    if args.max_clocking and args.resume_state is not None:
+        parser.error("--resume-state cannot be combined with max clocking")
     if args.max_clocking and (args.target_mhz is not None or args.overconstraint_mhz is not None):
         parser.error("max clocking uses fixed targets starting at 230 MHz and cannot be combined with --target-mhz or --overconstraint-mhz")
     return args
@@ -146,9 +156,70 @@ def main(args=None):
                     target_args._ssh_password = None
 
             return run_max_clocking(run_target)
+        if getattr(args, "resume_state", None) is not None:
+            return _resume_at_lec(args)
         return _run_single_target(args)
     finally:
         args._ssh_password = None
+
+
+def _resume_at_lec(args):
+    from shared.top_orchestrator.mailbox import verify
+    from shared.top_orchestrator.validation import verify_backend_handoff
+
+    _load_service_exports()
+    state = json.loads(args.resume_state.expanduser().read_text())
+    if not state.get("lec_enabled") or any(state.get("stage_status", {}).get(stage) != "success"
+            for stage in ("rtl_prep", "netlist", "mapped_netlist")):
+        raise ValueError("Resume requires successful RTL prep, synthesis and mapping with the LEC gate enabled")
+    if state.get("stage_status", {}).get("gdsii") not in (None, "pending"):
+        raise ValueError("LEC resume supports runs stopped before GDSII generation")
+    mailbox = Path(state["mailbox_source"]).resolve()
+    if args.mailbox is None or args.mailbox.expanduser().resolve() != mailbox:
+        raise ValueError("Resume mailbox must match the saved backend state")
+    if verify(mailbox)["rtl_revision"] != state.get("mailbox_revision"):
+        raise ValueError("Resume mailbox revision differs from the mapped build")
+    receipt = Path(state["lec_validation_result"]).resolve()
+    if args.lec_validation_result is not None and args.lec_validation_result.expanduser().resolve() != receipt:
+        raise ValueError("Resume must use the saved system verification receipt")
+    verify_backend_handoff(receipt, mailbox)
+    if args.target_mhz is not None and not math.isclose(1000 / args.target_mhz,
+            state["timing_target_clock_period_ns"], rel_tol=1e-12):
+        raise ValueError("Resume cannot change the mapped build's clock target")
+    if args.overconstraint_mhz is not None or args.no_overconstraint:
+        raise ValueError("Resume cannot change the saved timing constraints")
+    if args.log_dir is None:
+        raise ValueError("Resume requires a new --log-dir to preserve the original run")
+    state.update(current_stage="lec", stop_after_stage=None, route_back_to_stage=None,
+                 reserve_named_builds=False, lec_status="pending", lec_input_hashes={},
+                 lec_result=None, lec_report_dir=None, last_error=None,
+                 backend_log_dir=str(args.log_dir.expanduser().resolve()),
+                 resumed_from=str(args.resume_state.expanduser().resolve()),
+                 stage_status={**state["stage_status"], "lec": "pending", "gdsii": "pending"})
+    if getattr(args, "lec_remote_config", None) is not None:
+        state["lec_remote_config"] = str(args.lec_remote_config.expanduser().resolve())
+    _apply_shared_allocation(state)
+    ssh_config = {"host": state["ssh_host"], "username": state["ssh_user"],
+                  "port": state.get("ssh_port", 22), "key_filename": state.get("ssh_key_file")}
+    if getattr(args, "_ssh_password", None) is not None:
+        ssh_config["password"] = args._ssh_password
+    elif getattr(args, "ask_password", False):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", getpass.GetPassWarning)
+            ssh_config["password"] = getpass.getpass(f"SSH password for {state['ssh_user']}@{state['ssh_host']}: ")
+    return run_flow(initial_state=state, ssh_config=ssh_config, thread_id="eda-flow-lec-resume")
+
+
+def _apply_shared_allocation(state):
+    from shared.top_orchestrator.allocation import active_allocation
+    lease = active_allocation()
+    state.pop('shared_allocation_id', None)
+    state.pop('shared_allocation_cpus', None)
+    if lease:
+        if (state['ssh_host'], state['ssh_user'], state.get('ssh_port', 22)) != (
+                lease['host'], lease['username'], lease['port']):
+            raise ValueError('Backend shared allocation belongs to a different SSH endpoint')
+        state.update(shared_allocation_id=lease['job_id'], shared_allocation_cpus=lease['cpus'])
 
 
 def _run_single_target(args, *, require_timing_closure=False):
@@ -337,7 +408,11 @@ def _run_single_target(args, *, require_timing_closure=False):
                 )
         ssh_config["password"] = args._ssh_password
 
-    initial_state.update(full_flow_names(target_period))
+    _apply_shared_allocation(initial_state)
+    namespace = 'sa' + initial_state['shared_allocation_id'] if initial_state.get('shared_allocation_id') else None
+    initial_state.update(full_flow_names(target_period, namespace=namespace))
+    if namespace:
+        initial_state['timing_closure_base_outdir'] = 'build_GDSII_' + namespace
     if getattr(args, "log_dir", None):
         initial_state["backend_log_dir"] = str(args.log_dir.expanduser().resolve())
 
@@ -347,6 +422,19 @@ def _run_single_target(args, *, require_timing_closure=False):
             staged = stage_mailbox(args.mailbox, initial_state["remote_project_root"], ssh_config)
             args._mailbox_staged = staged
         initial_state.update(staged)
+
+    if getattr(args, "lec_validation_result", None) is not None:
+        if getattr(args, "mailbox", None) is None:
+            raise ValueError("LEC requires the verified mailbox snapshot")
+        initial_state.update(lec_enabled=True,
+                             lec_validation_result=str(args.lec_validation_result.expanduser().resolve()),
+                             lec_remote_config=str(args.lec_remote_config.expanduser().resolve())
+                             if getattr(args, "lec_remote_config", None) else None)
+
+    if getattr(args, "skip_lec", False):
+        initial_state.update(lec_enabled=False, lec_status="not_run",
+                             stage_status={**initial_state.get("stage_status", {}), "lec": "not_run"})
+        initial_state["history"].append("Agent 4 LEC skipped by --skip-lec (not_run)")
 
     result = run_flow(
         initial_state=initial_state,

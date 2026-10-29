@@ -11,6 +11,7 @@ Generation accepts these stage controls:
 | `--no-backend` | Disable backend execution. Combine with `--no-verif` to stop after frontend checks and snapshot publication. |
 | `--no-rtlgen` | Check existing RTL without spec selection or generation; alias for `--checks-only`. Cannot be combined with `--input` or `--cache`. |
 | `--no-bist` | Skip BIST simulation while retaining RTL lint. Records BIST as `not_run`. |
+| `--skip-lec` / `--no-lec` | Skip Agent 4 LEC between mapping and GDSII generation. Agents 1–3 verification and GDSII validation still run. Records LEC as `not_run`. Requires a flow with backend enabled. |
 
 For frontend generation, lint, BIST, and automatic repair only:
 
@@ -27,6 +28,16 @@ These controls apply to `generate` entry. Default routing continues from remote
 validation into backend when verification reports `READY_FOR_BACKEND`;
 `--no-backend` stops after verification and `--no-verif` goes directly to backend.
 Successful backend execution then runs remote GDSII validation.
+
+After GDSII validation passes, the console prints a final system summary with
+the approved YAML published alongside the RTL, the selected internal controller
+frequency and clock period, the frequency selection source, stage results, and
+the run artifact directory. All approved specification fields are included;
+missing specifications or stage evidence are identified explicitly. Skipped BIST
+or Agents 1–3 verification are labeled as skipped. The frequency is the selected
+clock target, not a claim of measured achieved frequency. No Agent 4 line is
+included. GDSII `PASS_WITH_GAPS` completes the run and prints a summary identifying
+the gaps. Failed validation does not print a success summary.
 
 ```bash
 # Start at interactive spec selection, then run generation and downstream stages.
@@ -367,7 +378,8 @@ between the layout and netlist.
 The deployed verifier performs structural inspection and imports backend report
 findings. Its successful result is currently `PASS_WITH_GAPS`, with
 `needs_review: true` and `allow_signoff: false`. The orchestrator preserves that
-result as `needs_attention` (CLI exit 2). Native `FAIL` or `ERROR` results become
+native report and accepts `PASS_WITH_GAPS` as `passed` (CLI exit 0), with the final
+summary displaying `PASS_WITH_GAPS`. Native `FAIL` or `ERROR` results become
 `failed`; missing reports, transport problems, or inconsistent evidence stop for
 attention. GDSII failures do not trigger automatic frontend repair.
 
@@ -671,3 +683,154 @@ the current frontend RTL matches the verified snapshot; repaired RTL is verified
 wrappers without matching YAMLs are listed in `modules_without_specs` and the final
 message; a module-level pass does not establish independent wrapper/system coverage.
 The existing frontend system lint and BIST still run before publication.
+
+## Agent 4 LEC between mapping and GDSII
+
+To skip Agent 4 while retaining the rest of the verified flow:
+
+```bash
+python3 -m shared.top_orchestrator --skip-lec --target-mhz 200
+```
+
+This also works with `--shared-allocation`. The saved configuration records
+`skip_lec: true`, and backend results record `lec_enabled: false` with LEC status
+`not_run`; the run makes no LEC coverage claim. Without this flag, the normal
+LEC gate remains required. The dedicated LEC resume command still requires LEC.
+
+The normal verified flow now runs:
+
+`frontend -> Agents 1–3 verification -> RTL prep -> generic netlist -> mapped netlist -> Agent 4 LEC -> GDSII generation -> GDSII validator`
+
+The backend invokes `server/validation/agent4_lec.py` through its authenticated
+`system_main` interface in a separate SSH/Slurm job. It reuses the exact saved
+system verification run, the published RTL inventory, the current mapped Verilog,
+and synthesis provenance. Agents 1–3 and mapping are not repeated at the LEC gate.
+After a complete `EQUIVALENT` proof, the same backend state continues to GDSII.
+Unknown/incomplete proofs, timeouts, missing models, stale inputs and proven
+mismatches stop the backend. Inputs are hashed again before physical implementation.
+This proof covers the mapped netlist; later physical ECOs are outside its scope.
+
+Each invocation preserves timestamped `lec.log`, `lec_request.json`, `lec_result.json`,
+the remote result, report archive, handoff and Agent 4 reports under
+`<backend_reports>/lec/<invocation-id>/`. The backend result records `lec_status`,
+`lec_result` and `lec_report_dir`. Interrupted jobs receive cancellation by their
+unique Slurm job name. Automatic backend/netlist repair after a mismatch is not enabled.
+
+Remote JSON settings (also shown in `remote.example.json`):
+
+| Setting | Default | Environment override |
+| --- | --- | --- |
+| `lec_script` | `server/validation/agent4_lec.py` | `CAPSTONE_LEC_SCRIPT` |
+| `lec_libraries` | `[]` | `CAPSTONE_LEC_LIBRARIES` (JSON array) |
+| `lec_netlist` | unique `results/*_mapped.v` | `CAPSTONE_LEC_NETLIST` |
+| `lec_eqy` / `lec_yosys` | `eqy` / `yosys` | `CAPSTONE_LEC_EQY` / `CAPSTONE_LEC_YOSYS` |
+| `lec_cpus` | 6 | `CAPSTONE_LEC_CPUS` |
+| `lec_proof_seconds` | 3600 | `CAPSTONE_LEC_PROOF_SECONDS` |
+| `lec_job_seconds` | 7200 | `CAPSTONE_LEC_JOB_SECONDS` |
+| `lec_queue_wait_seconds` | 14400 | `CAPSTONE_LEC_QUEUE_WAIT_SECONDS` |
+| `lec_timeout_seconds` | 21690 | `CAPSTONE_LEC_TIMEOUT_SECONDS` |
+
+LEC uses normal Slurm queuing without `--immediate`. Its default SSH deadline
+allows four hours of queue waiting, two hours of execution and 90 seconds of
+overhead. The queue allowance is used to validate the total SSH deadline; it is
+not a separate Slurm queue cutoff. If that total deadline expires or the run is
+interrupted, the integration cancels its uniquely named job. Allocation failures
+are reported with the Slurm diagnostic rather than a missing-report error.
+Nonzero Agent 4 exits still collect available reports and proof diagnostics.
+
+When no models are configured, the wrapper reads the mapped `setup_summary.txt`'s
+`Generic dir` and the literal `set LIBERTY "..."` path in that build's
+`run_genus_netlist.tcl`. Other synthesis layouts must supply `lec_libraries` explicitly.
+Model files must exist; a synthesis DB is not a functional model. When EQY/Yosys
+are absent from PATH, the wrapper also checks `<project_dir>/tools/oss-cad-suite/bin`
+and adds the selected tools' directories to PATH for their supporting engines.
+Explicit tool paths remain configurable.
+
+The top orchestrator enables this gate whenever it passes an accepted verification
+receipt to backend. Direct backend testing without a receipt and the explicit
+`--skip-verification`/`--allow-unvalidated` paths retain their existing unvalidated
+behavior and do not claim LEC coverage. Standalone `local/backend/app.py` callers
+can supply `--mailbox`, `--lec-validation-result` and optionally `--lec-remote-config`.
+
+Integration tests use isolated fake proof tools; they do not establish real
+controller equivalence. Run the LEC adapter regressions from the repository root:
+
+```bash
+python3 -m unittest shared.top_orchestrator.test_lec
+```
+
+Backend stage-order regressions run from `local/backend`:
+
+```bash
+python3 -m unittest timing_closure.tests.test_lec_gate
+```
+
+### Resume a run stopped at LEC
+
+From the repository root, resume the saved mapped build through LEC, physical
+implementation and GDSII validation:
+
+```bash
+python3 -m shared.top_orchestrator.resume --run shared/top_orchestrator/runs/<original-run-id>
+```
+
+Use the same configured remote environment as the original full run. The command
+prompts for SSH credentials and writes results to a new sibling `<timestamp>_resume_<id>`
+directory, preserving the original run. `--plan` verifies local inputs and prints
+the resume route without starting work. `--remote-config` can override the saved
+configuration, for example to update queue settings; server/account and input
+identity checks still apply.
+
+The resume command requires accepted system verification, successful RTL prep,
+synthesis and mapping, an enabled LEC gate, and GDSII not yet started. It keeps
+the mapped build, mailbox and clock target, disables build re-reservation, and
+restarts at LEC without reuploading RTL or repeating completed stages. It does
+not bypass LEC or input-integrity checks and is not a physical-design recovery
+command for runs that already started GDSII.
+
+### Reserve six CPUs once for the remote flow
+
+From the main repository root:
+
+```bash
+python3 -m shared.top_orchestrator --shared-allocation --shared-allocation-cpus 6 --target-mhz 200
+```
+
+Local generation and lint/BIST run first. Before remote validation, the controller
+requests one `salloc --no-shell` reservation. Validation, synthesis, mapping, LEC,
+GDSII generation and GDSII validation then use `srun --jobid=<id> --exact` within
+that same reservation. Backend steps bypass the `load-ecen-454` allocation alias.
+The configured main Agent 4 script and all proof/readiness gates still apply.
+Without `--shared-allocation`, the existing per-stage allocation behavior applies.
+Shared mode requires a verified full generation flow with backend enabled.
+
+The CPU count defaults to six. `--shared-allocation-hours` defaults to four hours
+for the whole remote flow, and `--shared-allocation-queue-hours` defaults to four
+hours of initial queue allowance (plus 90 seconds of SSH overhead). The Slurm
+reservation time limit covers all remote stages combined. `MAKEFLAGS=-j6` and
+`OMP_NUM_THREADS=6` are propagated for a six-CPU allocation; tool-specific serial
+work may still use fewer CPUs.
+
+The controller releases its owned reservation when the flow finishes, fails, or
+receives Ctrl-C, SIGTERM or SIGHUP. A stage transport timeout cancels only matching
+steps inside that reservation; the controller owns final allocation release.
+SIGKILL, a machine shutdown or an unavailable SSH server can prevent cleanup;
+Slurm's reservation time limit remains in effect. Inspect `shared_allocation.log`
+and `shared_allocation.json` in the local run directory for queue and release
+results. Remote reports are isolated under `shared/allocations/<job-id>/`, and
+new backend builds/scripts include `sa<job-id>` in their names.
+
+Existing interactive or unrelated allocations are not cancelled automatically.
+If another allocation holds part of your per-user six-CPU quota, the initial
+six-CPU request can queue with `QOSMaxCpuPerUserLimit` until those CPUs are freed.
+
+To resume an eligible saved mapped build with a fresh shared reservation:
+
+```bash
+python3 -m shared.top_orchestrator.resume --run shared/top_orchestrator/runs/<original-run-id> --shared-allocation --shared-allocation-cpus 6
+```
+
+Resume uses the same CPU/hour options, preserves completed synthesis and mapping,
+and never reuses a saved allocation ID. Add `--plan` to either command to preview
+the route without submitting jobs. Allocation and backend integration tests use
+fake schedulers/tools; passing tests do not establish live controller equivalence.

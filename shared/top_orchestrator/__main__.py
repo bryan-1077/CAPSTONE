@@ -52,6 +52,8 @@ def _main(resources) -> int:
                         help="Disable backend execution; combine with --no-verif for frontend only.")
     parser.add_argument("--no-bist", action="store_true",
                         help="Skip BIST simulation; RTL lint still runs.")
+    parser.add_argument("--skip-lec", "--no-lec", dest="skip_lec", action="store_true",
+                        help="Skip Agent 4 LEC between mapping and GDSII; retain RTL and GDSII validation.")
     parser.add_argument("--backend-python", help="Python executable in the backend dependency environment.")
     parser.add_argument("--remote-config", type=Path, help="Optional JSON overrides for CAPSTONE_* SSH/Slurm environment variables.")
     parser.add_argument("--ask-password", action="store_true", help="Prompt securely for remote-check SSH authentication; remote flow runs always request a password after selection.")
@@ -67,7 +69,23 @@ def _main(resources) -> int:
                         help="Maximum automatic debug cycles across stages; 0 disables routing.")
     parser.add_argument("--plan", action="store_true", help="Print routing and commands without executing or writing files.")
     parser.add_argument("--run-dir", type=Path, help="New directory for logs and state.json.")
+    parser.add_argument('--shared-allocation', action='store_true',
+                        help='Reserve CPUs once and reuse them for every remote stage')
+    parser.add_argument('--shared-allocation-cpus', type=int, default=6)
+    parser.add_argument('--shared-allocation-hours', type=int, default=4)
+    parser.add_argument('--shared-allocation-queue-hours', type=int, default=4)
     args = parser.parse_args()
+    if any(value < 1 for value in (args.shared_allocation_cpus, args.shared_allocation_hours,
+                                   args.shared_allocation_queue_hours)):
+        parser.error('Shared allocation CPUs and hours must be positive')
+    if args.shared_allocation and (args.entry != 'generate' or args.skip_verification or args.no_backend
+            or args.frontend_flow == 'specification' or args.prepare_intake
+            or args.module_probe or args.module_batch or args.offline_handoff):
+        parser.error('--shared-allocation requires a verified full generate flow with backend enabled')
+    if args.skip_lec and (args.no_backend or args.prepare_intake or args.module_probe
+                          or args.module_batch or args.offline_handoff
+                          or args.frontend_flow == "specification"):
+        parser.error("--skip-lec requires a flow that includes backend")
     if args.scope_plan and not args.module_probe:
         parser.error('--scope-plan requires validation --module-probe MODULE --mailbox PARENT')
     if args.module_batch or args.offline_handoff:
@@ -151,6 +169,7 @@ def _main(resources) -> int:
                 or args.checks_only or args.failure_dir or args.mailbox
                 or args.remote_config or args.ask_password or args.backend_python
                 or args.allow_unvalidated or args.repair or args.offline or args.no_bist
+                or args.skip_lec or args.shared_allocation
                 or args.max_attempts != 3 or args.max_repair_cycles != 2):
             parser.error("Experimental currently requires generate --no-verif --no-backend; legacy debug/check/BIST options are unsupported")
         info = None
@@ -223,6 +242,8 @@ def _main(resources) -> int:
         parser.error("--checks-only with --skip-verification requires --target-mhz")
     direct_backend_route = args.entry == "backend" or (args.skip_verification and not args.no_backend)
     backend_route = args.entry == "backend" or (args.entry in ("generate", "debug") and not args.no_backend)
+    if args.skip_lec and not backend_route:
+        parser.error("--skip-lec requires a flow that includes backend")
     needs_remote = (args.entry in ("generate", "validation", "remote-check") and not args.skip_verification) or (args.entry == "debug" and args.repair)
     if not direct_backend_route and ((needs_remote and not args.plan) or args.entry == "remote-check" or args.remote_config):
         from .remote import RemoteConfig, probe_command
@@ -271,7 +292,12 @@ def _main(resources) -> int:
                        frontend_flow="specification" if args.module_probe else args.frontend_flow or "expand-spec",
                        intake=args.intake.expanduser().resolve() if args.intake else None,
                        module_probe=args.module_probe, preflight_only=args.preflight_only,
-                       scope_plan=args.scope_plan.expanduser().resolve() if args.scope_plan else None)
+                       scope_plan=args.scope_plan.expanduser().resolve() if args.scope_plan else None,
+                       skip_lec=args.skip_lec,
+                       shared_allocation=args.shared_allocation,
+                       shared_allocation_cpus=args.shared_allocation_cpus,
+                       shared_allocation_hours=args.shared_allocation_hours,
+                       shared_allocation_queue_hours=args.shared_allocation_queue_hours)
     if args.plan:
         if args.module_probe:
             print(f'Experimental module: {args.module_probe}; parent mailbox: {config.mailbox}')
@@ -286,6 +312,12 @@ def _main(resources) -> int:
                   'Run the deployed module pipeline; require normal stage PASS and complete source-linked requirement/obligation/contract evidence.')
             print('Receipt binds parent revision, module snapshot, consumer hashes and reports; system verification/backend readiness remain false.')
             return 0
+        if args.shared_allocation:
+            print(f'Reserve {args.shared_allocation_cpus} CPUs once for '
+                  f'{args.shared_allocation_hours} hours after frontend; reuse one Slurm job ID '
+                  'for verification, backend, '
+                  + ('' if args.skip_lec else 'LEC and ')
+                  + 'GDSII validation; release on exit')
         if args.entry == "remote-check":
             print(f"SSH {remote.username}@{remote.host}:{remote.port}; remote directory: {remote.project_dir}")
             print(probe_command(remote, "PLAN"))
@@ -334,8 +366,13 @@ def _main(resources) -> int:
                               else "backend requires accepted validation evidence")}
         print(routes[args.entry])
         if backend_route:
+            if not args.allow_unvalidated and not args.skip_verification:
+                print("Backend stages: RTL prep -> generic netlist -> mapped netlist -> "
+                      + ("" if args.skip_lec else "Agent 4 LEC -> ") + "GDSII generation")
+            if args.skip_lec:
+                print("Agent 4 LEC skipped; records LEC: not_run.")
             print("After backend success: SSH/srun GDSII validation -> retrieve reports; "
-                  "PASS_WITH_GAPS requires review (needs_attention).")
+                  "PASS_WITH_GAPS completes the run with gaps recorded in the summary.")
         print("Frontend failures with supported evidence -> debug -> recheck -> publish -> "
               + ("stop" if args.skip_verification and args.no_backend else
                  "backend" if args.skip_verification else

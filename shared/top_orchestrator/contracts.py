@@ -48,6 +48,12 @@ class RunConfig:
     preflight_only: bool = False
     module_probe_parent: Path | None = None
     scope_plan: Path | None = None
+    backend_resume_state: Path | None = None
+    shared_allocation: bool = False
+    shared_allocation_cpus: int = 6
+    shared_allocation_hours: int = 4
+    shared_allocation_queue_hours: int = 4
+    skip_lec: bool = False
 
 
 @dataclass

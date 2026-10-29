@@ -1,0 +1,73 @@
+{
+  "architecture_version": 1,
+  "design_name": "timing_demo",
+  "profile": "DDR4-3200",
+  "rationale": "A single reusable tRRD block owns activation-spacing state. The wrapper exposes its contract directly; no controller behavior is hidden in integration.",
+  "top_ports": [
+    {
+      "name": "clk",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "rst_n",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "act_pulse",
+      "direction": "input",
+      "width": 1
+    },
+    {
+      "name": "tRRD_block",
+      "direction": "output",
+      "width": 1
+    }
+  ],
+  "modules": [
+    {
+      "instance": "u_spacing",
+      "responsibility": "Track accepted activations and enforce tRRD spacing.",
+      "reuse": {
+        "feature": "tRRD",
+        "submodule": "simple_tRRD",
+        "design_name": "ddr4_tRRD_simple_tRRD"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": "top.clk",
+      "to": "u_spacing.clk"
+    },
+    {
+      "from": "top.rst_n",
+      "to": "u_spacing.rst_n"
+    },
+    {
+      "from": "top.act_pulse",
+      "to": "u_spacing.act_pulse"
+    },
+    {
+      "from": "u_spacing.tRRD_block",
+      "to": "top.tRRD_block"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "Provide a reusable activation spacing gate for the DDR4-3200 profile. An accepted activation must block subsequent activation attempts for the configured tRRD interval. Expose the block output and use a asynchronous active-low reset.",
+      "owners": [
+        "u_spacing"
+      ],
+      "verification": "Reset, commit one activation, verify block asserts for the profile interval and clears at its boundary."
+    }
+  ],
+  "assumptions": [
+    "act_pulse represents an activation already accepted by the command issuer."
+  ],
+  "limitations": [
+    "This is a generation-flow example, not a memory controller. The caller must honor tRRD_block."
+  ]
+}

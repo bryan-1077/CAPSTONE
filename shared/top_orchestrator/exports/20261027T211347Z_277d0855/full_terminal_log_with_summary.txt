@@ -1,0 +1,1335 @@
+RECONSTRUCTED TERMINAL TRANSCRIPT — SAVED LOGS + CURRENT SUMMARY FORMAT
+Run: 20261027T211347Z_277d0855
+Started: October 27, 2026, 4:13:47 PM America/Chicago
+User table: 210 MHz | Oct. 27, 4:13 PM | 4 iterations | 58m 55s | Pass
+The table pass corresponds to backend timing closure. The final validator
+reported PASS_WITH_GAPS; the saved overall status is needs_attention.
+This export concatenates complete saved stage logs in execution order.
+Section markers and the summary were generated after the run; this is
+not an original terminal capture. No stages were rerun.
+
+================================================================================
+SAVED LOG: spec_selection.log
+================================================================================
+[2026-10-27 16:13:47 CDT] Describe the DDR4 controller you want.
+
+[2026-10-27 16:13:47 CDT] Supported options:
+[2026-10-27 16:13:47 CDT] - Speed: 2400 or 3200
+[2026-10-27 16:13:47 CDT] - Banks: 1, 2, or 4
+[2026-10-27 16:13:47 CDT] - Scheduler: simple or round_robin
+[2026-10-27 16:13:47 CDT] - Page policy: open_page or close_page
+[2026-10-27 16:13:47 CDT] - Optional features: refresh, tFAW, tRRD
+
+[2026-10-27 16:13:47 CDT] Press Enter when done.
+[2026-10-27 16:13:47 CDT] > [INFO] Loading...
+
+[2026-10-27 16:13:56 CDT] [INTERPRETED CONFIG]
+[2026-10-27 16:13:56 CDT] [SUMMARY]
+[2026-10-27 16:13:56 CDT] Protocol : DDR4
+[2026-10-27 16:13:56 CDT] Speed    : 3200
+[2026-10-27 16:13:56 CDT] Banks    : 4
+[2026-10-27 16:13:56 CDT] Scheduler: simple
+[2026-10-27 16:13:56 CDT] PagePol  : open_page
+[2026-10-27 16:13:56 CDT] Refresh  : enabled
+[2026-10-27 16:13:56 CDT] tFAW     : enabled
+[2026-10-27 16:13:56 CDT] tRRD     : enabled
+[2026-10-27 16:13:56 CDT] [ASSUMPTIONS]
+[2026-10-27 16:13:56 CDT] - Preset inference: 'fast' implies maximum performance (fastest preset).
+
+[2026-10-27 16:13:56 CDT] Trying to interpret your request, is this something you're happy with?
+[2026-10-27 16:13:56 CDT] Write this configuration to /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855/approved_specs.yaml? (y/n): [CONFIG] Wrote /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855/approved_specs.yaml
+
+================================================================================
+SAVED LOG: generate.log
+================================================================================
+[2026-10-27 16:14:07 CDT] [CONFIG] Detected user config
+[2026-10-27 16:14:07 CDT] [CONFIG] Generating internal input YAMLs...
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_bank.yaml
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_request_queue.yaml
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_tFAW.yaml
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_tRRD.yaml
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_scheduler.yaml
+[2026-10-27 16:14:07 CDT] [CONFIG] Generated: microarch/gen_basic/ddr4_refresh.yaml
+[2026-10-27 16:14:07 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_bank.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Design:  ddr4_bank
+[2026-10-27 16:14:07 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:07 CDT] [expand_spec] Features: basic_commands
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:07 CDT] [expand_spec] Processing feature: basic_commands
+[2026-10-27 16:14:07 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:07 CDT] [expand_spec]   {tRCD_cycles} -> 22
+[2026-10-27 16:14:07 CDT] [expand_spec]   {tRAS_cycles} -> 52
+[2026-10-27 16:14:07 CDT] [expand_spec]   {tRP_cycles} -> 22
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: activate_fsm
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_activate_fsm.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: tRAS_fsm
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_tRAS_fsm.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: precharge_fsm
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_precharge_fsm.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: bank_sequencer
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_bank_sequencer.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Master YAML written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_master.yaml
+
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] Expansion complete: ddr4_bank -> 4 submodules
+[2026-10-27 16:14:07 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:07 CDT] Feature:  basic_commands
+
+[2026-10-27 16:14:07 CDT] Generated files:
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_activate_fsm.yaml
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_tRAS_fsm.yaml
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_precharge_fsm.yaml
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_bank_sequencer.yaml
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_master.yaml
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_refresh.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Design:  ddr4_refresh
+[2026-10-27 16:14:07 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:07 CDT] [expand_spec] Features: refresh_controller
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:07 CDT] [expand_spec] Processing feature: refresh_controller
+[2026-10-27 16:14:07 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:07 CDT] [expand_spec]   {tREFI_cycles} -> 12480
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: refresh_controller
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_refresh_refresh_controller.yaml
+
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] Expansion complete: ddr4_refresh -> 1 submodules
+[2026-10-27 16:14:07 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:07 CDT] Feature:  refresh_controller
+
+[2026-10-27 16:14:07 CDT] Generated files:
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_refresh_refresh_controller.yaml
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_request_queue.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Design:  ddr4_request_queue
+[2026-10-27 16:14:07 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:07 CDT] [expand_spec] Features: request_queue
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:07 CDT] [expand_spec] Processing feature: request_queue
+[2026-10-27 16:14:07 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: request_queue
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_request_queue_request_queue.yaml
+
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] Expansion complete: ddr4_request_queue -> 1 submodules
+[2026-10-27 16:14:07 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:07 CDT] Feature:  request_queue
+
+[2026-10-27 16:14:07 CDT] Generated files:
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_request_queue_request_queue.yaml
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_scheduler.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Design:  ddr4_scheduler
+[2026-10-27 16:14:07 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:07 CDT] [expand_spec] Features: scheduler
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:07 CDT] [expand_spec] Processing feature: scheduler
+[2026-10-27 16:14:07 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:07 CDT] [expand_spec] Expanding submodule: scheduler
+[2026-10-27 16:14:07 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_scheduler_scheduler.yaml
+
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] Expansion complete: ddr4_scheduler -> 1 submodules
+[2026-10-27 16:14:07 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:07 CDT] Feature:  scheduler
+
+[2026-10-27 16:14:07 CDT] Generated files:
+[2026-10-27 16:14:07 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_scheduler_scheduler.yaml
+[2026-10-27 16:14:07 CDT] ============================================================
+[2026-10-27 16:14:07 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_tFAW.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Design:  ddr4_tFAW
+[2026-10-27 16:14:07 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:07 CDT] [expand_spec] Features: tFAW_tracker
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:07 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:07 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:08 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:08 CDT] [expand_spec] Processing feature: tFAW_tracker
+[2026-10-27 16:14:08 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:08 CDT] [expand_spec]   {tFAW_cycles} -> 40
+[2026-10-27 16:14:08 CDT] [expand_spec] Expanding submodule: tFAW_tracker
+[2026-10-27 16:14:08 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tFAW_tFAW_tracker.yaml
+
+[2026-10-27 16:14:08 CDT] ============================================================
+[2026-10-27 16:14:08 CDT] Expansion complete: ddr4_tFAW -> 1 submodules
+[2026-10-27 16:14:08 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:08 CDT] Feature:  tFAW_tracker
+
+[2026-10-27 16:14:08 CDT] Generated files:
+[2026-10-27 16:14:08 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tFAW_tFAW_tracker.yaml
+[2026-10-27 16:14:08 CDT] ============================================================
+[2026-10-27 16:14:08 CDT] [FLOW] Running expand_spec...
+[2026-10-27 16:14:08 CDT] [expand_spec] Loading: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_basic/ddr4_tRRD.yaml
+[2026-10-27 16:14:08 CDT] [expand_spec] Design:  ddr4_tRRD
+[2026-10-27 16:14:08 CDT] [expand_spec] Profile: DDR4-3200
+[2026-10-27 16:14:08 CDT] [expand_spec] Features: tRRD
+[2026-10-27 16:14:08 CDT] [expand_spec] Loading JEDEC dictionary: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/jedec_dictionary.yaml
+[2026-10-27 16:14:08 CDT] [expand_spec] Verifying cycle counts for DDR4-3200 (1600 MHz)...
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRCD = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRP = 13.75 ns -> 22 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRAS = 32.0 ns -> 52 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRC = 45.75 ns -> 74 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRRD = 3.333 ns -> 6 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tFAW = 25.0 ns -> 40 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tRFC1 = 350.0 ns -> 560 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec]   tREFI = 7800.0 ns -> 12480 cycles  OK
+[2026-10-27 16:14:08 CDT] [expand_spec] Loading feature templates: /home/antgamez1203/CAPSTONE/local/frontend/microarch/jedec/feature_templates.yaml
+[2026-10-27 16:14:08 CDT] [expand_spec] Output directory: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp
+[2026-10-27 16:14:08 CDT] [expand_spec] Processing feature: tRRD
+[2026-10-27 16:14:08 CDT] [expand_spec] Substitution map:
+[2026-10-27 16:14:08 CDT] [expand_spec]   {tRRD_cycles} -> 6
+[2026-10-27 16:14:08 CDT] [expand_spec] Expanding submodule: simple_tRRD
+[2026-10-27 16:14:08 CDT] [expand_spec]   Written: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tRRD_simple_tRRD.yaml
+
+[2026-10-27 16:14:08 CDT] ============================================================
+[2026-10-27 16:14:08 CDT] Expansion complete: ddr4_tRRD -> 1 submodules
+[2026-10-27 16:14:08 CDT] Profile:  DDR4-3200  (1600 MHz)
+[2026-10-27 16:14:08 CDT] Feature:  tRRD
+
+[2026-10-27 16:14:08 CDT] Generated files:
+[2026-10-27 16:14:08 CDT]   /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tRRD_simple_tRRD.yaml
+[2026-10-27 16:14:08 CDT] ============================================================
+[2026-10-27 16:14:08 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_bank_activate_fsm.yaml
+[2026-10-27 16:14:08 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_activate_fsm.yaml ...
+[2026-10-27 16:14:08 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_bank_activate_fsm_ir.json
+[2026-10-27 16:14:08 CDT] ================================================================================
+[2026-10-27 16:14:08 CDT] --- CREATING --- ddr4_bank_activate_fsm.sv file ------ FSM GENERATOR
+
+[2026-10-27 16:14:08 CDT] [FLOW] Using FSM GENERATOR for ddr4_bank_activate_fsm
+
+[2026-10-27 16:14:08 CDT] --- FINISHED --- ddr4_bank_activate_fsm.sv file ------- SUCCESS
+[2026-10-27 16:14:08 CDT] ================================================================================
+
+
+[2026-10-27 16:14:08 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_bank_bank_sequencer.yaml
+[2026-10-27 16:14:08 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_bank_sequencer.yaml ...
+[2026-10-27 16:14:08 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_bank_bank_sequencer_ir.json
+[2026-10-27 16:14:08 CDT] ================================================================================
+[2026-10-27 16:14:08 CDT] --- CREATING --- ddr4_bank_bank_sequencer.sv file ------ FSM GENERATOR
+
+[2026-10-27 16:14:08 CDT] [FLOW] Using FSM GENERATOR for ddr4_bank_bank_sequencer
+
+[2026-10-27 16:14:08 CDT] --- FINISHED --- ddr4_bank_bank_sequencer.sv file ------- SUCCESS
+[2026-10-27 16:14:08 CDT] ================================================================================
+
+
+[2026-10-27 16:14:08 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_bank_precharge_fsm.yaml
+[2026-10-27 16:14:08 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_precharge_fsm.yaml ...
+[2026-10-27 16:14:08 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_bank_precharge_fsm_ir.json
+[2026-10-27 16:14:08 CDT] ================================================================================
+[2026-10-27 16:14:08 CDT] --- CREATING --- ddr4_bank_precharge_fsm.sv file ------ FSM GENERATOR
+
+[2026-10-27 16:14:08 CDT] [FLOW] Using FSM GENERATOR for ddr4_bank_precharge_fsm
+
+[2026-10-27 16:14:08 CDT] --- FINISHED --- ddr4_bank_precharge_fsm.sv file ------- SUCCESS
+[2026-10-27 16:14:08 CDT] ================================================================================
+
+
+[2026-10-27 16:14:08 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_bank_tRAS_fsm.yaml
+[2026-10-27 16:14:08 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_bank_tRAS_fsm.yaml ...
+[2026-10-27 16:14:08 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_bank_tRAS_fsm_ir.json
+[2026-10-27 16:14:08 CDT] ================================================================================
+[2026-10-27 16:14:08 CDT] --- CREATING --- ddr4_bank_tRAS_fsm.sv file ------ FSM GENERATOR
+
+[2026-10-27 16:14:08 CDT] [FLOW] Using FSM GENERATOR for ddr4_bank_tRAS_fsm
+
+[2026-10-27 16:14:08 CDT] --- FINISHED --- ddr4_bank_tRAS_fsm.sv file ------- SUCCESS
+[2026-10-27 16:14:08 CDT] ================================================================================
+
+
+[2026-10-27 16:14:08 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_refresh_refresh_controller.yaml
+[2026-10-27 16:14:08 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_refresh_refresh_controller.yaml ...
+[2026-10-27 16:14:08 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_refresh_refresh_controller_ir.json
+[2026-10-27 16:14:08 CDT] ================================================================================
+[2026-10-27 16:14:08 CDT] --- CREATING --- ddr4_refresh_refresh_controller.sv file ------ FSM GENERATOR
+
+[2026-10-27 16:14:08 CDT] [FLOW] Using FSM GENERATOR for ddr4_refresh_refresh_controller
+
+[2026-10-27 16:14:08 CDT] --- FINISHED --- ddr4_refresh_refresh_controller.sv file ------- SUCCESS
+[2026-10-27 16:14:08 CDT] ================================================================================
+
+
+[2026-10-27 16:14:09 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_request_queue_request_queue.yaml
+[2026-10-27 16:14:09 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_request_queue_request_queue.yaml ...
+[2026-10-27 16:14:09 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_request_queue_ir.json
+[2026-10-27 16:14:09 CDT] ================================================================================
+[2026-10-27 16:14:09 CDT] --- CREATING --- ddr4_request_queue.sv file ------ DUAL LLM BASED
+
+[2026-10-27 16:14:09 CDT] [FLOW] Using DUAL LLM generator for ddr4_request_queue
+[2026-10-27 16:14:09 CDT] [dual_llm] Starting dual-LLM loop | max_rounds=3 | LLM1=protected.Claude-Opus-5 | LLM2=protected.gpt-5.6-terra | lint=on
+
+[2026-10-27 16:14:09 CDT] [dual_llm] ── Round 1/3 ──────────────────────────────
+[2026-10-27 16:14:09 CDT] [dual_llm] Step 1: LLM #1 generating...
+[2026-10-27 16:14:09 CDT] [dual_llm] LLM1-Generate: model=protected.Claude-Opus-5 finish_reason=stop completion_tokens=3757 max_tokens=8192
+[2026-10-27 16:14:09 CDT] [dual_llm] Step 2: Single-file lint OK.
+[2026-10-27 16:14:09 CDT] [dual_llm] Step 3: LLM #2 reviewing...
+[2026-10-27 16:14:09 CDT] [dual_llm] LLM2-Review: model=protected.gpt-5.6-terra finish_reason=stop completion_tokens=1228 max_tokens=8192
+[2026-10-27 16:14:09 CDT] [dual_llm] Step 3: Reviewer status = INVALID
+[2026-10-27 16:14:09 CDT] [dual_llm]   Issues: [SPEC_VIOLATION] The sel_idx port and its uses hardcode a 2-bit queue index instead of using SEL_WIDTH, so configurations where DEPTH differs from 4 are unsupported. | [SPEC_VIOLATION] The req_valid and req_array ports are fixed for four entries rather than scaling with the parameterized DEPTH, causing invalid or incomplete queue-state representation for non-default depths.
+[2026-10-27 16:14:09 CDT] [dual_llm] Step 4: LLM #1 merging both versions...
+[2026-10-27 16:14:10 CDT] [dual_llm] LLM1-Merge: model=protected.Claude-Opus-5 finish_reason=stop completion_tokens=2969 max_tokens=8192
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 4: Merged output passes local lint; reusing it for reviewer validation next round.
+
+[2026-10-27 16:14:10 CDT] [dual_llm] ── Round 2/3 ──────────────────────────────
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 1: Reusing lint-clean merged RTL for reviewer validation.
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 2: Single-file lint OK.
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 3: LLM #2 reviewing...
+[2026-10-27 16:14:10 CDT] [dual_llm] LLM2-Review: model=protected.gpt-5.6-terra finish_reason=stop completion_tokens=323 max_tokens=8192
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 3: Reviewer status = VALID
+[2026-10-27 16:14:10 CDT] [dual_llm] Step 4: Skipped (reviewer clean). Accepting output.
+[2026-10-27 16:14:10 CDT] [dual_llm] ---GOOD---: Converged at round 2.
+[2026-10-27 16:14:10 CDT] [dual_llm] Cached reviewed RTL: .llm_cache/ddr4_request_queue.sv
+
+[2026-10-27 16:14:10 CDT] --- FINISHED --- ddr4_request_queue.sv file ------- SUCCESS
+[2026-10-27 16:14:10 CDT] ================================================================================
+
+
+[2026-10-27 16:14:11 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_scheduler_scheduler.yaml
+[2026-10-27 16:14:11 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_scheduler_scheduler.yaml ...
+[2026-10-27 16:14:11 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_scheduler_scheduler_ir.json
+[2026-10-27 16:14:11 CDT] ================================================================================
+[2026-10-27 16:14:11 CDT] --- CREATING --- ddr4_scheduler_scheduler.sv file ------ DUAL LLM BASED
+
+[2026-10-27 16:14:11 CDT] [FLOW] Using DUAL LLM generator for ddr4_scheduler_scheduler
+[2026-10-27 16:14:11 CDT] [dual_llm] Starting dual-LLM loop | max_rounds=3 | LLM1=protected.Claude-Opus-5 | LLM2=protected.gpt-5.6-terra | lint=on
+
+[2026-10-27 16:14:11 CDT] [dual_llm] ── Round 1/3 ──────────────────────────────
+[2026-10-27 16:14:11 CDT] [dual_llm] Step 1: LLM #1 generating...
+[2026-10-27 16:14:11 CDT] [dual_llm] LLM1-Generate: model=protected.Claude-Opus-5 finish_reason=stop completion_tokens=5599 max_tokens=8192
+[2026-10-27 16:14:11 CDT] [dual_llm] Step 2: Single-file lint OK.
+[2026-10-27 16:14:11 CDT] [dual_llm] Step 3: LLM #2 reviewing...
+[2026-10-27 16:14:11 CDT] [dual_llm] LLM2-Review: model=protected.gpt-5.6-terra finish_reason=stop completion_tokens=949 max_tokens=8192
+[2026-10-27 16:14:11 CDT] [dual_llm] Step 3: Reviewer status = INVALID
+[2026-10-27 16:14:11 CDT] [dual_llm]   Issues: [SPEC_VIOLATION] The sel_idx port and its assignment use a hardcoded 2-bit width despite DEPTH being parameterized, violating the required DEPTH-derived selection-index width.
+[2026-10-27 16:14:11 CDT] [dual_llm] Step 4: LLM #1 merging both versions...
+[2026-10-27 16:14:12 CDT] [dual_llm] LLM1-Merge: model=protected.Claude-Opus-5 finish_reason=stop completion_tokens=4219 max_tokens=8192
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 4: Merged output passes local lint; reusing it for reviewer validation next round.
+
+[2026-10-27 16:14:12 CDT] [dual_llm] ── Round 2/3 ──────────────────────────────
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 1: Reusing lint-clean merged RTL for reviewer validation.
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 2: Single-file lint OK.
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 3: LLM #2 reviewing...
+[2026-10-27 16:14:12 CDT] [dual_llm] LLM2-Review: model=protected.gpt-5.6-terra finish_reason=stop completion_tokens=1304 max_tokens=8192
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 3: Reviewer status = VALID
+[2026-10-27 16:14:12 CDT] [dual_llm] Step 4: Skipped (reviewer clean). Accepting output.
+[2026-10-27 16:14:12 CDT] [dual_llm] ---GOOD---: Converged at round 2.
+[2026-10-27 16:14:12 CDT] [dual_llm] Cached reviewed RTL: .llm_cache/ddr4_scheduler_scheduler.sv
+
+[2026-10-27 16:14:12 CDT] --- FINISHED --- ddr4_scheduler_scheduler.sv file ------- SUCCESS
+[2026-10-27 16:14:12 CDT] ================================================================================
+
+
+[2026-10-27 16:14:13 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_tFAW_tFAW_tracker.yaml
+[2026-10-27 16:14:13 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tFAW_tFAW_tracker.yaml ...
+[2026-10-27 16:14:13 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_tFAW_tFAW_tracker_ir.json
+[2026-10-27 16:14:13 CDT] ================================================================================
+[2026-10-27 16:14:13 CDT] --- CREATING --- ddr4_tFAW_tFAW_tracker.sv file ------ DETERMINISTIC TIMING HARDENED
+
+[2026-10-27 16:14:13 CDT] [FLOW] Using DETERMINISTIC TIMING HARDENED generator for ddr4_tFAW_tFAW_tracker
+
+[2026-10-27 16:14:13 CDT] --- FINISHED --- ddr4_tFAW_tFAW_tracker.sv file ------- SUCCESS
+[2026-10-27 16:14:13 CDT] ================================================================================
+
+
+[2026-10-27 16:14:13 CDT] [FLOW] Generating: microarch/gen_exp/ddr4_tRRD_simple_tRRD.yaml
+[2026-10-27 16:14:13 CDT] Validating YAML: /home/antgamez1203/CAPSTONE/local/frontend/microarch/gen_exp/ddr4_tRRD_simple_tRRD.yaml ...
+[2026-10-27 16:14:13 CDT] [INFO] IR saved to /home/antgamez1203/CAPSTONE/local/frontend/microarch/ir/ddr4_tRRD_simple_tRRD_ir.json
+[2026-10-27 16:14:13 CDT] ================================================================================
+[2026-10-27 16:14:13 CDT] --- CREATING --- ddr4_tRRD_simple_tRRD.sv file ------ DETERMINISTIC TIMING HARDENED
+
+[2026-10-27 16:14:13 CDT] [FLOW] Using DETERMINISTIC TIMING HARDENED generator for ddr4_tRRD_simple_tRRD
+
+[2026-10-27 16:14:13 CDT] --- FINISHED --- ddr4_tRRD_simple_tRRD.sv file ------- SUCCESS
+[2026-10-27 16:14:13 CDT] ================================================================================
+
+
+[2026-10-27 16:14:13 CDT] [FLOW] Generating wrapper...
+[2026-10-27 16:14:13 CDT] [check_interfaces] Running interface validation...
+[2026-10-27 16:14:13 CDT] [check_interfaces] PASS
+[2026-10-27 16:14:13 CDT] [INFO] Wrote bank_top RTL to /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/ddr4_bank_top.sv
+[2026-10-27 16:14:13 CDT] [INFO] Wrote wrapper RTL to /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/ddr4_controller_top.sv
+[2026-10-27 16:14:13 CDT] [INFO] Wrote filelist to /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/filelist.f
+[2026-10-27 16:14:13 CDT] [INFO] Wrote manifest to /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/manifest.json
+[2026-10-27 16:14:13 CDT] [INFO] Wrote README to /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/README.md
+[2026-10-27 16:14:13 CDT] [generate_wrapper] Wrapper generation complete.
+[2026-10-27 16:14:13 CDT] [TB] Generated: tb/tb_ddr4_controller_top.sv
+[2026-10-27 16:14:13 CDT] [FLOW] Enforcing timescale directives...
+[2026-10-27 16:14:13 CDT] [FLOW] Running full-system RTL lint...
+[2026-10-27 16:14:13 CDT] [FLOW] Full-system RTL lint: 0 error(s), 0 warning(s), 0 blocking finding(s).
+[2026-10-27 16:14:13 CDT] [FLOW] Full-system RTL lint OK.
+[2026-10-27 16:14:13 CDT] [FLOW] COMPLETE
+[2026-10-27 16:14:13 CDT] [SUMMARY]
+[2026-10-27 16:14:13 CDT] Protocol : DDR4
+[2026-10-27 16:14:13 CDT] Speed    : 3200
+[2026-10-27 16:14:13 CDT] Banks    : 4
+[2026-10-27 16:14:13 CDT] Scheduler: simple
+[2026-10-27 16:14:13 CDT] PagePol  : open_page
+[2026-10-27 16:14:13 CDT] Refresh  : enabled
+[2026-10-27 16:14:13 CDT] tFAW     : enabled
+[2026-10-27 16:14:13 CDT] tRRD     : enabled
+[2026-10-27 16:14:13 CDT] [FLOW] Completed in 6.08 seconds
+
+================================================================================
+SAVED LOG: bist.log
+================================================================================
+[2026-10-27 16:14:13 CDT] [SIM] Collecting RTL files...
+[2026-10-27 16:14:13 CDT] [SIM] Compiling with Verilator...
+[2026-10-27 16:14:14 CDT] make: Entering directory '/home/antgamez1203/CAPSTONE/local/frontend/obj_dir'
+[2026-10-27 16:14:14 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated.o /usr/local/share/verilator/include/verilated.cpp
+[2026-10-27 16:14:16 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated_vcd_c.o /usr/local/share/verilator/include/verilated_vcd_c.cpp
+[2026-10-27 16:14:18 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated_timing.o /usr/local/share/verilator/include/verilated_timing.cpp
+[2026-10-27 16:14:19 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -c -o verilated_threads.o /usr/local/share/verilator/include/verilated_threads.cpp
+[2026-10-27 16:14:19 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -x c++-header Vtb_ddr4_controller_top__pch.h -o Vtb_ddr4_controller_top__pch.h.fast.gch
+[2026-10-27 16:14:21 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top.o Vtb_ddr4_controller_top.cpp
+[2026-10-27 16:14:22 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0.o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0.cpp
+[2026-10-27 16:14:22 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0.cpp
+[2026-10-27 16:14:27 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__1.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__1.cpp
+[2026-10-27 16:14:31 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__2.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__2.cpp
+[2026-10-27 16:14:36 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__3.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__3.cpp
+[2026-10-27 16:14:40 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__4.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__4.cpp
+[2026-10-27 16:14:43 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__5.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__5.cpp
+[2026-10-27 16:14:43 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top__main.o Vtb_ddr4_controller_top__main.cpp
+[2026-10-27 16:14:43 CDT] g++ -Os  -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.fast -c -o Vtb_ddr4_controller_top__Trace__0.o Vtb_ddr4_controller_top__Trace__0.cpp
+[2026-10-27 16:14:44 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -x c++-header Vtb_ddr4_controller_top__pch.h -o Vtb_ddr4_controller_top__pch.h.slow.gch
+[2026-10-27 16:14:46 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top__ConstPool_0.o Vtb_ddr4_controller_top__ConstPool_0.cpp
+[2026-10-27 16:14:46 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top___024root__Slow.o Vtb_ddr4_controller_top___024root__Slow.cpp
+[2026-10-27 16:14:46 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0__Slow.o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0__Slow.cpp
+[2026-10-27 16:14:46 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0__Slow.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0__Slow.cpp
+[2026-10-27 16:14:46 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top__Syms.o Vtb_ddr4_controller_top__Syms.cpp
+[2026-10-27 16:14:47 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top__Trace__0__Slow.o Vtb_ddr4_controller_top__Trace__0__Slow.cpp
+[2026-10-27 16:14:47 CDT] g++   -I.  -MMD -I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=1 -DVM_TRACE_FST=0 -DVM_TRACE_VCD=1 -faligned-new -fcf-protection=none -Wno-bool-operation -Wno-overloaded-virtual -Wno-shadow -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-parameter -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -DVL_TIME_CONTEXT   -fcoroutines -include Vtb_ddr4_controller_top__pch.h.slow -c -o Vtb_ddr4_controller_top__TraceDecls__0__Slow.o Vtb_ddr4_controller_top__TraceDecls__0__Slow.cpp
+[2026-10-27 16:14:47 CDT] echo "" > Vtb_ddr4_controller_top__ALL.verilator_deplist.tmp
+[2026-10-27 16:14:47 CDT] Archive ar -rcs Vtb_ddr4_controller_top__ALL.a Vtb_ddr4_controller_top.o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__1.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__2.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__3.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__4.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__5.o Vtb_ddr4_controller_top__main.o Vtb_ddr4_controller_top__Trace__0.o Vtb_ddr4_controller_top__ConstPool_0.o Vtb_ddr4_controller_top___024root__Slow.o Vtb_ddr4_controller_top___024root__DepSet_he0e3e7cd__0__Slow.o Vtb_ddr4_controller_top___024root__DepSet_h779f740c__0__Slow.o Vtb_ddr4_controller_top__Syms.o Vtb_ddr4_controller_top__Trace__0__Slow.o Vtb_ddr4_controller_top__TraceDecls__0__Slow.o
+[2026-10-27 16:14:47 CDT] g++     verilated.o verilated_vcd_c.o verilated_timing.o verilated_threads.o Vtb_ddr4_controller_top__ALL.a    -pthread -lpthread -latomic   -o Vtb_ddr4_controller_top
+[2026-10-27 16:14:47 CDT] rm Vtb_ddr4_controller_top__ALL.verilator_deplist.tmp
+[2026-10-27 16:14:47 CDT] make: Leaving directory '/home/antgamez1203/CAPSTONE/local/frontend/obj_dir'
+[2026-10-27 16:14:47 CDT] [SIM] Running simulation...
+[2026-10-27 16:14:47 CDT] ===== DDR4 MEMORY SYSTEM DEMO START =====
+[2026-10-27 16:14:47 CDT] === PHASE: RESET ===
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=0 | Reset phase
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=55000 | Scheduler policy checks: simple
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=76000 | Scheduler case 1: only refresh issues refresh
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=96000 | Scheduler case 2: only transaction issues transaction
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=116000 | Scheduler case 3: contention with cmd_ready low issues nothing
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=126000 | Scheduler case 4: contention grants refresh
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=146000 | Scheduler case 5: uncontested transaction still issues transaction
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=166000 | Scheduler case 6: later contention still grants refresh
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=196000 | Scheduler row-hit priority: req[1] beats non-hit req[0]
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=216000 | Scheduler fallback: no row hits selects first valid
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=236000 | Scheduler lock behavior: req[0] selected while blocked
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=246000 | Scheduler lock behavior: later row hit does not reselect
+[2026-10-27 16:14:47 CDT] === PHASE: ROW BUFFER ===
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=266000 | Row-buffer phase
+[2026-10-27 16:14:47 CDT] [TXN ][id=1][cycle=24] WRITE bank=0 addr=5 data=0x11110001
+[2026-10-27 16:14:47 CDT] [ACPT][id=1][cycle=26] accepted (row_closed)
+[2026-10-27 16:14:47 CDT] [ROW ][id=1][cycle=26] CLOSED -> OPEN bank=0 row=1
+[2026-10-27 16:14:47 CDT] [WHY ][id=1][cycle=26] bank=0 addr=5 row=1 col=1 open_before=closed => ROW_CLOSED
+[2026-10-27 16:14:47 CDT] [WRITE][id=1][cycle=26] bank=0 addr=5 <= 0x11110001
+[2026-10-27 16:14:47 CDT] [COMP ][id=1][cycle=29] latency=3
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=316000 | First access to bank 0 opens row 1 on the slow path
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=317000 | Bank 0 keeps row 1 open after the first access
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=321000 | Row hit remains ready while shared tRRD blocking is active
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=331000 | Row miss stalls while shared tRRD blocking is active
+[2026-10-27 16:14:47 CDT] [TXN ][id=2][cycle=31]  READ bank=0 addr=5 data=0x00000000
+[2026-10-27 16:14:47 CDT] [ACPT][id=2][cycle=33] accepted (row_hit)
+[2026-10-27 16:14:47 CDT] [ROW ][id=2][cycle=33] HIT bank=0 row=1
+[2026-10-27 16:14:47 CDT] [WHY ][id=2][cycle=33] bank=0 addr=5 row=1 col=1 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:47 CDT] [READ ][id=2][cycle=33] bank=0 addr=5
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=366000 | Second access to bank 0 row 1 is a row hit on the fast path
+[2026-10-27 16:14:47 CDT] [RSP  ][id=2][cycle=34] data=0x11110001
+[2026-10-27 16:14:47 CDT] [COMP ][id=2][cycle=34] latency=1
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=377000 | Row hit keeps bank 0 row 1 open
+[2026-10-27 16:14:47 CDT] [TXN ][id=3][cycle=35] WRITE bank=0 addr=8 data=0x22220002
+[2026-10-27 16:14:47 CDT] [ACPT][id=3][cycle=37] accepted (row_miss)
+[2026-10-27 16:14:47 CDT] [ROW ][id=3][cycle=37] MISS bank=0 old=1 new=2
+[2026-10-27 16:14:47 CDT] [WHY ][id=3][cycle=37] bank=0 addr=8 row=2 col=0 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:47 CDT] [WRITE][id=3][cycle=37] bank=0 addr=8 <= 0x22220002
+[2026-10-27 16:14:47 CDT] [COMP ][id=3][cycle=40] latency=3
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=426000 | Accessing bank 0 row 2 causes a row miss and row replacement
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=427000 | Row miss updates bank 0 to keep row 2 open
+[2026-10-27 16:14:47 CDT] [TXN ][id=4][cycle=40]  READ bank=0 addr=8 data=0x00000000
+[2026-10-27 16:14:47 CDT] [ACPT][id=4][cycle=42] accepted (row_hit)
+[2026-10-27 16:14:47 CDT] [ROW ][id=4][cycle=42] HIT bank=0 row=2
+[2026-10-27 16:14:47 CDT] [WHY ][id=4][cycle=42] bank=0 addr=8 row=2 col=0 open_before=row2 => ROW_HIT
+[2026-10-27 16:14:47 CDT] [READ ][id=4][cycle=42] bank=0 addr=8
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=456000 | Reading bank 0 row 2 after replacement is a row hit
+[2026-10-27 16:14:47 CDT] [RSP  ][id=4][cycle=43] data=0x22220002
+[2026-10-27 16:14:47 CDT] [COMP ][id=4][cycle=43] latency=1
+[2026-10-27 16:14:47 CDT] [TXN ][id=5][cycle=44]  READ bank=0 addr=5 data=0x00000000
+[2026-10-27 16:14:47 CDT] [ACPT][id=5][cycle=46] accepted (row_miss)
+[2026-10-27 16:14:47 CDT] [ROW ][id=5][cycle=46] MISS bank=0 old=2 new=1
+[2026-10-27 16:14:47 CDT] [WHY ][id=5][cycle=46] bank=0 addr=5 row=1 col=1 open_before=row2 => ROW_MISS
+[2026-10-27 16:14:47 CDT] [READ ][id=5][cycle=46] bank=0 addr=5
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=516000 | Returning to bank 0 row 1 preserves the original row-1 data
+[2026-10-27 16:14:47 CDT] [RSP  ][id=5][cycle=49] data=0x11110001
+[2026-10-27 16:14:47 CDT] [COMP ][id=5][cycle=49] latency=3
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=527000 | Bank 0 re-opens row 1 after reading it back
+[2026-10-27 16:14:47 CDT] === PHASE: BANK ISOLATION ===
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=527000 | Bank isolation phase
+[2026-10-27 16:14:47 CDT] [TXN ][id=6][cycle=50] WRITE bank=1 addr=13 data=0x33330003
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=51] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=52] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=53] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=54] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=55] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=56] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=57] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=58] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=59] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=60] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=61] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=62] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=63] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=64] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [STALL][id=6][cycle=65] queued request awaiting dispatch
+[2026-10-27 16:14:47 CDT] [ACPT][id=6][cycle=67] accepted (row_closed)
+[2026-10-27 16:14:47 CDT] [ROW ][id=6][cycle=67] CLOSED -> OPEN bank=1 row=3
+[2026-10-27 16:14:47 CDT] [WHY ][id=6][cycle=67] bank=1 addr=13 row=3 col=1 open_before=closed => ROW_CLOSED
+[2026-10-27 16:14:47 CDT] [WRITE][id=6][cycle=67] bank=1 addr=13 <= 0x33330003
+[2026-10-27 16:14:47 CDT] [COMP ][id=6][cycle=70] latency=3
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=726000 | Closed-bank WRITE on bank 1 opens an independent row
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=727000 | Bank 0 row state is preserved while bank 1 opens a row
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=728000 | Bank 1 tracks its own open row
+[2026-10-27 16:14:47 CDT] [TXN ][id=7][cycle=70]  READ bank=1 addr=13 data=0x00000000
+[2026-10-27 16:14:47 CDT] [ACPT][id=7][cycle=72] accepted (row_hit)
+[2026-10-27 16:14:47 CDT] [ROW ][id=7][cycle=72] HIT bank=1 row=3
+[2026-10-27 16:14:47 CDT] [WHY ][id=7][cycle=72] bank=1 addr=13 row=3 col=1 open_before=row3 => ROW_HIT
+[2026-10-27 16:14:47 CDT] [READ ][id=7][cycle=72] bank=1 addr=13
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=756000 | Bank 1 row hit returns its own stored data
+[2026-10-27 16:14:47 CDT] [RSP  ][id=7][cycle=73] data=0x33330003
+[2026-10-27 16:14:47 CDT] [COMP ][id=7][cycle=73] latency=1
+[2026-10-27 16:14:47 CDT] [TXN ][id=8][cycle=74]  READ bank=0 addr=5 data=0x00000000
+[2026-10-27 16:14:47 CDT] [ACPT][id=8][cycle=76] accepted (row_hit)
+[2026-10-27 16:14:47 CDT] [ROW ][id=8][cycle=76] HIT bank=0 row=1
+[2026-10-27 16:14:47 CDT] [WHY ][id=8][cycle=76] bank=0 addr=5 row=1 col=1 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:47 CDT] [READ ][id=8][cycle=76] bank=0 addr=5
+[2026-10-27 16:14:47 CDT] [INFO] tb_ddr4_controller_top | time=796000 | Bank 0 data and row-open state remain intact after bank 1 traffic
+[2026-10-27 16:14:47 CDT] [RSP  ][id=8][cycle=77] data=0x11110001
+[2026-10-27 16:14:47 CDT] [COMP ][id=8][cycle=77] latency=1
+[2026-10-27 16:14:48 CDT] === PHASE: ACCESS PATTERNS ===
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=806000 | Pattern comparison phase
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=807000 | Pattern comparison begins with bank 0 row 1 open
+[2026-10-27 16:14:48 CDT] === TEST PATTERN: HIGH LOCALITY ===
+[2026-10-27 16:14:48 CDT] Pattern Detail Logging : first 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [TXN ][id=9][cycle=78] WRITE bank=0 addr=4 data=0xaaaa1000
+[2026-10-27 16:14:48 CDT] [ACPT][id=9][cycle=80] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=9][cycle=80] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=9][cycle=80] bank=0 addr=4 row=1 col=0 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [WRITE][id=9][cycle=80] bank=0 addr=4 <= 0xaaaa1000
+[2026-10-27 16:14:48 CDT] [COMP ][id=9][cycle=81] latency=1
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=836000 | High locality: bank 0 stays on row 1 while columns change
+[2026-10-27 16:14:48 CDT] [TXN ][id=10][cycle=81]  READ bank=0 addr=4 data=0x00000000
+[2026-10-27 16:14:48 CDT] [ACPT][id=10][cycle=83] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=10][cycle=83] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=10][cycle=83] bank=0 addr=4 row=1 col=0 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [READ ][id=10][cycle=83] bank=0 addr=4
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=866000 | High locality: bank 0 reuses the same open row for readback
+[2026-10-27 16:14:48 CDT] [RSP  ][id=10][cycle=84] data=0xaaaa1000
+[2026-10-27 16:14:48 CDT] [COMP ][id=10][cycle=84] latency=1
+[2026-10-27 16:14:48 CDT] [TXN ][id=11][cycle=85] WRITE bank=0 addr=5 data=0xaaaa1011
+[2026-10-27 16:14:48 CDT] [ACPT][id=11][cycle=87] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=11][cycle=87] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=11][cycle=87] bank=0 addr=5 row=1 col=1 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [WRITE][id=11][cycle=87] bank=0 addr=5 <= 0xaaaa1011
+[2026-10-27 16:14:48 CDT] [COMP ][id=11][cycle=88] latency=1
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=906000 | High locality: bank 0 stays on row 1 while columns change
+[2026-10-27 16:14:48 CDT] [TXN ][id=12][cycle=88]  READ bank=0 addr=5 data=0x00000000
+[2026-10-27 16:14:48 CDT] [ACPT][id=12][cycle=90] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=12][cycle=90] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=12][cycle=90] bank=0 addr=5 row=1 col=1 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [READ ][id=12][cycle=90] bank=0 addr=5
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=936000 | High locality: bank 0 reuses the same open row for readback
+[2026-10-27 16:14:48 CDT] [RSP  ][id=12][cycle=91] data=0xaaaa1011
+[2026-10-27 16:14:48 CDT] [COMP ][id=12][cycle=91] latency=1
+[2026-10-27 16:14:48 CDT] [TXN ][id=13][cycle=92] WRITE bank=0 addr=6 data=0xaaaa1022
+[2026-10-27 16:14:48 CDT] [ACPT][id=13][cycle=94] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=13][cycle=94] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=13][cycle=94] bank=0 addr=6 row=1 col=2 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [WRITE][id=13][cycle=94] bank=0 addr=6 <= 0xaaaa1022
+[2026-10-27 16:14:48 CDT] [COMP ][id=13][cycle=95] latency=1
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=976000 | High locality: bank 0 stays on row 1 while columns change
+[2026-10-27 16:14:48 CDT] [TXN ][id=14][cycle=95]  READ bank=0 addr=6 data=0x00000000
+[2026-10-27 16:14:48 CDT] [ACPT][id=14][cycle=97] accepted (row_hit)
+[2026-10-27 16:14:48 CDT] [ROW ][id=14][cycle=97] HIT bank=0 row=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=14][cycle=97] bank=0 addr=6 row=1 col=2 open_before=row1 => ROW_HIT
+[2026-10-27 16:14:48 CDT] [READ ][id=14][cycle=97] bank=0 addr=6
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=996000 | Suppressing additional per-access logs for HIGH LOCALITY after 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=1006000 | High locality: bank 0 reuses the same open row for readback
+[2026-10-27 16:14:48 CDT] [RSP  ][id=14][cycle=98] data=0xaaaa1022
+[2026-10-27 16:14:48 CDT] [COMP ][id=14][cycle=98] latency=1
+[2026-10-27 16:14:48 CDT] ----- PATTERN SUMMARY: HIGH LOCALITY -----
+[2026-10-27 16:14:48 CDT] Page Policy           : open_page
+[2026-10-27 16:14:48 CDT] Accepted Transactions : 32
+[2026-10-27 16:14:48 CDT] Row Hits              : 32
+[2026-10-27 16:14:48 CDT] Non-Hits              : 0
+[2026-10-27 16:14:48 CDT] Stall Cycles          : 0
+[2026-10-27 16:14:48 CDT] Row Hit Ratio         : 100.00%
+[2026-10-27 16:14:48 CDT] Non-Hit Ratio         : 0.00%
+[2026-10-27 16:14:48 CDT] Stall / Accepted Txn  : 0.00 cycles
+[2026-10-27 16:14:48 CDT] Average Hit Latency     : 1.00 cycles
+[2026-10-27 16:14:48 CDT] Average Non-Hit Latency : n/a
+[2026-10-27 16:14:48 CDT] Policy Observation    : Open-page preserved row reuse in HIGH LOCALITY.
+[2026-10-27 16:14:48 CDT] Pattern Explanation   : bank 0 stayed on row 1 while columns changed, so the open row matched every request.
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=1927000 | High locality pattern keeps bank 0 row 1 open
+[2026-10-27 16:14:48 CDT] === TEST PATTERN: LOW LOCALITY ===
+[2026-10-27 16:14:48 CDT] Pattern Detail Logging : first 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [TXN ][id=41][cycle=190] WRITE bank=0 addr=8 data=0xbbbb2000
+[2026-10-27 16:14:48 CDT] [ACPT][id=41][cycle=192] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=41][cycle=192] MISS bank=0 old=1 new=2
+[2026-10-27 16:14:48 CDT] [WHY ][id=41][cycle=192] bank=0 addr=8 row=2 col=0 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=41][cycle=192] bank=0 addr=8 <= 0xbbbb2000
+[2026-10-27 16:14:48 CDT] [COMP ][id=41][cycle=195] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=1976000 | Low locality: alternating from row 1 to row 2 displaces the open row
+[2026-10-27 16:14:48 CDT] [TXN ][id=42][cycle=195]  READ bank=0 addr=4 data=0x00000000
+[2026-10-27 16:14:48 CDT] [STALL][id=42][cycle=196] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=42][cycle=196] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [ACPT][id=42][cycle=198] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=42][cycle=198] MISS bank=0 old=2 new=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=42][cycle=198] bank=0 addr=4 row=1 col=0 open_before=row2 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [READ ][id=42][cycle=198] bank=0 addr=4
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2036000 | Low locality: alternating back to row 1 forces another non-hit
+[2026-10-27 16:14:48 CDT] [RSP  ][id=42][cycle=201] data=0xaaaa10c0
+[2026-10-27 16:14:48 CDT] [COMP ][id=42][cycle=201] latency=3
+[2026-10-27 16:14:48 CDT] [TXN ][id=43][cycle=202] WRITE bank=0 addr=9 data=0xbbbb2011
+[2026-10-27 16:14:48 CDT] [ACPT][id=43][cycle=204] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=43][cycle=204] MISS bank=0 old=1 new=2
+[2026-10-27 16:14:48 CDT] [WHY ][id=43][cycle=204] bank=0 addr=9 row=2 col=1 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=43][cycle=204] bank=0 addr=9 <= 0xbbbb2011
+[2026-10-27 16:14:48 CDT] [COMP ][id=43][cycle=207] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2096000 | Low locality: alternating from row 1 to row 2 displaces the open row
+[2026-10-27 16:14:48 CDT] [TXN ][id=44][cycle=207]  READ bank=0 addr=5 data=0x00000000
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=208] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=44][cycle=208] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=209] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=210] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=211] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=212] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=213] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=214] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=215] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=216] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=217] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=218] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=219] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=220] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=221] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=222] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=223] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=224] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=225] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=226] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=227] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=228] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=229] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=230] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=44][cycle=231] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [ACPT][id=44][cycle=233] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=44][cycle=233] MISS bank=0 old=2 new=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=44][cycle=233] bank=0 addr=5 row=1 col=1 open_before=row2 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [READ ][id=44][cycle=233] bank=0 addr=5
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2386000 | Low locality: alternating back to row 1 forces another non-hit
+[2026-10-27 16:14:48 CDT] [RSP  ][id=44][cycle=236] data=0xaaaa10d1
+[2026-10-27 16:14:48 CDT] [COMP ][id=44][cycle=236] latency=3
+[2026-10-27 16:14:48 CDT] [TXN ][id=45][cycle=237] WRITE bank=0 addr=10 data=0xbbbb2022
+[2026-10-27 16:14:48 CDT] [ACPT][id=45][cycle=239] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=45][cycle=239] MISS bank=0 old=1 new=2
+[2026-10-27 16:14:48 CDT] [WHY ][id=45][cycle=239] bank=0 addr=10 row=2 col=2 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=45][cycle=239] bank=0 addr=10 <= 0xbbbb2022
+[2026-10-27 16:14:48 CDT] [COMP ][id=45][cycle=242] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2446000 | Low locality: alternating from row 1 to row 2 displaces the open row
+[2026-10-27 16:14:48 CDT] [TXN ][id=46][cycle=242]  READ bank=0 addr=6 data=0x00000000
+[2026-10-27 16:14:48 CDT] [STALL][id=46][cycle=243] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=46][cycle=243] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [ACPT][id=46][cycle=245] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=46][cycle=245] MISS bank=0 old=2 new=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=46][cycle=245] bank=0 addr=6 row=1 col=2 open_before=row2 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [READ ][id=46][cycle=245] bank=0 addr=6
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2476000 | Suppressing additional per-access logs for LOW LOCALITY after 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=2506000 | Low locality: alternating back to row 1 forces another non-hit
+[2026-10-27 16:14:48 CDT] [RSP  ][id=46][cycle=248] data=0xaaaa10e2
+[2026-10-27 16:14:48 CDT] [COMP ][id=46][cycle=248] latency=3
+[2026-10-27 16:14:48 CDT] ----- PATTERN SUMMARY: LOW LOCALITY -----
+[2026-10-27 16:14:48 CDT] Page Policy           : open_page
+[2026-10-27 16:14:48 CDT] Accepted Transactions : 32
+[2026-10-27 16:14:48 CDT] Row Hits              : 0
+[2026-10-27 16:14:48 CDT] Non-Hits              : 32
+[2026-10-27 16:14:48 CDT] Stall Cycles          : 246
+[2026-10-27 16:14:48 CDT] Row Hit Ratio         : 0.00%
+[2026-10-27 16:14:48 CDT] Non-Hit Ratio         : 100.00%
+[2026-10-27 16:14:48 CDT] Stall / Accepted Txn  : 7.69 cycles
+[2026-10-27 16:14:48 CDT] Average Hit Latency     : n/a
+[2026-10-27 16:14:48 CDT] Average Non-Hit Latency : 3.00 cycles
+[2026-10-27 16:14:48 CDT] Policy Observation    : Open-page helps most when requests stay on one row; LOW LOCALITY kept displacing the open row.
+[2026-10-27 16:14:48 CDT] Pattern Explanation   : bank 0 alternated rows 1 and 2, so each new access displaced the prior open row.
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6147000 | Low locality pattern ends with bank 0 row 1 reopened
+[2026-10-27 16:14:48 CDT] === TEST PATTERN: TIMING STRESS ===
+[2026-10-27 16:14:48 CDT] Pattern Detail Logging : first 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [TXN ][id=73][cycle=612] WRITE bank=0 addr=8 data=0xcc000008
+[2026-10-27 16:14:48 CDT] [ACPT][id=73][cycle=614] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=73][cycle=614] MISS bank=0 old=1 new=2
+[2026-10-27 16:14:48 CDT] [WHY ][id=73][cycle=614] bank=0 addr=8 row=2 col=0 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=73][cycle=614] bank=0 addr=8 <= 0xcc000008
+[2026-10-27 16:14:48 CDT] [COMP ][id=73][cycle=617] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6196000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] [TXN ][id=74][cycle=617] WRITE bank=1 addr=5 data=0xcc100045
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=618] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=74][cycle=618] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=619] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=620] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=621] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=622] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=623] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=624] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=625] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=626] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=627] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=628] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=629] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=630] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=631] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=632] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=633] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=634] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=635] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=636] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=637] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=638] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=639] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=640] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=74][cycle=641] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [ACPT][id=74][cycle=643] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=74][cycle=643] MISS bank=1 old=3 new=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=74][cycle=643] bank=1 addr=5 row=1 col=1 open_before=row3 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=74][cycle=643] bank=1 addr=5 <= 0xcc100045
+[2026-10-27 16:14:48 CDT] [COMP ][id=74][cycle=646] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6486000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] [TXN ][id=75][cycle=646] WRITE bank=2 addr=2 data=0xcc200082
+[2026-10-27 16:14:48 CDT] [STALL][id=75][cycle=647] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=75][cycle=647] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [ACPT][id=75][cycle=649] accepted (row_closed)
+[2026-10-27 16:14:48 CDT] [ROW ][id=75][cycle=649] CLOSED -> OPEN bank=2 row=0
+[2026-10-27 16:14:48 CDT] [WHY ][id=75][cycle=649] bank=2 addr=2 row=0 col=2 open_before=closed => ROW_CLOSED
+[2026-10-27 16:14:48 CDT] [WRITE][id=75][cycle=649] bank=2 addr=2 <= 0xcc200082
+[2026-10-27 16:14:48 CDT] [COMP ][id=75][cycle=652] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6546000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] [TXN ][id=76][cycle=652] WRITE bank=3 addr=3 data=0xcc3000c3
+[2026-10-27 16:14:48 CDT] [STALL][id=76][cycle=653] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=76][cycle=653] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [ACPT][id=76][cycle=655] accepted (row_closed)
+[2026-10-27 16:14:48 CDT] [ROW ][id=76][cycle=655] CLOSED -> OPEN bank=3 row=0
+[2026-10-27 16:14:48 CDT] [WHY ][id=76][cycle=655] bank=3 addr=3 row=0 col=3 open_before=closed => ROW_CLOSED
+[2026-10-27 16:14:48 CDT] [WRITE][id=76][cycle=655] bank=3 addr=3 <= 0xcc3000c3
+[2026-10-27 16:14:48 CDT] [COMP ][id=76][cycle=658] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6606000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] [TXN ][id=77][cycle=658] WRITE bank=0 addr=4 data=0xcc000104
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=659] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=77][cycle=659] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=660] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=661] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=662] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=663] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=664] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=665] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=666] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=667] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=668] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=669] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=670] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=671] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=672] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=673] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=674] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=675] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=676] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=677] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=678] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=679] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=680] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=681] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [STALL][id=77][cycle=682] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [ACPT][id=77][cycle=684] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=77][cycle=684] MISS bank=0 old=2 new=1
+[2026-10-27 16:14:48 CDT] [WHY ][id=77][cycle=684] bank=0 addr=4 row=1 col=0 open_before=row2 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=77][cycle=684] bank=0 addr=4 <= 0xcc000104
+[2026-10-27 16:14:48 CDT] [COMP ][id=77][cycle=687] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6896000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] [TXN ][id=78][cycle=687] WRITE bank=1 addr=1 data=0xcc100141
+[2026-10-27 16:14:48 CDT] [STALL][id=78][cycle=688] queued request awaiting dispatch
+[2026-10-27 16:14:48 CDT] [tRRD ][id=78][cycle=688] BLOCKED activation
+[2026-10-27 16:14:48 CDT] [ACPT][id=78][cycle=690] accepted (row_miss)
+[2026-10-27 16:14:48 CDT] [ROW ][id=78][cycle=690] MISS bank=1 old=1 new=0
+[2026-10-27 16:14:48 CDT] [WHY ][id=78][cycle=690] bank=1 addr=1 row=0 col=1 open_before=row1 => ROW_MISS
+[2026-10-27 16:14:48 CDT] [WRITE][id=78][cycle=690] bank=1 addr=1 <= 0xcc100141
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6926000 | Suppressing additional per-access logs for TIMING STRESS after 6 accepted transactions
+[2026-10-27 16:14:48 CDT] [COMP ][id=78][cycle=693] latency=3
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=6956000 | Timing stress: alternating banks and rows keeps ACT pressure high under open-page
+[2026-10-27 16:14:48 CDT] ----- PATTERN SUMMARY: TIMING STRESS -----
+[2026-10-27 16:14:48 CDT] Page Policy           : open_page
+[2026-10-27 16:14:48 CDT] Accepted Transactions : 32
+[2026-10-27 16:14:48 CDT] Row Hits              : 0
+[2026-10-27 16:14:48 CDT] Non-Hits              : 32
+[2026-10-27 16:14:48 CDT] Stall Cycles          : 284
+[2026-10-27 16:14:48 CDT] Row Hit Ratio         : 0.00%
+[2026-10-27 16:14:48 CDT] Non-Hit Ratio         : 100.00%
+[2026-10-27 16:14:48 CDT] Stall / Accepted Txn  : 8.88 cycles
+[2026-10-27 16:14:48 CDT] Average Hit Latency     : n/a
+[2026-10-27 16:14:48 CDT] Average Non-Hit Latency : 3.00 cycles
+[2026-10-27 16:14:48 CDT] Policy Observation    : Open-page still lost row reuse once the timing-stress pattern kept switching rows and banks.
+[2026-10-27 16:14:48 CDT] ----- TIMING STRESS SUMMARY -----
+[2026-10-27 16:14:48 CDT] Accepted Transactions   : 32
+[2026-10-27 16:14:48 CDT] Busy Stall Cycles        : 0
+[2026-10-27 16:14:48 CDT] tRRD Stall Cycles        : 31
+[2026-10-27 16:14:48 CDT] Refresh Stall Cycles     : 0
+[2026-10-27 16:14:48 CDT] Other Stall Cycles       : 253
+[2026-10-27 16:14:48 CDT] Stall / Accepted Txn     : 8.88 cycles
+[2026-10-27 16:14:48 CDT] tFAW Admission Stalls    : 253
+[2026-10-27 16:14:48 CDT] tFAW Hard-Block Cycles   : 0
+[2026-10-27 16:14:48 CDT] Timing Observation      : tRRD throttled requests; additional ACT pressure also showed up as tFAW admission stalls inside the 'other' bucket.
+[2026-10-27 16:14:48 CDT] tFAW Status             : enabled, but the hard block threshold is not realistically reachable in this config (window=40, limit=4).
+[2026-10-27 16:14:48 CDT] Pattern Explanation     : consecutive non-hit accesses across banks increased ACT pressure and exposed timing throttling.
+[2026-10-27 16:14:48 CDT] === PHASE: CORNER CASES ===
+[2026-10-27 16:14:48 CDT] [INFO] tb_ddr4_controller_top | time=10586000 | Corner cases
+[2026-10-27 16:14:48 CDT] ===== PERFORMANCE SUMMARY =====
+[2026-10-27 16:14:48 CDT] Page Policy           : open_page
+[2026-10-27 16:14:48 CDT] Accepted Transactions : 104
+[2026-10-27 16:14:48 CDT] Host Accepted         : 104
+[2026-10-27 16:14:48 CDT] Requests Dispatched   : 104
+[2026-10-27 16:14:48 CDT] Requests Completed    : 104
+[2026-10-27 16:14:48 CDT] Row Hits              : 36
+[2026-10-27 16:14:48 CDT] Row Misses            : 64
+[2026-10-27 16:14:48 CDT] Row Closed            : 4
+[2026-10-27 16:14:48 CDT] Non-Hits              : 68
+[2026-10-27 16:14:48 CDT] Stall Cycles          : 545
+[2026-10-27 16:14:48 CDT] Row Hit Ratio         : 34.62%
+[2026-10-27 16:14:48 CDT] Non-Hit Ratio         : 65.38%
+[2026-10-27 16:14:48 CDT] Policy Observation    : Open-page preserved row reuse whenever the workload stayed on an already-open row.
+[2026-10-27 16:14:48 CDT] ===== STALL BREAKDOWN =====
+[2026-10-27 16:14:48 CDT] Busy Stall Cycles     : 0
+[2026-10-27 16:14:48 CDT] tRRD Stall Cycles     : 47
+[2026-10-27 16:14:48 CDT] Refresh Stall Cycles  : 0
+[2026-10-27 16:14:48 CDT] Other Stall Cycles    : 498
+[2026-10-27 16:14:48 CDT] ===== PER-BANK SUMMARY =====
+[2026-10-27 16:14:48 CDT] Bank 0 : accepted=78 hit=35 miss=42 closed=1
+[2026-10-27 16:14:48 CDT] Bank 1 : accepted=10 hit=1 miss=8 closed=1
+[2026-10-27 16:14:48 CDT] Bank 2 : accepted=8 hit=0 miss=7 closed=1
+[2026-10-27 16:14:48 CDT] Bank 3 : accepted=8 hit=0 miss=7 closed=1
+[2026-10-27 16:14:48 CDT] ===== LATENCY BREAKDOWN =====
+[2026-10-27 16:14:48 CDT] Average Hit Latency     : 1.00 cycles
+[2026-10-27 16:14:48 CDT] Average Non-Hit Latency : 3.00 cycles
+[2026-10-27 16:14:48 CDT] =================================
+[2026-10-27 16:14:48 CDT] =========== TEST PASS ===========
+[2026-10-27 16:14:48 CDT] =================================
+[2026-10-27 16:14:48 CDT] - /home/antgamez1203/CAPSTONE/local/frontend/tb/tb_ddr4_controller_top.sv:1355: Verilog $finish
+[2026-10-27 16:14:48 CDT] [SIM] Waveform generated: tb_ddr4_controller_top.vcd
+[2026-10-27 16:14:48 CDT] [SIM] Done.
+
+================================================================================
+SAVED LOG: manifest_refresh.log
+================================================================================
+[2026-10-27 16:14:48 CDT] [generate_wrapper] Refreshed controller manifest v2: /home/antgamez1203/CAPSTONE/local/frontend/rtl_output/manifest.json
+
+================================================================================
+SAVED LOG: 001_validation/validation.log
+================================================================================
+[2026-10-27 16:14:50 CDT] CAPSTONE_WORKSPACE_12c912c5f1d64bb394f8e87fdb1874e2:/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2
+[2026-10-27 16:15:42 CDT] srun: job 720692 queued and waiting for resources
+[2026-10-27 16:15:43 CDT] srun: job 720692 has been allocated resources
+[2026-10-27 16:15:44 CDT] [PYTHON] {"username": "antgamez1203", "hostname": "n02-hera.olympus.ece.tamu.edu", "executable": "/usr/bin/python3", "version": "3.6.8 (default, Oct 15 2026, 01:28:52) \n[GCC 8.5.0 20210514 (Red Hat 8.5.0-29)]", "cwd": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/work", "sys_path": ["/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation", "/usr/lib64/python36.zip", "/usr/lib64/python3.6", "/usr/lib64/python3.6/lib-dynload", "/home/ugrads/a/antgamez1203/.local/lib/python3.6/site-packages", "/usr/local/lib64/python3.6/site-packages", "/usr/local/lib/python3.6/site-packages", "/usr/lib64/python3.6/site-packages", "/usr/lib/python3.6/site-packages"], "user_site": "/home/ugrads/a/antgamez1203/.local/lib/python3.6/site-packages", "user_site_enabled": true, "environment": {"PYTHONHOME": null, "PYTHONPATH": null, "PYTHONNOUSERSITE": null, "PYTHONUSERBASE": null}, "dependencies": {"yaml": {"available": true, "file": "/usr/lib64/python3.6/site-packages/yaml/__init__.py"}, "requests": {"available": true, "file": "/usr/lib/python3.6/site-packages/requests/__init__.py"}, "dotenv": {"available": true, "file": "/home/ugrads/a/antgamez1203/.local/lib/python3.6/site-packages/dotenv/__init__.py"}}}
+[2026-10-27 16:15:44 CDT] ============================================================
+[2026-10-27 16:15:44 CDT] SYSTEM DISCOVERY
+[2026-10-27 16:15:44 CDT] ============================================================
+[2026-10-27 16:15:44 CDT] Mode               : SYSTEM
+[2026-10-27 16:15:44 CDT] Top module         : ddr4_controller_top
+[2026-10-27 16:15:44 CDT] RTL files          : 11
+[2026-10-27 16:15:44 CDT] Module definitions : 11
+[2026-10-27 16:15:44 CDT] Primary component config: ../microarch/gen_basic/ddr4_bank.yaml
+[2026-10-27 16:15:44 CDT] System configuration: manifest.configuration + configuration_sources
+[2026-10-27 16:15:44 CDT] Module specs       : 9
+[2026-10-27 16:15:44 CDT] System testbench   : ../tb/tb_ddr4_controller_top.sv
+
+[2026-10-27 16:15:44 CDT] Configuration:
+[2026-10-27 16:15:44 CDT]   DDR rate         : 3200
+[2026-10-27 16:15:44 CDT]   Banks            : 4
+[2026-10-27 16:15:44 CDT]   Scheduler        : simple
+[2026-10-27 16:15:44 CDT]   Page policy      : open_page
+[2026-10-27 16:15:44 CDT]   Refresh          : enabled
+[2026-10-27 16:15:44 CDT]   tRRD             : enabled
+[2026-10-27 16:15:44 CDT]   tFAW             : enabled
+
+[2026-10-27 16:15:44 CDT] Discovery result   : PASS
+[2026-10-27 16:15:44 CDT] Scope              : input discovery only; no structural or functional RTL result
+[2026-10-27 16:15:44 CDT] Hierarchy analysis : deferred to Agent 1
+[2026-10-27 16:15:44 CDT] ============================================================
+[2026-10-27 16:15:45 CDT] [REPORTS] /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/summary.json
+[2026-10-27 16:15:46 CDT] [REPORTS] /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/agent1/report.json
+
+[2026-10-27 16:15:55 CDT] ============================================================
+[2026-10-27 16:15:55 CDT] AGENT 1 — FULL SYSTEM RTL VALIDATION
+[2026-10-27 16:15:55 CDT] ============================================================
+[2026-10-27 16:15:55 CDT] Mode                   : SYSTEM
+[2026-10-27 16:15:55 CDT] Top module             : ddr4_controller_top
+[2026-10-27 16:15:55 CDT] RTL files discovered   : 11
+[2026-10-27 16:15:55 CDT] Module definitions     : 11
+
+[2026-10-27 16:15:55 CDT] Hierarchy:
+[2026-10-27 16:15:55 CDT]   Reachable modules    : 11
+[2026-10-27 16:15:55 CDT]   Unused modules       : 0
+[2026-10-27 16:15:55 CDT]   Missing modules      : 0
+[2026-10-27 16:15:55 CDT]   Duplicate modules    : 0
+
+[2026-10-27 16:15:55 CDT] Configuration (normalized manifest.configuration):
+[2026-10-27 16:15:55 CDT]   DDR rate             : 3200
+[2026-10-27 16:15:55 CDT]   Banks                : 4
+[2026-10-27 16:15:55 CDT]   Scheduler            : simple
+[2026-10-27 16:15:55 CDT]   Page policy          : open_page
+[2026-10-27 16:15:55 CDT]   Refresh              : enabled
+[2026-10-27 16:15:55 CDT]   tRRD                 : enabled
+[2026-10-27 16:15:55 CDT]   tFAW                 : enabled
+
+[2026-10-27 16:15:55 CDT] Specifications:
+[2026-10-27 16:15:55 CDT]   Specs found          : 9
+[2026-10-27 16:15:55 CDT]   Specs valid          : 9
+[2026-10-27 16:15:55 CDT]   ddr4_bank_activate_fsm: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_bank_bank_sequencer: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_bank_precharge_fsm: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_bank_tRAS_fsm: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_bank_top: NO_MODULE_SPEC
+[2026-10-27 16:15:55 CDT]   ddr4_controller_top: NO_MODULE_SPEC
+[2026-10-27 16:15:55 CDT]   ddr4_refresh_refresh_controller: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_request_queue: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_scheduler_scheduler: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_tFAW_tFAW_tracker: PASS
+[2026-10-27 16:15:55 CDT]   ddr4_tRRD_simple_tRRD: PASS
+[2026-10-27 16:15:55 CDT]   Wrapper specs        : not required in system mode
+
+[2026-10-27 16:15:55 CDT] Integration:
+[2026-10-27 16:15:55 CDT]   Top Module           : PASS
+[2026-10-27 16:15:55 CDT]   Hierarchy            : PASS
+[2026-10-27 16:15:55 CDT]   Dependencies         : PASS
+[2026-10-27 16:15:55 CDT]   Interfaces           : PASS
+[2026-10-27 16:15:55 CDT]   Clock Reset          : PASS
+[2026-10-27 16:15:55 CDT]   Configuration        : PASS
+
+[2026-10-27 16:15:55 CDT] Compilation:
+[2026-10-27 16:15:55 CDT]   Tool                 : VCS
+[2026-10-27 16:15:55 CDT]   Full hierarchy       : PASS
+[2026-10-27 16:15:55 CDT]   Elaboration          : PASS
+[2026-10-27 16:15:55 CDT]   Compile log          : /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/agent1/work/compile/compile.log
+[2026-10-27 16:15:55 CDT]   Deferred static checks: 3
+
+[2026-10-27 16:15:55 CDT] AGENT 1 SYSTEM RESULT : PASS
+[2026-10-27 16:15:55 CDT] Verification readiness: READY_FOR_SYSTEM_AGENT_2_AND_AGENT_3
+[2026-10-27 16:15:55 CDT] Structural/integration validation only. No functional controller behavior has been proven.
+[2026-10-27 16:15:55 CDT] ============================================================
+[2026-10-27 16:15:57 CDT] [REPORTS] /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/agent2/report.json
+
+[2026-10-27 16:18:00 CDT] ============================================================
+[2026-10-27 16:18:00 CDT] AGENT 2 UVM ATTEMPT 1/5
+[2026-10-27 16:18:00 CDT] ============================================================
+[2026-10-27 16:18:00 CDT] Action: INITIAL_GENERATION
+[2026-10-27 16:18:00 CDT] [96m[UVM_TB_AGENT][0m System UVM generation attempt 1
+[2026-10-27 16:18:00 CDT] [96m[UVM_TB_AGENT][0m LLM model='protected.Claude Sonnet 4.5', endpoint=https://chat-api.tamu.ai/openai/chat/completions, max_tokens=16384
+[2026-10-27 16:18:00 CDT] [96m[VCS][0m Compiling 11 RTL file(s) + generated UVM TB...
+[2026-10-27 16:18:00 CDT] LLM model: protected.Claude Sonnet 4.5
+[2026-10-27 16:18:00 CDT] Generated:
+[2026-10-27 16:18:00 CDT]   dut_item : FOUND
+[2026-10-27 16:18:00 CDT]   dut_sequence : FOUND
+[2026-10-27 16:18:00 CDT]   dut_sequencer : FOUND
+[2026-10-27 16:18:00 CDT]   dut_driver : FOUND
+[2026-10-27 16:18:00 CDT]   dut_monitor : FOUND
+[2026-10-27 16:18:00 CDT]   dut_agent : FOUND
+[2026-10-27 16:18:00 CDT]   dut_scoreboard : FOUND
+[2026-10-27 16:18:00 CDT]   dut_env : FOUND
+[2026-10-27 16:18:00 CDT]   dut_test : FOUND
+[2026-10-27 16:18:00 CDT] Integrity audit: PASS
+[2026-10-27 16:18:00 CDT]   Required Classes : PASS
+[2026-10-27 16:18:00 CDT]   Trusted Checker : PASS
+[2026-10-27 16:18:00 CDT]   Topology : PASS
+[2026-10-27 16:18:00 CDT]   Lifecycle : PASS
+[2026-10-27 16:18:00 CDT]   Interface Contract : PASS
+[2026-10-27 16:18:00 CDT] VCS compile: PASS
+[2026-10-27 16:18:00 CDT] Repair decision: ACCEPTED
+
+[2026-10-27 16:18:00 CDT] ============================================================
+[2026-10-27 16:18:00 CDT] AGENT 2 — FULL SYSTEM UVM VERIFICATION
+[2026-10-27 16:18:00 CDT] ============================================================
+[2026-10-27 16:18:00 CDT] DUT: ddr4_controller_top
+[2026-10-27 16:18:00 CDT] RTL files: 11
+[2026-10-27 16:18:00 CDT] UVM Environment:
+[2026-10-27 16:18:00 CDT]   Generation mode: LLM_GENERATED
+[2026-10-27 16:18:00 CDT]   dut_item
+[2026-10-27 16:18:00 CDT]   dut_sequence
+[2026-10-27 16:18:00 CDT]   dut_sequencer
+[2026-10-27 16:18:00 CDT]   dut_driver
+[2026-10-27 16:18:00 CDT]   dut_monitor
+[2026-10-27 16:18:00 CDT]   dut_agent
+[2026-10-27 16:18:00 CDT]   dut_scoreboard
+[2026-10-27 16:18:00 CDT]   dut_env
+[2026-10-27 16:18:00 CDT]   dut_test
+[2026-10-27 16:18:00 CDT] Configuration: {"bank_count": 4, "memory_speed": "3200", "page_policy": "open_page", "protocol": "DDR4", "refresh_enabled": true, "scheduler": "simple", "tfaw_enabled": true, "trrd_enabled": true}
+[2026-10-27 16:18:00 CDT] Acceptance: txn_valid && txn_ready at the consuming clock edge
+[2026-10-27 16:18:00 CDT] Dispatch: dispatch_fire at the consuming edge removes selected_index from the request queue
+[2026-10-27 16:18:00 CDT] Write completion: completion_fire for the active write commits stimulus data to bank/address memory
+[2026-10-27 16:18:00 CDT] Read association: observed dispatch order through a single service slot; no acceptance-order assumption
+[2026-10-27 16:18:00 CDT] Ordering: may reorder; no FIFO guarantee
+[2026-10-27 16:18:00 CDT] Simulation:
+[2026-10-27 16:18:00 CDT]   Integrity audit   : PASS
+[2026-10-27 16:18:00 CDT]   VCS compile       : PASS
+[2026-10-27 16:18:00 CDT]   VCS simulation    : PASS
+[2026-10-27 16:18:00 CDT]   UVM_ERROR         : 0
+[2026-10-27 16:18:00 CDT]   UVM_FATAL         : 0
+[2026-10-27 16:18:00 CDT]   Scoreboard PASS   : 23646
+[2026-10-27 16:18:00 CDT]   Scoreboard FAIL   : 0
+[2026-10-27 16:18:00 CDT]   alternating_bank_row_replacement_timing: PASS
+[2026-10-27 16:18:00 CDT]   backpressure: PASS
+[2026-10-27 16:18:00 CDT]   bank_isolation_readback: PASS
+[2026-10-27 16:18:00 CDT]   bank_isolation_same_row: PASS
+[2026-10-27 16:18:00 CDT]   bank_readback_drain: PASS
+[2026-10-27 16:18:00 CDT]   bank_write_barrier: PASS
+[2026-10-27 16:18:00 CDT]   completion_and_new_acceptance: PASS
+[2026-10-27 16:18:00 CDT]   consecutive_acceptance: PASS
+[2026-10-27 16:18:00 CDT]   final_drain: PASS
+[2026-10-27 16:18:00 CDT]   final_reference_readback: PASS
+[2026-10-27 16:18:00 CDT]   long_mixed_traffic: PASS
+[2026-10-27 16:18:00 CDT]   mixed_write_barrier: PASS
+[2026-10-27 16:18:00 CDT]   multiple_outstanding: PASS
+[2026-10-27 16:18:00 CDT]   post_reset_read_drain: PASS
+[2026-10-27 16:18:00 CDT]   queue_saturation: PASS
+[2026-10-27 16:18:00 CDT]   queue_saturation_repeated_writes: PASS
+[2026-10-27 16:18:00 CDT]   readback_drain: PASS
+[2026-10-27 16:18:00 CDT]   refresh_traffic_drain: PASS
+[2026-10-27 16:18:00 CDT]   repeated_reads_drain: PASS
+[2026-10-27 16:18:00 CDT]   repeated_reads_row_hit: PASS
+[2026-10-27 16:18:00 CDT]   reset_cleared_memory: PASS
+[2026-10-27 16:18:00 CDT]   reset_idle: PASS
+[2026-10-27 16:18:00 CDT]   reset_outstanding: PASS
+[2026-10-27 16:18:00 CDT]   reset_outstanding_setup: PASS
+[2026-10-27 16:18:00 CDT]   single_write: PASS
+[2026-10-27 16:18:00 CDT]   single_write_drain: PASS
+[2026-10-27 16:18:00 CDT]   startup_reset: NOT_TESTED
+[2026-10-27 16:18:00 CDT]   timing_drain: PASS
+[2026-10-27 16:18:00 CDT]   traffic_around_refresh: PASS
+[2026-10-27 16:18:00 CDT]   trrd_boundary: PASS
+[2026-10-27 16:18:00 CDT]   write_burst_drain: PASS
+[2026-10-27 16:18:00 CDT]   write_readback: PASS
+[2026-10-27 16:18:00 CDT] Traffic accounting: {"accepted": 549, "accounting_proven": true, "cancelled_by_reset": 4, "completed": 545, "data_mismatches": 0, "dispatched": 545, "duplicated": 0, "lost": 0, "outstanding": 0, "pending_read_responses": 0, "presented": 549, "responses_checked": 203}
+[2026-10-27 16:18:00 CDT] Requirements: {"failed": 0, "not_tested": 0, "passed": 15}
+[2026-10-27 16:18:00 CDT] AGENT 2 SYSTEM RESULT : PASS
+[2026-10-27 16:18:00 CDT] Verification readiness: READY_FOR_SYSTEM_AGENT_3
+[2026-10-27 16:18:00 CDT] Phase 3 stops before Agent 3. Backend readiness has not been established.
+[2026-10-27 16:18:00 CDT] ============================================================
+[2026-10-27 16:18:08 CDT] [REPORTS] /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/agent3/report.json
+[2026-10-27 16:19:39 CDT] [AGENT3] Running QUEUE-001 (6 transactions)
+[2026-10-27 16:20:02 CDT] [AGENT3] Running QUEUE-002 (8 transactions)
+[2026-10-27 16:20:22 CDT] [AGENT3] Running QUEUE-003 (10 transactions)
+[2026-10-27 16:20:43 CDT] [AGENT3] Running QUEUE-004 (65 transactions)
+[2026-10-27 16:21:03 CDT] [AGENT3] Running QUEUE-005 (208 transactions)
+[2026-10-27 16:21:24 CDT] [AGENT3] Running QUEUE-006 (144 transactions)
+[2026-10-27 16:21:50 CDT] [AGENT3] Running CONSECUTIVE-001 (80 transactions)
+[2026-10-27 16:22:15 CDT] [AGENT3] Running OUTSTANDING-001 (80 transactions)
+[2026-10-27 16:22:41 CDT] [AGENT3] Running SIMULTANEOUS-001 (144 transactions)
+[2026-10-27 16:23:03 CDT] [AGENT3] Running BANK-001 (144 transactions)
+[2026-10-27 16:23:28 CDT] [AGENT3] Running BANK-002 (144 transactions)
+[2026-10-27 16:23:50 CDT] [AGENT3] Running BANK-003 (48 transactions)
+[2026-10-27 16:24:13 CDT] [AGENT3] Running ROW-001 (68 transactions)
+[2026-10-27 16:24:38 CDT] [AGENT3] Running ROW-002 (100 transactions)
+[2026-10-27 16:24:59 CDT] [AGENT3] Running WRITE-001 (144 transactions)
+[2026-10-27 16:25:19 CDT] [AGENT3] Running READ-001 (144 transactions)
+[2026-10-27 16:25:35 CDT] [AGENT3] Running MIXED-001 (336 transactions)
+[2026-10-27 16:25:52 CDT] [AGENT3] Running ADDRESS-001 (129 transactions)
+[2026-10-27 16:26:08 CDT] [AGENT3] Running RESET-001 (53 transactions)
+[2026-10-27 16:26:23 CDT] [AGENT3] Running RESET-002 (3 transactions)
+[2026-10-27 16:26:39 CDT] [AGENT3] Running RESET-003 (3 transactions)
+[2026-10-27 16:26:54 CDT] [AGENT3] Running REFRESH-001 (400 transactions)
+[2026-10-27 16:27:18 CDT] [AGENT3] Running TFAW-001 (176 transactions)
+[2026-10-27 16:27:34 CDT] [AGENT3] Running TRAS-001 (176 transactions)
+[2026-10-27 16:27:50 CDT] [AGENT3] Running TRCD-001 (176 transactions)
+[2026-10-27 16:28:07 CDT] [AGENT3] Running TRP-001 (176 transactions)
+[2026-10-27 16:28:25 CDT] [AGENT3] Running TRRD-001 (176 transactions)
+[2026-10-27 16:28:43 CDT] [AGENT3] Running LONG-001 (2064 transactions)
+[2026-10-27 16:29:12 CDT] [AGENT3] Running RANDOM-001 (2112 transactions)
+
+[2026-10-27 16:30:10 CDT] AGENT 3 — FULL SYSTEM DIRECTED / RANDOM / TIMING STRESS
+[2026-10-27 16:30:10 CDT] Vectors: 30
+[2026-10-27 16:30:10 CDT] VCS compile: PASS
+[2026-10-27 16:30:10 CDT] VCS simulation: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-001 queue_boundary: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-002 queue_boundary: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-003 queue_boundary: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-004 repeated_fill_drain: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-005 long_saturation: PASS
+[2026-10-27 16:30:10 CDT] QUEUE-006 full_at_completion: PASS
+[2026-10-27 16:30:10 CDT] CONSECUTIVE-001 consecutive: PASS
+[2026-10-27 16:30:10 CDT] OUTSTANDING-001 outstanding: PASS
+[2026-10-27 16:30:10 CDT] SIMULTANEOUS-001 simultaneous: PASS
+[2026-10-27 16:30:10 CDT] BANK-001 same_bank: PASS
+[2026-10-27 16:30:10 CDT] BANK-002 cross_bank: PASS
+[2026-10-27 16:30:10 CDT] BANK-003 bank_isolation: PASS
+[2026-10-27 16:30:10 CDT] ROW-001 row_hit: PASS
+[2026-10-27 16:30:10 CDT] ROW-002 row_replacement: PASS
+[2026-10-27 16:30:10 CDT] ROW-003 closed_page: NOT_APPLICABLE
+[2026-10-27 16:30:10 CDT] WRITE-001 back_to_back_writes: PASS
+[2026-10-27 16:30:10 CDT] READ-001 back_to_back_reads: PASS
+[2026-10-27 16:30:10 CDT] MIXED-001 mixed: PASS
+[2026-10-27 16:30:10 CDT] ADDRESS-001 same_address: PASS
+[2026-10-27 16:30:10 CDT] RESET-001 reset_outstanding: PASS
+[2026-10-27 16:30:10 CDT] RESET-002 reset_pending_response: PASS
+[2026-10-27 16:30:10 CDT] RESET-003 reset_active_service: PASS
+[2026-10-27 16:30:10 CDT] REFRESH-001 refresh: PASS
+[2026-10-27 16:30:10 CDT] TFAW-001 timing: PASS
+[2026-10-27 16:30:10 CDT] TRAS-001 timing: PASS
+[2026-10-27 16:30:10 CDT] TRCD-001 timing: PASS
+[2026-10-27 16:30:10 CDT] TRP-001 timing: PASS
+[2026-10-27 16:30:10 CDT] TRRD-001 timing: PASS
+[2026-10-27 16:30:10 CDT] LONG-001 long: PASS
+[2026-10-27 16:30:10 CDT] RANDOM-001 random: PASS
+[2026-10-27 16:30:10 CDT] UVM_ERROR: 0
+[2026-10-27 16:30:10 CDT] UVM_FATAL: 0
+[2026-10-27 16:30:10 CDT] Scoreboard PASS: 327555
+[2026-10-27 16:30:10 CDT] Scoreboard FAIL: 0
+[2026-10-27 16:30:10 CDT] Traffic: {"accepted": 7517, "accounting_proven": true, "cancelled_by_reset": 6, "completed": 7511, "data_mismatches": 0, "dispatched": 7513, "duplicated": 0, "lost": 0, "outstanding": 0, "presented": 7517, "responses_checked": 2964}
+[2026-10-27 16:30:10 CDT] tCCD_L: NOT_APPLICABLE scope=None required=None comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tCCD_S: NOT_APPLICABLE scope=None required=None comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tCL: NOT_OBSERVABLE scope=None required=None comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tFAW: PASS scope=logical_ACT_admission required=40 comparisons=5744 min=47 max=12530 boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRAS: PASS scope=bank_FSM_start_to_done_minimum required=52 comparisons=2262 min=54 max=54 boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRC: NOT_OBSERVABLE scope=None required=74 comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRCD: PASS scope=bank_FSM_start_to_done_minimum required=22 comparisons=2262 min=24 max=24 boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tREFI: NOT_OBSERVABLE scope=None required=12480 comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRFC1: NOT_OBSERVABLE scope=None required=560 comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRP: PASS scope=bank_FSM_start_to_done_minimum required=22 comparisons=2262 min=24 max=24 boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] tRRD: PASS scope=logical_ACT_admission required=6 comparisons=5818 min=6 max=12489 boundary_hits=990 early_host_attempts=6486 violations=0
+[2026-10-27 16:30:10 CDT] tWR: NOT_APPLICABLE scope=None required=None comparisons=0 min=None max=None boundary_hits=0 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] refresh_blocking: PASS scope=controller_dispatch_exclusion required=0 comparisons=21 min=0 max=0 boundary_hits=21 early_host_attempts=0 violations=0
+[2026-10-27 16:30:10 CDT] AGENT 3 SYSTEM RESULT : PASS_WITH_GAPS
+[2026-10-27 16:30:10 CDT] Readiness: READY_FOR_BACKEND
+
+[2026-10-27 16:30:20 CDT] FINAL SYSTEM VALIDATION
+[2026-10-27 16:30:20 CDT] agent1: PASS
+[2026-10-27 16:30:20 CDT] agent2: PASS
+[2026-10-27 16:30:20 CDT] agent3: PASS_WITH_GAPS
+[2026-10-27 16:30:20 CDT] Functional RTL: PASS
+[2026-10-27 16:30:20 CDT] Protocol timing: PASS_WITH_GAPS
+[2026-10-27 16:30:20 CDT] SYSTEM RTL RESULT : PASS_WITH_GAPS
+[2026-10-27 16:30:20 CDT] Readiness: READY_FOR_BACKEND
+[2026-10-27 16:30:20 CDT] Report: /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/validation_runs/run_12c912c5f1d64bb394f8e87fdb1874e2/input/rtl/verification_reports/2026-10-27_16-15-45/final_system_report.json
+[2026-10-27 16:30:20 CDT] Agent 4: AGENT4_INPUT_NOT_AVAILABLE (backend LEC handoff not selected).
+
+Controller system verification reports Readiness: READY_FOR_BACKEND for the published RTL snapshot. Backend was not run.
+
+================================================================================
+SAVED LOG: 002_backend/backend.log
+================================================================================
+Reserved build: build_prep_210MHz_01
+[2026-10-27 16:31:27 CDT] Entering rtl_prep stage (attempt 1/1)
+[2026-10-27 16:31:27 CDT] rtl_prep generate attempt 1
+[2026-10-27 16:31:31 CDT] rtl_prep generate attempt 1 completed
+[2026-10-27 16:32:16 CDT] rtl_prep review passed
+[2026-10-27 16:32:16 CDT] Entering netlist stage (attempt 1/1)
+[2026-10-27 16:32:16 CDT] netlist generate attempt 1
+[2026-10-27 16:34:48 CDT] netlist generate attempt 1 completed
+[2026-10-27 16:35:05 CDT] netlist review passed
+[2026-10-27 16:35:05 CDT] Entering mapped_netlist stage (attempt 1/1)
+[2026-10-27 16:35:05 CDT] mapped generate attempt 1
+[2026-10-27 16:37:08 CDT] mapped generate attempt 1 completed
+[2026-10-27 16:37:24 CDT] mapped review passed
+[2026-10-27 16:37:24 CDT] Entering gdsii stage (attempt 1/1)
+[2026-10-27 16:37:24 CDT] Timing closure enabled: fresh routed setup report required for success
+[2026-10-27 16:37:24 CDT] Preparing backend setup closure: target_210MHz.
+[2026-10-27 16:37:27 CDT] Timing closure mapped inputs isolated: build_mapped_210MHz_01 -> build_mapped_snapshot_210MHz_01
+[2026-10-27 16:37:28 CDT] Timing closure preset attempt 1: target 4.762 ns, output build_GDSII_210MHz_01
+[2026-10-27 16:37:28 CDT] gdsii generate attempt 1
+[2026-10-27 16:46:34 CDT] gdsii generate attempt 1 completed
+[2026-10-27 16:46:42 CDT] gdsii review passed
+Physical verification: build_GDSII_210MHz_01: DRC=0, antenna=0.
+[2026-10-27 16:46:47 CDT] build_GDSII_210MHz_01: DRC=0, antenna=0.
+Physical verification: Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 16:46:47 CDT] Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 16:46:47 CDT] Timing attempt 1 has a measured hold violation; evaluating for AI recovery.
+[2026-10-27 16:46:49 CDT] Recovery candidate rejected: hold slack -0.074 ns.
+[2026-10-27 16:46:50 CDT] Timing closure preset attempt 2: target 4.762 ns, output build_GDSII_210MHz_02
+[2026-10-27 16:46:50 CDT] gdsii generate attempt 1
+[2026-10-27 16:55:53 CDT] gdsii generate attempt 1 completed
+[2026-10-27 16:56:00 CDT] gdsii review passed
+Physical verification: build_GDSII_210MHz_02: DRC=0, antenna=0.
+[2026-10-27 16:56:02 CDT] build_GDSII_210MHz_02: DRC=0, antenna=0.
+Physical verification: Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 16:56:02 CDT] Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 16:56:02 CDT] Timing attempt 2 has a measured hold violation; evaluating for AI recovery.
+[2026-10-27 16:56:04 CDT] Recovery candidate rejected: hold slack -0.042 ns.
+[2026-10-27 16:56:05 CDT] Timing closure preset attempt 3: target 4.762 ns, output build_GDSII_210MHz_03
+[2026-10-27 16:56:05 CDT] gdsii generate attempt 1
+[2026-10-27 17:06:11 CDT] gdsii generate attempt 1 completed
+[2026-10-27 17:06:17 CDT] gdsii review passed
+Physical verification: build_GDSII_210MHz_03: DRC=0, antenna=0.
+[2026-10-27 17:06:19 CDT] build_GDSII_210MHz_03: DRC=0, antenna=0.
+Physical verification: Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 17:06:19 CDT] Physical reports are clean but final timing or area/power checks failed.
+[2026-10-27 17:06:19 CDT] Timing attempt 3 has a measured hold violation; evaluating for AI recovery.
+[2026-10-27 17:06:21 CDT] Recovery candidate rejected: hold slack -0.035 ns.
+[2026-10-27 17:06:24 CDT] Physical verification AI: comparing preset geometry, hold, and post-route setup reports before resizing.
+Physical verification AI: requesting responses
+Physical verification AI: requesting chat_completions
+[2026-10-27 17:06:31 CDT] Physical agent selected preset 1 for resizing: Selected attempt 1 (build_GDSII_210MHz_01).
+
+Why: All three attempts have 0 DRC and 0 antenna violations and are within area/power limits, but setup closure is the primary discriminator. Attempt 1 shows *MET setup* with WNS +0.007 ns at the target period (~4.762 ns), whereas attempt 2 fails setup (WNS -0.053 ns) and attempt 3 also fails setup (WNS -0.006 ns). Since failing setup is not acceptable evidence for the requested period, attempt 1 is the best starting checkpoint.
+
+Hold situation/tradeoff: Attempt 1 has worse hold WNS (-0.074 ns) than attempt 2 (-0.042 ns) and attempt 3 (-0.035 ns), but negative hold slack is eligible for recovery. Given attempt 1’s very small positive setup margin (+0.007 ns), hold fixing must be done carefully to avoid pushing setup negative; however it is still preferable to start from a setup-clean baseline than from attempts 2/3 where setup is already failing.
+
+Why others are worse:
+- Attempt 2: setup WNS -0.053 ns (failing), despite improved hold (-0.042 ns). Recovering both setup and hold is higher risk than repairing hold only.
+- Attempt 3: setup WNS -0.006 ns (slightly failing) with best hold (-0.035 ns), but still lacks valid setup pass evidence at the target period.
+
+Area/power headroom: all are far below limits (area ~0.15–0.18 mm^2 vs 8 mm^2, power ~0.036 W vs 2 W), so the choice is dominated by timing viability rather than resource constraints.
+[2026-10-27 17:06:36 CDT] AI recovery 1/3: inspect best attempt 1 with WNS 0.007 ns.
+AI timing recovery: requesting responses
+AI timing recovery: Responses unavailable or empty; trying Chat Completions
+AI timing recovery: requesting chat_completions
+AI timing recovery diagnostics: /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855/002_backend/backend_reports/timing_closure/target_210MHz/ai_response_4ea1934e7de1479f914930d4a6ce4804_4.json
+[2026-10-27 17:06:50 CDT] Timing agent selected buffer insertion for attempt 1 (build_GDSII_210MHz_01): Selected source checkpoint: attempt 1 (build_GDSII_210MHz_01).
+
+This build is the best eligible baseline because it is the only one with measured *post-route setup passing* at the fixed target period 4.7619 ns (WNS +0.007 ns), has clean geometry (No DRC violations), and is far within limits (die area 0.154 mm^2 << 4 mm^2 hard limit; total power 0.0353 W << 2 W).
+
+Problem to repair: post-route hold is violated with WNS = -0.074 ns. The worst hold paths are extremely short, from primary-input-style nets `txn_wdata[*]` directly through a single `sky130_fd_sc_hd__a22o_1` cell into `u_request_queue_entries_reg[*][wdata][*]/D`, e.g. Path 1 shows only `g184504__2346 (a22o_1)` with 0.099 ns data arrival vs 0.173 ns required, giving -0.074 ns slack. Similar -0.070 to -0.074 ns violations appear on several `u_request_queue_entries_reg` D pins.
+
+Given the very tight setup margin (+0.007 ns), the safest hold repair is *localized data-delay insertion at the failing sequential sinks* using small non-inverting buffers on the allowed D pins, rather than resizing logic on shared setup-critical paths (which could unpredictably impact both setup and hold across many endpoints).
+
+Why alternatives are less suitable:
+- Resizing combinational cells (e.g., downsizing the `a22o_1` drivers): may add hold delay, but the allowed resize choices list does not include the specific hold-path `a22o_1` instances (e.g., `g184504__2346`) for a legal downsizing, and resizing other shared cells risks eroding the already-small setup slack.
+- Pure resizing on the setup critical chain: upsizing would help setup but worsens hold; downsizing might help hold but could immediately break setup (already only +0.007 ns).
+- Combination resizing+buffers: not justified yet; hold can likely be fixed with minimal buffers on the top violating endpoints while preserving setup.
+
+Expected tradeoff (to be verified after execution): inserting a small `buf_1` on the worst violated D pins should add modest data-path delay to improve hold (targeting +0.074 ns recovery) while consuming minimal area/power. Setup may degrade slightly on any paths ending at those flops; because these endpoints are different from the currently reported worst setup endpoints (which are from `u_request_queue_entries_reg[2][row][0]/Q` into `[1][wdata][*]`), impact should be limited, but must be checked given small overall setup margin.
+
+Area/power impact expectation: small increase (buffers only), still well below 4 mm^2 and 2 W limits.
+[2026-10-27 17:06:50 CDT] AI timing action selected: insert_buffer at u_request_queue_entries_reg[0][wdata][28]/D using sky130_fd_sc_hd__buf_1; reason: Worst hold path in hold_postroute.rpt is txn_wdata[28] -> g184504__2346 (a22o_1, 0.099 ns) -> u_request_queue_entries_reg[0][wdata][28]/D with hold slack -0.074 ns. Insert small non-inverting buffer at the D pin to add data delay and recover hold locally while minimizing setup impact.
+[2026-10-27 17:06:50 CDT] AI timing action selected: insert_buffer at u_request_queue_entries_reg[1][wdata][25]/D using sky130_fd_sc_hd__buf_1; reason: Hold_postroute.rpt Path 2 shows txn_wdata[25] -> g184539__6260 (a22o_1, 0.099 ns) -> u_request_queue_entries_reg[1][wdata][25]/D with hold slack -0.074 ns. Buffer insertion at D adds local delay to fix hold with minimal disturbance to shared logic.
+[2026-10-27 17:06:50 CDT] AI timing action selected: insert_buffer at u_request_queue_entries_reg[0][wdata][27]/D using sky130_fd_sc_hd__buf_1; reason: Hold_postroute.rpt Path 3 shows txn_wdata[27] -> g184503__2883 (a22o_1, 0.099 ns) -> u_request_queue_entries_reg[0][wdata][27]/D with hold slack -0.073 ns. Add minimal D-side buffering to increase early data delay.
+[2026-10-27 17:06:50 CDT] AI timing action selected: insert_buffer at u_request_queue_entries_reg[3][wdata][18]/D using sky130_fd_sc_hd__buf_1; reason: Hold_postroute.rpt Path 4 shows txn_wdata[18] -> g184455__6260 (a22o_1, 0.100 ns) -> u_request_queue_entries_reg[3][wdata][18]/D with hold slack -0.072 ns. Insert small buffer at D to improve hold on this very short path.
+[2026-10-27 17:06:51 CDT] Timing closure ai_resize attempt 4: target 4.762 ns, output build_GDSII_210MHz_ai_4ea1934e_01
+[2026-10-27 17:06:51 CDT] gdsii generate attempt 1
+[2026-10-27 17:11:49 CDT] gdsii generate attempt 1 completed
+[2026-10-27 17:11:57 CDT] gdsii review passed
+Physical verification: DRC=0, antenna=0; setup WNS 0.029 ns, hold WNS 0.098 ns.
+[2026-10-27 17:12:00 CDT] DRC=0, antenna=0; setup WNS 0.029 ns, hold WNS 0.098 ns.
+[2026-10-27 17:12:01 CDT] Setup timing passed: WNS 0.029 ns at 4.762 ns.
+[2026-10-27 17:12:01 CDT] Flow completed
+Parsed session log written to: /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855/002_backend/backend_reports
+- prep_logs: 9 files
+- netlist_logs: 9 files
+- mapped_logs: 9 files
+- GDSII_logs: 9 files
+
+================================================================================
+SAVED LOG: 003_gdsii-validation/gdsii_validation.log
+================================================================================
+srun: job 720741 queued and waiting for resources
+srun: job 720741 has been allocated resources
+[GDSII] Inspecting /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_210MHz_ai_4ea1934e_01/results/ddr4_controller_top.gds with netlist /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/backend/build_GDSII_210MHz_ai_4ea1934e_01/results/ddr4_controller_top_postroute.v
+/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/server/validation/GDSII_Validation_Agent.py:232: UserWarning: [GDSPY] GDSII elements of type BOX are imported as polygons.
+  lib.read_gds(self.gds_file)
+[GDSII] Result: PASS_WITH_GAPS
+
+================================================================================
+RENDERED SUMMARY (heading reflects historical outcome)
+================================================================================
+
+[2026-10-27 17:12:41 CDT] SYSTEM RUN — NEEDS ATTENTION (GDSII: PASS_WITH_GAPS)
+
+[2026-10-27 17:12:41 CDT] Specifications used for RTL generation:
+[2026-10-27 17:12:41 CDT]   design_name: ddr4_controller
+[2026-10-27 17:12:41 CDT]   profile:
+[2026-10-27 17:12:41 CDT]     type: basic
+[2026-10-27 17:12:41 CDT]   memory:
+[2026-10-27 17:12:41 CDT]     protocol: DDR4
+[2026-10-27 17:12:41 CDT]     speed: '3200'
+[2026-10-27 17:12:41 CDT]   topology:
+[2026-10-27 17:12:41 CDT]     banks: 4
+[2026-10-27 17:12:41 CDT]   features:
+[2026-10-27 17:12:41 CDT]     scheduler: simple
+[2026-10-27 17:12:41 CDT]     page_policy: open_page
+[2026-10-27 17:12:41 CDT]     refresh: true
+[2026-10-27 17:12:41 CDT]     tFAW: true
+[2026-10-27 17:12:41 CDT]     tRRD: true
+[2026-10-27 17:12:41 CDT]   Specification source: /home/antgamez1203/CAPSTONE/shared/mailbox/20261027T211347Z_277d0855/revision_001/approved_specs.yaml
+
+[2026-10-27 17:12:41 CDT] Selected internal controller frequency:
+[2026-10-27 17:12:41 CDT]   Frequency: 210 MHz
+[2026-10-27 17:12:41 CDT]   Clock period: 4.76 ns
+[2026-10-27 17:12:41 CDT]   Selection source: user
+[2026-10-27 17:12:41 CDT]   Selected clock target; achieved frequency requires timing-report evidence.
+
+[2026-10-27 17:12:41 CDT] Final stage results:
+[2026-10-27 17:12:41 CDT]   RTL lint:             PASSED
+[2026-10-27 17:12:41 CDT]   BIST simulation:      PASSED
+[2026-10-27 17:12:41 CDT]   Agents 1–3:           PASSED
+[2026-10-27 17:12:41 CDT]   GDSII generation:     PASSED
+[2026-10-27 17:12:41 CDT]   GDSII validation:     NEEDS_ATTENTION
+
+[2026-10-27 17:12:41 CDT] Run artifacts: /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855
+
+[2026-10-27 17:12:41 CDT] Recorded backend results:
+[2026-10-27 17:12:41 CDT]   Timing closure:       PASSED in 4 iterations
+[2026-10-27 17:12:41 CDT]   Setup WNS:            0.029 ns
+[2026-10-27 17:12:41 CDT]   Hold WNS:             0.098 ns
+[2026-10-27 17:12:41 CDT]   Physical checks:      DRC=0, antenna=0
+[2026-10-27 17:12:41 CDT]   GDSII native verdict: PASS_WITH_GAPS
+[2026-10-27 17:12:41 CDT]   Overall run status:   NEEDS_ATTENTION

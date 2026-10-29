@@ -11,8 +11,12 @@ def frequency_label(period_ns):
     return f"{1000 / period:.0f}MHz"
 
 
-def full_flow_names(period_ns):
+def full_flow_names(period_ns, *, namespace=None):
     suffix = f"{frequency_label(period_ns)}_01"
+    if namespace:
+        if not namespace.replace('_', '').isalnum():
+            raise ValueError('Build namespace must contain only letters, digits and underscores')
+        suffix = f'{namespace}_{suffix}'
     scripts = f"scripts_{suffix}"
     return {
         "remote_prepare_dir": f"build_prep_{suffix}",

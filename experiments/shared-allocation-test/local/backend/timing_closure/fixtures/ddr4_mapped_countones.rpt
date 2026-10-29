@@ -1,0 +1,15 @@
+Cadence Genus report_timing
+Path 1:
+Cost Group   : 'clk' (path_group 'clk')
+Start-point  : u_request_queue_req_mem_reg[2][row][1]/clk
+End-point    : u_tFAW_tracker_act_count_reg[1]/d
+(clock clk) capture 5000 R
+data arrival time 3.771
+data required time 5.000
+slack 1.229
+
+next_count = $countones(next_window)
+WALLACE_CSA_DUMMY_OP_groupi/in_24
+unmapped_nand2
+unmapped_complex2
+u_tFAW_tracker_act_count_reg[1]/d

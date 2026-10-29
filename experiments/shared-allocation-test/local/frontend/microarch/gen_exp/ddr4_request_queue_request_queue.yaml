@@ -1,0 +1,93 @@
+behavior:
+  depth_default: 4
+  request_struct:
+    fields:
+    - name: bank
+      width: 2
+    - name: row
+      width: 10
+    - name: col
+      width: 6
+    - name: is_write
+      width: 1
+    - name: wdata
+      width: 32
+    packed: true
+    typedef_name: request_t
+  rules:
+  - request_t does not contain a valid field; req_valid is the only validity source
+  - enq_ready is high when any req_valid entry is 0, or when deq_en will free sel_idx
+    in the same cycle
+  - enqueue inserts into the lowest-index free slot; if the queue is full and deq_en
+    is asserted, enqueue inserts at sel_idx
+  - if enqueue and dequeue target the same index in one clock cycle, enqueue wins
+    and the new request remains valid
+  - define reuse_slot = deq_en && enq_valid && (insert_idx == sel_idx)
+  - 'suppress dequeue when reuse_slot is true: use if (deq_en && !reuse_slot)'
+  - deq_en clears req_valid[sel_idx] only when no same-index enqueue wins
+  - entries never shift
+  - entries persist until explicitly dequeued
+clock:
+  name: clk
+design_name: ddr4_request_queue
+design_type: datapath
+implementation_constraints:
+- DEPTH parameter defaults to 4
+- use request_t for enq_req and req_array entries
+- do not include a valid field inside request_t
+- do not implement FIFO shifting
+- do not drop a request unless deq_en clears its selected slot
+- update entry data and req_valid with explicit next-state ordering so same-index
+  enqueue/dequeue is deterministic
+- generated RTL must include an explicit reuse_slot signal; do not rely on assignment
+  ordering between deq and enq writes
+invariants:
+- req_valid is the sole validity source
+- enq_ready == OR of free slots, plus same-cycle deq slot reuse
+- first free slot receives enq_req; full queue plus deq_en inserts at sel_idx
+- same-cycle enqueue to a dequeued slot leaves req_valid set and stores the new payload
+- reuse_slot suppresses the dequeue clear so the target entry never has an intermediate
+  invalid state
+- one enqueue per cycle maximum
+- one dequeue per cycle maximum
+ports:
+- description: Controller clock
+  direction: input
+  name: clk
+  width: 1
+- description: Active-low synchronous reset
+  direction: input
+  name: rst_n
+  width: 1
+- description: Valid enqueue request
+  direction: input
+  name: enq_valid
+  width: 1
+- description: Packed request_t enqueue payload; validity is carried only by req_valid
+  direction: input
+  name: enq_req
+  width: 51
+- description: High when any queue slot is free
+  direction: output
+  name: enq_ready
+  width: 1
+- description: DEPTH-entry request_t array, DEPTH defaults to 4
+  direction: output
+  name: req_array
+  width: 204
+- description: Per-entry valid bits
+  direction: output
+  name: req_valid
+  width: 4
+- description: Scheduler-selected entry index
+  direction: input
+  name: sel_idx
+  width: 2
+- description: Clear selected entry when asserted
+  direction: input
+  name: deq_en
+  width: 1
+reset:
+  active_low: true
+  name: rst_n
+  synchronous: true

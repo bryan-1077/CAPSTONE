@@ -54,6 +54,11 @@ class IntegrationCliTests(unittest.TestCase):
             ['validation', '--module-batch', '--target-mhz', '200'],
             ['validation', '--module-batch', '--repair'],
             ['validation', '--module-batch', '--frontend-flow', 'expand-spec'],
+            ['backend', '--offline-handoff', '--no-lec'],
+            ['backend', '--offline-handoff', '--shared-allocation'],
+            ['validation', '--module-batch', '--no-lec'],
+            ['validation', '--module-batch', '--shared-allocation'],
+            ['validation', '--module-probe', 'unit', '--no-lec'],
         ]
         with patch('getpass.getpass', side_effect=AssertionError('prompt')), patch('sys.stderr', io.StringIO()):
             for args in combinations:

@@ -1,0 +1,88 @@
+{
+  "design_name": "ddr4_refresh_refresh_controller",
+  "design_type": "fsm",
+  "clock": {
+    "name": "clk",
+    "frequency_mhz": null
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": true
+  },
+  "ports": [
+    {
+      "name": "ref_ack",
+      "direction": "input",
+      "width": 1,
+      "description": "Refresh acknowledge pulse from the downstream scheduler"
+    },
+    {
+      "name": "ref_req",
+      "direction": "output",
+      "width": 1,
+      "description": "Refresh request signal asserted while waiting for acknowledge"
+    }
+  ],
+  "fsm": {
+    "states": [
+      "IDLE",
+      "REQUEST"
+    ],
+    "transitions": [
+      {
+        "src": "IDLE",
+        "dst": "REQUEST",
+        "condition": {
+          "left": {
+            "name": "counter"
+          },
+          "op": ">=",
+          "right": {
+            "value": 12480
+          }
+        },
+        "raw_condition": "counter >= 12480"
+      },
+      {
+        "src": "REQUEST",
+        "dst": "IDLE",
+        "condition": {
+          "left": {
+            "name": "ref_ack"
+          },
+          "op": "==",
+          "right": {
+            "value": 1
+          }
+        },
+        "raw_condition": "ref_ack == 1"
+      }
+    ],
+    "reset_state": "IDLE"
+  },
+  "metadata": {
+    "implementation_constraints": [
+      "exactly two states",
+      "counter increments only while in IDLE",
+      "counter resets on any state transition",
+      "ref_req asserted only in REQUEST",
+      "no queues or scheduling logic",
+      "fully self-contained FSM"
+    ],
+    "invariants": [
+      "FSM has exactly 2 states",
+      "ref_req == (current_state == REQUEST)",
+      "counter increments only in IDLE",
+      "counter resets after REQUEST -> IDLE transition",
+      "counter resets after IDLE -> REQUEST transition"
+    ],
+    "output_overrides": {
+      "ref_req": "(current_state == REQUEST)"
+    },
+    "inferred_signal_widths": {
+      "counter": 14,
+      "ref_ack": 1
+    }
+  }
+}

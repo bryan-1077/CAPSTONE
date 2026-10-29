@@ -50,8 +50,13 @@ paths; insertion choices use only buffer cells in the loaded library. The agent
 also receives the selected build's `<top>.geom.rpt`. Each experiment restores that checkpoint
 into a new output directory, checks instance/master identities, applies
 `ecoChangeCell`, legalizes placement, reroutes, and reruns optimization and reporting.
-Unsuccessful experiments retain the selected source. An improved eligible resize
-candidate becomes the next source; the controller does not switch back to an
+Regressions retain the selected source. A repair with passing setup and improved
+hold can become the next source even when hold still fails. Among setup-passing
+candidates, recovery prioritizes hold improvement before additional setup margin;
+setup-failing candidates remain ranked by setup slack. Each new source supplies
+fresh setup/hold reports, available cells, and allowed buffer targets for the next
+experiment. Final success still requires both setup and hold to pass, with clean
+physical reports and area/power within limits. The controller does not switch back to an
 unchosen preset. Selection/API failure stops recovery without a silent ranking fallback.
 
 The comparison, selection rationale, and API diagnostics are saved as

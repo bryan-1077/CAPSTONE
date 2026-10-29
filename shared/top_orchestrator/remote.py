@@ -50,6 +50,16 @@ class RemoteConfig:
     gdsii_top: str | None = None
     gdsii_libraries: tuple[str, ...] = ()
     gdsii_report_dirs: tuple[str, ...] = ()
+    lec_script: str = "server/validation/agent4_lec.py"
+    lec_libraries: tuple[str, ...] = ()
+    lec_netlist: str | None = None
+    lec_eqy: str = "eqy"
+    lec_yosys: str = "yosys"
+    lec_job_seconds: int = 7200
+    lec_queue_wait_seconds: int = 14400
+    lec_timeout_seconds: int = 21690
+    lec_proof_seconds: int = 3600
+    lec_cpus: int = 6
 
     @classmethod
     def load(cls, path: Path | None = None):
@@ -77,10 +87,17 @@ class RemoteConfig:
             "gdsii_validation_timeout_seconds": "CAPSTONE_GDSII_VALIDATION_TIMEOUT_SECONDS",
             "gdsii_file": "CAPSTONE_GDSII_FILE", "gdsii_netlist": "CAPSTONE_GDSII_NETLIST",
             "gdsii_top": "CAPSTONE_GDSII_TOP",
+            "lec_script": "CAPSTONE_LEC_SCRIPT", "lec_netlist": "CAPSTONE_LEC_NETLIST",
+            "lec_eqy": "CAPSTONE_LEC_EQY", "lec_yosys": "CAPSTONE_LEC_YOSYS",
+            "lec_job_seconds": "CAPSTONE_LEC_JOB_SECONDS",
+            "lec_queue_wait_seconds": "CAPSTONE_LEC_QUEUE_WAIT_SECONDS",
+            "lec_timeout_seconds": "CAPSTONE_LEC_TIMEOUT_SECONDS",
+            "lec_proof_seconds": "CAPSTONE_LEC_PROOF_SECONDS", "lec_cpus": "CAPSTONE_LEC_CPUS",
         }
         integer_fields = {"port", "cpus", "allocation_wait_seconds", "job_seconds", "timeout_seconds",
                           "validation_job_seconds", "validation_timeout_seconds", "validation_jobs",
-                          "gdsii_validation_job_seconds", "gdsii_validation_timeout_seconds"}
+                          "gdsii_validation_job_seconds", "gdsii_validation_timeout_seconds",
+                          "lec_job_seconds", "lec_queue_wait_seconds", "lec_timeout_seconds", "lec_proof_seconds", "lec_cpus"}
         for name, variable in environment.items():
             value = os.environ.get(variable)
             if name not in data and value:
@@ -91,6 +108,7 @@ class RemoteConfig:
         if "setup_commands" not in data and os.environ.get("CAPSTONE_REMOTE_SETUP"):
             data["setup_commands"] = [os.environ["CAPSTONE_REMOTE_SETUP"]]
         for name, variable in (("gdsii_libraries", "CAPSTONE_GDSII_LIBRARIES"),
+                               ("lec_libraries", "CAPSTONE_LEC_LIBRARIES"),
                                ("gdsii_report_dirs", "CAPSTONE_GDSII_REPORT_DIRS")):
             if name not in data and os.environ.get(variable):
                 try:
@@ -100,7 +118,7 @@ class RemoteConfig:
         for name in ("host", "username", "project_dir", "partition", "qos"):
             if name not in data:
                 raise ValueError(f"Set {environment[name]} in the local environment or {name} in --remote-config")
-        for name in ("setup_commands", "required_tools", "gdsii_libraries", "gdsii_report_dirs"):
+        for name in ("setup_commands", "required_tools", "gdsii_libraries", "gdsii_report_dirs", "lec_libraries"):
             if name in data:
                 if not isinstance(data[name], list) or any(not isinstance(x, str) or not x.strip() or "\x00" in x for x in data[name]):
                     raise ValueError(f"{name} must be a list of nonempty strings")
@@ -110,7 +128,7 @@ class RemoteConfig:
             raise ValueError("validation_mode must be system or modules")
         if not isinstance(config.allow_validation_output_dirs, bool):
             raise ValueError("allow_validation_output_dirs must be a boolean")
-        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script", "gdsii_validation_script"):
+        for name in ("host", "username", "project_dir", "partition", "qos", "python", "validation_script", "gdsii_validation_script", "lec_script", "lec_eqy", "lec_yosys"):
             value = getattr(config, name)
             if not isinstance(value, str) or not value.strip() or "\x00" in value:
                 raise ValueError(f"{name} must be a nonempty string")
@@ -132,7 +150,11 @@ class RemoteConfig:
             raise ValueError("validation_timeout_seconds must allow allocation wait + validation job time + 30 seconds")
         if config.gdsii_validation_timeout_seconds < config.allocation_wait_seconds + config.gdsii_validation_job_seconds + 30:
             raise ValueError("gdsii_validation_timeout_seconds must allow allocation wait + job time + 30 seconds")
-        for name in ("gdsii_file", "gdsii_netlist", "gdsii_top"):
+        if config.lec_timeout_seconds < config.lec_queue_wait_seconds + config.lec_job_seconds + 90:
+            raise ValueError("lec_timeout_seconds must allow LEC queue wait + job time + 90 seconds")
+        if config.lec_proof_seconds >= config.lec_job_seconds:
+            raise ValueError("lec_job_seconds must leave time for LEC preparation and report collection")
+        for name in ("gdsii_file", "gdsii_netlist", "gdsii_top", "lec_netlist"):
             value = getattr(config, name)
             if value is not None and (not isinstance(value, str) or not value.strip() or "\x00" in value):
                 raise ValueError(f"{name} must be a nonempty string or null")
@@ -141,22 +163,27 @@ class RemoteConfig:
         return config
 
 
-def slurm_command(config: RemoteConfig, argv: list[str], job_name: str) -> str:
+def slurm_command(config: RemoteConfig, argv: list[str], job_name: str, *, queue_normally: bool = False) -> str:
     """Setup is trusted configuration; paths and command arguments are shell quoted."""
+    from .allocation import active_allocation, step_arguments, thread_exports
+    lease = active_allocation(config)
     hours, remainder = divmod(config.job_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     script = "\n".join([
         "set -e",
         "shopt -s expand_aliases",
         *config.setup_commands,
+        *(thread_exports(lease['cpus']) if lease else []),
         "cd -- " + shlex.quote(config.project_dir),
         *("command -v -- " + shlex.quote(tool) + " >/dev/null" for tool in config.required_tools),
         "exec " + shlex.join(argv),
     ])
+    if lease:
+        return shlex.join([*step_arguments(lease, job_name), '/bin/bash', '-lc', script])
     return shlex.join([
         "srun", f"--job-name={job_name}", f"--cpus-per-task={config.cpus}",
         f"--partition={config.partition}", f"--qos={config.qos}",
-        f"--immediate={config.allocation_wait_seconds}",
+        *([] if queue_normally else [f"--immediate={config.allocation_wait_seconds}"]),
         f"--time={hours:02d}:{minutes:02d}:{seconds:02d}", "/bin/bash", "-lc", script,
     ])
 

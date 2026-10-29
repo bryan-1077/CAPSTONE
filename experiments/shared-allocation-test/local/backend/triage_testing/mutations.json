@@ -1,0 +1,45 @@
+{
+  "top_module": "ddr4_controller_top",
+  "source_archive": "../MemoryController.zip",
+  "legacy_archive_sha256": "62e834536a6b1d9d7da4fb6422545c7ec581172ba020ef033e5f2d8fd7e8ea5b",
+  "modified_archive_sha256": "d1b578bd7fa6cdfd9b4078730d8991bda613a58d6472b41ac438ea0629979dd6",
+  "rtl_file_count": 11,
+  "mutations": [
+    {
+      "id": "timing_gate_bypass",
+      "file": "ddr4_controller_top.sv",
+      "before": "assign slow_path_allowed = tfaw_can_accept_act & ~tRRD_block;",
+      "after": "assign slow_path_allowed = tfaw_can_accept_act | ~tRRD_block;",
+      "effect": "OR permits activation when only one of the two timing restrictions allows it; both must allow it."
+    },
+    {
+      "id": "bank_address_alias",
+      "file": "ddr4_controller_top.sv",
+      "before": "service_bank_q <= selected_bank[BANK_SEL_WIDTH-1:0];",
+      "after": "service_bank_q <= {1'b0, selected_bank[0]};",
+      "effect": "Stored service bank loses its upper bit: bank 2 aliases bank 0 and bank 3 aliases bank 1. Read/write data can go to the wrong bank."
+    },
+    {
+      "id": "serial_activation_count",
+      "file": "ddr4_tFAW_tFAW_tracker.sv",
+      "before": "next_count = NEXT_COUNT_WIDTH'($countones(next_window));",
+      "after": "next_count = '0;\n    for (int count_idx = 0; count_idx < TFAW_CYCLES; count_idx++) begin\n      next_count = next_count + NEXT_COUNT_WIDTH'(next_window[count_idx]);\n    end",
+      "effect": "Replaces population count with a loop-carried combinational sum across 40 bits. This is a design-quality test for arithmetic depth; synthesis may rebalance it, so timing degradation is not guaranteed."
+    },
+    {
+      "id": "activation_limit_off_by_one",
+      "file": "ddr4_tFAW_tFAW_tracker.sv",
+      "before": "tFAW_block = (next_count >= TFAW_LIMIT_L);",
+      "after": "tFAW_block = (next_count > TFAW_LIMIT_L);",
+      "effect": "At next_count == TFAW_LIMIT, the tracker incorrectly reports unblocked. Test at the tracker boundary; the top also has a separate count-based guard."
+    },
+    {
+      "id": "prep_missing_dependency",
+      "file": "ddr4_controller_top.sv",
+      "before": "ddr4_request_queue #(.DEPTH(REQ_QUEUE_DEPTH)) u_request_queue (",
+      "after": "ddr4_request_queue_missing #(.DEPTH(REQ_QUEUE_DEPTH)) u_request_queue (",
+      "effect": "Top instantiates undefined ddr4_request_queue_missing; deterministic prep dependency review must fail."
+    }
+  ],
+  "logic_faults_archive_sha256": "49b93b10efe855ff809e2551907175caba2bddb808644b382467914d4517f7f5"
+}

@@ -1,0 +1,372 @@
+{
+  "is_valid": false,
+  "severity": "high",
+  "error_code": "YAML_RTL_MISMATCH",
+  "failure_stage": "YAML_VS_RTL",
+  "summary": "YAML is valid, but Agent 1 found blocking RTL-related errors in stage 'YAML_VS_RTL'.",
+  "issues": [
+    "YAML combinational_behavior describes output 'act_count', but RTL does not clearly drive it with assign/always_comb/always @(*)."
+  ],
+  "warnings": [],
+  "rtl_files": [
+    "/home/ugrads/a/arufmak2004/Validation/rtl_ddr4_tFAW_tFAW_tracker/ddr4_tFAW_tFAW_tracker.sv"
+  ],
+  "top_module_name": "ddr4_tFAW_tFAW_tracker",
+  "top_module_file": "/home/ugrads/a/arufmak2004/Validation/rtl_ddr4_tFAW_tFAW_tracker/ddr4_tFAW_tFAW_tracker.sv",
+  "compile_tool": "vcs",
+  "compile_passed": true,
+  "compile_output_snippet": "Chronologic VCS (TM)\n      Version W-2024.09-SP2-4_Full64 -- Wed Sep 16 12:58:40 2026\n\n                    Copyright (c) 1991 - 2025 Synopsys, Inc.\n   This software and the associated documentation are proprietary to Synopsys,\n Inc. This software may only be used in accordance with the terms and conditions\n of a written license agreement with Synopsys, Inc. All other use, reproduction,\n   or distribution of this software is strictly prohibited.  Licensed Products\n     communicate with Synopsys servers for the purpose of providing software\n    updates, detecting software piracy and verifying that customers are using\n    Licensed Products in conformity with the applicable License Key for such\n  Licensed Products. Synopsys will use information gathered in connection with\n    this process to deliver software updates and pursue software pirates and\n                                   infringers.\n\n Inclusivity & Diversity - Visit SolvNetPlus to read the \"Synopsys Statement on\n            Inclusivity and Diversity\" (Refer to article 000036315 at\n                        https://solvnetplus.synopsys.com)\n\nParsing design file '/home/ugrads/a/arufmak2004/Validation/rtl_ddr4_tFAW_tFAW_tracker/ddr4_tFAW_tFAW_tracker.sv'\nTop Level Modules:\n       ddr4_tFAW_tFAW_tracker\nTimeScale is 1 ns / 1 ps\nStarting vcs inline pass...\n1 module and 0 UDP read.\nrecompiling module ddr4_tFAW_tFAW_tracker\nrm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so\nif [ -x ../.agent1_compile/simv ]; then chmod a-x ../.agent1_compile/simv; fi\ng++  -o ../.agent1_compile/simv      -rdynamic  -Wl,-rpath='$ORIGIN'/simv.daidir -Wl,-rpath=./simv.daidir -Wl,-rpath=/opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib -L/opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib  -Wl,-rpath-link=./  /usr/lib64/libnuma.so.1   objs/amcQw_d.o   _1027621_archive_1.so   SIM_l.o      rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o            -lvirsim -lerrorinf -lsnpsmalloc -lvfs    -lvcsnew -ldistsimclient -lsimprofile -luclinative /opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive          /opt/coe/synopsys/vcs/W-2024.09-SP2-4/linux64/lib/vcs_save_restore_new.o -ldl  -lc -lm -lpthread -ldl \n../.agent1_compile/simv up to date\nCPU time: .186 seconds to compile + .237 seconds to elab + .141 seconds to link",
+  "spec_file": "/home/ugrads/a/arufmak2004/Validation/rtl_ddr4_tFAW_tFAW_tracker/ddr4_tFAW_tFAW_tracker.yaml",
+  "yaml_sane": true,
+  "yaml_issues": [],
+  "spec_consistent": false,
+  "spec_issues": [
+    "YAML combinational_behavior describes output 'act_count', but RTL does not clearly drive it with assign/always_comb/always @(*)."
+  ],
+  "rtl_sane": true,
+  "rtl_issues": [],
+  "dut_spec": null,
+  "design_intent": {
+    "design_name": "ddr4_tFAW_tFAW_tracker",
+    "design_type": "datapath",
+    "purpose": "tFAW_ok is purely combinational (always_comb):\n  if (act_count < 4):\n    tFAW_ok = 1'b1\n  else:\n    tFAW_ok = ((cycle_counter - act_timestamps[3]) >= 30)\nact_count output is a direct connection to the internal act_count register. On every rising clock edge:\n  1. cycle_counter increments unconditionally (wraps 255->0).\n  2. If act_valid is high:\n     a. Shift timestamps: [3]<=[2], [2]<=[1], [1]<=[0], [0]<=cycle_counter.\n     b. If act_count < 4: act_count <= act_count + 1.\n        (When act_count == 4, it stays at 4; oldest entry silently overwritten.)\nOn synchronous reset (rst_n low):\n  cycle_counter    <= 0\n  act_timestamps[0] <= 0\n  act_timestamps[1] <= 0\n  act_timestamps[2] <= 0\n  act_timestamps[3] <= 0\n  act_count        <= 0",
+    "clock": {
+      "name": "clk"
+    },
+    "reset": {
+      "name": "rst_n",
+      "active_low": true,
+      "synchronous": true
+    },
+    "yaml_ports": [
+      {
+        "name": "act_valid",
+        "direction": "input",
+        "width": 1,
+        "description": "Asserted for exactly one cycle when an ACTIVATE command is issued"
+      },
+      {
+        "name": "tFAW_ok",
+        "direction": "output",
+        "width": 1,
+        "description": "Combinational output. High when the tFAW window constraint allows another ACTIVATE to be issued this cycle. Must be driven by always_comb, not always_ff.\n"
+      },
+      {
+        "name": "act_count",
+        "direction": "output",
+        "width": 3,
+        "description": "Number of ACTIVATE commands currently tracked inside the rolling window (0 to 4). Saturates at 4; never exceeds 4.\n"
+      }
+    ],
+    "behavior": {
+      "combinational_behavior": "tFAW_ok is purely combinational (always_comb):\n  if (act_count < 4):\n    tFAW_ok = 1'b1\n  else:\n    tFAW_ok = ((cycle_counter - act_timestamps[3]) >= 30)\nact_count output is a direct connection to the internal act_count register.\n",
+      "correctness_criteria": [
+        "tFAW_ok must be 1 when act_count < 4, regardless of timestamp values",
+        "tFAW_ok must be 0 when act_count == 4 AND (cycle_counter - act_timestamps[3]) < 30",
+        "tFAW_ok must be 1 when act_count == 4 AND (cycle_counter - act_timestamps[3]) >= 30",
+        "act_count must never exceed 4",
+        "cycle_counter must be exactly 8 bits wide",
+        "all 4 timestamp registers must be reset to 0 on synchronous reset",
+        "tFAW_ok must not be registered \u2014 it must be combinational",
+        "act_timestamps[0] must always hold the most recently captured timestamp",
+        "act_timestamps[3] must always hold the oldest captured timestamp"
+      ],
+      "cycle_counter_width": 8,
+      "internal_signals": {
+        "act_count": {
+          "description": "Counts how many valid timestamp entries are present (0 to 4). Increments on act_valid while act_count < 4. Saturates at 4. Reset value: 0.\n",
+          "type": "logic",
+          "width": 3
+        },
+        "act_timestamps": {
+          "count": 4,
+          "description": "Shift register of cycle_counter values captured at the moment each ACTIVATE was issued. Index [0] holds the most recent activation; index [3] holds the oldest. On each act_valid pulse the register shifts: [3]<=[2], [2]<=[1], [1]<=[0], [0]<=cycle_counter. All four registers reset to 0.\n",
+          "type": "logic",
+          "width": 8
+        },
+        "cycle_counter": {
+          "description": "Free-running counter. Increments by 1 on every rising clock edge. Wraps at 255 back to 0. Must be 8 bits wide \u2014 an 8-bit counter cannot wrap within a single tFAW window (max 30 cycles). Reset value: 0.\n",
+          "type": "logic",
+          "width": 8
+        }
+      },
+      "sequential_behavior": "On every rising clock edge:\n  1. cycle_counter increments unconditionally (wraps 255->0).\n  2. If act_valid is high:\n     a. Shift timestamps: [3]<=[2], [2]<=[1], [1]<=[0], [0]<=cycle_counter.\n     b. If act_count < 4: act_count <= act_count + 1.\n        (When act_count == 4, it stays at 4; oldest entry silently overwritten.)\nOn synchronous reset (rst_n low):\n  cycle_counter    <= 0\n  act_timestamps[0] <= 0\n  act_timestamps[1] <= 0\n  act_timestamps[2] <= 0\n  act_timestamps[3] <= 0\n  act_count        <= 0\n",
+      "tFAW_cycles": "30",
+      "timestamp_count": 4,
+      "timestamp_width": 8,
+      "window_size": 4
+    },
+    "rules": [],
+    "request_struct_width": null,
+    "invariants": [],
+    "implementation_required": [],
+    "implementation_forbidden": [],
+    "forbidden_patterns": [],
+    "verification_targets": {}
+  },
+  "what_agent1_tested": {
+    "yaml": [
+      "YAML syntax/root structure",
+      "design_name and design_type",
+      "clock definition",
+      "reset definition",
+      "YAML port names/directions/widths",
+      "duplicate YAML ports",
+      "clock/reset signal validity",
+      "behavior field types and numeric ranges",
+      "request_struct definition when present",
+      "correctness criteria and behavior rules",
+      "invariants",
+      "implementation constraints",
+      "forbidden patterns",
+      "verification section"
+    ],
+    "rtl": [
+      "top module exists",
+      "ANSI-style top-level port parsing",
+      "obvious non-SystemVerilog/AST junk patterns",
+      "basic RTL structure"
+    ],
+    "compile": [
+      "HDL compile/elaboration"
+    ],
+    "yaml_vs_rtl": [
+      "top module name vs YAML design_name",
+      "YAML clock exists in RTL",
+      "YAML reset exists in RTL",
+      "reset synchronous/asynchronous style",
+      "reset active-high/active-low polarity",
+      "YAML ports exist in RTL",
+      "YAML port directions",
+      "YAML port widths when statically resolvable",
+      "YAML-declared internal signal presence",
+      "outputs named in combinational_behavior are combinationally driven"
+    ]
+  },
+  "verification_readiness": {
+    "status": "NOT_READY_FOR_VERIFICATION",
+    "message": "Agent 1 found blocking errors. Agent 2 and Agent 3 should not run until they are fixed.",
+    "statically_checked": [
+      "YAML design_name matches the detected RTL top module.",
+      "YAML clock/reset are checked against the RTL interface and reset style/polarity.",
+      "YAML ports are checked against RTL names, directions, and resolvable widths.",
+      "YAML-declared internal signal names are checked for RTL declarations.",
+      "Outputs named in combinational_behavior are checked for combinational RTL assignment."
+    ],
+    "still_requires_dynamic_verification": [
+      "Correctness criterion: tFAW_ok must be 1 when act_count < 4, regardless of timestamp values",
+      "Correctness criterion: tFAW_ok must be 0 when act_count == 4 AND (cycle_counter - act_timestamps[3]) < 30",
+      "Correctness criterion: tFAW_ok must be 1 when act_count == 4 AND (cycle_counter - act_timestamps[3]) >= 30",
+      "Correctness criterion: act_count must never exceed 4",
+      "Correctness criterion: cycle_counter must be exactly 8 bits wide",
+      "Correctness criterion: all 4 timestamp registers must be reset to 0 on synchronous reset",
+      "Correctness criterion: tFAW_ok must not be registered \u2014 it must be combinational",
+      "Correctness criterion: act_timestamps[0] must always hold the most recently captured timestamp",
+      "Correctness criterion: act_timestamps[3] must always hold the oldest captured timestamp",
+      "Cycle-by-cycle sequential behavior from the YAML must be exercised in simulation.",
+      "Combinational output behavior must be verified dynamically, not only structurally."
+    ]
+  },
+  "validation_stages": {
+    "yaml": {
+      "status": "PASS",
+      "checks_performed": [
+        "YAML syntax/root structure",
+        "design_name and design_type",
+        "clock definition",
+        "reset definition",
+        "YAML port names/directions/widths",
+        "duplicate YAML ports",
+        "clock/reset signal validity",
+        "behavior field types and numeric ranges",
+        "request_struct definition when present",
+        "correctness criteria and behavior rules",
+        "invariants",
+        "implementation constraints",
+        "forbidden patterns",
+        "verification section"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    "rtl": {
+      "status": "PASS",
+      "checks_performed": [
+        "top module exists",
+        "ANSI-style top-level port parsing",
+        "obvious non-SystemVerilog/AST junk patterns",
+        "basic RTL structure"
+      ],
+      "errors": [],
+      "warnings": []
+    },
+    "compile": {
+      "status": "PASS",
+      "checks_performed": [
+        "HDL compile/elaboration"
+      ],
+      "errors": [],
+      "warnings": [],
+      "tool": "vcs"
+    },
+    "yaml_vs_rtl": {
+      "status": "FAIL",
+      "checks_performed": [
+        "top module name vs YAML design_name",
+        "YAML clock exists in RTL",
+        "YAML reset exists in RTL",
+        "reset synchronous/asynchronous style",
+        "reset active-high/active-low polarity",
+        "YAML ports exist in RTL",
+        "YAML port directions",
+        "YAML port widths when statically resolvable",
+        "YAML-declared internal signal presence",
+        "outputs named in combinational_behavior are combinationally driven"
+      ],
+      "errors": [
+        "YAML combinational_behavior describes output 'act_count', but RTL does not clearly drive it with assign/always_comb/always @(*)."
+      ],
+      "warnings": []
+    }
+  },
+  "requirement_catalog": [
+    {
+      "id": "REQ-001",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "tFAW_ok must be 1 when act_count < 4, regardless of timestamp values",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-002",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "tFAW_ok must be 0 when act_count == 4 AND (cycle_counter - act_timestamps[3]) < 30",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-003",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "tFAW_ok must be 1 when act_count == 4 AND (cycle_counter - act_timestamps[3]) >= 30",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-004",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "act_count must never exceed 4",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-005",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "cycle_counter must be exactly 8 bits wide",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-006",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "all 4 timestamp registers must be reset to 0 on synchronous reset",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-007",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "tFAW_ok must not be registered \u2014 it must be combinational",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-008",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "act_timestamps[0] must always hold the most recently captured timestamp",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-009",
+      "category": "correctness_criterion",
+      "source": "behavior.correctness_criteria",
+      "text": "act_timestamps[3] must always hold the oldest captured timestamp",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-010",
+      "category": "combinational_behavior",
+      "source": "behavior.combinational_behavior",
+      "text": "tFAW_ok is purely combinational (always_comb): if (act_count < 4): tFAW_ok = 1'b1 else: tFAW_ok = ((cycle_counter - act_timestamps[3]) >= 30) act_count output is a direct connection to the internal act_count register.",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    },
+    {
+      "id": "REQ-011",
+      "category": "sequential_behavior",
+      "source": "behavior.sequential_behavior",
+      "text": "On every rising clock edge: 1. cycle_counter increments unconditionally (wraps 255->0). 2. If act_valid is high: a. Shift timestamps: [3]<=[2], [2]<=[1], [1]<=[0], [0]<=cycle_counter. b. If act_count < 4: act_count <= act_count + 1. (When act_count == 4, it stays at 4; oldest entry silently overwritten.) On synchronous reset (rst_n low): cycle_counter <= 0 act_timestamps[0] <= 0 act_timestamps[1] <= 0 act_timestamps[2] <= 0 act_timestamps[3] <= 0 act_count <= 0",
+      "verification_method": "simulation",
+      "static_result": {
+        "status": "NOT_TESTED",
+        "evidence": "Requires executable behavioral checks.",
+        "method": "static"
+      }
+    }
+  ],
+  "static_requirement_coverage": {
+    "passed": 0,
+    "failed": 0,
+    "unverified_static": 0,
+    "policy": "Unverified source constraints are coverage gaps, not behavioral failures."
+  }
+}

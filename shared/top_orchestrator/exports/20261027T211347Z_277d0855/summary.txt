@@ -1,0 +1,44 @@
+Reconstructed summary timestamps: estimated historical output time from the saved
+final state.json modification time; these were not captured terminal timestamps.
+
+[2026-10-27 17:12:41 CDT] SYSTEM RUN — NEEDS ATTENTION (GDSII: PASS_WITH_GAPS)
+
+[2026-10-27 17:12:41 CDT] Specifications used for RTL generation:
+[2026-10-27 17:12:41 CDT]   design_name: ddr4_controller
+[2026-10-27 17:12:41 CDT]   profile:
+[2026-10-27 17:12:41 CDT]     type: basic
+[2026-10-27 17:12:41 CDT]   memory:
+[2026-10-27 17:12:41 CDT]     protocol: DDR4
+[2026-10-27 17:12:41 CDT]     speed: '3200'
+[2026-10-27 17:12:41 CDT]   topology:
+[2026-10-27 17:12:41 CDT]     banks: 4
+[2026-10-27 17:12:41 CDT]   features:
+[2026-10-27 17:12:41 CDT]     scheduler: simple
+[2026-10-27 17:12:41 CDT]     page_policy: open_page
+[2026-10-27 17:12:41 CDT]     refresh: true
+[2026-10-27 17:12:41 CDT]     tFAW: true
+[2026-10-27 17:12:41 CDT]     tRRD: true
+[2026-10-27 17:12:41 CDT]   Specification source: /home/antgamez1203/CAPSTONE/shared/mailbox/20261027T211347Z_277d0855/revision_001/approved_specs.yaml
+
+[2026-10-27 17:12:41 CDT] Selected internal controller frequency:
+[2026-10-27 17:12:41 CDT]   Frequency: 210 MHz
+[2026-10-27 17:12:41 CDT]   Clock period: 4.76 ns
+[2026-10-27 17:12:41 CDT]   Selection source: user
+[2026-10-27 17:12:41 CDT]   Selected clock target; achieved frequency requires timing-report evidence.
+
+[2026-10-27 17:12:41 CDT] Final stage results:
+[2026-10-27 17:12:41 CDT]   RTL lint:             PASSED
+[2026-10-27 17:12:41 CDT]   BIST simulation:      PASSED
+[2026-10-27 17:12:41 CDT]   Agents 1–3:           PASSED
+[2026-10-27 17:12:41 CDT]   GDSII generation:     PASSED
+[2026-10-27 17:12:41 CDT]   GDSII validation:     NEEDS_ATTENTION
+
+[2026-10-27 17:12:41 CDT] Run artifacts: /home/antgamez1203/CAPSTONE/shared/top_orchestrator/runs/20261027T211347Z_277d0855
+
+[2026-10-27 17:12:41 CDT] Recorded backend results:
+[2026-10-27 17:12:41 CDT]   Timing closure:       PASSED in 4 iterations
+[2026-10-27 17:12:41 CDT]   Setup WNS:            0.029 ns
+[2026-10-27 17:12:41 CDT]   Hold WNS:             0.098 ns
+[2026-10-27 17:12:41 CDT]   Physical checks:      DRC=0, antenna=0
+[2026-10-27 17:12:41 CDT]   GDSII native verdict: PASS_WITH_GAPS
+[2026-10-27 17:12:41 CDT]   Overall run status:   NEEDS_ATTENTION

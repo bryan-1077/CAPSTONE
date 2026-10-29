@@ -202,6 +202,22 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(verify(self.mailbox), verify(output / 'validation_input'))
         self.assertIn('Readiness: READY_FOR_BACKEND', result.message)
 
+    def test_shared_job_verifies_snapshot_inside_existing_allocation(self):
+        from shared.top_orchestrator.allocation import ENVIRONMENT
+        data = json.loads(self.remote_config.read_text())
+        data.pop('validation_workspace')
+        self.remote_config.write_text(json.dumps(data))
+        destination = self.root / 'shared_run'
+        destination.mkdir()
+        lease = dict(job_id='777', cpus=6, host='fake', username='fake', port=22)
+        with patch.dict('os.environ', {ENVIRONMENT: json.dumps(lease)}), patch(
+                'shared.top_orchestrator.validation.SSHExecutor', LocalSSH):
+            result = validation_node(self.config, destination)
+        self.assertEqual(result.status, 'passed', result.message)
+        record = json.loads((destination / 'validation_result.json').read_text())
+        self.assertIn('--jobid=777', record['command'])
+        self.assertIn('/shared/allocations/777/validation_runs/', record['remote_directory'])
+
     def test_behavioral_failure_routes_to_debug_only_for_matching_live_rtl(self):
         from shared.top_orchestrator.mailbox import verify_frontend_revision
         from shared.top_orchestrator.orchestrator import next_stage
@@ -428,8 +444,9 @@ class ValidationTests(unittest.TestCase):
             seen.append(config)
             metadata = verify(config.mailbox)
             payload = dict(current_stage='done', mailbox_revision=metadata['rtl_revision'],
+                           lec_status='passed',
                            timing_target_clock_period_ns=5.0,
-                           stage_status=dict.fromkeys(('rtl_prep', 'netlist', 'mapped_netlist', 'gdsii'), 'success'))
+                           stage_status=dict.fromkeys(('rtl_prep', 'netlist', 'mapped_netlist', 'lec', 'gdsii'), 'success'))
             script = ("import hashlib, os, pathlib, sys\n"
                       "assert os.environ['CAPSTONE_SSH_USER'] == 'fake'\n"
                       "assert os.environ['CAPSTONE_SSH_HOST'] == 'fake'\n"

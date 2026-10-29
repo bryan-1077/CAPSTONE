@@ -26,6 +26,15 @@ DEFAULT_GDSII_SCRIPT = "run_innovus_GDSII_universal.py"
 
 
 def _build_inner_ssh_command(state: FlowState, inner_cmd: str) -> str:
+    if state.get('shared_allocation_id'):
+        from shared.top_orchestrator.allocation import step_arguments, thread_exports
+        job_id = str(state['shared_allocation_id'])
+        cpus = state['shared_allocation_cpus']
+        if not job_id.isdigit() or type(cpus) is not int or cpus < 1:
+            raise ValueError('Invalid shared allocation for backend stage')
+        lease = {'job_id': job_id, 'cpus': cpus}
+        wrapped = '; '.join(['set -e', 'source ~/.bashrc', *thread_exports(cpus), inner_cmd])
+        return shlex.join([*step_arguments(lease, 'capstone-backend-step'), '/bin/bash', '-lc', wrapped])
     wrapped = (
         "source ~/.bashrc >/dev/null 2>&1 || true; "
         "type load-ecen-454 >/dev/null 2>&1 && load-ecen-454; "

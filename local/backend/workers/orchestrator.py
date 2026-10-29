@@ -200,7 +200,7 @@ def _run_stage_with_retries(
 
 def _stage_retry_limit(state: FlowState, stage_name: str) -> int:
     default_limit = max(1, int(state.get("max_stage_retries", 3)))
-    if stage_name in {"rtl_prep", "netlist", "mapped_netlist", "gdsii"}:
+    if stage_name in {"rtl_prep", "netlist", "mapped_netlist", "lec", "gdsii"}:
         return 1
     return default_limit
 
@@ -3806,6 +3806,9 @@ def run_flow(initial_state: FlowState, ssh_config: dict, thread_id: str = "eda-f
             ("mapped_netlist", mapped_runner),
             ("gdsii", gdsii_runner),
         ]
+        if initial_state.get("lec_enabled"):
+            from shared.top_orchestrator.lec import run_lec_gate
+            stages.insert(3, ("lec", lambda state: run_lec_gate(state, ssh)))
 
         stage_index_by_name = {
             stage_name: index for index, (stage_name, _) in enumerate(stages)
@@ -3816,6 +3819,17 @@ def run_flow(initial_state: FlowState, ssh_config: dict, thread_id: str = "eda-f
 
         while stage_index < len(stages):
             stage_name, runner = stages[stage_index]
+            if stage_name == "gdsii" and state.get("lec_enabled"):
+                from shared.top_orchestrator.lec import verify_lec_inputs
+                try:
+                    verify_lec_inputs(state, ssh)
+                except Exception as exc:
+                    return _merge_state(state, {
+                        "current_stage": "failed", "lec_status": "failed",
+                        "stage_status": {**state.get("stage_status", {}), "lec": "failed"},
+                        "last_error": f"LEC gate rejected GDSII: {exc}",
+                        "history": state["history"] + [f"LEC gate rejected GDSII: {exc}"],
+                    })
             stage_max_retries = _stage_retry_limit(state, stage_name)
             state = _run_stage_with_retries(
                 state,
@@ -3868,6 +3882,7 @@ def run_flow(initial_state: FlowState, ssh_config: dict, thread_id: str = "eda-f
                             route_back_to_stage: "pending",
                             "netlist": "pending" if route_back_to_stage == "rtl_prep" else state.get("stage_status", {}).get("netlist", "pending"),
                             "mapped_netlist": "pending",
+                            **({"lec": "pending"} if state.get("lec_enabled") else {}),
                             "gdsii": "pending",
                         },
                     },

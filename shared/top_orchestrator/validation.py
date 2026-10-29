@@ -250,7 +250,8 @@ def validation_node(config, run_dir: Path) -> StageResult:
             snapshot_digest = hashlib.sha256((snapshot / "snapshot.json").read_bytes()).hexdigest()
             token = uuid4().hex
             job_name = "capstone-verif-" + token
-            invocation = PurePosixPath(remote.validation_workspace or f"shared/validation_runs/run_{token}")
+            from .allocation import workspace
+            invocation = PurePosixPath(remote.validation_workspace) if remote.validation_workspace else workspace(remote) / 'validation_runs' / f'run_{token}'
             if not invocation.is_absolute():
                 invocation = PurePosixPath(remote.project_dir) / invocation
             pipeline = PurePosixPath(remote.validation_script)
@@ -496,7 +497,8 @@ def validation_node(config, run_dir: Path) -> StageResult:
         finally:
             if ssh is not None:
                 if launched and not finished:
-                    record["cancellation"] = ssh.run(shlex.join(["scancel", "--name", job_name]), timeout=15)
+                    from .allocation import cancellation_command
+                    record["cancellation"] = ssh.run(shlex.join(cancellation_command(remote, job_name)), timeout=15)
                 ssh.close()
                 ssh.password = None
             record.update(status=status, message=message)

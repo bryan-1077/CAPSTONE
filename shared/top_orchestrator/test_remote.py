@@ -23,6 +23,24 @@ ENV = {"CAPSTONE_SSH_HOST": "example.test", "CAPSTONE_SSH_USER": "tester",
 
 
 class RemoteTests(unittest.TestCase):
+    def test_normal_queueing_is_explicit_and_other_stages_keep_their_wait_limit(self):
+        with patch.dict('os.environ', ENV, clear=True):
+            remote = RemoteConfig.load()
+        self.assertIn('--immediate=30', slurm_command(remote, ['python3', 'runner.py'], 'other-stage'))
+        queued = slurm_command(remote, ['python3', 'runner.py'], 'lec', queue_normally=True)
+        self.assertNotIn('--immediate', queued)
+        self.assertIn('--time=00:02:00', queued)
+
+    def test_lec_queue_budget_environment_override_requires_matching_ssh_deadline(self):
+        with patch.dict('os.environ', {**ENV, 'CAPSTONE_LEC_QUEUE_WAIT_SECONDS': '18000',
+                                      'CAPSTONE_LEC_TIMEOUT_SECONDS': '25290'}, clear=True):
+            remote = RemoteConfig.load()
+            self.assertEqual(remote.lec_queue_wait_seconds, 18000)
+            self.assertEqual(remote.lec_timeout_seconds, 25290)
+            with patch.dict('os.environ', {'CAPSTONE_LEC_TIMEOUT_SECONDS': '25289'}):
+                with self.assertRaisesRegex(ValueError, 'LEC queue wait'):
+                    RemoteConfig.load()
+
     def test_validation_mode_default_override_and_validation(self):
         with patch.dict("os.environ", ENV, clear=True):
             self.assertEqual(RemoteConfig.load().validation_mode, "system")

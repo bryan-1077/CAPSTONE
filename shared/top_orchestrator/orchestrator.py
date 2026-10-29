@@ -10,6 +10,8 @@ from .frequency import prepare_generation, select_frequency
 from .mailbox import publish
 from .display import print_node_header
 from .auth import password_session, prepare_password
+from .allocation import shared_session, ensure_allocation
+from .summary import final_summary
 
 
 def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | None:
@@ -34,7 +36,7 @@ def save_state(state: RunState, run_dir: Path) -> None:
 
 
 def run(config: RunConfig, run_dir: Path) -> RunState:
-    with password_session():
+    with password_session(), shared_session(config, run_dir):
         return _run(config, run_dir)
 
 
@@ -119,6 +121,8 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
         try:
             step_dir = run_dir if not state.results else run_dir / f"{len(state.results):03d}_{stage}"
             step_dir.mkdir(exist_ok=True)
+            if stage in ('validation', 'backend', 'gdsii-validation', 'remote-check'):
+                ensure_allocation()
             result = NODES[stage](active_config, step_dir)
         except Exception as exc:
             result = StageResult(stage, "failed", f"{type(exc).__name__}: {exc}")
@@ -172,4 +176,6 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
             state.status = "complete" if result.status == "passed" else result.status
         save_state(state, run_dir)
         print(f"{stage}: {result.status} — {result.message}", flush=True)
+    if state.status == "complete" and state.results[-1].stage == "gdsii-validation":
+        print("\n" + final_summary(state, run_dir), flush=True)
     return state

@@ -1,0 +1,59 @@
+{
+  "recovered": {
+    "run_pipeline.py": {
+      "source": "git:3bcec95:server/validation/run_pipeline.py",
+      "sha256": "04e345d2f57db259fd7e80f3301447bf980589658f3bd42e4e7f743372e228df",
+      "restored_exactly": true
+    },
+    "agent1_rtl_validator.py": {
+      "source": "git:3bcec95:server/validation/agent1_rtl_validator.py",
+      "sha256": "07bd6f3aa00fb8d3b31e520d1a9705debc07a8c15e75d169d131038109231cdc",
+      "restored_exactly": true
+    },
+    "agent2_uvm_tb.py": {
+      "source": "git:3bcec95:server/validation/agent2_uvm_tb.py",
+      "sha256": "03f56c3609ad9dbb391c9325b3d355a3deb847886eb27ea5d55a033adb11e7ae",
+      "restored_exactly": true
+    },
+    "agent3_testvectors.py": {
+      "source": "git:3bcec95:server/validation/agent3_testvectors.py",
+      "sha256": "a941a873f35e988371e29bab5c66bb738e36487eed93174523b1ab3f1c62fca9",
+      "restored_exactly": true
+    },
+    "commands.py": {
+      "source": "git:3bcec95:server/validation/commands.py",
+      "sha256": "a5f2c97e94ba7361f117aeb37d80708d222923ff64d990c764eb4dd00d942c18",
+      "restored_exactly": true
+    },
+    "llm_caller_test.py": {
+      "source": "git:3bcec95:server/validation/llm_caller_test.py",
+      "sha256": "cc270e41974ef0beffee35cc4e345ae26ba70e3aed7ed90a692f51a587b60e61",
+      "restored_exactly": true
+    },
+    "GDSII_Validation_Agent.py": {
+      "source": "git:3bcec95:server/validation/GDSII_Validation_Agent.py",
+      "sha256": "483f5277974fdcf5387d18e787524d44b6202f289256177d13ba75a7a81800eb",
+      "restored_exactly": true
+    }
+  },
+  "status": "Incomplete; not ready for a full-system run",
+  "missing_agent4_runtime_modules": [
+    "agent4_progress.py",
+    "agent4_orchestration.py",
+    "agent4_producers.py",
+    "agent4_completion.py",
+    "agent4_proof_context.py",
+    "agent4_supervisor.py"
+  ],
+  "other_known_gaps": [
+    "templates/controller_system/dut_if.sv",
+    "templates/controller_system/dut_pkg.sv",
+    "templates/controller_system/dut_tb_top.sv",
+    "Newer system-pipeline entrypoint dispatch",
+    "test_agent4_reliability.py test support"
+  ],
+  "original_snapshot_integrity": {
+    "files_checked": 292,
+    "changed_files": []
+  }
+}

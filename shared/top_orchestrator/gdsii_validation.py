@@ -11,6 +11,7 @@ from uuid import uuid4
 from shared.remote.ssh_executor import SSHExecutor
 from .auth import cached_password, run_with_password_retries
 from .contracts import StageResult
+from .display import TimestampedOutput
 from .mailbox import verify
 from .remote import RemoteConfig, slurm_command
 from .validation import unpack_reports
@@ -75,8 +76,10 @@ def assess(payload, code):
         return "failed", f"GDSII validation reported {native}; inspect the saved report."
     if code != 0:
         return "failed", f"GDSII validation execution failed (exit {code})."
-    if native == "PASS_WITH_GAPS" or (native == "PASS" and (
-            report.get("needs_review") or report.get("allow_signoff") is not True)):
+    if native == "PASS_WITH_GAPS":
+        return "passed", "GDSII validation passed with gaps; limitations are recorded in the saved report."
+    if native == "PASS" and (
+            report.get("needs_review") or report.get("allow_signoff") is not True):
         return "needs_attention", "GDSII structural inspection completed with gaps; review is required."
     if native == "PASS" and report.get("structural_checks_passed") is True:
         return "passed", "GDSII validation passed."
@@ -92,7 +95,9 @@ def gdsii_validation_node(config, run_dir):
     ssh = None
     launched = finished = False
     with log_path.open("w", encoding="utf-8") as log:
+        timestamps = {name: TimestampedOutput() for name in ("stdout", "stderr")}
         def output(name, text):
+            text = timestamps["stderr" if name == "stderr" else "stdout"].format(text)
             log.write(text)
             log.flush()
             stream = sys.stderr if name == "stderr" else sys.stdout
@@ -106,7 +111,8 @@ def gdsii_validation_node(config, run_dir):
             token = uuid4().hex
             request["invocation_id"] = token
             job_name = "capstone-gdsii-" + token
-            invocation = PurePosixPath(remote.project_dir) / "shared/gdsii_validation_runs" / ("run_" + token)
+            from .allocation import workspace
+            invocation = workspace(remote) / 'gdsii_validation_runs' / ('run_' + token)
             record.update(host=remote.host, username=remote.username, remote_directory=str(invocation),
                           backend_result=str(config.backend_result), request=request)
             request_path = run_dir / "gdsii_validation_request.json"
@@ -156,6 +162,8 @@ def gdsii_validation_node(config, run_dir):
                     if payload["report"].get(field) != payload.get(field):
                         raise ValueError("GDSII report refers to different input artifacts")
             status, message = assess(payload, code)
+            if status == "passed":
+                artifacts["validation_status"] = payload["report"]["status"]
         except (Exception, KeyboardInterrupt) as exc:
             message = f"GDSII validation stopped: {type(exc).__name__}: {exc}"
             record["error"] = message
@@ -163,7 +171,8 @@ def gdsii_validation_node(config, run_dir):
             if ssh is not None:
                 if launched and not finished:
                     try:
-                        record["cancellation"] = ssh.run(shlex.join(["scancel", "--name", job_name]), timeout=15)
+                        from .allocation import cancellation_command
+                        record["cancellation"] = ssh.run(shlex.join(cancellation_command(remote, job_name)), timeout=15)
                     except Exception as exc:
                         record["cancellation_error"] = f"{type(exc).__name__}: {exc}"
                 ssh.close()
