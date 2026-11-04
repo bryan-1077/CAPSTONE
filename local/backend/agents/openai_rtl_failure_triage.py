@@ -7,6 +7,8 @@ from pathlib import Path
 from uuid import uuid4
 from typing import Any, Iterable, Mapping
 
+from agents import ai_config
+
 from agents.openai_prep_review import (
     AIReviewParseError,
     DEFAULT_OPENAI_MODEL,
@@ -294,7 +296,7 @@ def _call_responses_api(
     system_prompt: str,
     triage_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.responses.create(
+    response = ai_config.create_response(client,
         model=model,
         input=[
             {"role": "system", "content": system_prompt},
@@ -329,7 +331,7 @@ def _call_chat_completions_api(
     system_prompt: str,
     triage_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.chat.completions.create(
+    response = ai_config.create_chat_completion(client,
         model=model,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -366,7 +368,7 @@ def _call_chat_completions_plain_json_api(
     system_prompt: str,
     triage_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.chat.completions.create(
+    response = ai_config.create_chat_completion(client,
         model=model,
         messages=[
             {
@@ -470,8 +472,8 @@ def _run_openai_rtl_failure_triage(
         logs=logs,
         rtl_sources=rtl_sources,
     )
-    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
-    base_url = os.getenv("OPENAI_BASE_URL")
+    model = ai_config.model_name(DEFAULT_OPENAI_MODEL)
+    base_url = ai_config.base_url()
     request_metadata = {
         "model": model,
         "base_url": base_url or "https://api.openai.com/v1",
@@ -496,11 +498,11 @@ def _run_openai_rtl_failure_triage(
         "ai_triage": None,
     }
 
-    if not os.getenv("OPENAI_API_KEY"):
+    if not ai_config.api_key():
         base_result["warnings"] = _ordered_unique_strings(
             [
                 *base_result.get("warnings", []),
-                "OpenAI RTL failure triage skipped because OPENAI_API_KEY is not set.",
+                "OpenAI RTL failure triage skipped because TAMUS_AI_CHAT_API_KEY (or OPENAI_API_KEY) is not set.",
             ]
         )
         return base_result

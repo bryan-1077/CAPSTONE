@@ -1,0 +1,56 @@
+{
+  "input_hashes": {
+    "gate": "4d228a5efe91cf0e674a74cc689e198111f13e6accf9df0fe55d3f3f9c65a9d7",
+    "gold": "5809aa6299c01a39e43c1b3a01cce447cbdc798cbb3e5b381255297d410d7cd9"
+  },
+  "ports": {
+    "clk": {
+      "direction": "input",
+      "width": 1
+    },
+    "cmd_ready": {
+      "direction": "output",
+      "width": 1
+    },
+    "rsp_rdata": {
+      "direction": "output",
+      "width": 32
+    },
+    "rsp_valid": {
+      "direction": "output",
+      "width": 1
+    },
+    "rst_n": {
+      "direction": "input",
+      "width": 1
+    },
+    "txn_addr": {
+      "direction": "input",
+      "width": 4
+    },
+    "txn_bank": {
+      "direction": "input",
+      "width": 2
+    },
+    "txn_is_write": {
+      "direction": "input",
+      "width": 1
+    },
+    "txn_ready": {
+      "direction": "output",
+      "width": 1
+    },
+    "txn_valid": {
+      "direction": "input",
+      "width": 1
+    },
+    "txn_wdata": {
+      "direction": "input",
+      "width": 32
+    }
+  },
+  "source": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/allocations/733265/lec_runs/356dc9917c74489c94a97b3ca5358e24/verification_reports/agent4_runs/2026-11-03_23-50-08_ts9t2jq0/agent4",
+  "width_mismatches": [
+    "req_array_packed"
+  ]
+}

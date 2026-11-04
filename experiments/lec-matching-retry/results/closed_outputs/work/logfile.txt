@@ -1,0 +1,22 @@
+EQY 18:15:49 [work] read_gold: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/gold.log work/gold.ys"
+EQY 18:15:50 [work] read_gate: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/gate.log work/gate.ys"
+EQY 18:15:50 [work] read_gold: finished (returncode=0)
+EQY 18:15:51 [work] read_gate: finished (returncode=0)
+EQY 18:15:51 [work] combine: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/combine.log work/combine.ys"
+EQY 18:15:53 [work] combine: finished (returncode=0)
+EQY 18:15:57 [work] partition: starting process "cd work; /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql partition.log partition.ys"
+EQY 18:16:01 [work] partition: finished (returncode=0)
+EQY 18:16:01 [work] run: starting process "make -j6 -C work -f strategies.mk"
+EQY 18:16:01 [work] run: make: Entering directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/closed_outputs/work'
+EQY 18:16:01 [work] run: Running strategy 'prove' on 'ddr4_controller_top.cmd_ready'..
+EQY 18:26:03 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.cmd_ready' using strategy 'prove': timeout
+EQY 18:26:03 [work] run: make -f strategies.mk summary
+EQY 18:26:03 [work] run: make[1]: Entering directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/closed_outputs/work'
+EQY 18:26:03 [work] run: make[1]: Leaving directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/closed_outputs/work'
+EQY 18:26:03 [work] run: make: Leaving directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/closed_outputs/work'
+EQY 18:26:03 [work] run: finished (returncode=0)
+EQY 18:26:03 [work] Warning: Failed to prove equivalence for 1/1 partitions:
+EQY 18:26:03 [work] Failed to prove equivalence of partition ddr4_controller_top.cmd_ready
+EQY 18:26:03 [work] summary: Elapsed clock time [H:MM:SS (secs)]: 0:10:14 (614)
+EQY 18:26:03 [work] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:36 (36)
+EQY 18:26:04 [work] DONE (FAIL, rc=2)

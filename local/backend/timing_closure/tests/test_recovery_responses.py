@@ -22,7 +22,7 @@ class RecoveryResponseTests(unittest.TestCase):
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
         self.client = Mock()
-        self.stack.enter_context(patch.dict("os.environ", {"OPENAI_API_KEY": "test"}))
+        self.stack.enter_context(patch.dict("os.environ", {"OPENAI_API_KEY": "test"}, clear=True))
         self.stack.enter_context(patch.object(agent, "_build_client", return_value=self.client))
         self.temp = self.stack.enter_context(tempfile.TemporaryDirectory())
         self.path = Path(self.temp) / "diagnostics.json"

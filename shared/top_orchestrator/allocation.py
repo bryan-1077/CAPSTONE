@@ -187,7 +187,7 @@ def shared_session(config, directory):
             handlers[number] = signal.getsignal(number)
             signal.signal(number, interrupted)
     try:
-        yield
+        yield session
     finally:
         try:
             if session is not None:

@@ -15,6 +15,7 @@ StageStatus = str
 
 
 class FlowState(TypedDict, total=False):
+    stage_runtime_seconds: Dict[str, float]
     shared_allocation_id: str
     shared_allocation_cpus: int
     lec_enabled: bool

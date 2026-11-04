@@ -307,6 +307,37 @@ def choose_sky130_root(explicit_root=None):
     return candidates[0]
 
 
+def auto_find_stdcell_gds(pdk_root, stdcell_lib):
+    """Use layout definitions from the same PDK/library as place and route."""
+    folder = Path(pdk_root) / "libs.ref" / stdcell_lib / "gds"
+    combined = folder / (stdcell_lib + ".gds")
+    if combined.is_file():
+        return [combined.resolve()]
+    candidates = sorted(p for p in folder.rglob("*")
+                        if p.is_file() and p.suffix.lower() in (".gds", ".gdsii"))
+    if not candidates:
+        raise SystemExit("No standard-cell GDS layouts found in {0}; cannot export a merged GDS. "
+                         "Supply --gds-library PATH for this PDK/library.".format(folder))
+    return unique_paths(candidates)
+
+
+def stream_out_command(top, stream_map, gds_libraries):
+    if not gds_libraries:
+        raise ValueError("GDS export requires standard-cell GDS libraries to merge")
+
+    def word(path):
+        value = str(path).replace("\\", "/")
+        if any(char in value for char in "{}\n\r"):
+            raise ValueError("Unsupported character in GDS export path")
+        return "{" + value + "}"
+
+    options = ["streamOut $RESULTS_DIR/{0}.gds".format(top), "-units 1000", "-mode ALL",
+               "-merge [list " + " ".join(word(path) for path in gds_libraries) + "]"]
+    if stream_map:
+        options.append("-mapFile " + word(stream_map))
+    return " ".join(options)
+
+
 def auto_find_tech_lef(pdk_root, stdcell_lib):
     candidates = search_files(
         pdk_root,
@@ -794,6 +825,7 @@ def build_innovus_tcl(
     tielo_net,
     timing_eco_plan=None,
     physical_repair_plan=None,
+    gds_libraries=(),
 ):
     if timing_eco_plan is not None and physical_repair_plan is not None:
         raise ValueError("Timing and physical repair plans must run separately")
@@ -838,14 +870,7 @@ def build_innovus_tcl(
         "NRIF-95",
     ]
 
-    stream_opts = [
-        "streamOut $RESULTS_DIR/{0}.gds".format(top),
-        "-units 1000",
-        "-mode ALL",
-    ]
-    if stream_map:
-        stream_opts.append("-mapFile {{{0}}}".format(str(stream_map).replace("\\", "/")))
-    stream_cmd = " \\\n    ".join(stream_opts)
+    stream_cmd = stream_out_command(top, stream_map, gds_libraries)
 
     lines = []
     lines.append("# Auto-generated Innovus TCL")
@@ -1354,7 +1379,8 @@ def build_innovus_tcl(
     lines.append("catch {defOut $RESULTS_DIR/%s.def}" % top)
     lines.append("catch {saveNetlist $RESULTS_DIR/%s_postroute.v}" % top)
     lines.append("if {[catch {" + stream_cmd + "} stream_err]} {")
-    lines.append('    puts "WARN: streamOut failed: $stream_err"')
+    lines.append('    puts "ERROR: merged GDS streamOut failed: $stream_err"')
+    lines.append('    exit 8')
     lines.append("} else {")
     lines.append('    puts "INFO: GDS stream-out complete"')
     lines.append("}")
@@ -1406,6 +1432,7 @@ def write_tcl(
     tielo_net,
     timing_eco_plan=None,
     physical_repair_plan=None,
+    gds_libraries=(),
 ):
     txt = build_innovus_tcl(
         top=top,
@@ -1441,6 +1468,7 @@ def write_tcl(
         tielo_net=tielo_net,
         timing_eco_plan=timing_eco_plan,
         physical_repair_plan=physical_repair_plan,
+        gds_libraries=gds_libraries,
     )
     write_text(tcl_path, txt)
 
@@ -1473,6 +1501,9 @@ def main():
     parser.add_argument("--innovus", default=None)
     parser.add_argument("--pdk-root", default=None)
     parser.add_argument("--stdcell-lib", default="sky130_fd_sc_hd")
+    parser.add_argument("--gds-library", action="append", default=[],
+                        help="GDS layout library to merge into the export; repeat for multiple files. "
+                             "Defaults to the selected PDK's standard-cell GDS library.")
     parser.add_argument("--tech-lef", default=None)
     parser.add_argument("--lef", action="append", default=[])
     parser.add_argument("--lib", action="append", default=[])
@@ -1541,6 +1572,11 @@ def main():
     top = choose_top(netlist, args.top)
 
     pdk_root = choose_sky130_root(args.pdk_root)
+    gds_libraries = (unique_paths(Path(path).expanduser() for path in args.gds_library)
+                     if args.gds_library else auto_find_stdcell_gds(pdk_root, args.stdcell_lib))
+    for library in gds_libraries:
+        if not library.is_file() or library.stat().st_size == 0:
+            raise SystemExit("GDS merge library is missing or empty: {0}".format(library))
     tech_lef = (
         Path(args.tech_lef).expanduser().resolve()
         if args.tech_lef
@@ -1633,6 +1669,7 @@ def main():
         routing_layers=routing_layers,
         filler_cells=filler_cells,
         stream_map=local_stream_map,
+        gds_libraries=gds_libraries,
         pwr_net=args.pwr_net,
         gnd_net=args.gnd_net,
         pwr_pins=pwr_pins,
@@ -1659,6 +1696,7 @@ def main():
         physical_repair_plan=json.loads(args.physical_repair_json) if args.physical_repair_json else None,
     )
 
+    print("GDS merge libraries: " + ", ".join(str(path) for path in gds_libraries))
     summary = (
         "Mapped dir   : {0}\n"
         "Out dir      : {1}\n"

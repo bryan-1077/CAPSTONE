@@ -256,7 +256,7 @@ class PhysicalTests(unittest.TestCase):
         context = {"available_recipes": ["refill_and_reroute"]}
         client.chat.completions.create.return_value = response
         path = Path(self.temp.name) / "ai_response.json"
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}), \
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}, clear=True), \
              patch.object(agent, "_build_client", return_value=client), \
              patch.object(agent, "_is_not_found_error", return_value=True), \
              patch.object(agent, "_recovery_response_text", return_value=(json.dumps(repair()), "response")):
@@ -272,7 +272,7 @@ class PhysicalTests(unittest.TestCase):
         client.responses.create.side_effect = RuntimeError("404 Not Found")
         context = {"eligible_attempts": [1, 2, 3], "presets": []}
         path = Path(self.temp.name) / "selection_response.json"
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}), \
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test"}, clear=True), \
              patch.object(agent, "_build_client", return_value=client), \
              patch.object(agent, "_is_not_found_error", return_value=True), \
              patch.object(agent, "_recovery_response_text", return_value=(json.dumps(selection), "response")):
@@ -312,8 +312,11 @@ class PhysicalTests(unittest.TestCase):
     def test_generated_physical_script_restores_and_rechecks_everything(self):
         fixture = ROOT / "timing_closure/fixtures"
         outdir = Path(self.temp.name) / "generated"
+        library = Path(self.temp.name) / "fixture.gds"
+        library.write_bytes(b"setup-only layout fixture; Innovus is not run")
         result = subprocess.run([sys.executable, str(ROOT / "probes/run_innovus_GDSII_universal.py"),
             "--mappeddir", str(fixture / "minimal_mapped"), "--pdk-root", str(fixture / "minimal_pdk"),
+            "--gds-library", str(library),
             "--outdir", str(outdir), "--setup-only", "--physical-repair-json",
             json.dumps({"checkpoint": "/project/best/db/06_final.enc", "actions": repair("antenna_cleanup")["actions"]})],
             capture_output=True, text=True)

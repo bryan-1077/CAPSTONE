@@ -1,0 +1,12 @@
+bind ddr4_controller_top clk
+bind ddr4_controller_top cmd_ready
+bind ddr4_controller_top rsp_rdata
+bind ddr4_controller_top rsp_valid
+bind ddr4_controller_top rst_n
+bind ddr4_controller_top txn_addr
+bind ddr4_controller_top txn_bank
+bind ddr4_controller_top txn_is_write
+bind ddr4_controller_top txn_ready
+bind ddr4_controller_top txn_valid
+bind ddr4_controller_top txn_wdata
+group ddr4_controller_top clk cmd_ready rsp_rdata rsp_valid rst_n txn_addr txn_bank txn_is_write txn_ready txn_valid txn_wdata

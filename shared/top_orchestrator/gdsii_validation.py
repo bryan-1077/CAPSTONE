@@ -163,8 +163,26 @@ def gdsii_validation_node(config, run_dir):
                         raise ValueError("GDSII report refers to different input artifacts")
             status, message = assess(payload, code)
             if status == "passed":
+                remote_gds = payload["gds_file"]
+                local_gds = run_dir / PurePosixPath(remote_gds).name
+                if local_gds.suffix.lower() not in (".gds", ".gdsii"):
+                    raise ValueError("Validated GDSII artifact has an unsupported filename")
+                fetched = ssh.fetch_file(remote_gds, local_gds)
+                if not fetched["ok"]:
+                    raise RuntimeError(f"Could not retrieve GDSII file: {fetched.get('error')}")
+                expected = payload.get("input_digests", {}).get(remote_gds)
+                checksum = hashlib.sha256()
+                with local_gds.open("rb") as source:
+                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                        checksum.update(chunk)
+                if checksum.hexdigest() != expected:
+                    local_gds.unlink()
+                    raise ValueError("Downloaded GDSII file digest mismatch")
+                artifacts["gds_file"] = str(local_gds)
+                record["gds_file"] = str(local_gds)
                 artifacts["validation_status"] = payload["report"]["status"]
         except (Exception, KeyboardInterrupt) as exc:
+            status = "needs_attention"
             message = f"GDSII validation stopped: {type(exc).__name__}: {exc}"
             record["error"] = message
         finally:

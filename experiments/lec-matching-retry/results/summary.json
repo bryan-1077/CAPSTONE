@@ -1,0 +1,33 @@
+{
+  "input_hashes": {
+    "gate": "4d228a5efe91cf0e674a74cc689e198111f13e6accf9df0fe55d3f3f9c65a9d7",
+    "gold": "5809aa6299c01a39e43c1b3a01cce447cbdc798cbb3e5b381255297d410d7cd9"
+  },
+  "source": "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/allocations/733265/lec_runs/356dc9917c74489c94a97b3ca5358e24/verification_reports/agent4_runs/2026-11-03_23-50-08_ts9t2jq0/agent4",
+  "trials": {
+    "closed_outputs": {
+      "counterexample_traces": [],
+      "covered_output_bits": 35,
+      "elapsed_seconds": 616.763828256051,
+      "only_top_level_inputs": true,
+      "partition_counts": {
+        "TIMEOUT": 1
+      },
+      "returncode": 2,
+      "strategy_timeout": true,
+      "verdict": "INCONCLUSIVE",
+      "wall_timeout": false
+    },
+    "width_checked": {
+      "elapsed_seconds": 589.3864515639725,
+      "partition_counts": {
+        "FAIL": 53,
+        "PASS": 8
+      },
+      "returncode": 2,
+      "strategy_timeout": false,
+      "verdict": "INCONCLUSIVE",
+      "wall_timeout": false
+    }
+  }
+}

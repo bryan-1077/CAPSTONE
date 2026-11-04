@@ -5,6 +5,8 @@ import os
 import re
 from typing import Any, Mapping
 
+from agents import ai_config
+
 from agents.openai_prep_review import (
     AIReviewParseError,
     DEFAULT_OPENAI_MODEL,
@@ -224,7 +226,7 @@ def _call_edit_responses_api(
     system_prompt: str,
     edit_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.responses.create(
+    response = ai_config.create_response(client,
         model=model,
         input=[
             {"role": "system", "content": system_prompt},
@@ -281,7 +283,7 @@ def _call_edit_chat_api(
             }
         }
 
-    response = client.chat.completions.create(
+    response = ai_config.create_chat_completion(client,
         model=model,
         messages=[
             {"role": "system", "content": system_content},
@@ -309,8 +311,8 @@ def run_openai_mapped_edit(
     review_payload: Mapping[str, Any],
     universal_rules_path: str | None,
 ) -> dict[str, Any]:
-    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
-    base_url = os.getenv("OPENAI_BASE_URL")
+    model = ai_config.model_name(DEFAULT_OPENAI_MODEL)
+    base_url = ai_config.base_url()
     deterministic_plan = _build_deterministic_mapped_edit_plan(
         review_payload,
         model=model,
@@ -353,9 +355,9 @@ def run_openai_mapped_edit(
         ]
         return base_result
 
-    if not os.getenv("OPENAI_API_KEY"):
+    if not ai_config.api_key():
         base_result["warnings"] = [
-            "OpenAI mapped-stage editor skipped because OPENAI_API_KEY is not set."
+            "OpenAI mapped-stage editor skipped because TAMUS_AI_CHAT_API_KEY (or OPENAI_API_KEY) is not set."
         ]
         base_result["summary"] = (
             f"{base_result['summary']} AI mapped-stage edit planning was skipped because no API key was found."

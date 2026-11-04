@@ -518,7 +518,7 @@ proc ecoRoute {} {puts ROUTED}
         client = Mock()
         response = Mock(output_text=json.dumps(plan()))
         client.responses.create.return_value = response
-        with patch.dict("os.environ", {"OPENAI_API_KEY": "test"}), patch.object(agent, "_build_client", return_value=client):
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "test"}, clear=True), patch.object(agent, "_build_client", return_value=client):
             result = agent.plan_timing_recovery({"resize_choices": self.choices()})
         self.assertEqual(result, plan())
         request = client.responses.create.call_args.kwargs
@@ -530,7 +530,7 @@ proc ecoRoute {} {puts ROUTED}
         client = Mock()
         client.responses.create.side_effect = RuntimeError("Responses endpoint missing")
         with (
-            patch.dict("os.environ", {"OPENAI_API_KEY": "test"}),
+            patch.dict("os.environ", {"OPENAI_API_KEY": "test"}, clear=True),
             patch.object(agent, "_build_client", return_value=client),
             patch.object(agent, "_is_not_found_error", return_value=True),
             patch.object(agent, "_extract_chat_output_text", return_value=json.dumps(plan())),
@@ -581,10 +581,13 @@ proc ecoRoute {} {puts ROUTED}
         root = Path(__file__).resolve().parents[2]
         fixture = root / "timing_closure" / "fixtures"
         with tempfile.TemporaryDirectory() as directory:
+            library = Path(directory) / "fixture.gds"
+            library.write_bytes(b"setup-only layout fixture; Innovus is not run")
             command = [
                 sys.executable, str(root / "probes" / "run_innovus_GDSII_universal.py"),
                 "--mappeddir", str(fixture / "minimal_mapped"), "--outdir", directory,
                 "--pdk-root", str(fixture / "minimal_pdk"), "--clock-period", "4.348",
+                "--gds-library", str(library),
                 "--final-postroute-setup-opt", "--setup-only",
                 "--timing-eco-json", json.dumps({"checkpoint": "/project/best/db/06_final.enc", "actions": plan()["actions"]}),
             ]
@@ -602,6 +605,7 @@ proc ecoRoute {} {puts ROUTED}
             self.assertIn("report_power -power_unit W", script)
             self.assertIn("die_area_mm2:", script)
             self.assertIn("saveDesign $DBS_DIR/06_final.enc", script)
+            self.assertIn("-merge [list {" + str(library) + "}]", script)
 
 
 if __name__ == "__main__":

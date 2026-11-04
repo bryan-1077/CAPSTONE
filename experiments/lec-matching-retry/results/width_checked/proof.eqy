@@ -1,0 +1,15 @@
+[gold]
+read_rtlil "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/allocations/733265/lec_runs/356dc9917c74489c94a97b3ca5358e24/verification_reports/agent4_runs/2026-11-03_23-50-08_ts9t2jq0/agent4/eqy_work/gold.il"
+
+[gate]
+read_rtlil "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/allocations/733265/lec_runs/356dc9917c74489c94a97b3ca5358e24/verification_reports/agent4_runs/2026-11-03_23-50-08_ts9t2jq0/agent4/eqy_work/gate.il"
+
+[match ddr4_controller_top]
+gold-nomatch /^req_array_packed$/
+gate-nomatch /^req_array_packed$/
+
+[strategy prove]
+use sby
+engine abc pdr
+depth 20
+timeout 600

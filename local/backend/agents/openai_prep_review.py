@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from agents import ai_config
+
 DEFAULT_OPENAI_MODEL = "gpt-5.2"
 MAX_RULES_CHARS = 12000
 DEFAULT_OPENAI_TIMEOUT_SEC = 120.0
@@ -151,11 +153,11 @@ def _openai_timeout_seconds() -> float:
 def _build_client() -> Any:
     from openai import OpenAI
 
-    base_url = os.getenv("OPENAI_BASE_URL")
+    base_url = ai_config.base_url()
     timeout = _openai_timeout_seconds()
     if base_url:
-        return OpenAI(base_url=base_url, timeout=timeout)
-    return OpenAI(timeout=timeout)
+        return OpenAI(api_key=ai_config.api_key(), base_url=base_url, timeout=timeout, max_retries=0)
+    return OpenAI(api_key=ai_config.api_key(), timeout=timeout, max_retries=0)
 
 
 def _extract_output_text(response: Any) -> str:
@@ -498,6 +500,8 @@ def _downgrade_non_selected_top_interface_issues(
 
 
 def _is_not_found_error(exc: Exception) -> bool:
+    if isinstance(exc, ai_config.ResponsesUnavailable):
+        return True
     text = str(exc)
     return "404" in text or "Not Found" in text
 
@@ -509,7 +513,7 @@ def _call_responses_api(
     system_prompt: str,
     review_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.responses.create(
+    response = ai_config.create_response(client,
         model=model,
         input=[
             {"role": "system", "content": system_prompt},
@@ -544,7 +548,7 @@ def _call_chat_completions_api(
     system_prompt: str,
     review_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.chat.completions.create(
+    response = ai_config.create_chat_completion(client,
         model=model,
         messages=[
             {"role": "system", "content": system_prompt},
@@ -581,7 +585,7 @@ def _call_chat_completions_plain_json_api(
     system_prompt: str,
     review_payload: Mapping[str, Any],
 ) -> tuple[dict[str, Any], str]:
-    response = client.chat.completions.create(
+    response = ai_config.create_chat_completion(client,
         model=model,
         messages=[
             {
@@ -616,8 +620,8 @@ def run_openai_prep_review(
     local_review: Mapping[str, Any],
     universal_rules_path: str | None,
 ) -> dict[str, Any]:
-    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
-    base_url = os.getenv("OPENAI_BASE_URL")
+    model = ai_config.model_name(DEFAULT_OPENAI_MODEL)
+    base_url = ai_config.base_url()
     request_metadata = {
         "model": model,
         "base_url": base_url or "https://api.openai.com/v1",
@@ -645,9 +649,9 @@ def run_openai_prep_review(
         "api_error": None,
     }
 
-    if not os.getenv("OPENAI_API_KEY"):
+    if not ai_config.api_key():
         base_result["warnings"] = [
-            "OpenAI prep review skipped because OPENAI_API_KEY is not set."
+            "OpenAI prep review skipped because TAMUS_AI_CHAT_API_KEY (or OPENAI_API_KEY) is not set."
         ]
         base_result["summary"] = "AI prep review was skipped because no API key was found."
         return base_result

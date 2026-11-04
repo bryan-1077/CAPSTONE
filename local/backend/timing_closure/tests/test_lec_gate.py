@@ -76,6 +76,7 @@ class LECGateRoutingTests(unittest.TestCase):
 
         with ExitStack() as stack:
             stack.enter_context(patch.object(orchestrator, 'SSHExecutor', return_value=MagicMock()))
+            stack.enter_context(patch.object(orchestrator, 'monotonic', side_effect=range(100)))
             for name, factory in (('rtl_prep', '_make_rtl_prep_runner'), ('netlist', '_make_netlist_runner'),
                                   ('mapped_netlist', '_make_mapped_runner'), ('gdsii', '_make_gdsii_runner')):
                 stack.enter_context(patch.object(orchestrator, factory, return_value=stage(name)))
@@ -89,6 +90,8 @@ class LECGateRoutingTests(unittest.TestCase):
         result, order = self.execute()
         self.assertEqual(order, ['rtl_prep', 'netlist', 'mapped_netlist', 'lec', 'check_lec_inputs', 'gdsii'])
         self.assertEqual(result['current_stage'], 'done')
+        self.assertEqual(result['stage_runtime_seconds'],
+                         dict(rtl_prep=1, netlist=1, mapped_netlist=1, lec=1, gdsii=1))
 
     def test_disabled_lec_runs_mapping_then_gdsii_without_proof(self):
         result, order = self.execute(lec_enabled=False)

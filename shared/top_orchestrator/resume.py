@@ -3,13 +3,12 @@
 import argparse
 from dataclasses import replace
 import json
-from datetime import datetime, timezone
 from pathlib import Path
-from uuid import uuid4
 
 from .contracts import RunConfig
 from .mailbox import verify
 from .orchestrator import run
+from .run_paths import run_name
 from .validation import verify_backend_handoff
 
 
@@ -69,8 +68,7 @@ def main(argv=None):
     print(f'Saved backend state: {config.backend_resume_state}', flush=True)
     if args.plan:
         return 0
-    destination = args.run.expanduser().resolve().parent / (
-        datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '_resume_' + uuid4().hex[:8])
+    destination = args.run.expanduser().resolve().parent / run_name(config.target_mhz)
     print(f'New reports: {destination}', flush=True)
     state = run(config, destination)
     print(f'Resume status: {state.status}; reports: {destination}', flush=True)

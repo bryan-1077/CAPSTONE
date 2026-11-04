@@ -1,7 +1,8 @@
 """Deterministic routing. Automatic repair loops will follow the report contracts."""
 
 import json
-from dataclasses import asdict, replace
+from time import monotonic
+from dataclasses import asdict, fields, replace
 from pathlib import Path
 
 from .contracts import RunConfig, RunState, Stage, StageResult
@@ -12,6 +13,7 @@ from .display import print_node_header
 from .auth import password_session, prepare_password
 from .allocation import shared_session, ensure_allocation
 from .summary import final_summary
+from .run_paths import frequency_run_dir
 
 
 def next_stage(result: StageResult, config: RunConfig | None = None) -> Stage | None:
@@ -35,12 +37,12 @@ def save_state(state: RunState, run_dir: Path) -> None:
     temporary.replace(run_dir / "state.json")
 
 
-def run(config: RunConfig, run_dir: Path) -> RunState:
-    with password_session(), shared_session(config, run_dir):
-        return _run(config, run_dir)
+def run(config: RunConfig, run_dir: Path, *, auto_name: bool = False) -> RunState:
+    with password_session(), shared_session(config, run_dir) as allocation:
+        return _run(config, run_dir, auto_name=auto_name, allocation=allocation)
 
 
-def _run(config: RunConfig, run_dir: Path) -> RunState:
+def _run(config: RunConfig, run_dir: Path, *, auto_name=False, allocation=None) -> RunState:
     if config.frontend_flow != "expand-spec" and not (config.entry == 'validation' and config.module_probe):
         if not (config.frontend_flow == "specification" and (config.intake or config.input_yaml)
                 and config.entry == "generate" and config.skip_verification and config.no_backend
@@ -103,6 +105,25 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
             config = select_frequency(config, run_dir)
             state.config = config
             save_state(state, run_dir)
+        if auto_name:
+            named_dir = frequency_run_dir(run_dir, config.target_mhz)
+            if named_dir != run_dir:
+                # Selection owns only these early run-local paths; rebase them
+                # before any stage or mailbox records the final directory.
+                updates = {}
+                for field in fields(config):
+                    value = getattr(config, field.name)
+                    if isinstance(value, Path) and value.is_relative_to(run_dir):
+                        updates[field.name] = named_dir / value.relative_to(run_dir)
+                if named_dir.exists():
+                    raise FileExistsError(named_dir)
+                run_dir.rename(named_dir)
+                run_dir = named_dir
+                config = replace(config, **updates)
+                state.config = config
+                if allocation is not None:
+                    allocation.directory = run_dir
+                save_state(state, run_dir)
         prepare_password(config)
     except (Exception, KeyboardInterrupt) as exc:
         state.status = "needs_attention"
@@ -118,14 +139,18 @@ def _run(config: RunConfig, run_dir: Path) -> RunState:
         stage = state.current_stage
         print_node_header(stage)
         print(f"Running {stage}; artifacts: {run_dir}", flush=True)
+        started = None
         try:
             step_dir = run_dir if not state.results else run_dir / f"{len(state.results):03d}_{stage}"
             step_dir.mkdir(exist_ok=True)
             if stage in ('validation', 'backend', 'gdsii-validation', 'remote-check'):
                 ensure_allocation()
+            started = monotonic()
             result = NODES[stage](active_config, step_dir)
         except Exception as exc:
             result = StageResult(stage, "failed", f"{type(exc).__name__}: {exc}")
+        if started is not None:
+            result.artifacts["elapsed_seconds"] = str(monotonic() - started)
         if stage == "generate" and result.status == "passed":
             try:
                 number = 1 + sum(r.stage == "generate" and "mailbox" in r.artifacts for r in state.results)

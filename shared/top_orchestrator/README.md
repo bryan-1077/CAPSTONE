@@ -113,7 +113,13 @@ using the same SSH connection settings and password. `--no-backend` stops after
 verification. Direct `validation` entry runs verification only; direct backend
 testing still requires `--allow-unvalidated`.
 
-Each execution creates `runs/<id>/state.json` plus frontend subprocess logs. Later stages and retries get numbered
+Each execution creates `runs/internal_<frequency>MHz_<date>_<time>/state.json`
+(for example, `runs/internal_200MHz_20261102_143025_123456/state.json`)
+plus frontend subprocess logs. Dates and times use America/Chicago, with microseconds
+to distinguish launches. If frequency selection is pending, the temporary name
+contains `unknown_frequency`; it is updated before the stages start once a target
+is selected. Runs without a selected controller target retain that label.
+Later stages and retries get numbered
 subdirectories so earlier evidence is preserved.
 Use `--run-dir` to select a new output directory. Existing directories are rejected.
 Exit codes: 0 = complete (or plan printed), 2 = incomplete/stopped or CLI misuse,
@@ -383,11 +389,47 @@ summary displaying `PASS_WITH_GAPS`. Native `FAIL` or `ERROR` results become
 `failed`; missing reports, transport problems, or inconsistent evidence stop for
 attention. GDSII failures do not trigger automatic frontend repair.
 
+Backend AI reviewers, editors, physical verification and timing recovery use the
+local process's exported `TAMUS_AI_CHAT_API_KEY` with TAMU's
+`https://chat-api.tamu.ai/openai/chat/completions` endpoint. Set `TAMU_MODEL` to
+select the model; its default is `protected.gpt-5.4-nano`, matching the frontend
+configuration generator. Export these variables in the local terminal launching
+the orchestrator; sourcing the remote server's `.bashrc` does not configure local
+backend AI calls. TAMU credentials take priority when both providers are configured.
+Without a TAMU key, explicit `OPENAI_API_KEY`, `OPENAI_MODEL`, and `OPENAI_BASE_URL`
+configuration remains supported. Credentials are never included in request metadata.
+
+Backend AI requests retry HTTP 429 responses up to four times. Each retry honors
+the response's `Retry-After` header (seconds or HTTP date). If it is absent or
+invalid, waits increase through 15, 30, 60, and 120 seconds, each with up to one
+second of random jitter. The backend logs each wait and resends the same API
+request without restarting physical design. After five unsuccessful requests,
+the last API error is passed back to the agent's normal failure handling. SDK
+retries are disabled so they do not multiply these attempts.
+
+The Innovus runner merges standard-cell layout definitions into every final GDS
+using `streamOut -merge`. It selects the GDS library under
+`<selected-pdk>/libs.ref/<stdcell-lib>/gds/`, using the same PDK and cell family as
+place and route. It prefers `<stdcell-lib>.gds`; otherwise it includes the split
+`.gds`/`.gdsii` files in that folder. The runner logs the selected merge libraries
+and stops if they are missing/empty or stream-out fails. For manual runner use,
+repeat `--gds-library PATH` to override the automatically selected layout files.
+Normal orchestrator runs select the libraries automatically. The merged design
+is passed to the existing GDSII validation stage and downloaded after validation
+succeeds; separate validation libraries are unnecessary when all references have
+been resolved by the merged export.
+
 Local stage artifacts include `gdsii_validation.log`,
 `gdsii_validation_request.json`, `gdsii_validation_result.json`,
 `remote_gdsii_validation_result.json`, `reports.zip`, and extracted
 `reports/verification_reports/`, including the native report and copies of supplied
-backend reports. Layouts and netlists remain on the server.
+backend reports. Successful validation also downloads the final `.gds` or `.gdsii`
+file directly into the local validation stage directory, preserving its filename
+and checking its SHA-256 against the validated input. For a full flow without
+retries, this is `runs/<run-name>/003_gdsii-validation/<design>.gds`.
+Skipped stages and retries can change the stage number. The final console summary
+prints the local GDSII path. Failed or mismatched GDSII downloads stop the run for
+attention. Server artifacts remain in place.
 
 GDSII validation uses the existing remote project, Python, setup, SSH, partition,
 and QoS settings and cached password. The server Python must provide the agent's

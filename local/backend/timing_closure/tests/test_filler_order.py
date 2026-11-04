@@ -11,9 +11,12 @@ class FillerOrderTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         fixture = root / "timing_closure" / "fixtures"
         with tempfile.TemporaryDirectory() as directory:
+            library = Path(directory) / "fixture.gds"
+            library.write_bytes(b"setup-only layout fixture; Innovus is not run")
             command = [sys.executable, str(root / "probes/run_innovus_GDSII_universal.py"),
                        "--mappeddir", str(fixture / "minimal_mapped"), "--outdir", directory,
                        "--pdk-root", str(fixture / "minimal_pdk"),
+                       "--gds-library", str(library),
                        "--final-postroute-setup-opt", "--setup-only"]
             if actions is not None:
                 command += ["--timing-eco-json", json.dumps({"checkpoint": "/project/best/db/06_final.enc", "actions": actions})]

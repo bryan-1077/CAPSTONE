@@ -1,0 +1,1 @@
+ddr4_controller_top ddr4_controller_top.cmd_ready xbits : txn_ready[0] rsp_valid[0] rsp_rdata[31:0] cmd_ready[0]

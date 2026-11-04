@@ -4,6 +4,8 @@ import os
 import re
 from pathlib import Path
 
+from agents import ai_config
+
 from agents.openai_prep_review import (
     DEFAULT_OPENAI_MODEL, _build_client, _extract_output_text,
     _extract_chat_output_text, _extract_json_text, _is_not_found_error,
@@ -141,9 +143,9 @@ def _recovery_response_text(response, api):
 
 
 def plan_timing_recovery(context, *, diagnostics_path=None):
-    if not os.getenv("OPENAI_API_KEY"):
-        raise RuntimeError("AI timing recovery requires OPENAI_API_KEY; no preset fallback was substituted.")
-    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+    if not ai_config.api_key():
+        raise RuntimeError("AI timing recovery requires TAMUS_AI_CHAT_API_KEY (or OPENAI_API_KEY); no preset fallback was substituted.")
+    model = ai_config.model_name(DEFAULT_OPENAI_MODEL)
     prompt = (
         "You are the timing-closure optimization agent for a SKY130 HD memory controller. "
         "Review the geometry (geom.rpt), routed setup (timing_postroute.rpt), and hold "
@@ -187,12 +189,12 @@ def plan_timing_recovery(context, *, diagnostics_path=None):
         print(f"AI timing recovery: requesting {api}", flush=True)
         try:
             if api == "responses":
-                response = client.responses.create(
+                response = ai_config.create_response(client,
                     model=model, input=messages,
                     text={"format": {"type": "json_schema", "name": "timing_resize_plan", "strict": True, "schema": PLAN_SCHEMA}},
                 )
             else:
-                response = client.chat.completions.create(
+                response = ai_config.create_chat_completion(client,
                     model=model, messages=messages,
                     response_format={"type": "json_schema", "json_schema": {"name": "timing_resize_plan", "strict": True, "schema": PLAN_SCHEMA}},
                 )

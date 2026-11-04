@@ -1,0 +1,25 @@
+# [ddr4_controller_top] gold-match clk clk
+ddr4_controller_top clk clk
+# [ddr4_controller_top] gold-match rst_n rst_n
+ddr4_controller_top rst_n rst_n
+# [ddr4_controller_top] gold-match txn_valid txn_valid
+ddr4_controller_top txn_valid txn_valid
+# [ddr4_controller_top] gold-match txn_is_write txn_is_write
+ddr4_controller_top txn_is_write txn_is_write
+# [ddr4_controller_top] gold-match txn_addr txn_addr
+ddr4_controller_top txn_addr txn_addr
+# [ddr4_controller_top] gold-match txn_wdata txn_wdata
+ddr4_controller_top txn_wdata txn_wdata
+# [ddr4_controller_top] gold-match txn_bank txn_bank
+ddr4_controller_top txn_bank txn_bank
+# [ddr4_controller_top] gold-match txn_ready txn_ready
+ddr4_controller_top txn_ready txn_ready
+# [ddr4_controller_top] gold-match cmd_ready cmd_ready
+ddr4_controller_top cmd_ready cmd_ready
+# [ddr4_controller_top] gold-match rsp_valid rsp_valid
+ddr4_controller_top rsp_valid rsp_valid
+# [ddr4_controller_top] gold-match rsp_rdata rsp_rdata
+ddr4_controller_top rsp_rdata rsp_rdata
+# [ddr4_controller_top] gold-nomatch *
+# [ddr4_controller_top] gate-nomatch *
+# [*] gold-match *

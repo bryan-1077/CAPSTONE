@@ -98,6 +98,10 @@ class GDSIIValidationTests(unittest.TestCase):
         self.assertEqual(remote['input_digests'][str(self.gds)], hashlib.sha256(before).hexdigest())
         self.assertEqual(remote['backend_digest'], hashlib.sha256(self.backend.read_bytes()).hexdigest())
         self.assertEqual(self.gds.read_bytes(), before)
+        local_gds = Path(result.artifacts['gds_file'])
+        self.assertEqual(local_gds, self.root / 'run/top.gds')
+        self.assertEqual(local_gds.read_bytes(), before)
+        self.assertEqual(record['gds_file'], str(local_gds))
         reports = Path(result.artifacts['reports']) / 'verification_reports'
         self.assertTrue((reports / 'gdsii_validation_report.json').is_file())
         self.assertEqual(next((reports / 'backend_reports').iterdir()).read_text(), 'slack 0.1')
@@ -276,6 +280,23 @@ class GDSIIValidationTests(unittest.TestCase):
             self.assertIn('does not match' if mode == 'identity' else 'digest mismatch', result.message)
             shutil.rmtree(self.root / 'run')
 
+    def test_missing_or_changed_gds_download_cannot_complete(self):
+        for mode in ('missing', 'changed'):
+            class BrokenGDS(LocalSSH):
+                def fetch_file(self, remote, local):
+                    if str(remote).endswith('.gds'):
+                        if mode == 'missing':
+                            return dict(ok=False, error='download failed')
+                        Path(local).write_bytes(b'changed GDS')
+                        return dict(ok=True)
+                    return super().fetch_file(remote, local)
+            result, record = self.execute(BrokenGDS)
+            self.assertEqual(result.status, 'needs_attention')
+            self.assertNotIn('gds_file', result.artifacts)
+            self.assertIn('Could not retrieve GDSII file' if mode == 'missing' else 'digest mismatch', result.message)
+            self.assertFalse((self.root / 'run/top.gds').exists())
+            shutil.rmtree(self.root / 'run')
+
     def test_routing_hands_backend_result_to_new_stage_and_stops_on_failure(self):
         for backend_status in ('passed', 'failed'):
             destination = self.root / backend_status
@@ -291,6 +312,23 @@ class GDSIIValidationTests(unittest.TestCase):
                              if backend_status == 'passed' else ['backend'])
             self.assertEqual(state.status, 'needs_attention' if backend_status == 'passed' else 'failed')
         self.assertIsNone(next_stage(StageResult('gdsii-validation', 'failed', 'failed')))
+
+    def test_full_flow_saves_final_gds_in_numbered_validation_folder(self):
+        destination = self.root / 'internal_200MHz_20261102_143025_123456'
+        with patch('shared.top_orchestrator.orchestrator.prepare_generation', side_effect=lambda c, d: c), patch(
+                'shared.top_orchestrator.orchestrator.prepare_password'), patch(
+                'shared.top_orchestrator.orchestrator.publish', return_value=self.mailbox), patch(
+                'shared.top_orchestrator.gdsii_validation.SSHExecutor', LocalSSH), patch.dict(
+                'shared.top_orchestrator.orchestrator.NODES', {
+                    'generate': lambda c, d: StageResult('generate', 'passed', 'generated'),
+                    'validation': lambda c, d: StageResult('validation', 'passed', 'verified'),
+                    'backend': lambda c, d: StageResult('backend', 'passed', 'implemented', {'result': str(self.backend)})}):
+            state = run(replace(self.config, entry='generate'), destination)
+        self.assertEqual(state.status, 'complete')
+        final_gds = destination / '003_gdsii-validation/top.gds'
+        self.assertEqual(final_gds.read_bytes(), self.gds.read_bytes())
+        saved = json.loads((destination / 'state.json').read_text())
+        self.assertEqual(saved['results'][-1]['artifacts']['gds_file'], str(final_gds))
 
     def test_nonzero_or_missing_result_cannot_pass(self):
         payload = dict(input_unchanged=True, report=dict(status='PASS_WITH_GAPS'))

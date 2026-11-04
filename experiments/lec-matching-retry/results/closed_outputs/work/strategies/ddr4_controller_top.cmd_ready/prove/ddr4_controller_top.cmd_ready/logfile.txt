@@ -1,0 +1,854 @@
+SBY 18:16:02 [ddr4_controller_top.cmd_ready] Removing directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/closed_outputs/work/strategies/ddr4_controller_top.cmd_ready/prove/ddr4_controller_top.cmd_ready'.
+SBY 18:16:02 [ddr4_controller_top.cmd_ready] engine_0: abc pdr
+SBY 18:16:03 [ddr4_controller_top.cmd_ready] base: starting process "cd ddr4_controller_top.cmd_ready/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 18:16:07 [ddr4_controller_top.cmd_ready] base: finished (returncode=0)
+SBY 18:16:07 [ddr4_controller_top.cmd_ready] prep: starting process "cd ddr4_controller_top.cmd_ready/model; yosys -ql design_prep.log design_prep.ys"
+SBY 18:16:12 [ddr4_controller_top.cmd_ready] prep: finished (returncode=0)
+SBY 18:16:12 [ddr4_controller_top.cmd_ready] aig: starting process "cd ddr4_controller_top.cmd_ready/model; yosys -ql design_aiger.log design_aiger.ys"
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [0] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [1] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [2] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [3] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [4] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [5] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [6] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [7] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [8] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [9] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [10] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [11] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [12] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [13] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [14] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [15] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [16] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [17] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [18] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [19] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [20] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [21] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [22] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [23] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [24] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [25] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [26] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [27] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [28] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [29] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [30] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_wdata [31] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_valid like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_is_write like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_bank [0] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_bank [1] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_addr [0] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_addr [1] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_addr [2] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_txn_addr [3] like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_rst_n like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating undriven bit miter.\__pi_clk like $anyseq.
+SBY 18:16:24 [ddr4_controller_top.cmd_ready] aig: Warning: Treating a total of 42 undriven bits in miter like $anyseq.
+SBY 18:16:25 [ddr4_controller_top.cmd_ready] aig: finished (returncode=0)
+SBY 18:16:25 [ddr4_controller_top.cmd_ready] engine_0: starting process "cd ddr4_controller_top.cmd_ready; yosys-abc -c 'read_aiger model/design_aiger.aig; fold; strash; pdr -v -l; write_cex -a engine_0/trace.aiw'"
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: ======== ABC command line "read_aiger model/design_aiger.aig; fold; strash; pdr -v -l; write_cex -a engine_0/trace.aiw"
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: Warning: The last output is interpreted as a constraint.
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 179. MonoCNF = no. SkipGen = no. SolveAll = no.
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 160                                                               1   194      0.22 sec  T/O =  0  PRV =  0
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 91 72 ~1                                                           2   196      0.93 sec  T/O =  0  PRV =  0
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 2 (retrying in next anytime pass).
+SBY 18:16:26 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 91 83 ~1                                                           1   196      1.05 sec  T/O =  1  PRV =  0
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 2 (retrying in next anytime pass).
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 96 110 ~1                                                          3   210      1.25 sec  T/O =  2  PRV =  0
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 90 63 45 ~8                                                        3   211      1.71 sec  T/O =  2  PRV =  0
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 3 (retrying in next anytime pass).
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 90 64 45 ~8                                                        3   212      1.77 sec  T/O =  3  PRV =  0
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 3 (retrying in next anytime pass).
+SBY 18:16:27 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 90 64 45 ~8                                                        0   212      1.77 sec  T/O =  4  PRV =  0
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 90 64 41 3 ~9                                                     0   212      2.14 sec  T/O =  4  PRV =  0
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 4.
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 198 ~9                                                            0     0      0.25 sec  T/O =  0  PRV =  0
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 90 169 ~9                                                         1    87      0.75 sec  T/O =  0  PRV =  0
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 2 (retrying in next anytime pass).
+SBY 18:16:28 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 90 169 ~9                                                         0    87      0.75 sec  T/O =  1  PRV =  0
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 90 66 97 ~20                                                       3    91      1.26 sec  T/O =  1  PRV =  0
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 3 (retrying in next anytime pass).
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 91 70 104 ~20                                                      3   104      1.47 sec  T/O =  2  PRV =  0
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 3 (retrying in next anytime pass).
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 91 70 104 ~20                                                      0   104      1.47 sec  T/O =  3  PRV =  0
+SBY 18:16:29 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 91 66 59 46 ~20                                                    1   107      1.91 sec  T/O =  3  PRV =  0
+SBY 18:16:30 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 95 77 84 48 6 ~20                                                 29   135      2.52 sec  T/O =  3  PRV =  0
+SBY 18:16:30 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 5 (retrying in next anytime pass).
+SBY 18:16:30 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 95 77 84 48 6 ~20                                                  0   135      2.52 sec  T/O =  4  PRV =  0
+SBY 18:16:30 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 89 76 78 54 3 0 ~24                                                0   135      2.84 sec  T/O =  4  PRV =  0
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 6.
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 300 ~24                                                            0     0      0.29 sec  T/O =  0  PRV =  0
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 89 250 ~24                                                         1    58      0.83 sec  T/O =  0  PRV =  0
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 2 (retrying in next anytime pass).
+SBY 18:16:31 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 89 250 ~24                                                         0    58      0.83 sec  T/O =  1  PRV =  0
+SBY 18:16:32 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 89 71 219 ~46                                                      3   118      2.02 sec  T/O =  1  PRV =  0
+SBY 18:16:32 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 3 (retrying in next anytime pass).
+SBY 18:16:32 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 89 71 228 ~46                                                      2   130      2.10 sec  T/O =  2  PRV =  0
+SBY 18:16:33 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 79 66 116 132 ~47                                                  2   145      2.87 sec  T/O =  2  PRV =  0
+SBY 18:16:34 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 79 62 117 92 85 ~47                                               13   186      3.69 sec  T/O =  2  PRV =  0
+SBY 18:16:35 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 79 62 105 76 69 41 ~56                                             5   199      4.35 sec  T/O =  2  PRV =  0
+SBY 18:16:35 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 6 (retrying in next anytime pass).
+SBY 18:16:35 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 79 62 105 76 69 41 ~56                                             0   199      4.35 sec  T/O =  3  PRV =  0
+SBY 18:16:35 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 79 62 105 35 33 33 94 ~57                                          8   201      4.89 sec  T/O =  3  PRV =  0
+SBY 18:16:36 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 79 62 105 34 29 20 51 57 ~61                                       3   203      5.47 sec  T/O =  3  PRV =  0
+SBY 18:16:36 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 79 62 108 35 29 17 51 47 5 ~69                                    10   203      6.10 sec  T/O =  3  PRV =  0
+SBY 18:16:36 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 9 (retrying in next anytime pass).
+SBY 18:16:36 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 79 62 108 35 29 17 51 47 5 ~69                                     0   203      6.10 sec  T/O =  4  PRV =  0
+SBY 18:16:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 77 61 103 28 29 18 52 47 3 0 ~71                                   0   203      6.58 sec  T/O =  4  PRV =  0
+SBY 18:16:37 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 10.
+SBY 18:16:37 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:16:37 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:16:37 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 417 ~71                                                            0     0      0.44 sec  T/O =  0  PRV =  0
+SBY 18:16:38 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 77 344 ~71                                                         1     9      0.68 sec  T/O =  0  PRV =  0
+SBY 18:16:40 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 78 65 403 ~71                                                      3   160      2.72 sec  T/O =  0  PRV =  0
+SBY 18:16:41 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 46 31 124 286 ~71                                                  3   168      3.91 sec  T/O =  0  PRV =  0
+SBY 18:16:41 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 4 (retrying in next anytime pass).
+SBY 18:16:41 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 46 31 124 286 ~71                                                  0   168      3.91 sec  T/O =  1  PRV =  0
+SBY 18:16:42 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 45 31 126 112 189 ~71                                              5   184      5.36 sec  T/O =  1  PRV =  0
+SBY 18:16:42 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 5 (retrying in next anytime pass).
+SBY 18:16:42 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 45 31 126 112 189 ~71                                              0   184      5.36 sec  T/O =  2  PRV =  0
+SBY 18:16:43 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 45 29 125 109 68 131 ~72                                           5   200      6.03 sec  T/O =  2  PRV =  0
+SBY 18:16:44 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 45 29 131 117 86 34 118 ~75                                       35   254      7.13 sec  T/O =  2  PRV =  0
+SBY 18:16:44 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 45 29 140 140 108 40 122 ~75                                      63   278      7.32 sec  T/O =  2  PRV =  0
+SBY 18:16:44 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 7 (retrying in next anytime pass).
+SBY 18:16:44 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 45 29 140 140 108 40 122 ~75                                       0   278      7.32 sec  T/O =  3  PRV =  0
+SBY 18:16:45 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 45 28 134 135 96 34 60 75 ~86                                      0   278      8.01 sec  T/O =  3  PRV =  0
+SBY 18:16:46 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 45 28 134 135 99 53 79 56 33 ~86                                  36   320      8.99 sec  T/O =  3  PRV =  0
+SBY 18:16:46 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 45 28 137 141 113 68 100 60 35 ~86                                67   343      9.35 sec  T/O =  3  PRV =  0
+SBY 18:16:46 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 45 28 137 141 118 76 111 61 37 ~86                                69   344      9.45 sec  T/O =  3  PRV =  0
+SBY 18:16:46 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 9 (retrying in next anytime pass).
+SBY 18:16:46 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 45 28 137 141 118 76 111 61 37 ~86                                 0   344      9.45 sec  T/O =  4  PRV =  0
+SBY 18:16:47 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 45 28 135 134 105 54 87 65 16 24 ~115                              0   344     10.14 sec  T/O =  4  PRV =  0
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 10.
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 656 ~135                                                           0     0      0.90 sec  T/O =  0  PRV =  0
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 45 611 ~135                                                        0     0      0.91 sec  T/O =  0  PRV =  0
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 45 28 583 ~135                                                     0     0      0.93 sec  T/O =  0  PRV =  0
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 45 29 164 496 ~135                                                 3   116      1.17 sec  T/O =  0  PRV =  0
+SBY 18:16:48 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 45 29 174 515 ~135                                                 3   126      1.22 sec  T/O =  0  PRV =  0
+SBY 18:16:50 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 49 35 182 201 414 ~138                                            10   165      3.28 sec  T/O =  0  PRV =  0
+SBY 18:16:51 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 49 35 184 205 458 ~138                                             3   228      3.58 sec  T/O =  0  PRV =  0
+SBY 18:16:52 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 44 19 110 100 198 358 ~140                                         3   238      5.26 sec  T/O =  0  PRV =  0
+SBY 18:16:55 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 110 99 198 131 281 ~140                                      4   264      7.37 sec  T/O =  0  PRV =  0
+SBY 18:16:55 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 110 99 200 133 284 ~140                                      4   266      7.39 sec  T/O =  0  PRV =  0
+SBY 18:16:56 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 7 (retrying in next anytime pass).
+SBY 18:16:56 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 110 99 225 236 418 ~140                                      7   352      8.54 sec  T/O =  1  PRV =  0
+SBY 18:16:56 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 7 (retrying in next anytime pass).
+SBY 18:16:56 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 110 99 225 236 420 ~140                                      1   353      8.55 sec  T/O =  2  PRV =  0
+SBY 18:16:58 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 44 19 110 98 189 223 229 175 ~167                                  3   363     10.99 sec  T/O =  2  PRV =  0
+SBY 18:17:00 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 110 98 190 221 237 148 75 ~156                               7   376     12.77 sec  T/O =  2  PRV =  0
+SBY 18:17:00 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 110 98 190 224 249 168 106 ~156                             11   378     12.94 sec  T/O =  2  PRV =  0
+SBY 18:17:00 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 110 98 193 228 260 185 138 ~156                              9   379     13.09 sec  T/O =  2  PRV =  0
+SBY 18:17:00 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 110 98 195 233 275 200 169 ~156                              8   380     13.24 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 110 98 196 237 287 216 198 ~156                             14   385     13.40 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 202 242 294 230 220 ~156                            14   398     13.60 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 202 242 300 239 273 ~156                             8   401     13.77 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 202 242 300 239 323 ~156                             3   401     13.88 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 202 242 300 239 373 ~156                             3   401     13.98 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 202 242 300 239 423 ~156                             3   401     14.08 sec  T/O =  2  PRV =  0
+SBY 18:17:01 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 203 245 312 254 456 ~156                             7   401     14.22 sec  T/O =  2  PRV =  0
+SBY 18:17:02 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 203 248 326 274 485 ~156                             7   401     14.38 sec  T/O =  2  PRV =  0
+SBY 18:17:02 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 204 251 349 323 562 ~156                             9   406     14.71 sec  T/O =  2  PRV =  0
+SBY 18:17:02 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 113 103 205 252 358 337 602 ~156                             5   411     14.85 sec  T/O =  2  PRV =  0
+SBY 18:17:04 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 96 188 228 301 256 322 167 ~386                         18   439     17.06 sec  T/O =  2  PRV =  0
+SBY 18:17:04 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 96 188 228 303 265 343 177 ~386                         31   447     17.20 sec  T/O =  2  PRV =  0
+SBY 18:17:05 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 10 (retrying in next anytime pass).
+SBY 18:17:05 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 96 188 228 303 276 362 248 ~386                          4   449     17.47 sec  T/O =  3  PRV =  0
+SBY 18:17:05 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 96 188 228 303 278 367 262 ~386                          4   449     17.52 sec  T/O =  3  PRV =  0
+SBY 18:17:05 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 10 (retrying in next anytime pass).
+SBY 18:17:05 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 96 188 228 303 278 367 262 ~386                          0   449     17.52 sec  T/O =  4  PRV =  0
+SBY 18:17:06 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 96 187 228 295 244 337 186 44 ~441                       0   449     19.21 sec  T/O =  4  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 11.
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 1779 ~441                                                          0     0      2.47 sec  T/O =  0  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 44 1735 ~441                                                       0     0      2.49 sec  T/O =  0  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 44 19 1716 ~441                                                    0     0      2.51 sec  T/O =  0  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 44 19 108 1608 ~441                                                0     0      2.56 sec  T/O =  0  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 44 19 108 96 1512 ~441                                             0     0      2.64 sec  T/O =  0  PRV =  0
+SBY 18:17:09 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 44 19 108 96 187 1325 ~441                                         0     0      2.77 sec  T/O =  0  PRV =  0
+SBY 18:17:11 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 108 96 203 271 1173 ~441                                     6   161      4.25 sec  T/O =  0  PRV =  0
+SBY 18:17:16 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 44 19 108 98 212 318 472 1064 ~442                                14   328     10.09 sec  T/O =  0  PRV =  0
+SBY 18:17:21 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 108 89 192 225 372 388 744 ~449                              3   347     14.62 sec  T/O =  0  PRV =  0
+SBY 18:17:22 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 108 89 192 229 392 433 818 ~449                             12   363     15.42 sec  T/O =  0  PRV =  0
+SBY 18:17:22 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 108 91 198 234 406 452 852 ~449                             18   373     15.80 sec  T/O =  0  PRV =  0
+SBY 18:17:22 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 108 91 198 236 412 464 866 ~449                              8   373     15.95 sec  T/O =  0  PRV =  0
+SBY 18:17:22 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 9 (retrying in next anytime pass).
+SBY 18:17:22 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 108 91 198 236 412 464 866 ~449                              0   373     15.95 sec  T/O =  1  PRV =  0
+SBY 18:17:27 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 108 91 193 232 378 424 477 470 ~463                          3   392     20.35 sec  T/O =  1  PRV =  0
+SBY 18:17:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 192 230 373 400 448 338 237 ~464                      5   401     23.64 sec  T/O =  1  PRV =  0
+SBY 18:17:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 192 230 373 400 452 344 282 ~464                      3   405     23.76 sec  T/O =  1  PRV =  0
+SBY 18:17:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 192 230 374 406 472 394 433 ~464                      8   419     24.26 sec  T/O =  1  PRV =  0
+SBY 18:17:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 194 234 380 415 485 408 459 ~464                     11   430     24.43 sec  T/O =  1  PRV =  0
+SBY 18:17:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 200 237 394 439 540 503 682 ~464                      9   483     25.42 sec  T/O =  1  PRV =  0
+SBY 18:17:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 201 238 405 453 566 529 724 ~464                     17   503     25.73 sec  T/O =  1  PRV =  0
+SBY 18:17:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 203 240 412 458 600 591 834 ~464                      7   530     26.27 sec  T/O =  1  PRV =  0
+SBY 18:17:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 210 248 421 463 615 604 884 ~464                     13   559     26.57 sec  T/O =  1  PRV =  0
+SBY 18:17:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 44 19 108 90 211 249 422 465 623 611 934 ~464                      7   563     26.76 sec  T/O =  1  PRV =  0
+SBY 18:17:37 [ddr4_controller_top.cmd_ready] engine_0: 12 : 0 44 19 108 89 206 234 371 352 460 449 515 570 ~498                  9   565     30.31 sec  T/O =  1  PRV =  0
+SBY 18:17:37 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 12 (retrying in next anytime pass).
+SBY 18:17:37 [ddr4_controller_top.cmd_ready] engine_0: 12 : 0 44 19 108 89 206 234 371 352 461 457 532 783 ~498                  4   610     30.90 sec  T/O =  2  PRV =  0
+SBY 18:17:41 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 373 355 456 435 505 555 257 ~489             16   610     34.56 sec  T/O =  2  PRV =  0
+SBY 18:17:41 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 356 457 442 521 582 282 ~489             14   612     34.76 sec  T/O =  2  PRV =  0
+SBY 18:17:41 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 356 459 445 534 601 319 ~489             13   615     34.98 sec  T/O =  2  PRV =  0
+SBY 18:17:42 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 357 461 449 545 616 350 ~489              8   615     35.18 sec  T/O =  2  PRV =  0
+SBY 18:17:42 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 357 461 449 548 623 394 ~489              4   615     35.32 sec  T/O =  2  PRV =  0
+SBY 18:17:42 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 357 461 449 549 626 396 ~489              5   615     35.34 sec  T/O =  2  PRV =  0
+SBY 18:17:42 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 13 (retrying in next anytime pass).
+SBY 18:17:42 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 44 19 108 89 205 235 374 357 461 449 549 626 396 ~489              0   615     35.34 sec  T/O =  3  PRV =  0
+SBY 18:17:45 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 233 368 349 423 432 532 629 299 46 ~545          27   615     38.98 sec  T/O =  3  PRV =  0
+SBY 18:17:46 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 429 441 543 645 307 47 ~545          41   615     39.18 sec  T/O =  3  PRV =  0
+SBY 18:17:46 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 429 444 554 665 333 50 ~545          61   616     39.39 sec  T/O =  3  PRV =  0
+SBY 18:17:46 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 434 450 569 679 349 50 ~545          87   616     39.58 sec  T/O =  3  PRV =  0
+SBY 18:17:46 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 434 452 580 699 375 51 ~545         105   617     39.80 sec  T/O =  3  PRV =  0
+SBY 18:17:46 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 436 459 593 711 397 52 ~545         124   618     40.01 sec  T/O =  3  PRV =  0
+SBY 18:17:47 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 438 466 608 728 416 52 ~545         148   618     40.23 sec  T/O =  3  PRV =  0
+SBY 18:17:47 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 438 466 608 738 440 78 ~545         144   626     40.47 sec  T/O =  3  PRV =  0
+SBY 18:17:47 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 438 466 609 748 463 110 ~545        135   626     40.71 sec  T/O =  3  PRV =  0
+SBY 18:17:47 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 438 466 612 757 480 154 ~545        121   628     40.95 sec  T/O =  3  PRV =  0
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 438 466 612 760 490 212 ~545         99   628     41.18 sec  T/O =  3  PRV =  0
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 234 368 350 439 470 623 774 502 225 ~545         24   629     41.37 sec  T/O =  3  PRV =  0
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 235 369 351 443 473 631 785 528 228 ~545         42   635     41.56 sec  T/O =  3  PRV =  0
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 235 369 351 444 474 634 787 533 230 ~545         47   635     41.60 sec  T/O =  3  PRV =  0
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 14 (retrying in next anytime pass).
+SBY 18:17:48 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 44 19 108 89 204 235 369 351 444 474 634 787 533 230 ~545          0   635     41.60 sec  T/O =  4  PRV =  0
+SBY 18:17:52 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 19 108 89 204 234 366 347 402 380 477 562 532 307 97 ~561        0   635     45.29 sec  T/O =  4  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 15.
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 3839 ~562                                                          0     0      6.12 sec  T/O =  0  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 44 3795 ~562                                                       0     0      6.17 sec  T/O =  0  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 44 19 3776 ~562                                                    0     0      6.23 sec  T/O =  0  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 44 19 104 3672 ~562                                                0     0      6.32 sec  T/O =  0  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 44 19 104 78 3594 ~562                                             0     0      6.42 sec  T/O =  0  PRV =  0
+SBY 18:17:58 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 44 19 104 78 187 3407 ~562                                         0     0      6.59 sec  T/O =  0  PRV =  0
+SBY 18:17:59 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 44 19 104 78 187 218 3189 ~562                                     0     0      7.21 sec  T/O =  0  PRV =  0
+SBY 18:18:00 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 44 19 104 78 187 218 336 2853 ~562                                 0     0      8.21 sec  T/O =  0  PRV =  0
+SBY 18:18:02 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 44 19 104 78 187 218 341 347 2550 ~562                             8    73     10.59 sec  T/O =  0  PRV =  0
+SBY 18:18:08 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 104 78 187 220 340 346 404 2189 ~563                        12   100     16.69 sec  T/O =  0  PRV =  0
+SBY 18:18:09 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 104 79 190 224 350 361 419 2200 ~563                        14   120     16.92 sec  T/O =  0  PRV =  0
+SBY 18:18:09 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 106 80 193 229 355 368 433 2219 ~563                        15   137     17.15 sec  T/O =  0  PRV =  0
+SBY 18:18:09 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 109 85 198 237 363 378 445 2229 ~563                        18   150     17.40 sec  T/O =  0  PRV =  0
+SBY 18:18:09 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 113 91 202 241 369 390 456 2236 ~563                        26   167     17.62 sec  T/O =  0  PRV =  0
+SBY 18:18:10 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 113 91 204 248 385 410 480 2257 ~563                        25   182     17.97 sec  T/O =  0  PRV =  0
+SBY 18:18:10 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 113 91 206 250 391 422 496 2284 ~563                        10   187     18.23 sec  T/O =  0  PRV =  0
+SBY 18:18:10 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 113 91 206 253 399 433 513 2318 ~563                        11   280     18.65 sec  T/O =  0  PRV =  0
+SBY 18:18:11 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 115 92 206 255 404 444 528 2343 ~563                        14   283     18.90 sec  T/O =  0  PRV =  0
+SBY 18:18:11 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 116 98 212 261 414 458 542 2349 ~563                        14   283     19.15 sec  T/O =  0  PRV =  0
+SBY 18:18:11 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 44 19 116 98 212 264 422 468 561 2367 ~563                        12   285     19.42 sec  T/O =  0  PRV =  0
+SBY 18:18:11 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 45 22 122 101 216 268 428 478 567 2375 ~563                       15   290     19.61 sec  T/O =  0  PRV =  0
+SBY 18:18:12 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 25 128 104 221 272 431 488 580 2380 ~563                       17   300     19.79 sec  T/O =  0  PRV =  0
+SBY 18:18:12 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 26 129 107 224 280 444 507 597 2410 ~563                       12   310     20.27 sec  T/O =  0  PRV =  0
+SBY 18:18:12 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 26 129 107 224 280 444 507 602 2461 ~563                       12   312     20.70 sec  T/O =  0  PRV =  0
+SBY 18:18:13 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 26 129 107 224 280 444 507 602 2510 ~563                        8   312     21.13 sec  T/O =  0  PRV =  0
+SBY 18:18:13 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 26 129 107 224 280 444 507 602 2560 ~563                        8   312     21.56 sec  T/O =  0  PRV =  0
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 27 131 108 225 281 445 511 615 2594 ~563                       11   314     21.91 sec  T/O =  0  PRV =  0
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 27 131 108 225 285 452 524 635 2612 ~563                       11   316     22.13 sec  T/O =  0  PRV =  0
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 28 132 111 230 294 460 533 650 2619 ~563                       21   332     22.38 sec  T/O =  0  PRV =  0
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 28 132 111 230 294 460 533 651 2624 ~563                        2   335     22.40 sec  T/O =  0  PRV =  0
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 10 (retrying in next anytime pass).
+SBY 18:18:14 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 28 132 111 230 294 460 533 651 2624 ~563                        0   335     22.40 sec  T/O =  1  PRV =  0
+SBY 18:18:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 45 24 114 84 200 233 356 374 575 538 1976 ~750                     0   335     27.64 sec  T/O =  1  PRV =  0
+SBY 18:18:24 [ddr4_controller_top.cmd_ready] engine_0: 12 : 0 45 24 114 84 200 233 341 370 567 530 541 1489 ~750                 3   386     31.82 sec  T/O =  1  PRV =  0
+SBY 18:18:29 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 565 521 543 591 938 ~766              7   400     36.78 sec  T/O =  1  PRV =  0
+SBY 18:18:29 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 567 528 554 599 969 ~766              9   411     37.00 sec  T/O =  1  PRV =  0
+SBY 18:18:29 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 567 532 568 618 1000 ~766             9   414     37.21 sec  T/O =  1  PRV =  0
+SBY 18:18:29 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 567 534 580 640 1028 ~766             6   416     37.42 sec  T/O =  1  PRV =  0
+SBY 18:18:29 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 567 537 592 651 1062 ~766             7   419     37.61 sec  T/O =  1  PRV =  0
+SBY 18:18:30 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 341 370 567 537 603 672 1108 ~766             4   432     37.83 sec  T/O =  1  PRV =  0
+SBY 18:18:30 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 343 374 574 546 630 707 1275 ~766            18   472     38.50 sec  T/O =  1  PRV =  0
+SBY 18:18:30 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 343 374 575 547 641 726 1308 ~766             5   472     38.67 sec  T/O =  1  PRV =  0
+SBY 18:18:31 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 343 374 576 550 652 741 1342 ~766             5   473     38.87 sec  T/O =  1  PRV =  0
+SBY 18:18:31 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 45 24 114 84 200 233 343 376 585 558 670 762 1439 ~766            14   494     39.42 sec  T/O =  1  PRV =  0
+SBY 18:18:37 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 45 24 113 84 200 231 342 370 550 529 588 685 729 817 ~794          6   512     45.48 sec  T/O =  1  PRV =  0
+SBY 18:18:38 [ddr4_controller_top.cmd_ready] engine_0: 14 : 0 45 24 113 84 200 231 343 374 557 538 596 705 758 904 ~794         20   535     46.05 sec  T/O =  1  PRV =  0
+SBY 18:18:38 [ddr4_controller_top.cmd_ready] engine_0: 14 : ... 45 24 113 84 200 231 343 374 557 538 597 709 769 1036 ~794      20   550     46.61 sec  T/O =  1  PRV =  0
+SBY 18:18:43 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 522 582 640 677 639 442 ~794      23   561     51.75 sec  T/O =  1  PRV =  0
+SBY 18:18:44 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 522 582 647 688 661 469 ~794      24   561     52.03 sec  T/O =  1  PRV =  0
+SBY 18:18:44 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 522 583 648 700 676 503 ~794      13   564     52.23 sec  T/O =  1  PRV =  0
+SBY 18:18:44 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 522 583 650 721 712 578 ~794       7   568     52.65 sec  T/O =  1  PRV =  0
+SBY 18:18:45 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 522 584 652 730 734 637 ~794       8   569     52.94 sec  T/O =  1  PRV =  0
+SBY 18:18:45 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 588 661 742 757 658 ~794       9   576     53.19 sec  T/O =  1  PRV =  0
+SBY 18:18:45 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 588 661 746 777 697 ~794       3   577     53.41 sec  T/O =  1  PRV =  0
+SBY 18:18:46 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 588 661 759 826 778 ~794       3   577     54.03 sec  T/O =  1  PRV =  0
+SBY 18:18:46 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 588 662 772 850 867 ~794       5   579     54.41 sec  T/O =  1  PRV =  0
+SBY 18:18:46 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 589 669 785 863 897 ~794       6   581     54.61 sec  T/O =  1  PRV =  0
+SBY 18:18:47 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 591 674 798 877 929 ~794       5   582     54.79 sec  T/O =  1  PRV =  0
+SBY 18:18:47 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 591 675 811 897 962 ~794       5   585     55.01 sec  T/O =  1  PRV =  0
+SBY 18:18:47 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 200 231 343 367 551 523 592 678 826 929 1018 ~794      5   590     55.39 sec  T/O =  1  PRV =  0
+SBY 18:18:47 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 15 (retrying in next anytime pass).
+SBY 18:18:47 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 348 373 561 535 604 689 833 929 1019 ~794     33   592     55.73 sec  T/O =  2  PRV =  0
+SBY 18:18:48 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 350 376 565 538 611 700 844 932 1023 ~794     33   594     55.91 sec  T/O =  2  PRV =  0
+SBY 18:18:48 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 350 376 565 539 616 703 857 948 1045 ~794     19   596     56.18 sec  T/O =  2  PRV =  0
+SBY 18:18:48 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 350 376 565 539 616 706 870 961 1079 ~794     12   597     56.41 sec  T/O =  2  PRV =  0
+SBY 18:18:48 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 350 376 565 539 618 714 882 981 1094 ~794     24   597     56.63 sec  T/O =  2  PRV =  0
+SBY 18:18:49 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 24 113 84 201 234 350 376 565 539 618 715 886 996 1134 ~794      9   597     56.86 sec  T/O =  2  PRV =  0
+SBY 18:18:49 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 715 899 1033 1220 ~794       11   610     57.44 sec  T/O =  2  PRV =  0
+SBY 18:18:49 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 715 909 1056 1254 ~794        4   611     57.69 sec  T/O =  2  PRV =  0
+SBY 18:18:50 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 715 918 1077 1289 ~794        8   617     57.96 sec  T/O =  2  PRV =  0
+SBY 18:18:50 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 717 930 1096 1322 ~794        5   621     58.22 sec  T/O =  2  PRV =  0
+SBY 18:18:50 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 717 941 1121 1354 ~794        6   623     58.50 sec  T/O =  2  PRV =  0
+SBY 18:18:51 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 717 950 1144 1388 ~794        3   627     58.77 sec  T/O =  2  PRV =  0
+SBY 18:18:51 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 717 959 1163 1425 ~794        3   629     59.05 sec  T/O =  2  PRV =  0
+SBY 18:18:51 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 618 717 967 1183 1460 ~794        4   631     59.34 sec  T/O =  2  PRV =  0
+SBY 18:18:51 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 619 720 978 1205 1491 ~794        5   633     59.62 sec  T/O =  2  PRV =  0
+SBY 18:18:52 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 619 720 987 1223 1528 ~794        5   636     59.87 sec  T/O =  2  PRV =  0
+SBY 18:18:52 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 619 720 994 1245 1564 ~794        4   637     60.19 sec  T/O =  2  PRV =  0
+SBY 18:18:52 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 619 720 1002 1262 1601 ~794       4   637     60.51 sec  T/O =  2  PRV =  0
+SBY 18:18:53 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 621 723 1017 1277 1633 ~794       5   637     60.81 sec  T/O =  2  PRV =  0
+SBY 18:18:53 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 626 730 1045 1323 1709 ~794       5   643     61.53 sec  T/O =  2  PRV =  0
+SBY 18:18:53 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 626 732 1056 1338 1730 ~794       5   643     61.75 sec  T/O =  2  PRV =  0
+SBY 18:18:53 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 15 (retrying in next anytime pass).
+SBY 18:18:53 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 113 84 201 234 350 376 565 539 626 732 1056 1338 1730 ~794       0   643     61.75 sec  T/O =  3  PRV =  0
+SBY 18:19:00 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 84 199 216 333 360 538 502 556 640 721 1033 1217 715 ~860        1   643     67.95 sec  T/O =  3  PRV =  0
+SBY 18:19:05 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 538 502 554 636 720 1032 1201 472 245 ~860      37   643     73.32 sec  T/O =  3  PRV =  0
+SBY 18:19:05 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 538 502 555 640 728 1044 1223 486 249 ~860      46   646     73.62 sec  T/O =  3  PRV =  0
+SBY 18:19:06 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 539 503 557 643 736 1053 1244 500 252 ~860      63   646     73.94 sec  T/O =  3  PRV =  0
+SBY 18:19:06 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 539 506 562 653 747 1071 1262 504 252 ~860      70   646     74.31 sec  T/O =  3  PRV =  0
+SBY 18:19:06 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 540 508 565 656 751 1080 1281 531 254 ~860      80   646     74.67 sec  T/O =  3  PRV =  0
+SBY 18:19:07 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 540 509 566 658 757 1099 1304 543 256 ~860     108   646     75.05 sec  T/O =  3  PRV =  0
+SBY 18:19:07 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 540 509 567 661 764 1114 1320 561 260 ~860     122   646     75.34 sec  T/O =  3  PRV =  0
+SBY 18:19:07 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 540 510 568 662 770 1129 1341 579 260 ~860     141   646     75.69 sec  T/O =  3  PRV =  0
+SBY 18:19:08 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 779 1145 1367 592 260 ~860     153   646     76.03 sec  T/O =  3  PRV =  0
+SBY 18:19:08 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 779 1147 1376 620 280 ~860     150   646     76.26 sec  T/O =  3  PRV =  0
+SBY 18:19:08 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 779 1148 1388 641 309 ~860     136   655     76.54 sec  T/O =  3  PRV =  0
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 781 1154 1403 658 329 ~860     145   672     76.84 sec  T/O =  3  PRV =  0
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 781 1156 1417 679 356 ~860     137   673     77.15 sec  T/O =  3  PRV =  0
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 781 1158 1429 702 389 ~860     138   673     77.41 sec  T/O =  3  PRV =  0
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 781 1158 1430 708 396 ~860     130   673     77.45 sec  T/O =  3  PRV =  0
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 17 (retrying in next anytime pass).
+SBY 18:19:09 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 199 216 333 359 541 511 571 665 781 1158 1430 708 396 ~860       0   673     77.45 sec  T/O =  4  PRV =  0
+SBY 18:19:15 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 216 332 351 532 507 569 655 741 1084 1317 749 257 216 ~861       0   673     83.36 sec  T/O =  4  PRV =  0
+SBY 18:19:25 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 18.
+SBY 18:19:25 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:19:25 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:19:25 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 7988 ~861                                                          0     0     10.18 sec  T/O =  0  PRV =  0
+SBY 18:19:26 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 45 7943 ~861                                                       0     0     10.39 sec  T/O =  0  PRV =  0
+SBY 18:19:26 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 45 24 7919 ~861                                                    0     0     10.61 sec  T/O =  0  PRV =  0
+SBY 18:19:26 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 45 24 113 7806 ~861                                                0     0     10.85 sec  T/O =  0  PRV =  0
+SBY 18:19:26 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 45 24 113 84 7722 ~861                                             0     0     11.12 sec  T/O =  0  PRV =  0
+SBY 18:19:27 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 45 24 113 84 199 7523 ~861                                         0     0     11.45 sec  T/O =  0  PRV =  0
+SBY 18:19:27 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 45 24 113 84 199 216 7307 ~861                                     0     0     12.20 sec  T/O =  0  PRV =  0
+SBY 18:19:29 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 45 24 113 84 199 216 332 6975 ~861                                 0     0     13.27 sec  T/O =  0  PRV =  0
+SBY 18:19:31 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 45 24 113 84 199 216 332 351 6624 ~861                             0     0     15.50 sec  T/O =  0  PRV =  0
+SBY 18:19:34 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 45 24 113 84 199 216 335 364 551 6118 ~861                         7    53     18.79 sec  T/O =  0  PRV =  0
+SBY 18:19:34 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 45 24 113 84 201 221 344 379 560 6134 ~861                        10    73     19.05 sec  T/O =  0  PRV =  0
+SBY 18:19:35 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 45 24 116 86 207 226 350 388 569 6150 ~861                        15    93     19.30 sec  T/O =  0  PRV =  0
+SBY 18:19:35 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 27 121 91 212 230 354 401 593 6174 ~861                        14   125     19.69 sec  T/O =  0  PRV =  0
+SBY 18:19:35 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 125 95 219 237 363 412 606 6183 ~861                        16   137     19.97 sec  T/O =  0  PRV =  0
+SBY 18:19:35 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 125 95 221 243 373 422 620 6193 ~861                        16   151     20.27 sec  T/O =  0  PRV =  0
+SBY 18:19:36 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 162 98 227 243 373 424 622 6195 ~861                        60   188     20.46 sec  T/O =  0  PRV =  0
+SBY 18:19:36 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 191 120 248 243 373 424 622 6195 ~861                       88   217     20.65 sec  T/O =  0  PRV =  0
+SBY 18:19:36 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 209 139 294 243 373 424 622 6195 ~861                      105   236     20.87 sec  T/O =  0  PRV =  0
+SBY 18:19:36 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 212 141 312 246 373 424 622 6195 ~861                      110   242     20.95 sec  T/O =  0  PRV =  0
+SBY 18:19:36 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 212 141 315 254 388 432 628 6203 ~861                       31   245     21.12 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 212 141 325 269 406 432 628 6223 ~861                       50   245     21.29 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 212 141 330 280 423 436 629 6243 ~861                       72   247     21.47 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 29 212 141 334 287 435 437 630 6275 ~861                       80   269     21.63 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 46 31 216 145 338 289 435 439 631 6276 ~861                       32   272     21.72 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 49 37 223 150 341 292 438 444 637 6281 ~861                       32   281     21.86 sec  T/O =  0  PRV =  0
+SBY 18:19:37 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 39 226 151 344 297 444 455 647 6290 ~861                       13   289     22.06 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 228 152 348 305 457 463 657 6299 ~861                       20   292     22.28 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 233 157 362 324 473 463 657 6303 ~861                       48   297     22.51 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 239 162 372 335 500 471 659 6303 ~861                       76   300     22.75 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 261 175 386 337 506 476 659 6303 ~861                      114   300     22.93 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 268 184 396 360 508 477 659 6303 ~861                      130   302     23.07 sec  T/O =  0  PRV =  0
+SBY 18:19:38 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 268 184 396 360 508 477 666 6308 ~861                       83   303     23.13 sec  T/O =  0  PRV =  0
+SBY 18:19:39 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 268 184 396 361 515 490 686 6322 ~861                        9   314     23.43 sec  T/O =  0  PRV =  0
+SBY 18:19:39 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 50 40 270 186 400 367 528 507 707 6347 ~861                       12   323     23.84 sec  T/O =  0  PRV =  0
+SBY 18:19:39 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 51 43 274 189 403 371 540 518 717 6351 ~861                       15   327     24.07 sec  T/O =  0  PRV =  0
+SBY 18:19:40 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 51 43 274 189 403 373 549 534 733 6365 ~861                       11   330     24.32 sec  T/O =  0  PRV =  0
+SBY 18:19:40 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 53 47 278 193 408 379 559 539 740 6371 ~861                       15   334     24.51 sec  T/O =  0  PRV =  0
+SBY 18:19:40 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 56 54 286 200 415 386 566 541 742 6371 ~861                       24   342     24.64 sec  T/O =  0  PRV =  0
+SBY 18:19:40 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 57 56 288 202 418 391 574 550 768 6393 ~861                       14   348     24.97 sec  T/O =  0  PRV =  0
+SBY 18:19:41 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 60 63 298 208 425 399 584 558 789 6408 ~861                       18   362     25.33 sec  T/O =  0  PRV =  0
+SBY 18:19:41 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 64 71 306 217 434 409 599 568 806 6440 ~861                       17   394     25.82 sec  T/O =  0  PRV =  0
+SBY 18:19:42 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 71 83 322 230 448 425 624 596 867 6528 ~861                       21   483     27.10 sec  T/O =  0  PRV =  0
+SBY 18:19:42 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 71 83 322 230 448 425 624 596 872 6545 ~861                       16   492     27.20 sec  T/O =  0  PRV =  0
+SBY 18:19:53 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 129 53 144 208 345 407 741 730 5998 ~962                    11   505     37.61 sec  T/O =  0  PRV =  0
+SBY 18:19:53 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 130 54 145 210 350 414 751 739 6020 ~962                    11   512     37.82 sec  T/O =  0  PRV =  0
+SBY 18:19:53 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 133 57 148 212 355 418 764 748 6035 ~962                    11   518     38.05 sec  T/O =  0  PRV =  0
+SBY 18:19:54 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 135 59 150 215 361 421 773 762 6052 ~962                    11   522     38.29 sec  T/O =  0  PRV =  0
+SBY 18:19:54 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 137 61 153 219 369 428 785 769 6067 ~962                    11   526     38.50 sec  T/O =  0  PRV =  0
+SBY 18:19:54 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 32 140 64 156 222 377 436 796 774 6081 ~962                    11   532     38.72 sec  T/O =  0  PRV =  0
+SBY 18:19:54 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 53 33 141 67 158 225 383 442 811 785 6096 ~962                    11   535     38.94 sec  T/O =  0  PRV =  0
+SBY 18:19:54 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 54 34 144 69 160 229 389 449 825 794 6109 ~962                    11   539     39.21 sec  T/O =  0  PRV =  0
+SBY 18:19:55 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 55 37 148 72 163 231 393 453 831 802 6129 ~962                    13   618     39.50 sec  T/O =  0  PRV =  0
+SBY 18:19:55 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 55 39 152 74 165 233 399 459 844 812 6143 ~962                    11   622     39.70 sec  T/O =  0  PRV =  0
+SBY 18:19:55 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 55 40 155 76 166 238 403 464 855 821 6156 ~962                    17   630     39.90 sec  T/O =  0  PRV =  0
+SBY 18:19:55 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 57 44 162 82 172 241 405 468 861 828 6161 ~962                    15   637     40.07 sec  T/O =  0  PRV =  0
+SBY 18:19:55 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 57 47 168 85 175 244 408 472 869 835 6172 ~962                    11   643     40.23 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 58 49 172 87 177 246 411 480 881 843 6184 ~962                    11   647     40.42 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 58 52 178 90 179 248 413 486 894 850 6196 ~962                    11   653     40.58 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 58 54 182 92 182 251 416 495 909 856 6208 ~962                    11   657     40.74 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 57 186 95 187 259 423 508 917 859 6213 ~962                    15   663     40.95 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 57 186 95 187 259 423 508 921 865 6222 ~962                    13   663     41.02 sec  T/O =  0  PRV =  0
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 11 (retrying in next anytime pass).
+SBY 18:19:56 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 57 186 95 187 259 423 508 921 865 6222 ~962                     0   663     41.02 sec  T/O =  1  PRV =  0
+SBY 18:20:06 [ddr4_controller_top.cmd_ready] engine_0: 12 : 0 56 32 144 53 144 213 370 387 867 786 927 5193 ~1051                0   663     50.82 sec  T/O =  1  PRV =  0
+SBY 18:20:11 [ddr4_controller_top.cmd_ready] engine_0: 13 : 0 56 32 144 49 144 207 367 386 844 775 926 781 4384 ~1051            0   663     55.36 sec  T/O =  1  PRV =  0
+SBY 18:20:15 [ddr4_controller_top.cmd_ready] engine_0: 14 : ... 56 32 144 49 144 207 367 386 844 775 925 781 669 3658 ~1051      0   663     59.88 sec  T/O =  1  PRV =  0
+SBY 18:20:21 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 926 784 690 1028 2781 ~1051       6   728     65.94 sec  T/O =  1  PRV =  0
+SBY 18:20:22 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 927 788 715 1078 2857 ~1051       5   761     66.57 sec  T/O =  1  PRV =  0
+SBY 18:20:22 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 927 789 726 1101 2888 ~1051       5   765     66.84 sec  T/O =  1  PRV =  0
+SBY 18:20:24 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 929 794 781 1218 3107 ~1051       5   797     68.42 sec  T/O =  1  PRV =  0
+SBY 18:20:24 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 929 794 791 1234 3144 ~1051       3   803     68.67 sec  T/O =  1  PRV =  0
+SBY 18:20:25 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 144 49 144 207 367 386 844 775 929 794 805 1262 3395 ~1051       3   811     70.09 sec  T/O =  1  PRV =  0
+SBY 18:20:34 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 923 791 753 1206 1790 1598 ~1030      5   812     78.55 sec  T/O =  1  PRV =  0
+SBY 18:20:34 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 923 794 761 1216 1814 1623 ~1030      7   812     78.83 sec  T/O =  1  PRV =  0
+SBY 18:20:34 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 923 794 767 1232 1855 1674 ~1030      8   813     79.24 sec  T/O =  1  PRV =  0
+SBY 18:20:35 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 924 797 772 1255 1895 1757 ~1030     12   815     79.89 sec  T/O =  1  PRV =  0
+SBY 18:20:37 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 924 797 774 1299 2010 2051 ~1030      5   829     81.82 sec  T/O =  1  PRV =  0
+SBY 18:20:39 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 926 799 789 1344 2094 2268 ~1030     25   838     83.55 sec  T/O =  1  PRV =  0
+SBY 18:20:40 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 49 144 205 366 387 845 776 926 799 790 1356 2121 2546 ~1030      6   841     84.86 sec  T/O =  1  PRV =  0
+SBY 18:20:48 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 766 1078 1685 1618 1301 ~1046        4   846     92.99 sec  T/O =  1  PRV =  0
+SBY 18:20:49 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 766 1078 1695 1639 1335 ~1046        4   847     93.33 sec  T/O =  1  PRV =  0
+SBY 18:20:49 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 766 1078 1702 1650 1376 ~1046        4   847     93.57 sec  T/O =  1  PRV =  0
+SBY 18:20:49 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 766 1078 1709 1665 1414 ~1046        4   847     93.96 sec  T/O =  1  PRV =  0
+SBY 18:20:50 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1080 1716 1683 1449 ~1046        6   847     94.29 sec  T/O =  1  PRV =  0
+SBY 18:20:50 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1080 1724 1704 1484 ~1046        7   847     94.63 sec  T/O =  1  PRV =  0
+SBY 18:20:50 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1080 1730 1722 1521 ~1046        4   847     94.97 sec  T/O =  1  PRV =  0
+SBY 18:20:51 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1080 1739 1746 1555 ~1046        7   847     95.33 sec  T/O =  1  PRV =  0
+SBY 18:20:51 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1084 1753 1773 1577 ~1046       13   847     95.66 sec  T/O =  1  PRV =  0
+SBY 18:20:51 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1084 1758 1792 1614 ~1046       13   847     96.01 sec  T/O =  1  PRV =  0
+SBY 18:20:52 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1084 1760 1811 1654 ~1046        5   847     96.32 sec  T/O =  1  PRV =  0
+SBY 18:20:52 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1085 1765 1832 1689 ~1046        5   848     96.65 sec  T/O =  1  PRV =  0
+SBY 18:20:52 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1086 1774 1854 1722 ~1046        9   848     96.97 sec  T/O =  1  PRV =  0
+SBY 18:20:52 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1086 1783 1877 1757 ~1046        5   849     97.27 sec  T/O =  1  PRV =  0
+SBY 18:20:53 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1086 1789 1897 1794 ~1046        5   849     97.59 sec  T/O =  1  PRV =  0
+SBY 18:20:53 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1086 1801 1931 1843 ~1046        6   849     98.06 sec  T/O =  1  PRV =  0
+SBY 18:20:54 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1087 1809 1959 1875 ~1046        6   849     98.38 sec  T/O =  1  PRV =  0
+SBY 18:20:54 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 767 1087 1821 1982 1907 ~1046        6   849     98.70 sec  T/O =  1  PRV =  0
+SBY 18:20:54 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 768 1088 1829 2004 1940 ~1046        6   849     98.97 sec  T/O =  1  PRV =  0
+SBY 18:20:55 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 769 1090 1842 2029 1981 ~1046        7   850     99.33 sec  T/O =  1  PRV =  0
+SBY 18:20:55 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 770 1091 1858 2047 2010 ~1046        8   850     99.65 sec  T/O =  1  PRV =  0
+SBY 18:20:55 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 770 1091 1861 2054 2022 ~1046        8   850     99.77 sec  T/O =  1  PRV =  0
+SBY 18:20:56 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 770 1093 1881 2094 2162 ~1046        8   862    100.53 sec  T/O =  1  PRV =  0
+SBY 18:20:56 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1095 1895 2111 2193 ~1046        7   870    100.77 sec  T/O =  1  PRV =  0
+SBY 18:20:57 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1096 1932 2148 2277 ~1046        7   870    101.29 sec  T/O =  1  PRV =  0
+SBY 18:20:57 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1096 1948 2163 2313 ~1046        7   870    101.52 sec  T/O =  1  PRV =  0
+SBY 18:20:57 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1099 1974 2180 2331 ~1046       18   870    101.72 sec  T/O =  1  PRV =  0
+SBY 18:20:57 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1099 1992 2195 2359 ~1046       27   870    101.87 sec  T/O =  1  PRV =  0
+SBY 18:20:57 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 844 767 864 732 771 1100 2008 2207 2394 ~1046        6   870    102.07 sec  T/O =  1  PRV =  0
+SBY 18:20:58 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 845 769 868 738 785 1116 2037 2219 2426 ~1046       26   872    102.65 sec  T/O =  1  PRV =  0
+SBY 18:20:58 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 845 769 869 742 793 1135 2057 2227 2426 ~1046       47   872    103.02 sec  T/O =  1  PRV =  0
+SBY 18:20:58 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 845 769 869 742 793 1135 2059 2233 2456 ~1046       24   872    103.25 sec  T/O =  1  PRV =  0
+SBY 18:20:58 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 17 (retrying in next anytime pass).
+SBY 18:20:58 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 205 366 386 845 769 869 742 793 1135 2059 2233 2456 ~1046        0   872    103.25 sec  T/O =  2  PRV =  0
+SBY 18:21:07 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 864 740 662 791 1239 1354 1293 1084 ~1143       21   872    112.06 sec  T/O =  2  PRV =  0
+SBY 18:21:08 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 866 741 665 796 1251 1365 1309 1097 ~1143       25   872    112.48 sec  T/O =  2  PRV =  0
+SBY 18:21:08 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 866 741 665 796 1252 1375 1330 1135 ~1143       17   872    112.87 sec  T/O =  2  PRV =  0
+SBY 18:21:08 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 866 741 670 804 1262 1384 1348 1146 ~1143       18   873    113.19 sec  T/O =  2  PRV =  0
+SBY 18:21:09 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 866 741 670 804 1266 1398 1397 1219 ~1143        9   874    113.85 sec  T/O =  2  PRV =  0
+SBY 18:21:09 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 842 764 866 741 670 804 1266 1409 1421 1243 ~1143       10   874    114.15 sec  T/O =  2  PRV =  0
+SBY 18:21:10 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 843 765 870 745 679 820 1286 1426 1442 1390 ~1143       27   881    115.03 sec  T/O =  2  PRV =  0
+SBY 18:21:11 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 843 765 870 745 687 837 1307 1440 1451 1390 ~1143       44   881    115.31 sec  T/O =  2  PRV =  0
+SBY 18:21:11 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 843 765 870 745 699 860 1334 1443 1453 1390 ~1143       75   882    115.73 sec  T/O =  2  PRV =  0
+SBY 18:21:11 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 843 765 870 745 712 882 1367 1444 1453 1390 ~1143      106   886    116.10 sec  T/O =  2  PRV =  0
+SBY 18:21:12 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 872 750 723 902 1393 1445 1453 1390 ~1143      137   886    116.49 sec  T/O =  2  PRV =  0
+SBY 18:21:12 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 872 752 725 912 1417 1464 1456 1390 ~1143      151   886    116.86 sec  T/O =  2  PRV =  0
+SBY 18:21:12 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 872 752 726 916 1429 1493 1458 1391 ~1143      152   886    117.16 sec  T/O =  2  PRV =  0
+SBY 18:21:13 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 872 752 731 927 1448 1521 1461 1391 ~1143      135   886    117.57 sec  T/O =  2  PRV =  0
+SBY 18:21:13 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 873 753 739 938 1473 1534 1463 1391 ~1143      155   886    117.92 sec  T/O =  2  PRV =  0
+SBY 18:21:14 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 757 753 954 1493 1539 1466 1392 ~1143      170   890    118.31 sec  T/O =  2  PRV =  0
+SBY 18:21:14 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 758 760 972 1525 1544 1468 1392 ~1143      200   890    118.65 sec  T/O =  2  PRV =  0
+SBY 18:21:14 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 758 762 973 1529 1557 1491 1396 ~1143      199   890    118.89 sec  T/O =  2  PRV =  0
+SBY 18:21:14 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 758 764 982 1529 1559 1493 1437 ~1143      178   890    119.13 sec  T/O =  2  PRV =  0
+SBY 18:21:15 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 767 987 1536 1564 1495 1467 ~1143      185   890    119.34 sec  T/O =  2  PRV =  0
+SBY 18:21:15 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 774 1001 1554 1573 1502 1476 ~1143     200   891    119.62 sec  T/O =  2  PRV =  0
+SBY 18:21:15 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 776 1011 1578 1607 1504 1476 ~1143     222   891    120.04 sec  T/O =  2  PRV =  0
+SBY 18:21:16 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 777 1015 1593 1626 1526 1479 ~1143     249   891    120.50 sec  T/O =  2  PRV =  0
+SBY 18:21:16 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 778 1018 1601 1642 1563 1483 ~1143     264   892    121.00 sec  T/O =  2  PRV =  0
+SBY 18:21:17 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 766 875 760 779 1020 1611 1659 1599 1485 ~1143     288   893    121.60 sec  T/O =  2  PRV =  0
+SBY 18:21:17 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 844 767 878 763 788 1037 1629 1664 1607 1487 ~1143     306   894    121.96 sec  T/O =  2  PRV =  0
+SBY 18:21:18 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 769 883 771 803 1053 1646 1664 1607 1487 ~1143     330   894    122.30 sec  T/O =  2  PRV =  0
+SBY 18:21:18 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 771 887 776 817 1070 1668 1665 1607 1487 ~1143     345   894    122.68 sec  T/O =  2  PRV =  0
+SBY 18:21:18 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 824 1088 1696 1673 1608 1487 ~1143     373   894    123.02 sec  T/O =  2  PRV =  0
+SBY 18:21:19 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 825 1091 1700 1707 1619 1487 ~1143     373   894    123.33 sec  T/O =  2  PRV =  0
+SBY 18:21:19 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 825 1091 1710 1728 1656 1490 ~1143     364   895    123.88 sec  T/O =  2  PRV =  0
+SBY 18:21:20 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 825 1091 1721 1747 1696 1490 ~1143     388   895    124.41 sec  T/O =  2  PRV =  0
+SBY 18:21:20 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 827 1094 1735 1769 1724 1490 ~1143     415   895    124.93 sec  T/O =  2  PRV =  0
+SBY 18:21:21 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 827 1097 1750 1788 1751 1492 ~1143     445   895    125.41 sec  T/O =  2  PRV =  0
+SBY 18:21:21 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 827 1097 1761 1814 1782 1493 ~1143     467   895    125.91 sec  T/O =  2  PRV =  0
+SBY 18:21:22 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 833 1119 1782 1815 1787 1502 ~1143     488   895    126.33 sec  T/O =  2  PRV =  0
+SBY 18:21:22 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 778 835 1125 1796 1831 1804 1504 ~1143     497   895    126.65 sec  T/O =  2  PRV =  0
+SBY 18:21:22 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 779 840 1130 1808 1851 1826 1506 ~1143     506   895    127.09 sec  T/O =  2  PRV =  0
+SBY 18:21:23 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 779 840 1130 1817 1876 1854 1508 ~1143     533   895    127.51 sec  T/O =  2  PRV =  0
+SBY 18:21:23 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 18 (retrying in next anytime pass).
+SBY 18:21:23 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 362 379 845 772 888 779 840 1130 1817 1876 1854 1508 ~1143       0   895    127.51 sec  T/O =  3  PRV =  0
+SBY 18:21:32 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 379 846 767 857 710 715 934 1455 1537 1499 909 1025 ~1195       14   898    137.14 sec  T/O =  3  PRV =  0
+SBY 18:21:32 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 19 (retrying in next anytime pass).
+SBY 18:21:32 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 379 846 767 857 710 715 934 1455 1537 1499 909 1025 ~1195        0   898    137.14 sec  T/O =  4  PRV =  0
+SBY 18:21:39 [ddr4_controller_top.cmd_ready] engine_0: 20 : ... 846 767 856 706 706 915 1408 1501 1418 889 580 473 ~1207         0   898    144.10 sec  T/O =  4  PRV =  0
+SBY 18:22:01 [ddr4_controller_top.cmd_ready] engine_0: All outputs solved or timed out in frame 20.
+SBY 18:22:01 [ddr4_controller_top.cmd_ready] engine_0: Starting new anytime pass, reusing clauses.
+SBY 18:22:01 [ddr4_controller_top.cmd_ready] engine_0: Frame Clauses                                                     Max Queue Flops Time
+SBY 18:22:01 [ddr4_controller_top.cmd_ready] engine_0: 1 : 0 11680 ~1205                                                        0     0     20.95 sec  T/O =  0  PRV =  0
+SBY 18:22:01 [ddr4_controller_top.cmd_ready] engine_0: 2 : 0 56 11624 ~1205                                                     0     0     21.40 sec  T/O =  0  PRV =  0
+SBY 18:22:02 [ddr4_controller_top.cmd_ready] engine_0: 3 : 0 56 28 11596 ~1205                                                  0     0     21.86 sec  T/O =  0  PRV =  0
+SBY 18:22:02 [ddr4_controller_top.cmd_ready] engine_0: 4 : 0 56 28 137 11459 ~1205                                              0     0     22.36 sec  T/O =  0  PRV =  0
+SBY 18:22:03 [ddr4_controller_top.cmd_ready] engine_0: 5 : 0 56 28 137 43 11416 ~1205                                           0     0     22.88 sec  T/O =  0  PRV =  0
+SBY 18:22:03 [ddr4_controller_top.cmd_ready] engine_0: 6 : 0 56 28 137 43 131 11285 ~1205                                       0     0     23.44 sec  T/O =  0  PRV =  0
+SBY 18:22:04 [ddr4_controller_top.cmd_ready] engine_0: 7 : 0 56 28 137 43 131 185 11100 ~1205                                   0     0     24.28 sec  T/O =  0  PRV =  0
+SBY 18:22:05 [ddr4_controller_top.cmd_ready] engine_0: 8 : 0 56 28 137 43 131 185 328 10772 ~1205                               0     0     25.32 sec  T/O =  0  PRV =  0
+SBY 18:22:06 [ddr4_controller_top.cmd_ready] engine_0: 9 : 0 56 28 137 43 131 185 328 357 10415 ~1205                           0     0     26.64 sec  T/O =  0  PRV =  0
+SBY 18:22:09 [ddr4_controller_top.cmd_ready] engine_0: 10 : 0 56 28 137 43 131 185 328 357 786 9629 ~1205                        0     0     28.95 sec  T/O =  0  PRV =  0
+SBY 18:22:12 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 57 31 139 47 132 186 331 366 799 746 8901 ~1205                   12    47     32.75 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 58 35 153 57 141 194 332 367 801 746 8901 ~1205                   25    61     32.92 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 58 36 154 58 142 197 338 374 815 755 8911 ~1205                   14    83     33.16 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 38 157 60 144 201 341 377 822 762 8924 ~1205                   11    93     33.34 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 40 161 62 146 203 343 381 830 773 8936 ~1205                   11    99     33.51 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 59 43 167 65 149 206 346 384 836 776 8944 ~1205                   11   106     33.65 sec  T/O =  0  PRV =  0
+SBY 18:22:13 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 61 46 173 68 152 209 349 386 842 782 8953 ~1205                   11   115     33.80 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 61 49 176 70 155 213 353 391 851 785 8959 ~1205                   13   121     33.94 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 62 51 182 73 158 216 356 394 859 789 8967 ~1205                   11   131     34.09 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 64 56 191 79 164 221 359 397 863 791 8971 ~1205                   13   140     34.22 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 67 61 199 83 168 223 361 399 869 794 8977 ~1205                   13   150     34.37 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 68 64 205 87 172 226 364 402 875 797 8983 ~1205                   13   157     34.49 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 69 67 211 90 175 230 368 406 881 800 8989 ~1205                   11   164     34.63 sec  T/O =  0  PRV =  0
+SBY 18:22:14 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 70 70 217 93 178 233 371 409 889 804 8996 ~1205                   11   171     34.75 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 70 73 223 96 181 236 374 412 895 807 9003 ~1205                   11   177     34.89 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 71 77 229 99 184 239 377 415 901 810 9009 ~1205                   11   185     35.02 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 72 79 235 102 187 242 380 421 910 814 9015 ~1205                  11   191     35.14 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 72 82 241 105 190 245 383 424 918 818 9023 ~1205                  11   197     35.27 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 72 85 247 108 193 248 386 427 924 821 9030 ~1205                  11   203     35.38 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 74 88 253 111 196 251 389 430 930 824 9036 ~1205                  11   210     35.50 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 74 92 261 115 200 254 392 433 936 827 9042 ~1205                  11   218     35.61 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 75 95 267 118 203 258 396 437 942 830 9048 ~1205                  11   224     35.72 sec  T/O =  0  PRV =  0
+SBY 18:22:15 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 75 97 271 120 205 260 399 441 954 835 9056 ~1205                  11   228     35.84 sec  T/O =  0  PRV =  0
+SBY 18:22:16 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 76 100 277 123 208 263 402 444 960 838 9062 ~1205                 11   235     35.98 sec  T/O =  0  PRV =  0
+SBY 18:22:16 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 80 106 286 129 214 269 408 451 975 844 9075 ~1205                 13   256     36.24 sec  T/O =  0  PRV =  0
+SBY 18:22:16 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 81 109 291 131 218 275 413 455 981 850 9084 ~1205                 13   269     36.41 sec  T/O =  0  PRV =  0
+SBY 18:22:16 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 82 111 295 133 220 277 415 458 989 859 9099 ~1205                 11   286     36.61 sec  T/O =  0  PRV =  0
+SBY 18:22:16 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 83 113 299 135 223 281 420 463 1000 865 9107 ~1205                11   291     36.76 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 84 116 305 138 226 284 423 467 1006 868 9113 ~1205                11   298     36.90 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 85 119 311 141 229 287 426 470 1014 872 9119 ~1205                11   305     37.04 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 85 122 317 144 232 290 429 473 1020 875 9127 ~1205                11   311     37.18 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 87 125 324 148 235 293 434 477 1026 878 9135 ~1205                11   325     37.34 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 88 128 330 151 238 296 437 480 1032 881 9141 ~1205                11   332     37.47 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 89 132 338 155 242 299 440 483 1038 884 9147 ~1205                11   341     37.59 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 90 135 344 158 245 303 444 487 1044 887 9153 ~1205                11   348     37.72 sec  T/O =  0  PRV =  0
+SBY 18:22:17 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 91 138 350 161 248 306 447 490 1052 891 9159 ~1205                11   355     37.83 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 91 141 356 164 251 309 450 493 1058 894 9167 ~1205                11   361     37.95 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 92 144 362 167 254 312 453 496 1064 897 9173 ~1205                11   368     38.06 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 93 148 370 171 258 315 456 499 1070 900 9179 ~1205                11   377     38.18 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 94 151 376 174 261 319 460 503 1076 903 9185 ~1205                11   384     38.29 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 96 156 382 178 265 321 462 505 1082 906 9191 ~1205                13   392     38.42 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 97 160 391 184 270 324 467 509 1088 909 9197 ~1205                13   399     38.56 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 98 163 396 187 273 327 472 513 1096 913 9205 ~1205                11   406     38.70 sec  T/O =  0  PRV =  0
+SBY 18:22:18 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 99 166 402 190 276 330 475 516 1102 916 9213 ~1205                11   414     38.82 sec  T/O =  0  PRV =  0
+SBY 18:22:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 99 169 408 193 278 332 478 520 1112 920 9219 ~1205                11   420     38.94 sec  T/O =  0  PRV =  0
+SBY 18:22:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 100 173 414 197 283 335 481 523 1118 923 9225 ~1205               11   426     39.06 sec  T/O =  0  PRV =  0
+SBY 18:22:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 102 178 425 203 288 340 488 529 1129 928 9238 ~1205               13   439     39.31 sec  T/O =  0  PRV =  0
+SBY 18:22:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 104 180 428 205 290 344 493 535 1138 933 9245 ~1205               13   452     39.49 sec  T/O =  0  PRV =  0
+SBY 18:22:19 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 106 183 433 208 294 349 499 539 1145 939 9252 ~1205               13   459     39.67 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 106 186 437 210 296 351 501 543 1154 944 9264 ~1205               13   464     39.85 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 106 188 441 213 301 357 510 549 1162 948 9270 ~1205               13   471     40.04 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 107 190 445 215 303 360 519 555 1177 956 9281 ~1205               11   477     40.24 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 108 193 451 218 306 363 527 559 1187 960 9292 ~1205               11   484     40.42 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 108 195 455 220 308 365 534 565 1204 968 9304 ~1205               11   488     40.60 sec  T/O =  0  PRV =  0
+SBY 18:22:20 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 108 198 461 223 311 368 543 572 1211 970 9310 ~1205               11   494     40.74 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 108 199 463 224 312 369 544 579 1225 976 9318 ~1205               11   496     40.88 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 109 203 469 227 315 372 547 582 1231 979 9324 ~1205               11   504     41.01 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 110 206 477 231 319 375 550 585 1237 982 9330 ~1205               11   512     41.14 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 111 209 483 234 322 379 554 589 1243 985 9336 ~1205               11   519     41.26 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 111 212 489 237 325 382 557 592 1251 989 9343 ~1205               11   525     41.39 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 112 215 495 240 328 385 560 595 1257 992 9350 ~1205               11   532     41.53 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 113 219 501 243 331 388 563 598 1263 995 9356 ~1205               11   540     41.65 sec  T/O =  0  PRV =  0
+SBY 18:22:21 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 114 222 509 247 335 391 566 601 1269 998 9362 ~1205               11   548     41.77 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 116 226 515 251 339 394 569 604 1275 1001 9368 ~1205              13   555     41.90 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 117 230 522 254 342 397 572 607 1281 1004 9374 ~1205              11   564     42.02 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 118 234 530 260 347 401 575 610 1287 1007 9379 ~1205              13   570     42.15 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 237 536 263 350 404 578 613 1293 1010 9386 ~1205              11   577     42.29 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 241 543 266 353 407 581 616 1299 1013 9392 ~1205              11   585     42.43 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 243 548 269 356 410 584 622 1309 1019 9400 ~1205              11   589     42.59 sec  T/O =  0  PRV =  0
+SBY 18:22:22 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 245 551 271 359 414 589 629 1322 1025 9412 ~1205              13   598     42.83 sec  T/O =  0  PRV =  0
+SBY 18:22:23 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 248 556 274 361 416 591 632 1328 1031 9426 ~1205              13   607     43.01 sec  T/O =  0  PRV =  0
+SBY 18:22:23 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 249 557 275 365 422 599 637 1337 1038 9438 ~1205              12   609     43.23 sec  T/O =  0  PRV =  0
+SBY 18:22:23 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 119 252 563 278 368 425 605 643 1349 1044 9448 ~1205              11   615     43.41 sec  T/O =  0  PRV =  0
+SBY 18:22:23 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 120 255 569 281 371 428 613 648 1359 1050 9457 ~1205              11   622     43.59 sec  T/O =  0  PRV =  0
+SBY 18:22:23 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 121 257 572 283 374 432 619 657 1373 1055 9466 ~1205              13   628     43.77 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 121 259 577 286 376 435 623 663 1382 1062 9474 ~1205              11   632     43.96 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 122 261 581 288 378 437 629 668 1392 1066 9480 ~1205              11   637     44.13 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 122 264 586 291 381 440 635 673 1403 1072 9490 ~1205              13   643     44.33 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 123 267 592 294 384 443 642 679 1412 1076 9498 ~1205              11   650     44.50 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 124 270 598 297 387 446 648 684 1418 1079 9504 ~1205              11   657     44.64 sec  T/O =  0  PRV =  0
+SBY 18:22:24 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 124 273 604 300 390 449 651 687 1424 1082 9510 ~1205              11   663     44.76 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 125 277 612 304 394 452 654 690 1430 1085 9516 ~1205              11   672     44.88 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 126 280 618 307 397 456 658 694 1436 1088 9522 ~1205              11   679     45.01 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 127 283 624 310 400 459 661 697 1444 1092 9528 ~1205              11   686     45.14 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 128 286 630 313 403 462 664 700 1450 1095 9536 ~1205              11   693     45.27 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 128 289 636 316 406 465 667 703 1456 1098 9542 ~1205              11   699     45.42 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 130 293 644 320 409 468 670 706 1462 1101 9548 ~1205              11   709     45.55 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 131 296 650 323 413 472 674 709 1468 1104 9554 ~1205              11   716     45.67 sec  T/O =  0  PRV =  0
+SBY 18:22:25 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 131 299 656 326 416 475 677 713 1476 1108 9560 ~1205              11   722     45.80 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 132 302 662 329 419 478 681 716 1483 1111 9568 ~1205              11   729     45.93 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 133 305 668 332 422 481 684 720 1491 1114 9574 ~1205              11   736     46.06 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 135 308 674 335 425 484 687 723 1497 1118 9582 ~1205              11   744     46.18 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 135 311 679 338 429 488 691 727 1505 1121 9587 ~1205              13   753     46.34 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 135 313 682 340 433 492 694 730 1511 1127 9600 ~1205              13   757     46.51 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 136 316 687 343 437 496 700 734 1517 1131 9606 ~1205              11   764     46.67 sec  T/O =  0  PRV =  0
+SBY 18:22:26 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 136 319 693 346 440 499 703 738 1525 1135 9612 ~1205              11   770     46.81 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 137 322 699 349 443 502 706 741 1531 1138 9620 ~1205              11   777     46.96 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 138 325 706 353 446 506 709 744 1537 1141 9626 ~1205              11   784     47.12 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 139 329 713 356 449 509 712 747 1543 1144 9632 ~1205              11   793     47.26 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 139 332 720 360 453 513 715 750 1549 1147 9638 ~1205              11   799     47.40 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 140 335 726 363 456 516 719 754 1556 1150 9644 ~1205              11   806     47.53 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 141 338 732 366 459 519 722 757 1563 1154 9652 ~1205              11   813     47.65 sec  T/O =  0  PRV =  0
+SBY 18:22:27 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 142 341 738 369 462 522 725 760 1569 1157 9658 ~1205              11   820     47.78 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 143 345 745 372 465 525 728 763 1575 1160 9664 ~1205              11   829     47.91 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 143 348 752 376 469 529 731 766 1581 1163 9670 ~1205              11   835     48.04 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 144 351 758 379 472 532 735 770 1588 1166 9676 ~1205              11   842     48.17 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 144 352 760 380 473 533 739 776 1601 1171 9684 ~1205              11   844     48.32 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 145 356 768 384 477 536 742 779 1607 1174 9690 ~1205              11   853     48.45 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 145 359 774 387 480 540 746 783 1613 1177 9696 ~1205              11   859     48.58 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 146 362 780 390 483 543 749 786 1621 1181 9703 ~1205              11   866     48.71 sec  T/O =  0  PRV =  0
+SBY 18:22:28 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 147 365 786 393 486 546 752 789 1627 1184 9710 ~1205              11   873     48.85 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 148 368 792 396 488 548 756 795 1635 1187 9716 ~1205              11   880     49.00 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 150 371 798 399 492 552 759 798 1641 1190 9722 ~1205              11   888     49.13 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 154 378 806 406 499 557 765 802 1647 1196 9735 ~1205              11   899     49.34 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 156 382 810 410 503 563 771 805 1650 1202 9747 ~1205              11   903     49.49 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 159 388 816 416 509 569 776 807 1652 1206 9755 ~1205              11   909     49.64 sec  T/O =  0  PRV =  0
+SBY 18:22:29 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 161 392 820 420 513 573 781 810 1655 1212 9767 ~1205              11   913     49.78 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 164 398 826 426 519 579 787 813 1657 1216 9776 ~1205              11   919     49.91 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 167 404 831 430 523 583 791 815 1660 1222 9787 ~1205              11   925     50.05 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 169 408 836 436 529 589 797 818 1663 1228 9797 ~1205              11   929     50.20 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 172 414 842 442 533 593 801 820 1665 1232 9807 ~1205              11   935     50.33 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 174 418 846 446 539 599 807 823 1668 1239 9819 ~1205              11   939     50.47 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 177 424 852 452 545 603 811 825 1670 1243 9828 ~1205              11   945     50.60 sec  T/O =  0  PRV =  0
+SBY 18:22:30 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 179 428 856 456 549 609 817 828 1673 1249 9840 ~1205              11   949     50.73 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 182 434 862 462 555 615 822 830 1675 1253 9848 ~1205              11   955     50.86 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 184 438 866 466 559 619 827 833 1678 1259 9860 ~1205              11   959     50.99 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 187 444 872 472 565 625 833 836 1680 1263 9869 ~1205              11   965     51.13 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 190 450 877 476 569 629 837 838 1683 1269 9880 ~1205              11   971     51.27 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 192 454 882 482 575 635 843 841 1686 1275 9890 ~1205              11   975     51.40 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 195 460 888 488 579 639 847 843 1688 1279 9900 ~1205              11   981     51.54 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 197 464 892 492 585 645 853 846 1691 1285 9912 ~1205              11   985     51.68 sec  T/O =  0  PRV =  0
+SBY 18:22:31 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 200 470 898 498 591 651 857 848 1693 1289 9920 ~1205              11   991     51.81 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 202 474 902 502 595 655 863 852 1697 1295 9930 ~1205              11   995     51.94 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 205 480 908 508 601 661 869 854 1699 1299 9939 ~1205              11  1001     52.06 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 208 485 912 512 605 665 873 857 1702 1305 9950 ~1205              11  1006     52.20 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 210 490 918 518 611 671 879 860 1705 1309 9960 ~1205              11  1011     52.34 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 213 496 924 523 615 675 883 862 1707 1315 9970 ~1205              11  1017     52.47 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 215 500 928 528 621 681 889 865 1710 1321 9982 ~1205              11  1021     52.60 sec  T/O =  0  PRV =  0
+SBY 18:22:32 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 215 503 933 531 624 684 895 871 1716 1325 9990 ~1205              11  1030     52.82 sec  T/O =  0  PRV =  0
+SBY 18:22:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 215 505 936 533 628 689 901 876 1727 1330 9997 ~1205              13  1034     53.03 sec  T/O =  0  PRV =  0
+SBY 18:22:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 216 507 938 535 633 695 909 884 1737 1334 10003 ~1205             14  1039     53.23 sec  T/O =  0  PRV =  0
+SBY 18:22:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 217 509 942 537 635 697 913 890 1749 1340 10012 ~1205             11  1044     53.41 sec  T/O =  0  PRV =  0
+SBY 18:22:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 218 512 948 540 638 700 919 898 1758 1342 10017 ~1205             11  1051     53.57 sec  T/O =  0  PRV =  0
+SBY 18:22:33 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 219 515 952 542 640 702 923 902 1770 1352 10030 ~1205             11  1057     53.77 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 219 516 956 544 642 704 927 908 1786 1364 10040 ~1205             11  1060     53.96 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 219 519 962 547 645 706 932 912 1796 1370 10054 ~1205             11  1066     54.18 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 221 521 966 549 647 709 937 917 1806 1377 10064 ~1205             11  1072     54.34 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 221 524 972 552 650 712 940 920 1812 1380 10071 ~1205             11  1078     54.48 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 222 528 979 555 653 715 943 923 1818 1383 10077 ~1205             11  1087     54.63 sec  T/O =  0  PRV =  0
+SBY 18:22:34 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 223 531 986 559 657 719 946 926 1824 1386 10083 ~1205             11  1094     54.77 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 224 534 992 562 660 722 950 930 1831 1389 10089 ~1205             11  1101     54.92 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 224 537 998 565 663 725 953 933 1838 1393 10097 ~1205             11  1107     55.05 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 225 540 1004 568 666 728 956 936 1844 1396 10103 ~1205            11  1114     55.19 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 226 543 1010 571 669 731 960 939 1852 1401 10110 ~1205            11  1121     55.33 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 227 546 1016 574 672 734 963 942 1858 1404 10117 ~1205            11  1128     55.48 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 228 550 1022 577 675 737 966 945 1864 1407 10123 ~1205            11  1136     55.62 sec  T/O =  0  PRV =  0
+SBY 18:22:35 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 228 553 1030 581 679 741 969 948 1870 1410 10129 ~1205            11  1143     55.76 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 229 556 1036 584 682 744 973 952 1877 1413 10135 ~1205            11  1150     55.89 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 230 559 1042 587 685 747 976 955 1884 1417 10142 ~1205            11  1157     56.01 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 231 562 1048 590 688 750 979 958 1890 1420 10149 ~1205            11  1164     56.14 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 234 570 1058 598 696 757 985 964 1898 1424 10158 ~1205            11  1175     56.41 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 236 574 1062 602 700 762 991 970 1904 1430 10164 ~1205            11  1179     56.60 sec  T/O =  0  PRV =  0
+SBY 18:22:36 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 239 580 1068 608 706 768 997 974 1908 1434 10168 ~1205            11  1185     56.81 sec  T/O =  0  PRV =  0
+SBY 18:22:37 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 242 584 1072 612 710 772 1001 980 1914 1440 10174 ~1205           11  1190     57.02 sec  T/O =  0  PRV =  0
+SBY 18:22:37 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 244 590 1078 618 716 778 1007 986 1920 1444 10178 ~1205           11  1195     57.22 sec  T/O =  0  PRV =  0
+SBY 18:22:37 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 247 596 1084 622 720 782 1011 990 1924 1450 10184 ~1205           11  1201     57.42 sec  T/O =  0  PRV =  0
+SBY 18:22:37 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 249 600 1088 628 726 788 1017 996 1930 1456 10189 ~1205           11  1205     57.62 sec  T/O =  0  PRV =  0
+SBY 18:22:37 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 252 606 1094 634 732 792 1021 1000 1934 1460 10194 ~1205          11  1211     57.82 sec  T/O =  0  PRV =  0
+SBY 18:22:38 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 254 610 1098 638 736 798 1027 1003 1937 1466 10206 ~1205          11  1215     58.02 sec  T/O =  0  PRV =  0
+SBY 18:22:38 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 255 612 1100 638 736 798 1027 1003 1937 1466 10206 ~1205          11  1217     58.05 sec  T/O =  0  PRV =  0
+SBY 18:22:38 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 1 in frame 11 (retrying in next anytime pass).
+SBY 18:22:38 [ddr4_controller_top.cmd_ready] engine_0: 11 : 0 255 612 1100 638 736 798 1027 1003 1937 1466 10206 ~1205           0  1217     58.05 sec  T/O =  1  PRV =  0
+SBY 18:22:56 [ddr4_controller_top.cmd_ready] engine_0: 12 : 0 157 29 505 49 162 246 399 751 1781 1324 1671 8593 ~1207            0  1217     76.13 sec  T/O =  1  PRV =  0
+SBY 18:23:02 [ddr4_controller_top.cmd_ready] engine_0: 13 : ... 29 505 49 162 246 399 742 1774 1324 1654 1172 7418 ~1207         0  1217     82.63 sec  T/O =  1  PRV =  0
+SBY 18:23:09 [ddr4_controller_top.cmd_ready] engine_0: 14 : ... 505 49 162 246 399 742 1774 1324 1654 1172 708 6685 ~1207        0  1217     89.09 sec  T/O =  1  PRV =  0
+SBY 18:23:16 [ddr4_controller_top.cmd_ready] engine_0: 15 : ... 49 162 246 399 742 1774 1324 1654 1172 708 847 5799 ~1207        0  1217     96.27 sec  T/O =  1  PRV =  0
+SBY 18:23:23 [ddr4_controller_top.cmd_ready] engine_0: 16 : ... 162 246 399 742 1774 1324 1654 1172 708 847 1288 4472 ~1207      0  1217    103.48 sec  T/O =  1  PRV =  0
+SBY 18:23:33 [ddr4_controller_top.cmd_ready] engine_0: 17 : ... 399 742 1775 1325 1657 1174 717 856 1318 1427 3211 ~1207        13  1336    112.89 sec  T/O =  1  PRV =  0
+SBY 18:23:44 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1775 1324 1656 1173 716 856 1327 1431 1397 1806 ~1217       25  1352    123.97 sec  T/O =  1  PRV =  0
+SBY 18:23:44 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1775 1325 1660 1181 730 876 1348 1434 1397 1806 ~1217       54  1367    124.36 sec  T/O =  1  PRV =  0
+SBY 18:23:44 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1775 1325 1660 1182 733 878 1357 1453 1427 1807 ~1217       55  1373    124.76 sec  T/O =  1  PRV =  0
+SBY 18:23:45 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1775 1325 1663 1188 743 895 1373 1461 1432 1807 ~1217       71  1380    125.07 sec  T/O =  1  PRV =  0
+SBY 18:23:45 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1666 1189 753 908 1392 1466 1444 1808 ~1217       89  1384    125.54 sec  T/O =  1  PRV =  0
+SBY 18:23:46 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1192 765 929 1420 1469 1444 1808 ~1217      121  1388    125.92 sec  T/O =  1  PRV =  0
+SBY 18:23:46 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1194 776 952 1449 1471 1444 1808 ~1217      154  1396    126.25 sec  T/O =  1  PRV =  0
+SBY 18:23:46 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1197 789 976 1477 1472 1445 1808 ~1217      184  1399    126.60 sec  T/O =  1  PRV =  0
+SBY 18:23:47 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 800 992 1504 1484 1445 1808 ~1217      214  1399    126.90 sec  T/O =  1  PRV =  0
+SBY 18:23:47 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 802 996 1519 1535 1447 1810 ~1217      223  1399    127.25 sec  T/O =  1  PRV =  0
+SBY 18:23:47 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 802 996 1522 1566 1457 1811 ~1217      218  1399    127.50 sec  T/O =  1  PRV =  0
+SBY 18:23:48 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 802 997 1526 1575 1510 1812 ~1217      174  1401    127.85 sec  T/O =  1  PRV =  0
+SBY 18:23:48 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 803 999 1537 1601 1536 1815 ~1217      193  1407    128.24 sec  T/O =  1  PRV =  0
+SBY 18:23:48 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 804 1000 1547 1628 1565 1818 ~1217     220  1409    128.65 sec  T/O =  1  PRV =  0
+SBY 18:23:49 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 806 1002 1563 1650 1590 1820 ~1217     248  1410    128.99 sec  T/O =  1  PRV =  0
+SBY 18:23:49 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 807 1004 1574 1675 1621 1820 ~1217     278  1410    129.31 sec  T/O =  1  PRV =  0
+SBY 18:23:49 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1667 1201 810 1007 1591 1697 1647 1822 ~1217     303  1410    129.63 sec  T/O =  1  PRV =  0
+SBY 18:23:50 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1669 1203 815 1010 1600 1708 1674 1823 ~1217     314  1410    130.01 sec  T/O =  1  PRV =  0
+SBY 18:23:50 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1669 1204 821 1025 1623 1728 1677 1823 ~1217     327  1411    130.41 sec  T/O =  1  PRV =  0
+SBY 18:23:50 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1669 1204 830 1037 1642 1734 1691 1823 ~1217     338  1413    130.79 sec  T/O =  1  PRV =  0
+SBY 18:23:51 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1207 840 1052 1667 1752 1693 1823 ~1217     359  1414    131.22 sec  T/O =  1  PRV =  0
+SBY 18:23:51 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1207 840 1053 1675 1771 1731 1826 ~1217     360  1415    131.69 sec  T/O =  1  PRV =  0
+SBY 18:23:52 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1207 842 1058 1689 1794 1755 1827 ~1217     390  1415    132.13 sec  T/O =  1  PRV =  0
+SBY 18:23:52 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1207 848 1066 1701 1809 1780 1829 ~1217     414  1418    132.58 sec  T/O =  1  PRV =  0
+SBY 18:23:53 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1208 851 1070 1715 1836 1806 1830 ~1217     433  1418    133.05 sec  T/O =  1  PRV =  0
+SBY 18:23:53 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1327 1670 1209 859 1082 1736 1851 1820 1831 ~1217     460  1419    133.52 sec  T/O =  1  PRV =  0
+SBY 18:23:54 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1673 1213 863 1088 1748 1867 1844 1831 ~1217     476  1422    133.93 sec  T/O =  1  PRV =  0
+SBY 18:23:54 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1217 870 1108 1774 1882 1844 1831 ~1217     501  1424    134.38 sec  T/O =  1  PRV =  0
+SBY 18:23:54 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1217 871 1109 1786 1897 1871 1831 ~1217     500  1424    134.75 sec  T/O =  1  PRV =  0
+SBY 18:23:55 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1217 875 1120 1808 1909 1886 1832 ~1217     531  1432    135.11 sec  T/O =  1  PRV =  0
+SBY 18:23:55 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1217 876 1124 1822 1926 1907 1834 ~1217     542  1440    135.49 sec  T/O =  1  PRV =  0
+SBY 18:23:56 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1217 878 1129 1839 1943 1928 1838 ~1217     556  1444    135.89 sec  T/O =  1  PRV =  0
+SBY 18:23:56 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1218 880 1137 1859 1969 1940 1839 ~1217     583  1445    136.37 sec  T/O =  1  PRV =  0
+SBY 18:23:57 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1218 880 1139 1874 1983 1974 1840 ~1217     601  1456    136.89 sec  T/O =  1  PRV =  0
+SBY 18:23:57 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1674 1218 885 1146 1894 2004 1990 1840 ~1217     630  1458    137.33 sec  T/O =  1  PRV =  0
+SBY 18:23:57 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1675 1219 890 1151 1908 2016 2015 1840 ~1217     649  1459    137.71 sec  T/O =  1  PRV =  0
+SBY 18:23:58 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1675 1221 894 1160 1923 2029 2036 1840 ~1217     664  1460    138.12 sec  T/O =  1  PRV =  0
+SBY 18:23:58 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1675 1221 894 1161 1934 2051 2068 1842 ~1217     694  1460    138.59 sec  T/O =  1  PRV =  0
+SBY 18:23:59 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1675 1221 894 1164 1952 2072 2094 1842 ~1217     726  1465    139.07 sec  T/O =  1  PRV =  0
+SBY 18:23:59 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1675 1221 894 1165 1966 2091 2129 1842 ~1217     753  1466    139.46 sec  T/O =  1  PRV =  0
+SBY 18:23:59 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1676 1223 899 1174 1985 2103 2146 1843 ~1217     777  1470    139.84 sec  T/O =  1  PRV =  0
+SBY 18:24:00 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1676 1223 900 1178 2000 2119 2170 1847 ~1217     796  1471    140.28 sec  T/O =  1  PRV =  0
+SBY 18:24:00 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1676 1223 902 1185 2019 2131 2193 1849 ~1217     819  1471    140.72 sec  T/O =  1  PRV =  0
+SBY 18:24:01 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1676 1223 902 1185 2030 2149 2227 1850 ~1217     852  1471    141.20 sec  T/O =  1  PRV =  0
+SBY 18:24:01 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1677 1224 906 1188 2033 2161 2245 1871 ~1217     868  1479    141.59 sec  T/O =  1  PRV =  0
+SBY 18:24:02 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1679 1232 922 1209 2057 2163 2245 1871 ~1217     891  1479    142.07 sec  T/O =  1  PRV =  0
+SBY 18:24:02 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1680 1238 934 1232 2077 2175 2245 1871 ~1217     915  1481    142.57 sec  T/O =  1  PRV =  0
+SBY 18:24:03 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1328 1680 1240 937 1237 2084 2196 2264 1871 ~1217     922  1484    142.97 sec  T/O =  1  PRV =  0
+SBY 18:24:03 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1684 1244 943 1247 2096 2203 2274 1871 ~1217     900  1484    143.32 sec  T/O =  1  PRV =  0
+SBY 18:24:03 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1255 2103 2216 2293 1895 ~1217     905  1484    143.80 sec  T/O =  1  PRV =  0
+SBY 18:24:04 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1255 2105 2225 2308 1932 ~1217     866  1490    144.23 sec  T/O =  1  PRV =  0
+SBY 18:24:04 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1255 2105 2236 2331 1968 ~1217     832  1490    144.71 sec  T/O =  1  PRV =  0
+SBY 18:24:05 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1255 2108 2245 2354 1998 ~1217     831  1490    145.13 sec  T/O =  1  PRV =  0
+SBY 18:24:05 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1255 2110 2254 2376 2037 ~1217     822  1490    145.63 sec  T/O =  1  PRV =  0
+SBY 18:24:06 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1256 2112 2265 2400 2071 ~1217     809  1490    146.11 sec  T/O =  1  PRV =  0
+SBY 18:24:06 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1256 2112 2274 2426 2106 ~1217     798  1490    146.57 sec  T/O =  1  PRV =  0
+SBY 18:24:07 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1258 2116 2287 2452 2133 ~1217     783  1490    147.03 sec  T/O =  1  PRV =  0
+SBY 18:24:07 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1258 2116 2298 2480 2164 ~1217     784  1491    147.40 sec  T/O =  1  PRV =  0
+SBY 18:24:08 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1258 2119 2308 2501 2197 ~1217     786  1491    147.88 sec  T/O =  1  PRV =  0
+SBY 18:24:08 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1259 2123 2313 2514 2254 ~1217     767  1491    148.34 sec  T/O =  1  PRV =  0
+SBY 18:24:09 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1260 2125 2321 2532 2300 ~1217     701  1491    148.86 sec  T/O =  1  PRV =  0
+SBY 18:24:09 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1329 1685 1247 947 1261 2127 2324 2543 2335 ~1217     677  1491    149.19 sec  T/O =  1  PRV =  0
+SBY 18:24:10 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 2 in frame 18 (retrying in next anytime pass).
+SBY 18:24:10 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1330 1688 1251 953 1269 2139 2341 2567 2361 ~1217      21  1492    149.85 sec  T/O =  2  PRV =  0
+SBY 18:24:10 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1330 1688 1251 954 1273 2148 2357 2584 2382 ~1217      32  1494    150.28 sec  T/O =  2  PRV =  0
+SBY 18:24:11 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1330 1688 1251 954 1273 2153 2375 2615 2458 ~1217      21  1494    151.00 sec  T/O =  2  PRV =  0
+SBY 18:24:12 [ddr4_controller_top.cmd_ready] engine_0: 18 : ... 742 1776 1330 1689 1253 957 1275 2166 2396 2641 2590 ~1217      16  1499    152.01 sec  T/O =  2  PRV =  0
+SBY 18:24:25 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1730 1986 2307 1610 1252 ~1215     33  1500    165.18 sec  T/O =  2  PRV =  0
+SBY 18:24:25 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1730 1989 2321 1635 1277 ~1215     37  1503    165.60 sec  T/O =  2  PRV =  0
+SBY 18:24:26 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1730 1991 2334 1659 1306 ~1215     28  1511    165.98 sec  T/O =  2  PRV =  0
+SBY 18:24:26 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1732 1996 2347 1683 1334 ~1215     30  1511    166.39 sec  T/O =  2  PRV =  0
+SBY 18:24:26 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1732 1998 2358 1704 1365 ~1215     28  1511    166.72 sec  T/O =  2  PRV =  0
+SBY 18:24:27 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1733 2001 2369 1723 1395 ~1215     32  1511    167.11 sec  T/O =  2  PRV =  0
+SBY 18:24:27 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1027 1733 2001 2379 1751 1426 ~1215     21  1512    167.49 sec  T/O =  2  PRV =  0
+SBY 18:24:28 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1028 1734 2001 2390 1774 1456 ~1215     24  1513    167.95 sec  T/O =  2  PRV =  0
+SBY 18:24:28 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1737 2014 2410 1801 1466 ~1215     40  1513    168.50 sec  T/O =  2  PRV =  0
+SBY 18:24:29 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2026 2429 1819 1483 ~1215     49  1516    168.98 sec  T/O =  2  PRV =  0
+SBY 18:24:29 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2027 2439 1843 1517 ~1215     49  1518    169.57 sec  T/O =  2  PRV =  0
+SBY 18:24:30 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2027 2447 1861 1560 ~1215     39  1520    170.14 sec  T/O =  2  PRV =  0
+SBY 18:24:30 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2031 2465 1879 1584 ~1215     24  1520    170.59 sec  T/O =  2  PRV =  0
+SBY 18:24:31 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2033 2476 1902 1614 ~1215     21  1520    170.97 sec  T/O =  2  PRV =  0
+SBY 18:24:31 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1739 2033 2487 1931 1646 ~1215     23  1520    171.44 sec  T/O =  2  PRV =  0
+SBY 18:24:32 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1740 2034 2498 1958 1676 ~1215     21  1520    171.86 sec  T/O =  2  PRV =  0
+SBY 18:24:32 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1741 2035 2514 1981 1703 ~1215     21  1520    172.32 sec  T/O =  2  PRV =  0
+SBY 18:24:32 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1741 2035 2529 2003 1735 ~1215     20  1520    172.79 sec  T/O =  2  PRV =  0
+SBY 18:24:33 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1742 2041 2544 2029 1759 ~1215     25  1520    173.31 sec  T/O =  2  PRV =  0
+SBY 18:24:33 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1742 2041 2559 2051 1791 ~1215     20  1520    173.76 sec  T/O =  2  PRV =  0
+SBY 18:24:34 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1742 2041 2571 2077 1822 ~1215     20  1521    174.21 sec  T/O =  2  PRV =  0
+SBY 18:24:34 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1742 2041 2583 2104 1852 ~1215     20  1521    174.57 sec  T/O =  2  PRV =  0
+SBY 18:24:35 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1742 2041 2590 2125 1888 ~1215     20  1521    174.96 sec  T/O =  2  PRV =  0
+SBY 18:24:35 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1744 2043 2603 2151 1916 ~1215     21  1521    175.50 sec  T/O =  2  PRV =  0
+SBY 18:24:36 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1744 2044 2617 2174 1947 ~1215     20  1521    175.92 sec  T/O =  2  PRV =  0
+SBY 18:24:36 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1744 2044 2629 2198 1979 ~1215     18  1521    176.32 sec  T/O =  2  PRV =  0
+SBY 18:24:36 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1744 2045 2641 2224 2010 ~1215     20  1521    176.74 sec  T/O =  2  PRV =  0
+SBY 18:24:37 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1744 2045 2653 2254 2037 ~1215     20  1521    177.27 sec  T/O =  2  PRV =  0
+SBY 18:24:37 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 815 1029 1745 2046 2664 2274 2070 ~1215     20  1521    177.73 sec  T/O =  2  PRV =  0
+SBY 18:24:38 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 822 1037 1760 2059 2677 2276 2072 ~1215     39  1521    178.13 sec  T/O =  2  PRV =  0
+SBY 18:24:38 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1763 2067 2694 2299 2089 ~1215     45  1521    178.61 sec  T/O =  2  PRV =  0
+SBY 18:24:39 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1763 2070 2705 2324 2118 ~1215     37  1525    179.15 sec  T/O =  2  PRV =  0
+SBY 18:24:39 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1766 2076 2721 2345 2138 ~1215     34  1525    179.69 sec  T/O =  2  PRV =  0
+SBY 18:24:40 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1767 2081 2732 2368 2162 ~1215     41  1526    180.16 sec  T/O =  2  PRV =  0
+SBY 18:24:40 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2744 2391 2192 ~1215     31  1527    180.75 sec  T/O =  2  PRV =  0
+SBY 18:24:41 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2756 2417 2220 ~1215     22  1527    181.24 sec  T/O =  2  PRV =  0
+SBY 18:24:41 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2765 2443 2253 ~1215     20  1527    181.73 sec  T/O =  2  PRV =  0
+SBY 18:24:42 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2772 2472 2285 ~1215     19  1527    182.18 sec  T/O =  2  PRV =  0
+SBY 18:24:42 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2782 2496 2319 ~1215     18  1527    182.71 sec  T/O =  2  PRV =  0
+SBY 18:24:43 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1039 1768 2083 2792 2517 2356 ~1215     17  1527    183.10 sec  T/O =  2  PRV =  0
+SBY 18:24:43 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 823 1047 1796 2104 2799 2524 2386 ~1215     32  1533    183.77 sec  T/O =  2  PRV =  0
+SBY 18:24:44 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1208 827 1056 1810 2116 2816 2526 2386 ~1215     38  1533    184.20 sec  T/O =  2  PRV =  0
+SBY 18:24:44 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1211 836 1074 1832 2133 2819 2526 2386 ~1215     54  1533    184.68 sec  T/O =  2  PRV =  0
+SBY 18:24:45 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1211 837 1076 1843 2152 2847 2528 2386 ~1215     67  1534    185.15 sec  T/O =  2  PRV =  0
+SBY 18:24:45 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1677 1211 840 1081 1857 2172 2875 2530 2387 ~1215     89  1534    185.73 sec  T/O =  2  PRV =  0
+SBY 18:24:46 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1678 1216 852 1100 1880 2176 2878 2530 2387 ~1215    120  1534    186.22 sec  T/O =  2  PRV =  0
+SBY 18:24:46 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1678 1216 855 1107 1892 2197 2900 2530 2387 ~1215    127  1535    186.71 sec  T/O =  2  PRV =  0
+SBY 18:24:47 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1678 1216 859 1122 1910 2213 2903 2531 2387 ~1215    137  1535    187.19 sec  T/O =  2  PRV =  0
+SBY 18:24:47 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1678 1216 861 1127 1922 2231 2933 2531 2387 ~1215    149  1535    187.81 sec  T/O =  2  PRV =  0
+SBY 18:24:48 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1678 1216 868 1135 1939 2250 2950 2533 2387 ~1215    167  1535    188.34 sec  T/O =  2  PRV =  0
+SBY 18:24:49 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1221 877 1146 1961 2262 2956 2535 2387 ~1215    199  1535    188.88 sec  T/O =  2  PRV =  0
+SBY 18:24:49 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1221 877 1148 1970 2292 2982 2537 2387 ~1215    216  1535    189.43 sec  T/O =  2  PRV =  0
+SBY 18:24:50 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 882 1157 1992 2305 2992 2538 2387 ~1215    232  1535    189.89 sec  T/O =  2  PRV =  0
+SBY 18:24:50 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1158 2000 2325 3018 2541 2387 ~1215    243  1536    190.44 sec  T/O =  2  PRV =  0
+SBY 18:24:50 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 0 in frame 19 (retrying in next anytime pass).
+SBY 18:24:50 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1158 2008 2333 3031 2552 2408 ~1215     12  1536    190.76 sec  T/O =  3  PRV =  0
+SBY 18:24:51 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1159 2016 2341 3041 2566 2433 ~1215     18  1543    191.03 sec  T/O =  3  PRV =  0
+SBY 18:24:51 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1159 2028 2353 3062 2583 2439 ~1215     35  1559    191.35 sec  T/O =  3  PRV =  0
+SBY 18:24:51 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1159 2031 2357 3075 2602 2461 ~1215     35  1574    191.62 sec  T/O =  3  PRV =  0
+SBY 18:24:52 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1159 2032 2362 3084 2613 2489 ~1215     23  1579    191.86 sec  T/O =  3  PRV =  0
+SBY 18:24:52 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1159 2034 2364 3096 2629 2523 ~1215      6  1579    192.16 sec  T/O =  3  PRV =  0
+SBY 18:24:52 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 883 1160 2041 2370 3108 2646 2539 ~1215     11  1579    192.48 sec  T/O =  3  PRV =  0
+SBY 18:24:53 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1161 2047 2383 3140 2694 2621 ~1215     14  1583    193.51 sec  T/O =  3  PRV =  0
+SBY 18:24:54 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1162 2050 2387 3151 2719 2650 ~1215     20  1583    194.00 sec  T/O =  3  PRV =  0
+SBY 18:24:54 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1162 2055 2393 3169 2738 2669 ~1215     15  1583    194.55 sec  T/O =  3  PRV =  0
+SBY 18:24:55 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1162 2055 2394 3183 2759 2701 ~1215      8  1583    195.05 sec  T/O =  3  PRV =  0
+SBY 18:24:55 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1163 2058 2400 3196 2781 2725 ~1215     11  1583    195.53 sec  T/O =  3  PRV =  0
+SBY 18:24:56 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1163 2062 2405 3208 2797 2753 ~1215     11  1583    195.91 sec  T/O =  3  PRV =  0
+SBY 18:24:56 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1163 2062 2407 3221 2824 2781 ~1215      9  1583    196.31 sec  T/O =  3  PRV =  0
+SBY 18:24:56 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1164 2062 2408 3235 2841 2815 ~1215     11  1583    196.68 sec  T/O =  3  PRV =  0
+SBY 18:24:57 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 884 1165 2068 2417 3253 2860 2833 ~1215     11  1583    197.20 sec  T/O =  3  PRV =  0
+SBY 18:24:57 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 885 1167 2071 2419 3265 2880 2863 ~1215      9  1583    197.75 sec  T/O =  3  PRV =  0
+SBY 18:24:58 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 885 1168 2076 2424 3277 2901 2893 ~1215     14  1583    198.28 sec  T/O =  3  PRV =  0
+SBY 18:24:59 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2083 2433 3294 2921 2915 ~1215     10  1583    198.96 sec  T/O =  3  PRV =  0
+SBY 18:25:00 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2094 2448 3328 2963 2995 ~1215     27  1584    200.16 sec  T/O =  3  PRV =  0
+SBY 18:25:00 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2094 2448 3340 2981 3033 ~1215     12  1584    200.73 sec  T/O =  3  PRV =  0
+SBY 18:25:01 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2098 2456 3354 3002 3057 ~1215     11  1584    201.37 sec  T/O =  3  PRV =  0
+SBY 18:25:02 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2110 2471 3375 3013 3065 ~1215     21  1584    202.07 sec  T/O =  3  PRV =  0
+SBY 18:25:02 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2115 2479 3387 3034 3095 ~1215     21  1584    202.75 sec  T/O =  3  PRV =  0
+SBY 18:25:03 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2116 2484 3402 3056 3122 ~1215     11  1584    203.50 sec  T/O =  3  PRV =  0
+SBY 18:25:04 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2118 2486 3414 3080 3149 ~1215      7  1584    204.10 sec  T/O =  3  PRV =  0
+SBY 18:25:05 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2118 2486 3435 3127 3208 ~1215      7  1584    204.95 sec  T/O =  3  PRV =  0
+SBY 18:25:05 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2119 2490 3449 3146 3235 ~1215      8  1584    205.44 sec  T/O =  3  PRV =  0
+SBY 18:25:06 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2119 2490 3460 3173 3280 ~1215      6  1586    205.96 sec  T/O =  3  PRV =  0
+SBY 18:25:06 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2119 2490 3471 3196 3314 ~1215      4  1586    206.56 sec  T/O =  3  PRV =  0
+SBY 18:25:07 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2120 2492 3482 3219 3344 ~1215      6  1587    207.10 sec  T/O =  3  PRV =  0
+SBY 18:25:07 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2120 2494 3494 3242 3376 ~1215      5  1587    207.62 sec  T/O =  3  PRV =  0
+SBY 18:25:08 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2120 2494 3506 3267 3406 ~1215      5  1589    208.22 sec  T/O =  3  PRV =  0
+SBY 18:25:09 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 886 1169 2121 2495 3519 3291 3438 ~1215      8  1589    208.88 sec  T/O =  3  PRV =  0
+SBY 18:25:09 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2126 2502 3535 3310 3461 ~1215     10  1589    209.59 sec  T/O =  3  PRV =  0
+SBY 18:25:10 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2126 2502 3548 3331 3495 ~1215      4  1589    210.22 sec  T/O =  3  PRV =  0
+SBY 18:25:10 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2127 2504 3558 3357 3525 ~1215      5  1589    210.78 sec  T/O =  3  PRV =  0
+SBY 18:25:11 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2127 2506 3572 3379 3554 ~1215      9  1589    211.35 sec  T/O =  3  PRV =  0
+SBY 18:25:12 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2127 2507 3582 3400 3581 ~1215      5  1589    211.90 sec  T/O =  3  PRV =  0
+SBY 18:25:12 [ddr4_controller_top.cmd_ready] engine_0: Timing out on output 3 in frame 19 (retrying in next anytime pass).
+SBY 18:25:12 [ddr4_controller_top.cmd_ready] engine_0: 19 : ... 1775 1325 1679 1222 887 1170 2127 2507 3582 3400 3581 ~1215      0  1589    211.90 sec  T/O =  4  PRV =  0
+SBY 18:25:28 [ddr4_controller_top.cmd_ready] engine_0: 20 : ... 1325 1678 1208 834 1072 1884 2162 2880 2832 2879 1246 ~1242      0  1589    228.57 sec  T/O =  4  PRV =  0
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] Reached TIMEOUT (600 seconds). Terminating all subprocesses.
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] engine_0: terminating process
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] summary: Elapsed clock time [H:MM:SS (secs)]: 0:10:01 (601)
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:29 (29)
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] summary: engine_0 (abc pdr) did not return a status
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] summary: engine_0 did not produce any traces
+SBY 18:26:03 [ddr4_controller_top.cmd_ready] DONE (TIMEOUT, rc=0)

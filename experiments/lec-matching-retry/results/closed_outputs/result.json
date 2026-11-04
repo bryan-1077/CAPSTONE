@@ -1,0 +1,119 @@
+{
+  "cones": {
+    "ddr4_controller_top.cmd_ready": {
+      "crossbits": {},
+      "inbits": {
+        "clk": [
+          0
+        ],
+        "rst_n": [
+          0
+        ],
+        "txn_addr": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "txn_bank": [
+          0,
+          1
+        ],
+        "txn_is_write": [
+          0
+        ],
+        "txn_valid": [
+          0
+        ],
+        "txn_wdata": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31
+        ]
+      },
+      "outbits": {
+        "cmd_ready": [
+          0
+        ],
+        "rsp_rdata": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31
+        ],
+        "rsp_valid": [
+          0
+        ],
+        "txn_ready": [
+          0
+        ]
+      }
+    }
+  },
+  "elapsed_seconds": 616.763828256051,
+  "failed": true,
+  "mode": "closed_outputs",
+  "passed": false,
+  "returncode": 2,
+  "statuses": {
+    "ddr4_controller_top.cmd_ready": "TIMEOUT"
+  },
+  "timed_out": false
+}

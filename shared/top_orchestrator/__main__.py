@@ -5,14 +5,13 @@ import shlex
 import sys
 import tempfile
 from contextlib import ExitStack
-from datetime import datetime, timezone
 from pathlib import Path
-from uuid import uuid4
 
 from .contracts import RunConfig
 from .nodes import backend_command, frontend_command, spec_command
 from .frequency import DEFAULT_TARGET_MHZ, positive_mhz
 from .orchestrator import run
+from .run_paths import run_name
 
 
 def main() -> int:
@@ -195,7 +194,7 @@ def _main(resources) -> int:
         mode = info["mode"] if info else "request"
         if args.cache and (mode != "approved" or args.resume_build):
             parser.error("--cache requires approved architecture input without --resume-build")
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
+        run_id = run_name(args.target_mhz)
         run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()
         if args.plan:
             root = run_dir / "frontend"
@@ -383,10 +382,10 @@ def _main(resources) -> int:
             print("System Agent 2/3 failures after Agent 1 PASS -> debug -> recheck -> validation; "
                   + ("backend runs after READY_FOR_BACKEND." if backend_route else "no backend."))
         return 0
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid4().hex[:8]
+    run_id = run_name(args.target_mhz)
     run_dir = (args.run_dir or Path(__file__).parent / "runs" / run_id).expanduser().resolve()
     try:
-        state = run(config, run_dir)
+        state = run(config, run_dir, auto_name=args.run_dir is None)
     except OSError as exc:
         parser.exit(1, f"Cannot create/write run artifacts: {exc}\n")
     return 0 if state.status == "complete" else 2

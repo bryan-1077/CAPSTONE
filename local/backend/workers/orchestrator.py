@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from time import monotonic
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Callable
@@ -3799,6 +3800,8 @@ def run_flow(initial_state: FlowState, ssh_config: dict, thread_id: str = "eda-f
         gdsii_runner = _make_gdsii_runner(ssh)
 
         state = dict(initial_state)
+        # Resumed builds contribute only work performed by this invocation.
+        state["stage_runtime_seconds"] = {}
 
         stages = [
             ("rtl_prep", rtl_prep_runner),
@@ -3831,12 +3834,16 @@ def run_flow(initial_state: FlowState, ssh_config: dict, thread_id: str = "eda-f
                         "history": state["history"] + [f"LEC gate rejected GDSII: {exc}"],
                     })
             stage_max_retries = _stage_retry_limit(state, stage_name)
+            started = monotonic()
             state = _run_stage_with_retries(
                 state,
                 stage_name=stage_name,
                 runner=runner,
                 max_retries=stage_max_retries,
             )
+            runtimes = dict(state.get("stage_runtime_seconds", {}))
+            runtimes[stage_name] = runtimes.get(stage_name, 0.0) + monotonic() - started
+            state["stage_runtime_seconds"] = runtimes
 
             route_back_to_stage = state.get("route_back_to_stage")
             if route_back_to_stage and route_back_to_stage != stage_name:

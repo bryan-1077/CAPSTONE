@@ -12,6 +12,31 @@ from .summary import final_summary
 
 
 class FinalSummaryTests(unittest.TestCase):
+    def test_runtime_totals_count_lec_only_as_verification(self):
+        for lec in (False, True):
+            with self.subTest(lec=lec):
+                results = [StageResult(stage, "passed", "ok", {"elapsed_seconds": str(duration)})
+                           for stage, duration in (("generate", 181), ("validation", 630),
+                                                   ("backend", 2100), ("gdsii-validation", 7))]
+                results[2].artifacts.update(physical_design_seconds="2050", lec="passed" if lec else "not_run")
+                if lec:
+                    results[2].artifacts["lec_seconds"] = "50"
+                output = final_summary(RunState(RunConfig("generate", skip_lec=not lec), results), Path("/run"))
+                self.assertIn("Frontend:      3m 01s", output)
+                self.assertIn("Backend:       34m 10s", output)
+                self.assertIn("Verification:  " + ("11m 27s" if lec else "10m 37s"), output)
+                self.assertIn("Total runtime: " + ("48m 38s" if lec else "47m 48s"), output)
+                self.assertEqual("LEC +" in output, lec)
+                self.assertLess(output.index("Final stage results:"), output.index("Runtime stats:"))
+
+    def test_missing_lec_runtime_does_not_double_count_backend(self):
+        results = [StageResult(stage, "passed", "ok", {"elapsed_seconds": "10"})
+                   for stage in ("generate", "validation", "backend", "gdsii-validation")]
+        results[2].artifacts["lec"] = "passed"
+        output = final_summary(RunState(RunConfig("generate"), results), Path("/run"))
+        self.assertIn("Verification:  NOT RECORDED IN THIS RUN", output)
+        self.assertIn("Total runtime: NOT RECORDED IN THIS RUN", output)
+
     def test_summary_uses_published_specs_and_selected_clock(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -26,7 +51,9 @@ class FinalSummaryTests(unittest.TestCase):
                                       target_mhz=200, target_mhz_source="command line"),
                              [StageResult(stage, "passed", "ok") for stage in
                               ("generate", "validation", "backend", "gdsii-validation")], status="complete")
+            state.results[-1].artifacts['gds_file'] = str(root / '003_gdsii-validation/controller.gds')
             output = final_summary(state, root)
+            self.assertIn(f"Final GDSII file: {root / '003_gdsii-validation/controller.gds'}", output)
             for expected in ("protocol: DDR4", "speed: '3200'", "banks: 4", "scheduler: simple",
                              "refresh: true", "200 MHz", "5.00 ns", "command line",
                              str(mailbox / "approved_specs.yaml"), str(root)):

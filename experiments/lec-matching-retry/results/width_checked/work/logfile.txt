@@ -1,0 +1,309 @@
+EQY 18:05:59 [work] read_gold: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/gold.log work/gold.ys"
+EQY 18:06:00 [work] read_gate: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/gate.log work/gate.ys"
+EQY 18:06:00 [work] read_gold: finished (returncode=0)
+EQY 18:06:01 [work] read_gate: finished (returncode=0)
+EQY 18:06:01 [work] combine: starting process "/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql work/combine.log work/combine.ys"
+EQY 18:06:02 [work] combine: finished (returncode=0)
+EQY 18:06:06 [work] partition: starting process "cd work; /mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/tools/oss-cad-suite/bin/yosys -ql partition.log partition.ys"
+EQY 18:06:51 [work] partition: finished (returncode=0)
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.txn_ready contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.txn_ready contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.2 contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.2 contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.1 contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.1 contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.0 contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.tFAW_act_count.0 contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_wdata_q contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_wdata_q contains 3 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_update_open_row_q contains 3 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_update_open_row_q contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_pending_q contains 3 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_pending_q contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_is_write_q contains 4 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_is_write_q contains 3 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_cycles_left_q contains 3 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_cycles_left_q contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_bank_q contains 3 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_bank_q contains 4 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_addr_q contains 3 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.service_addr_q contains 3 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.31 contains 12 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.31 contains 2 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.30 contains 12 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.30 contains 2 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.29 contains 12 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.29 contains 2 unused gate inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.28 contains 12 unused gold inputs.
+EQY 18:06:51 [work] Warning: Partition ddr4_controller_top.rsp_rdata.28 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.27 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.27 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.26 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.26 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.25 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.25 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.24 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.24 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.23 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.23 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.22 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.22 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.21 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.21 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.20 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.20 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.19 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.19 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.18 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.18 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.17 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.17 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.16 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.16 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.15 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.15 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.14 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.14 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.13 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.13 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.12 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.12 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.11 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.11 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.10 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.10 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.9 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.9 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.8 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.8 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.7 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.7 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.6 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.6 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.5 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.5 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.4 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.4 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.3 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.3 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.2 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.2 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.1 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.1 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.0 contains 12 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.rsp_rdata.0 contains 2 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.3 contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.3 contains 4 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.2 contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.2 contains 4 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.1 contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.1 contains 4 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.0 contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.req_valid_packed.0 contains 4 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.ref_req contains 1 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.3 contains 1 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.3 contains 13 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.2 contains 1 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.2 contains 13 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.1 contains 1 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.1 contains 13 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.0 contains 1 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.open_row.0 contains 13 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.issue_ref contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.issue_ref contains 4 unused gate inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.cmd_ready contains 4 unused gold inputs.
+EQY 18:06:52 [work] Warning: Partition ddr4_controller_top.cmd_ready contains 4 unused gate inputs.
+EQY 18:06:58 [work] run: starting process "make -j6 -C work -f strategies.mk"
+EQY 18:06:58 [work] run: make: Entering directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/width_checked/work'
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.cmd_ready'..
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.open_row.1'..
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.open_row.0'..
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.issue_ref'..
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.open_row.2'..
+EQY 18:06:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.open_row.3'..
+EQY 18:07:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.open_row.0' using strategy 'prove': partitions not equivalent
+EQY 18:07:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.open_row.2' using strategy 'prove': partitions not equivalent
+EQY 18:07:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.ref_req'..
+EQY 18:07:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.req_valid_packed.0'..
+EQY 18:07:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.open_row.1' using strategy 'prove': partitions not equivalent
+EQY 18:07:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.open_row.3' using strategy 'prove': partitions not equivalent
+EQY 18:07:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.req_valid_packed.2'..
+EQY 18:07:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.req_valid_packed.1'..
+EQY 18:07:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.cmd_ready' using strategy 'prove': partitions not equivalent
+EQY 18:07:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.req_valid_packed.3'..
+EQY 18:07:09 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.issue_ref' using strategy 'prove': partitions not equivalent
+EQY 18:07:09 [work] run: Running strategy 'prove' on 'ddr4_controller_top.row_open_valid'..
+EQY 18:07:13 [work] run: Proved equivalence of partition 'ddr4_controller_top.ref_req' using strategy 'prove'
+EQY 18:07:13 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.0'..
+EQY 18:07:16 [work] run: Proved equivalence of partition 'ddr4_controller_top.row_open_valid' using strategy 'prove'
+EQY 18:07:16 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.1'..
+EQY 18:07:20 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.req_valid_packed.3' using strategy 'prove': partitions not equivalent
+EQY 18:07:20 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.10'..
+EQY 18:07:21 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.req_valid_packed.0' using strategy 'prove': partitions not equivalent
+EQY 18:07:21 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.11'..
+EQY 18:07:21 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.req_valid_packed.2' using strategy 'prove': partitions not equivalent
+EQY 18:07:21 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.12'..
+EQY 18:07:22 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.req_valid_packed.1' using strategy 'prove': partitions not equivalent
+EQY 18:07:22 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.13'..
+EQY 18:07:37 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.0' using strategy 'prove': partitions not equivalent
+EQY 18:07:37 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.14'..
+EQY 18:07:39 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.1' using strategy 'prove': partitions not equivalent
+EQY 18:07:39 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.15'..
+EQY 18:07:47 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.13' using strategy 'prove': partitions not equivalent
+EQY 18:07:47 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.16'..
+EQY 18:07:47 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.12' using strategy 'prove': partitions not equivalent
+EQY 18:07:47 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.17'..
+EQY 18:07:47 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.10' using strategy 'prove': partitions not equivalent
+EQY 18:07:47 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.18'..
+EQY 18:07:48 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.11' using strategy 'prove': partitions not equivalent
+EQY 18:07:48 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.19'..
+EQY 18:08:01 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.14' using strategy 'prove': partitions not equivalent
+EQY 18:08:01 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.2'..
+EQY 18:08:03 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.15' using strategy 'prove': partitions not equivalent
+EQY 18:08:03 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.20'..
+EQY 18:08:14 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.19' using strategy 'prove': partitions not equivalent
+EQY 18:08:14 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.18' using strategy 'prove': partitions not equivalent
+EQY 18:08:14 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.17' using strategy 'prove': partitions not equivalent
+EQY 18:08:14 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.21'..
+EQY 18:08:14 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.22'..
+EQY 18:08:14 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.23'..
+EQY 18:08:15 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.16' using strategy 'prove': partitions not equivalent
+EQY 18:08:15 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.24'..
+EQY 18:08:31 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.2' using strategy 'prove': partitions not equivalent
+EQY 18:08:31 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.20' using strategy 'prove': partitions not equivalent
+EQY 18:08:31 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.25'..
+EQY 18:08:31 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.26'..
+EQY 18:08:41 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.22' using strategy 'prove': partitions not equivalent
+EQY 18:08:41 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.27'..
+EQY 18:08:42 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.24' using strategy 'prove': partitions not equivalent
+EQY 18:08:42 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.28'..
+EQY 18:08:42 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.23' using strategy 'prove': partitions not equivalent
+EQY 18:08:42 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.29'..
+EQY 18:08:42 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.21' using strategy 'prove': partitions not equivalent
+EQY 18:08:42 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.3'..
+EQY 18:08:56 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.26' using strategy 'prove': partitions not equivalent
+EQY 18:08:56 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.30'..
+EQY 18:08:57 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.25' using strategy 'prove': partitions not equivalent
+EQY 18:08:57 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.31'..
+EQY 18:09:06 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.28' using strategy 'prove': partitions not equivalent
+EQY 18:09:06 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.4'..
+EQY 18:09:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.27' using strategy 'prove': partitions not equivalent
+EQY 18:09:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.3' using strategy 'prove': partitions not equivalent
+EQY 18:09:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.5'..
+EQY 18:09:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.6'..
+EQY 18:09:07 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.29' using strategy 'prove': partitions not equivalent
+EQY 18:09:07 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.7'..
+EQY 18:09:20 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.30' using strategy 'prove': partitions not equivalent
+EQY 18:09:20 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.8'..
+EQY 18:09:21 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.31' using strategy 'prove': partitions not equivalent
+EQY 18:09:21 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_rdata.9'..
+EQY 18:12:53 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.5' using strategy 'prove': partitions not equivalent
+EQY 18:12:53 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.4' using strategy 'prove': partitions not equivalent
+EQY 18:12:53 [work] run: Running strategy 'prove' on 'ddr4_controller_top.rsp_valid'..
+EQY 18:12:53 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.7' using strategy 'prove': partitions not equivalent
+EQY 18:12:53 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_addr_q'..
+EQY 18:12:53 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_bank_q'..
+EQY 18:12:53 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.6' using strategy 'prove': partitions not equivalent
+EQY 18:12:53 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_cycles_left_q'..
+EQY 18:12:58 [work] run: Proved equivalence of partition 'ddr4_controller_top.rsp_valid' using strategy 'prove'
+EQY 18:12:58 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_is_write_q'..
+EQY 18:12:59 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.8' using strategy 'prove': partitions not equivalent
+EQY 18:12:59 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_pending_q'..
+EQY 18:13:00 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.rsp_rdata.9' using strategy 'prove': partitions not equivalent
+EQY 18:13:00 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_update_open_row_q'..
+EQY 18:13:04 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_cycles_left_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:04 [work] run: Running strategy 'prove' on 'ddr4_controller_top.service_wdata_q'..
+EQY 18:13:04 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_addr_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:04 [work] run: Running strategy 'prove' on 'ddr4_controller_top.tFAW_act_count.0'..
+EQY 18:13:06 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_bank_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:06 [work] run: Running strategy 'prove' on 'ddr4_controller_top.tFAW_act_count.1'..
+EQY 18:13:10 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_update_open_row_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:10 [work] run: Running strategy 'prove' on 'ddr4_controller_top.tFAW_act_count.2'..
+EQY 18:13:10 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_pending_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:10 [work] run: Running strategy 'prove' on 'ddr4_controller_top.txn_ready'..
+EQY 18:13:11 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_is_write_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:11 [work] run: Running strategy 'prove' on 'ddr4_controller_top.u_refresh_controller.clk'..
+EQY 18:13:15 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.tFAW_act_count.0' using strategy 'prove': partitions not equivalent
+EQY 18:13:15 [work] run: Running strategy 'prove' on 'ddr4_controller_top.u_refresh_controller.counter'..
+EQY 18:13:17 [work] run: Proved equivalence of partition 'ddr4_controller_top.u_refresh_controller.clk' using strategy 'prove'
+EQY 18:13:17 [work] run: Running strategy 'prove' on 'ddr4_controller_top.u_refresh_controller.ref_ack'..
+EQY 18:13:19 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.service_wdata_q' using strategy 'prove': partitions not equivalent
+EQY 18:13:19 [work] run: Running strategy 'prove' on 'ddr4_controller_top.u_refresh_controller.ref_req'..
+EQY 18:13:21 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.txn_ready' using strategy 'prove': partitions not equivalent
+EQY 18:13:21 [work] run: Running strategy 'prove' on 'ddr4_controller_top.u_refresh_controller.rst_n'..
+EQY 18:13:22 [work] run: Proved equivalence of partition 'ddr4_controller_top.u_refresh_controller.counter' using strategy 'prove'
+EQY 18:13:24 [work] run: Proved equivalence of partition 'ddr4_controller_top.u_refresh_controller.ref_ack' using strategy 'prove'
+EQY 18:13:27 [work] run: Proved equivalence of partition 'ddr4_controller_top.u_refresh_controller.ref_req' using strategy 'prove'
+EQY 18:13:29 [work] run: Proved equivalence of partition 'ddr4_controller_top.u_refresh_controller.rst_n' using strategy 'prove'
+EQY 18:13:37 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.tFAW_act_count.1' using strategy 'prove': partitions not equivalent
+EQY 18:15:45 [work] run: Could not prove equivalence of partition 'ddr4_controller_top.tFAW_act_count.2' using strategy 'prove': partitions not equivalent
+EQY 18:15:45 [work] run: make -f strategies.mk summary
+EQY 18:15:45 [work] run: make[1]: Entering directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/width_checked/work'
+EQY 18:15:46 [work] run: make[1]: Leaving directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/width_checked/work'
+EQY 18:15:46 [work] run: make: Leaving directory '/mnt/nfs-scratch/ECEN_403-404/ddr4_capstone/CAPSTONE/shared/lec_matching_20261103_01/width_checked/work'
+EQY 18:15:46 [work] run: finished (returncode=0)
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.u_refresh_controller.rst_n
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.u_refresh_controller.ref_req
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.u_refresh_controller.ref_ack
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.u_refresh_controller.counter
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.u_refresh_controller.clk
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.rsp_valid
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.row_open_valid
+EQY 18:15:46 [work] Successfully proved equivalence of partition ddr4_controller_top.ref_req
+EQY 18:15:46 [work] Warning: Failed to prove equivalence for 53/61 partitions:
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.txn_ready
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.tFAW_act_count.2
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.tFAW_act_count.1
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.tFAW_act_count.0
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_wdata_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_update_open_row_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_pending_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_is_write_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_cycles_left_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_bank_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.service_addr_q
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.31
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.30
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.29
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.28
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.27
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.26
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.25
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.24
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.23
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.22
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.21
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.20
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.19
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.18
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.17
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.16
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.15
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.14
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.13
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.12
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.11
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.10
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.9
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.8
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.7
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.6
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.5
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.4
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.3
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.2
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.1
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.rsp_rdata.0
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.req_valid_packed.3
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.req_valid_packed.2
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.req_valid_packed.1
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.req_valid_packed.0
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.open_row.3
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.open_row.2
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.open_row.1
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.open_row.0
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.issue_ref
+EQY 18:15:46 [work] Failed to prove equivalence of partition ddr4_controller_top.cmd_ready
+EQY 18:15:46 [work] summary: Elapsed clock time [H:MM:SS (secs)]: 0:09:47 (587)
+EQY 18:15:46 [work] summary: Elapsed process time [H:MM:SS (secs)]: 0:12:21 (741)
+EQY 18:15:46 [work] DONE (FAIL, rc=2)

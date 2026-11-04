@@ -1,0 +1,35 @@
+# [ddr4_controller_top] gold-nomatch /^req_array_packed$/
+# [ddr4_controller_top] gate-nomatch /^req_array_packed$/
+# [*] gold-match *
+ddr4_controller_top clk clk
+ddr4_controller_top cmd_ready cmd_ready
+ddr4_controller_top issue_ref issue_ref
+ddr4_controller_top open_row[0] open_row[0]
+ddr4_controller_top open_row[1] open_row[1]
+ddr4_controller_top open_row[2] open_row[2]
+ddr4_controller_top open_row[3] open_row[3]
+ddr4_controller_top ref_req ref_req
+ddr4_controller_top req_valid_packed req_valid_packed
+ddr4_controller_top row_open_valid row_open_valid
+ddr4_controller_top rsp_rdata rsp_rdata
+ddr4_controller_top rsp_valid rsp_valid
+ddr4_controller_top rst_n rst_n
+ddr4_controller_top service_addr_q service_addr_q
+ddr4_controller_top service_bank_q service_bank_q
+ddr4_controller_top service_cycles_left_q service_cycles_left_q
+ddr4_controller_top service_is_write_q service_is_write_q
+ddr4_controller_top service_pending_q service_pending_q
+ddr4_controller_top service_update_open_row_q service_update_open_row_q
+ddr4_controller_top service_wdata_q service_wdata_q
+ddr4_controller_top tFAW_act_count tFAW_act_count
+ddr4_controller_top txn_addr txn_addr
+ddr4_controller_top txn_bank txn_bank
+ddr4_controller_top txn_is_write txn_is_write
+ddr4_controller_top txn_ready txn_ready
+ddr4_controller_top txn_valid txn_valid
+ddr4_controller_top txn_wdata txn_wdata
+ddr4_controller_top u_refresh_controller.clk u_refresh_controller.clk
+ddr4_controller_top u_refresh_controller.counter u_refresh_controller.counter
+ddr4_controller_top u_refresh_controller.ref_ack u_refresh_controller.ref_ack
+ddr4_controller_top u_refresh_controller.ref_req u_refresh_controller.ref_req
+ddr4_controller_top u_refresh_controller.rst_n u_refresh_controller.rst_n

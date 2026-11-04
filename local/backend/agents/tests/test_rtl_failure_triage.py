@@ -117,7 +117,7 @@ class RTLFailureTriageTests(unittest.TestCase):
             "confidence": 0.98, "evidence": ["Serial mux chain requires RTL redesign."],
         }
         with (
-            patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}),
+            patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True),
             patch.dict(sys.modules, {"openai": SimpleNamespace(OpenAI=object)}),
             patch.object(triage, "_build_client", return_value=object()),
             patch.object(triage, "_call_responses_api", return_value=(ai_result, "{}")) as call,

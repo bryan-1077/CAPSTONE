@@ -1,6 +1,7 @@
 """Render the completed system using run-local specifications and stage evidence."""
 
 from .contracts import RunState
+from .runtime import format_seconds, runtime_stats
 
 
 def final_summary(state: RunState, run_dir) -> str:
@@ -54,6 +55,15 @@ def final_summary(state: RunState, run_dir) -> str:
                   f"  BIST simulation:      {bist}",
                   f"  Agents 1–3:           {verification}",
                   f"  GDSII generation:     {status('backend')}",
-                  f"  GDSII validation:     {status('gdsii-validation')}",
+                  f"  GDSII validation:     {status('gdsii-validation')}"])
+    frontend, verification, backend, total, lec_ran = runtime_stats(state)
+    verification_label = "Agents 1–3 + " + ("LEC + " if lec_ran else "") + "GDSII validation"
+    lines.extend(["", "Runtime stats:",
+                  f"  Frontend:      {format_seconds(frontend)} (RTL generation + lint + BIST)",
+                  f"  Verification:  {format_seconds(verification)} ({verification_label})",
+                  f"  Backend:       {format_seconds(backend)} (total physical design runtime)",
+                  f"  Total runtime: {format_seconds(total)} (Frontend + Verification + Backend)",
                   "", f"Run artifacts: {run_dir}"])
+    if gdsii is not None and gdsii.artifacts.get("gds_file"):
+        lines.append(f"Final GDSII file: {gdsii.artifacts['gds_file']}")
     return "\n".join(lines)

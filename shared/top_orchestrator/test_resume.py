@@ -64,7 +64,7 @@ class ResumeTests(unittest.TestCase):
             self.assertEqual(resume.main(['--run', str(self.original), '--remote-config', str(self.remote_path)]), 0)
         self.assertEqual(seen, ['backend', 'gdsii-validation'])
         self.assertEqual((self.ledger.read_bytes(), self.saved_backend.read_bytes()), before)
-        destinations = list(self.root.glob('*_resume_*/state.json'))
+        destinations = list(self.root.glob('internal_200MHz_*/state.json'))
         self.assertEqual(len(destinations), 1)
         self.assertEqual(json.loads(destinations[0].read_text())['status'], 'complete')
 

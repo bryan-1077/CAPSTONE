@@ -1,10 +1,9 @@
 """Main CLI entry adapters for the bounded Experimental integration tools."""
-from datetime import datetime, timezone
 import json
 from pathlib import Path
-from uuid import uuid4
 
 from .contracts import RunConfig
+from .run_paths import run_name
 
 
 def integrated_entry(args, parser):
@@ -50,7 +49,7 @@ def integrated_entry(args, parser):
                   'Run deployed verification agents (model calls); stop at first failure; recheck revision-bound evidence.')
             print('Structural/system verification remains pending; backend readiness remains false.')
         return 0
-    run_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '_' + uuid4().hex[:8]
+    run_id = run_name(plan.get('target_mhz'))
     output = (args.run_dir or Path(__file__).parent / 'runs' / run_id).expanduser().resolve()
     if output.exists() or output.is_relative_to(mailbox):
         parser.error('Run directory must be new and outside the immutable mailbox')

@@ -257,6 +257,12 @@ def backend_node(config: RunConfig, run_dir: Path) -> StageResult:
         return StageResult("backend", "failed", f"Backend produced no usable result: {exc}", artifacts, code)
     artifacts["result"] = str(result_path)
     artifacts["lec"] = payload.get("lec_status", "not_run")
+    runtimes = payload.get("stage_runtime_seconds", {})
+    physical_stages = ("rtl_prep", "netlist", "mapped_netlist", "gdsii")
+    if all(name in runtimes for name in physical_stages):
+        artifacts["physical_design_seconds"] = str(sum(runtimes[name] for name in physical_stages))
+    if "lec" in runtimes:
+        artifacts["lec_seconds"] = str(runtimes["lec"])
     if payload.get("lec_result"):
         artifacts["lec_result"] = str(payload["lec_result"])
         artifacts["lec_reports"] = str(payload.get("lec_report_dir", ""))

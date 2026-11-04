@@ -3,6 +3,8 @@ import json
 import os
 from pathlib import Path
 
+from agents import ai_config
+
 from agents.openai_prep_review import (
     DEFAULT_OPENAI_MODEL, _build_client, _extract_json_text, _is_not_found_error,
 )
@@ -110,13 +112,13 @@ def select_resize_source(context, *, diagnostics_path):
 
 
 def _request(context, prompt, schema, name, validate, diagnostics_path):
-    model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+    model = ai_config.model_name(DEFAULT_OPENAI_MODEL)
     messages = [{"role": "system", "content": prompt},
                 {"role": "user", "content": json.dumps(context)}]
     diagnostics = {"model": model, "requests": []}
     try:
-        if not os.getenv("OPENAI_API_KEY"):
-            raise RuntimeError("Physical verification AI requires OPENAI_API_KEY.")
+        if not ai_config.api_key():
+            raise RuntimeError("Physical verification AI requires TAMUS_AI_CHAT_API_KEY (or OPENAI_API_KEY).")
         client = _build_client()
         text = ""
         for api in ("responses", "chat_completions"):
@@ -125,10 +127,10 @@ def _request(context, prompt, schema, name, validate, diagnostics_path):
             print(f"Physical verification AI: requesting {api}", flush=True)
             try:
                 if api == "responses":
-                    response = client.responses.create(model=model, input=messages,
+                    response = ai_config.create_response(client, model=model, input=messages,
                         text={"format": {"type": "json_schema", "name": name, "strict": True, "schema": schema}})
                 else:
-                    response = client.chat.completions.create(model=model, messages=messages,
+                    response = ai_config.create_chat_completion(client, model=model, messages=messages,
                         response_format={"type": "json_schema", "json_schema": {"name": name, "strict": True, "schema": schema}})
                 text, raw = _recovery_response_text(response, api)
                 entry.update(raw_response=raw, extracted_text=text)
