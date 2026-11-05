@@ -1,0 +1,6 @@
+# Direct dependencies from the current development environment.
+# Full execution also needs local tools and the existing frontend setup.
+-r requirements.txt
+requests==2.33.1
+paramiko==5.0.0
+langgraph==1.2.11
