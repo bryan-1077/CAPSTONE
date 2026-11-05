@@ -702,6 +702,11 @@ def run_openai_prep_review(
         "over rewriting the original RTL file. "
         "If review_context.synthesis_top_checks lists applicable_recipe_ids or a chosen_recipe_id, "
         "treat those approved recipes as the preferred bounded adaptation path. "
+        "Recipe applicability is decided by deterministic code: only applicable_recipe_ids "
+        "and chosen_recipe_id authorize recipe requirements for this build. The project-wide "
+        "adaptation_hints catalog does not make its recipes applicable. An empty applicability "
+        "list with no chosen recipe requires no recipe opt-out or exception. Any recipe-related "
+        "error or suggested fix must name an authorized recipe ID. "
         "Do not invent a new synthesis rewrite when no approved recipe exists. "
         "Inspect the selected top name, its port declarations, and any nearby interface usage context "
         "before deciding whether this generic-interface-top condition applies. "
@@ -818,6 +823,47 @@ def merge_prep_review_results(
         if isinstance(local_review.get("context", {}), Mapping)
         else {}
     )
+    # Recipe applicability comes from the deterministic prep analysis, never
+    # from the model's interpretation of the project-wide recipe catalog.
+    ai_errors = _ordered_unique(ai_review.get("errors", []))
+    ai_fixes = _ordered_unique(ai_review.get("suggested_fixes", []))
+    recipe_warnings: list[str] = []
+    if "applicable_recipe_ids" in synthesis_top_checks:
+        allowed_recipes = _ordered_unique(
+            synthesis_top_checks.get("applicable_recipe_ids", [])
+        )
+        chosen_recipe = synthesis_top_checks.get("chosen_recipe_id")
+        if chosen_recipe:
+            allowed_recipes = _ordered_unique([*allowed_recipes, chosen_recipe])
+        catalog = synthesis_top_checks.get("adaptation_hints", {}).get(
+            "project_recipe_requirements", {}
+        )
+
+        def is_unapproved_recipe_claim(message: str) -> bool:
+            def mentions(recipe_id: str) -> bool:
+                return bool(re.search(
+                    rf"(?<!\w){re.escape(recipe_id)}(?!\w)", message, re.IGNORECASE
+                ))
+
+            is_recipe_claim = bool(re.search(r"\brecipes?\b", message, re.IGNORECASE))
+            is_recipe_claim = is_recipe_claim or any(mentions(key) for key in catalog)
+            if not is_recipe_claim:
+                return False
+            # A recipe finding must name a recipe selected by code. Merely
+            # appearing in adaptation_hints does not authorize enforcement.
+            return (
+                not any(mentions(key) for key in allowed_recipes)
+                or any(mentions(key) for key in catalog if key not in allowed_recipes)
+            )
+
+        ignored = [item for item in ai_errors if is_unapproved_recipe_claim(item)]
+        ai_errors = [item for item in ai_errors if not is_unapproved_recipe_claim(item)]
+        ai_fixes = [item for item in ai_fixes if not is_unapproved_recipe_claim(item)]
+        recipe_warnings = [
+            "AI recipe finding excluded from blocking errors because deterministic "
+            f"prep analysis did not authorize that recipe requirement: {item}"
+            for item in ignored
+        ]
     local_errors, local_warnings = _downgrade_non_selected_top_interface_issues(
         local_errors,
         local_warnings,
@@ -825,9 +871,9 @@ def merge_prep_review_results(
     )
 
     ai_errors, ai_warnings, ai_fixes = _downgrade_prep_ai_errors(
-        ai_review.get("errors", []),
-        ai_review.get("warnings", []),
-        ai_review.get("suggested_fixes", []),
+        ai_errors,
+        [*ai_review.get("warnings", []), *recipe_warnings],
+        ai_fixes,
         local_review_passed=not local_errors and not prep_dependency_errors,
     )
     ai_errors, ai_warnings = _downgrade_non_selected_top_interface_issues(
@@ -874,6 +920,11 @@ def merge_prep_review_results(
 
     local_summary = str(local_review.get("summary", "")).strip()
     ai_summary = str(ai_review.get("summary", "")).strip()
+    if recipe_warnings:
+        ai_summary = (
+            "AI review contained recipe requirements outside the deterministic "
+            "applicability decision; those findings were retained as warnings only."
+        )
     summary_parts = [part for part in [local_summary, ai_summary] if part]
 
     return {

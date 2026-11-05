@@ -6,6 +6,8 @@ import os
 import codecs
 import shlex
 import time
+import threading
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -170,28 +172,64 @@ class SSHExecutor:
             if channel is not None:
                 channel.close()
 
-    def upload_file(self, local_path: str | Path, remote_path: str, *, exclusive: bool = False) -> None:
+    @contextmanager
+    def _sftp_session(self, timeout: int):
+        """Bound subsystem startup as well as file reads/writes and close/flush."""
+        if timeout <= 0:
+            raise ValueError("SFTP timeout must be positive")
+        self.connect(timeout=min(timeout, 30))
+        client = self._client
+        expired = threading.Event()
+
+        def expire():
+            expired.set()
+            # Channel socket timeouts alone do not bound subsystem startup.
+            # Closing this connection wakes blocked SFTP requests too.
+            client.close()
+
+        deadline = threading.Timer(timeout, expire)
+        deadline.daemon = True
+        deadline.start()
+        try:
+            with client.open_sftp() as sftp:
+                sftp.get_channel().settimeout(timeout)
+                yield sftp
+            if expired.is_set():
+                raise TimeoutError(f"SFTP transfer exceeded {timeout} seconds")
+        except Exception as exc:
+            if expired.is_set():
+                raise TimeoutError(f"SFTP transfer exceeded {timeout} seconds") from exc
+            raise
+        finally:
+            deadline.cancel()
+            if expired.is_set():
+                self.close()
+
+    def upload_file(self, local_path: str | Path, remote_path: str, *, exclusive: bool = False,
+                    timeout: int = 120) -> None:
         """Upload a runner to a caller-selected, unique remote filename."""
-        self.connect()
-        with self._client.open_sftp() as sftp:
-            if exclusive:
-                with sftp.open(remote_path, "wx") as destination:
-                    destination.write(Path(local_path).read_bytes())
-            else:
-                sftp.put(str(local_path), remote_path)
+        try:
+            with self._sftp_session(timeout) as sftp:
+                if exclusive:
+                    with sftp.open(remote_path, "wx") as destination:
+                        destination.write(Path(local_path).read_bytes())
+                else:
+                    sftp.put(str(local_path), remote_path)
+        except Exception as exc:
+            self.close()
+            raise RuntimeError(f"Upload failed for {local_path} -> {remote_path}: {type(exc).__name__}: {exc}") from exc
 
     def fetch_file(
         self,
         remote_path: str,
         local_path: str | Path,
         *,
-        timeout: int = 30,
+        timeout: int = 120,
     ) -> dict:
         try:
-            self.connect(timeout=timeout)
             local = Path(local_path)
             local.parent.mkdir(parents=True, exist_ok=True)
-            with self._client.open_sftp() as sftp:
+            with self._sftp_session(timeout) as sftp:
                 sftp.get(remote_path, str(local))
             return {
                 "ok": True,
@@ -205,5 +243,5 @@ class SSHExecutor:
                 "ok": False,
                 "remote_path": remote_path,
                 "local_path": str(local_path),
-                "error": str(exc),
+                "error": f"{type(exc).__name__}: {exc}",
             }

@@ -224,6 +224,45 @@ class AIClosureTests(unittest.TestCase):
         self.assertIn('AI timing action selected: insert_buffer at rsp_rdata_q_reg[17]/D', transcript)
         self.assertIn(action['reason'], transcript)
 
+    def test_empty_ai_decision_uses_hold_fallback_and_remeasures_limits(self):
+        class HoldFallbackSSH(EvidenceSSH):
+            def fetch_file(self, remote, local):
+                result = super().fetch_file(remote, local)
+                if remote.endswith('eco_library.rpt'):
+                    with Path(local).open('a') as handle:
+                        handle.write('sky130_fd_sc_hd__buf_1\n')
+                elif remote.endswith('hold_postroute.rpt') and '_ai_' not in remote:
+                    Path(local).write_text(Path(local).read_text().replace('0.020', '-0.050'))
+                return result
+
+        for overrides, expected in (({}, 'passed'), ({'hold_slack': -0.03}, 'failed'),
+                                    ({'ai_power': MAX_POWER_W + 0.01}, 'failed')):
+            with self.subTest(overrides=overrides):
+                self.states.clear()
+                self.state['timing_closure_ai_max_attempts'] = 1
+                decision = {'summary': 'No supported repairs: hold endpoints are absent.', 'actions': []}
+                with patch.object(closure, 'plan_timing_recovery', return_value=decision):
+                    result = self.run_closure(HoldFallbackSSH([-0.3, -0.1, -0.2, 0.01], **overrides))
+                self.assertEqual(result['timing_closure_status'], expected, result.get('last_error'))
+                self.assertEqual(len(self.states), 4)
+                actions = self.states[3]['timing_closure_eco_plan']['actions']
+                self.assertTrue(actions)
+                self.assertTrue(all(action['operation'] == 'insert_buffer' for action in actions))
+                self.assertIn('hold_wns_ns', result['timing_closure_attempts'][-1])
+                self.assertIn('limits', result['timing_closure_attempts'][-1])
+                artifact = json.loads((self.repo / 'logs/timing_closure/target_210MHz/ai_plan_4.json').read_text())
+                self.assertEqual(artifact['ai_decision'], decision)
+                self.assertTrue(artifact['decision_check']['fallback_used'])
+                self.assertIn('contradicted', '\n'.join(str(item) for item in result['history']))
+
+    def test_empty_ai_decision_with_passing_hold_does_not_buffer(self):
+        with patch.object(closure, 'plan_timing_recovery', return_value={
+                'summary': 'No useful setup repair remains.', 'actions': []}):
+            result = self.run_closure(EvidenceSSH([-0.3, -0.1, -0.2]))
+        self.assertEqual(len(self.states), 3)
+        self.assertEqual(result['timing_closure_status'], 'failed')
+        self.assertIn('No useful setup repair remains', result['last_error'])
+
     def test_regression_restarts_from_best_and_feedback_reaches_ai(self):
         seen = []
         def decide(context, **kwargs):

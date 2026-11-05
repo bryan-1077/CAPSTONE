@@ -337,8 +337,13 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 quoted = shlex.quote(str(invocation / name))
                 checked(f"test ! -e {quoted} && test ! -L {quoted} || "
                         "{ echo 'Remote workspace already used; select a fresh workspace' >&2; exit 1; }")
-            for path in files:
+            record["phase"] = "input_upload"
+            output("stdout", f"[TRANSFER] Uploading {len(files)} input files; each SFTP operation has a 120-second deadline.\n")
+            for index, path in enumerate(files, 1):
+                record["upload_file"] = path.relative_to(snapshot).as_posix()
+                output("stdout", f"[TRANSFER] {index}/{len(files)}: {record['upload_file']}\n")
                 ssh.upload_file(path, str(invocation / "input" / path.relative_to(snapshot).as_posix()), exclusive=True)
+            output("stdout", "[TRANSFER] Inputs uploaded; uploading verification launcher.\n")
             ssh.upload_file(request_path, str(invocation / "request.json"), exclusive=True)
             ssh.upload_file(Path(__file__).with_name("validation_runner.py"), str(invocation / "runner.py"), exclusive=True)
             if module_probe:
@@ -351,6 +356,7 @@ def validation_node(config, run_dir: Path) -> StageResult:
             command = slurm_command(job_config, [remote.python, "-u", str(invocation / "runner.py"), str(invocation)], job_name)
             record["command"] = command
             record["phase"] = "execution"
+            output("stdout", "[VALIDATION] Launching server verification pipeline.\n")
             launched = True
             execution = ssh.run(command, timeout=remote.timeout_seconds if config.preflight_only else remote.validation_timeout_seconds, on_output=output)
             record["execution"] = execution

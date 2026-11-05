@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from dataclasses import replace
@@ -255,6 +256,53 @@ class TransportTests(unittest.TestCase):
             result = ssh.fetch_file("/remote/result.json", destination)
             self.assertTrue(result["ok"])
             sftp.get.assert_called_once_with("/remote/result.json", str(destination))
+            sftp.get_channel.return_value.settimeout.assert_called_with(120)
+
+    def test_sftp_deadline_bounds_startup_writes_and_flush(self):
+        for stage in ("startup", "write", "flush"):
+            with self.subTest(stage=stage), tempfile.TemporaryDirectory() as temporary:
+                ssh = SSHExecutor("host", "user")
+                client = MagicMock()
+                ssh._client = client
+                closed = threading.Event()
+                client.close.side_effect = closed.set
+
+                def blocked(*args):
+                    if not closed.wait(2):
+                        raise AssertionError("Transfer deadline failed to close the connection")
+                    raise OSError("connection closed during stalled I/O")
+
+                sftp = client.open_sftp.return_value.__enter__.return_value
+                if stage == "startup":
+                    client.open_sftp.side_effect = blocked
+                elif stage == "write":
+                    sftp.open.return_value.__enter__.return_value.write.side_effect = blocked
+                else:
+                    sftp.open.return_value.__exit__.side_effect = blocked
+                source = Path(temporary) / "top.sv"
+                source.write_bytes(b"RTL")
+                with patch.object(ssh, "connect"), self.assertRaisesRegex(RuntimeError, "top.sv.*SFTP transfer exceeded"):
+                    ssh.upload_file(source, "/remote/top.sv", exclusive=True, timeout=0.05)
+                self.assertIsNone(ssh._client)
+
+    def test_sftp_download_deadline_returns_failure_and_closes_connection(self):
+        ssh = SSHExecutor("host", "user")
+        client = MagicMock()
+        ssh._client = client
+        closed = threading.Event()
+        client.close.side_effect = closed.set
+
+        def blocked(*args):
+            if not closed.wait(2):
+                raise AssertionError("Download deadline failed to close the connection")
+            raise OSError("connection closed during stalled read")
+
+        client.open_sftp.return_value.__enter__.return_value.get.side_effect = blocked
+        with tempfile.TemporaryDirectory() as temporary, patch.object(ssh, "connect"):
+            result = ssh.fetch_file("/remote/result.json", Path(temporary) / "result.json", timeout=0.05)
+        self.assertFalse(result["ok"])
+        self.assertIn("SFTP transfer exceeded", result["error"])
+        self.assertIsNone(ssh._client)
 
     def executor(self, channel):
         ssh = SSHExecutor("host", "user")

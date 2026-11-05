@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from timing_closure.remote_analyze import fetch_remote_reports
 from timing_closure.recovery_context import build_recovery_evidence, excerpt
+from timing_closure.hold_recovery import legal_hold_targets, fallback_hold_plan, plan_signature
 from timing_closure.timing_analyzer import analyze_reports, parse_timing_report, render_markdown
 from services.path_naming import resolve_prepare_dir, resolve_netlist_dir_choice, resolve_mapped_dir_choice
 from services import mapped_snapshot
@@ -248,7 +249,23 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 plan = validate_plan(plan_timing_recovery(
                     context, diagnostics_path=run_log_dir / f"ai_response_{run_id}_{attempt}.json",
                 ), choices, buffers)
-                (run_log_dir / f"ai_plan_{attempt}.json").write_text(json.dumps({"context": context, "plan": plan}, indent=2) + "\n")
+                ai_decision = deepcopy(plan)
+                targets = legal_hold_targets(parse_timing_report(hold_paths[0]), buffers)
+                decision_check = {"empty_plan_with_legal_hold_targets": not plan["actions"] and bool(targets),
+                                  "legal_hold_targets": targets, "fallback_used": False}
+                if decision_check["empty_plan_with_legal_hold_targets"]:
+                    record("planning", f"Empty AI repair decision contradicted by {len(targets)} failing hold endpoints with legal buffer choices.")
+                    fallback = fallback_hold_plan(targets, buffers, source_entry["outdir"], tried_plans)
+                    if fallback:
+                        plan = fallback
+                        decision_check["fallback_used"] = True
+                        record("planning", "Using a bounded deterministic hold-buffer experiment; all measurement gates still apply.")
+                    else:
+                        plan = {"actions": [], "summary": "Legal hold-buffer targets exist, but all bounded fallback plans for this checkpoint have already been measured."}
+                (run_log_dir / f"ai_plan_{attempt}.json").write_text(json.dumps({
+                    "context": context, "ai_decision": ai_decision,
+                    "decision_check": decision_check, "plan": plan,
+                }, indent=2) + "\n")
                 action_types = {"buffer insertion" if action.get("operation") == "insert_buffer" else "resizing"
                                 for action in plan["actions"]}
                 selected_repair = " and ".join(sorted(action_types)) if action_types else "no repair"
@@ -262,9 +279,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                     record("planning", f"AI timing action selected: {detail}; reason: {action['reason']}")
                 if not plan["actions"]:
                     return fail(f"AI timing recovery stopped: {plan['summary']}")
-                signature = json.dumps([source_entry["outdir"], sorted(
-                    json.dumps({k: v for k, v in action.items() if k != 'reason'}, sort_keys=True)
-                    for action in plan["actions"])])
+                signature = plan_signature(source_entry["outdir"], plan["actions"])
                 if signature in tried_plans:
                     return fail("AI repeated an already measured resize plan; stopping without rerunning it.")
                 tried_plans.add(signature)

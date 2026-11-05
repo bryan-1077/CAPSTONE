@@ -1481,6 +1481,219 @@ def copy_stream_map(found_stream_map, outdir):
     return dst
 
 
+SCREENSHOT_STAGES = (
+    ("floorplan", "02_powerplan.enc", "fplan"),
+    ("placement", "03_place.enc", "place"),
+    ("routing", "06_final.enc", "physical"),
+)
+
+
+def screenshot_tcl_word(value):
+    """Quote a literal Tcl argument, including paths containing spaces or brackets."""
+    value = str(value).replace("\\", "\\\\")
+    for char in ('"', '$', '[', ']'):
+        value = value.replace(char, "\\" + char)
+    return '"' + value.replace("\n", "\\n").replace("\r", "\\r") + '"'
+
+
+def build_screenshot_tcl(checkpoint, image, view):
+    # saveDesign produces a Tcl loader that selects the correct restore command.
+    return "\n".join([
+        "# Read-only export in a fresh graphics-enabled Innovus session.",
+        "if {[catch {",
+        '    puts "SCREENSHOT: restoring checkpoint"; flush stdout',
+        "    source " + screenshot_tcl_word(checkpoint),
+        '    puts "SCREENSHOT: configuring view"; flush stdout',
+        "    setDrawView " + view,
+        # Explicit visibility avoids inheriting hidden layers from a saved GUI.
+        "    foreach layer [dbGet head.layers.name] {",
+        '        if {[catch {setLayerPreference $layer -isVisible 1} layer_error]} {puts "WARN: $layer: $layer_error"}',
+        "    }",
+        "    deselectAll",
+        "    fit",
+        "    redraw",
+        "    update",
+        '    puts "SCREENSHOT: exporting PNG"; flush stdout',
+        "    dumpToPNG " + screenshot_tcl_word(image),
+        "} screenshot_error]} {",
+        '    puts "ERROR: screenshot export failed: $screenshot_error"',
+        '    puts $::errorInfo; flush stdout',
+        "    exit 9",
+        "}",
+        "exit 0",
+        "",
+    ])
+
+
+def screenshot_source_build(build):
+    """Follow recorded lineage, or the narrow restore statement in older Tcl."""
+    import json
+    metadata = build / "screenshot_lineage.json"
+    if metadata.is_file():
+        data = json.loads(metadata.read_text())
+        source = data.get("source_build")
+        if source is None:
+            return None
+        if not isinstance(source, str) or not source:
+            raise ValueError("Invalid screenshot source_build in " + str(metadata))
+        path = Path(source).expanduser()
+        return (path if path.is_absolute() else build / path).resolve()
+    script = build / "tcl" / "run_innovus.tcl"
+    if script.is_file():
+        # Parse only a literal restore path; never execute Tcl to discover lineage.
+        match = re.search(r"^set eco_checkpoint \{([^{}\r\n]+)\}\s*$", script.read_text(), re.MULTILINE)
+        if match:
+            path = Path(match.group(1))
+            path = (path if path.is_absolute() else build / path).resolve()
+            if path.parent.name == "db":
+                return path.parent.parent
+    return None
+
+
+def screenshot_checkpoint(build, stage, name, source_build=None):
+    """Earlier stages may come from ancestors; routing must describe this build."""
+    current = build.resolve()
+    seen = set()
+    for depth in range(32):
+        if current in seen:
+            raise ValueError("Cycle in screenshot lineage: " + str(current))
+        seen.add(current)
+        checkpoint = current / "db" / name
+        if checkpoint.is_file() and Path(str(checkpoint) + ".dat").is_dir():
+            return checkpoint, current
+        if stage == "routing":
+            break
+        parent = Path(source_build).expanduser().resolve() if depth == 0 and source_build else screenshot_source_build(current)
+        if parent is None:
+            break
+        current = parent
+    raise RuntimeError("Missing checkpoint loader or database for {0}: {1}; checked {2}".format(
+        stage, build / "db" / name, ", ".join(str(p) for p in sorted(seen))))
+
+
+def write_screenshot_lineage(outdir, source_checkpoint=None):
+    import json
+    source = None
+    if source_checkpoint:
+        checkpoint = Path(source_checkpoint).expanduser().resolve()
+        if checkpoint.parent.name != "db":
+            raise ValueError("Screenshot source checkpoint must be in a build's db directory")
+        source = str(checkpoint.parent.parent)
+    write_text(outdir / "screenshot_lineage.json", json.dumps({"source_build": source}, indent=2) + "\n")
+
+
+def screenshot_png_size(path):
+    """Check PNG structure and CRCs; return dimensions without extra packages."""
+    import struct
+    import zlib
+
+    with path.open("rb") as stream:
+        if stream.read(8) != b"\x89PNG\r\n\x1a\n":
+            raise ValueError("Exporter did not produce a PNG")
+        dimensions = None
+        has_data = False
+        while True:
+            header = stream.read(8)
+            if len(header) != 8:
+                raise ValueError("Truncated PNG")
+            length, kind = struct.unpack(">I4s", header)
+            if length > 64 * 1024 * 1024:
+                raise ValueError("PNG chunk exceeds validation limit")
+            data, crc = stream.read(length), stream.read(4)
+            if len(data) != length or len(crc) != 4:
+                raise ValueError("Truncated PNG chunk")
+            if zlib.crc32(kind + data) & 0xffffffff != struct.unpack(">I", crc)[0]:
+                raise ValueError("Invalid PNG checksum")
+            if dimensions is None:
+                if kind != b"IHDR" or length != 13:
+                    raise ValueError("Missing PNG header")
+                dimensions = struct.unpack(">II", data[:8])
+                if min(dimensions) < 64:
+                    raise ValueError("PNG is too small to show the layout")
+            if kind == b"IDAT" and length:
+                has_data = True
+            if kind == b"IEND":
+                if length or not has_data:
+                    raise ValueError("PNG contains no image data or has an invalid end")
+                return dimensions
+
+
+def export_screenshots(outdir, innovus, mode="auto", timeout=300, source_build=None):
+    """Export each checkpoint independently; record failures without losing GDS."""
+    import os
+    import json
+
+    outdir = Path(outdir).resolve()
+    image_dir = outdir / "results" / "screenshots"
+    image_dir.mkdir(parents=True, exist_ok=True)
+    for folder in (outdir / "tcl", outdir / "logs"):
+        folder.mkdir(parents=True, exist_ok=True)
+    manifest = {"mode": mode, "status": "pending", "images": []}
+    environment = os.environ.copy()
+    environment.setdefault("CDS_LIC_FILE", DEFAULT_CDS_LIC_FILE)
+    environment.setdefault("LM_LICENSE_FILE", DEFAULT_LM_LICENSE_FILE)
+    # Prefer a fresh virtual display over a possibly stale inherited SSH DISPLAY.
+    xvfb = shutil.which("xvfb-run") if mode in ("auto", "xvfb") else None
+    use_xvfb = mode == "xvfb" or (mode == "auto" and (xvfb or not environment.get("DISPLAY")))
+    manifest["display_mode"] = "xvfb" if use_xvfb else "display"
+    for stage, checkpoint_name, view in SCREENSHOT_STAGES:
+        checkpoint = outdir / "db" / checkpoint_name
+        image = image_dir / (stage + ".png")
+        log = outdir / "logs" / ("screenshot_" + stage + ".log")
+        tcl = outdir / "tcl" / ("screenshot_" + stage + ".tcl")
+        entry = {"stage": stage, "checkpoint": str(checkpoint), "file": str(image),
+                 "log": str(log), "status": "pending"}
+        manifest["images"].append(entry)
+        write_text(log, "Screenshot stage: {0}\n".format(stage))
+        try:
+            # Never let an earlier successful export masquerade as this attempt.
+            if image.exists():
+                image.unlink()
+            checkpoint, origin = screenshot_checkpoint(outdir, stage, checkpoint_name, source_build)
+            entry.update(checkpoint=str(checkpoint), source_build=str(origin),
+                         origin="current_build" if origin == outdir else "ancestor_build")
+            write_text(tcl, build_screenshot_tcl(checkpoint, image, view))
+            if mode == "display" and not environment.get("DISPLAY"):
+                raise RuntimeError("DISPLAY is unset; use --screenshots xvfb or enable X forwarding")
+            command = [str(innovus), "-log", str(outdir / "logs" / ("screenshot_" + stage + "_native.log")),
+                       "-files", str(tcl)]
+            if use_xvfb:
+                if not xvfb:
+                    raise RuntimeError("No virtual display: install Xvfb/xvfb-run and xauth, or use --screenshots display with DISPLAY set")
+                command = [xvfb, "-a", "-s", "-screen 0 1920x1080x24"] + command
+            entry["command"] = command
+            # A GUI is intentional here: the main implementation still uses -no_gui.
+            with log.open("a", encoding="utf-8") as output:
+                # A separate process group lets timeout terminate Xvfb and Innovus.
+                process = subprocess.Popen(command, cwd=str(outdir), env=environment,
+                                           stdout=output, stderr=subprocess.STDOUT,
+                                           start_new_session=True)
+                try:
+                    code = process.wait(timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    import signal
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait()
+                    raise RuntimeError("Screenshot export timed out after {0}s".format(timeout))
+            if code:
+                raise RuntimeError("Innovus screenshot process exited with code {0}".format(code))
+            width, height = screenshot_png_size(image)
+            entry.update(status="success", width=width, height=height)
+            print("Screenshot: {0}".format(image))
+        except (OSError, RuntimeError, ValueError) as error:
+            entry.update(status="failed", error=str(error))
+            # Keep the actual startup/Tcl error in the manifest, not just an exit code.
+            with log.open("rb") as output:
+                output.seek(max(0, log.stat().st_size - 6000))
+                entry["log_tail"] = output.read().decode("utf-8", errors="replace")
+            with log.open("a", encoding="utf-8") as output:
+                output.write("\nEXPORT ERROR: " + str(error) + "\n")
+            print("WARN: {0} screenshot failed: {1}. See {2}".format(stage, error, log))
+    manifest["status"] = "success" if all(e["status"] == "success" for e in manifest["images"]) else "failed"
+    write_text(image_dir / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+    return manifest["status"] == "success"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run a universal Innovus/GDSII flow from a mapped Genus build."
@@ -1542,7 +1755,24 @@ def main():
     parser.add_argument("--tiehi-net", default=None)
     parser.add_argument("--tielo-net", default=None)
     parser.add_argument("--setup-only", action="store_true")
+    parser.add_argument("--screenshots", choices=("auto", "display", "xvfb", "off"), default="auto",
+                        help="Export stage PNGs after GDS; auto prefers xvfb-run, then DISPLAY.")
+    parser.add_argument("--screenshots-only", action="store_true",
+                        help="Export existing checkpoints in --outdir without running implementation.")
+    parser.add_argument("--screenshot-timeout", type=int, default=300,
+                        help="Maximum seconds per screenshot session (default: 300).")
+    parser.add_argument("--screenshot-source-build",
+                        help="Explicit ancestor build for missing floorplan/placement checkpoints; routing stays local.")
     args = parser.parse_args()
+
+    if args.screenshot_timeout <= 0:
+        parser.error("--screenshot-timeout must be positive")
+    if args.screenshots_only:
+        if not args.outdir or args.screenshots == "off" or args.setup_only:
+            parser.error("--screenshots-only requires --outdir and enabled screenshots, without --setup-only")
+        return 0 if export_screenshots(Path(args.outdir).expanduser(), find_innovus(args.innovus),
+                                       args.screenshots, args.screenshot_timeout, args.screenshot_source_build) else 1
+
 
     mappeddir = find_mapped_builddir(args.mappeddir)
     outdir = derive_outdir(mappeddir, args.outdir)
@@ -1765,6 +1995,16 @@ def main():
         "{0:.3f}".format(args.ccopt_target_max_transition),
         args.final_postroute_setup_opt,
     )
+    # Persist ancestry even when PNG export is disabled, so later ECOs can find it.
+    import json
+    source_checkpoint = None
+    for option in ("timing_eco_json", "physical_repair_json"):
+        raw = getattr(args, option, None)
+        if raw:
+            source_checkpoint = json.loads(raw)["checkpoint"]
+    if args.screenshot_source_build:
+        source_checkpoint = Path(args.screenshot_source_build).expanduser().resolve() / "db" / "06_final.enc"
+    write_screenshot_lineage(outdir, source_checkpoint)
     write_text(outdir / "setup_summary.txt", summary)
     print(summary)
 
@@ -1802,6 +2042,11 @@ def main():
                 innovus_log,
             )
         )
+
+    if args.screenshots != "off":
+        if not export_screenshots(outdir, innovus, args.screenshots, args.screenshot_timeout, args.screenshot_source_build):
+            print("WARN: GDS is available, but screenshots are incomplete. "
+                  "Check results/screenshots/manifest.json; retry with --screenshots-only --outdir.")
 
     return 0
 
