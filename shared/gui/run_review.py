@@ -8,6 +8,7 @@ from .run_storage import worker_log_path, lifecycle_path
 from .registry import read_record
 from .run_reader import preview
 from .node_graph import MAIN_NODES
+from .action_button import ActionButton
 
 
 class RunReview(QWidget):
@@ -31,10 +32,10 @@ class RunReview(QWidget):
         self.caption = QLabel()
         self.caption.setObjectName('fieldHeading')
         controls.addWidget(self.caption, 1)
-        self.spec = QPushButton('Approved Specification')
+        self.spec = ActionButton('Approved Specification', icon_kind='approved-spec')
         self.spec.clicked.connect(self.specification_requested)
         controls.addWidget(self.spec)
-        self.log_toggle = QPushButton('Show Run Log')
+        self.log_toggle = ActionButton('Show Run Log', icon_kind='run-log')
         self.log_toggle.setCheckable(True)
         controls.addWidget(self.log_toggle)
         layout.addLayout(controls)

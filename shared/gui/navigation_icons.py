@@ -15,7 +15,8 @@ class NavigationIcon(QIconEngine):
     def paint(self, painter, rect, mode, state):
         colors = theme_colors()
         ink = (colors['disabled'] if mode == QIcon.Mode.Disabled else
-               colors['field'] if self.kind == 'new-design' or state == QIcon.State.On else colors['text'])
+               colors['field'] if self.kind == 'new-design' or (
+                   self.kind == 'saved-runs' and state == QIcon.State.On) else colors['text'])
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.translate(rect.x(), rect.y())
@@ -34,6 +35,24 @@ class NavigationIcon(QIconEngine):
             painter.drawPath(shape)
             painter.drawLine(QPointF(15, 12), QPointF(15, 18))
             painter.drawLine(QPointF(12, 15), QPointF(18, 15))
+        elif self.kind == 'approved-spec':
+            shape.moveTo(4, 2)
+            for x, y in [(12, 2), (16, 6), (16, 18), (4, 18), (4, 2)]:
+                shape.lineTo(x, y)
+            shape.moveTo(12, 2)
+            shape.lineTo(12, 6)
+            shape.lineTo(16, 6)
+            painter.drawPath(shape)
+            check = QPainterPath(QPointF(7, 12))
+            check.lineTo(9.5, 14.5)
+            check.lineTo(13.5, 10)
+            painter.drawPath(check)
+        elif self.kind == 'run-log':
+            painter.drawRoundedRect(2, 3, 16, 14, 1, 1)
+            painter.drawLine(QPointF(2, 7), QPointF(18, 7))
+            for y, end in [(10, 15), (13, 12)]:
+                painter.drawPoint(QPointF(5, y))
+                painter.drawLine(QPointF(8, y), QPointF(end, y))
         else:
             shape.moveTo(2, 5)
             for x, y in [(8, 5), (10, 7), (18, 7), (18, 17), (2, 17), (2, 5)]:

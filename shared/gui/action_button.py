@@ -7,6 +7,13 @@ from PySide6.QtWidgets import QPushButton, QStyle, QStyleOptionButton, QStylePai
 class ActionButton(QPushButton):
     icon_gap = 8
 
+    def __init__(self, text='', parent=None, *, icon_kind=None):
+        super().__init__(text, parent)
+        if icon_kind is not None:
+            from .navigation_icons import navigation_icon
+            self.setIcon(navigation_icon(icon_kind))
+            self.setIconSize(QSize(18, 18))
+
     def sizeHint(self):
         hint = super().sizeHint()
         if not self.icon().isNull() and self.text():
@@ -42,7 +49,8 @@ class ActionButton(QPushButton):
         from .theme import theme_colors
         colors = theme_colors()
         foreground = (colors['disabled'] if not self.isEnabled() else
-                      colors['field'] if self.isChecked() or self.objectName() == 'primaryAction' else colors['text'])
+                      colors['field'] if self.objectName() == 'primaryAction' or (
+                          self.objectName() == 'historyToggle' and self.isChecked()) else colors['text'])
         palette = QPalette(option.palette)
         palette.setColor(QPalette.ColorRole.ButtonText, QColor(foreground))
         self.style().drawItemText(painter, text_rect, Qt.AlignmentFlag.AlignCenter,

@@ -8,6 +8,7 @@ from .node_graph import MAIN_NODES
 from .stage_details import evidence_rows
 from .verification_details import small_json, validation_directory
 from .physical_details import backend_report, measured_results
+from .action_button import ActionButton
 
 
 def verification_report(run):
@@ -127,7 +128,7 @@ class ResultsPanel(QScrollArea):
         summary.add_widget(label('Target speed is a design request. Achieved timing requires physical timing evidence.'))
         if run.error:
             summary.add_widget(label('Saved evidence could not be read: ' + run.error))
-        spec = QPushButton('Approved Specification')
+        spec = ActionButton('Approved Specification', icon_kind='approved-spec')
         spec.setEnabled(approved_spec_path(run.directory) is not None)
         spec.clicked.connect(self.specification_requested)
         summary.content.itemAt(0).layout().insertWidget(1, spec)

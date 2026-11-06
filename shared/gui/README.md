@@ -77,6 +77,12 @@ flags. The worker retains existing acceptance gates, snapshot publication, bound
 repair, backend, LEC, and GDSII routing. No live end-to-end remote run has been
 performed to validate this GUI milestone.
 
+New designs default to Skip Equivalence Checking. Target Speed starts blank with
+a short MHz hint and requires a positive value before launch. When Stop Before
+Physical Design is selected, the LEC option is disabled and its flag is omitted
+from the effective configuration; turning physical design back on preserves the
+selected LEC preference. These defaults apply only to the GUI.
+
 Remote credentials are requested through the same prominent pending-decision card
 as specification approval, with the server account, a masked password field, and
 Connect. There is no password field in the initial setup form.

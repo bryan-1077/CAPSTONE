@@ -22,7 +22,10 @@ def validate(config):
             raise ValueError('Invalid YAML specification') from exc
         if not valid:
             raise ValueError('Select approved YAML or enter a design description.')
-    frequency = float(config['target_mhz'])
+    try:
+        frequency = float(config.get('target_mhz', ''))
+    except (TypeError, ValueError):
+        raise ValueError('Enter a target speed in MHz (a positive number).') from None
     if not math.isfinite(frequency) or frequency <= 0:
         raise ValueError('Target MHz must be finite and positive.')
     if config.get('skip_lec') and config.get('no_backend'):

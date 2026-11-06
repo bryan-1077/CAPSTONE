@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QWidget, QFormLayout, QLineEdit, QPushButton,
                               QVBoxLayout, QHBoxLayout, QGroupBox, QScrollArea, QSplitter)
 from .execution import launch
 from .run_reader import load_run, summary, preview
+from .action_button import ActionButton
 
 
 class SetupPanel(QWidget):
@@ -86,12 +87,12 @@ class SetupPanel(QWidget):
         self.active_stage_button.clicked.connect(self.return_to_active_stage)
         self.active_stage_button.hide()
         workspace_controls.addWidget(self.active_stage_button)
-        self.spec_button = QPushButton('Approved Specification')
+        self.spec_button = ActionButton('Approved Specification', icon_kind='approved-spec')
         self.spec_button.setToolTip('Read the approved specification saved with this run.')
         self.spec_button.setEnabled(False)
         self.spec_button.clicked.connect(self.show_approved_specification)
         workspace_controls.addWidget(self.spec_button)
-        self.details_toggle = QPushButton('Show Run Log')
+        self.details_toggle = ActionButton('Show Run Log', icon_kind='run-log')
         self.details_toggle.setCheckable(True)
         workspace_controls.addWidget(self.details_toggle)
         workspace_layout.addLayout(workspace_controls)
@@ -116,7 +117,8 @@ class SetupPanel(QWidget):
         browse.clicked.connect(lambda: self.pick(self.yaml, 'YAML (*.yaml *.yml)'))
         file_row.addWidget(browse)
         form.addRow('Saved Specification', file_row)
-        self.frequency = QLineEdit('200')
+        self.frequency = QLineEdit()
+        self.frequency.setPlaceholderText('Enter the target clock speed in MHz')
         self.frequency.setToolTip('Requested controller clock speed; actual performance depends on the completed design.')
         form.addRow('Target Speed (MHz)', self.frequency)
         self.advanced_toggle = QPushButton('Show Advanced Settings')
@@ -137,7 +139,10 @@ class SetupPanel(QWidget):
                            ('skip_verification', 'Skip design verification'),
                            ('no_backend', 'Stop before physical design'), ('skip_lec', 'Skip equivalence checking')]:
             self.flags[key] = QCheckBox(label)
+            self.flags[key].setChecked(key == 'skip_lec')
             advanced.addRow(self.flags[key])
+        self.flags['no_backend'].toggled.connect(
+            lambda checked: self.flags['skip_lec'].setEnabled(not checked))
         form.addRow(self.advanced)
         self.advanced.hide()
         self.advanced_toggle.toggled.connect(self.advanced.setVisible)
@@ -299,10 +304,10 @@ class SetupPanel(QWidget):
         self.input_panel.setEnabled(True)
         self.description.clear()
         self.yaml.clear()
-        self.frequency.setText('200')
+        self.frequency.clear()
         self.review_frequency.setChecked(False)
-        for field in self.flags.values():
-            field.setChecked(False)
+        for key, field in self.flags.items():
+            field.setChecked(key == 'skip_lec')
         self.advanced_toggle.setChecked(False)
         self.details_toggle.setChecked(False)
         self.status.clear()
@@ -341,6 +346,8 @@ class SetupPanel(QWidget):
 
     def start_run(self):
         config = {key: field.isChecked() for key, field in self.flags.items()}
+        if config['no_backend']:
+            config['skip_lec'] = False
         config.update(input_yaml=self.yaml.text(), target_mhz=self.frequency.text(),
                       remote_config=self.remote.text() or None,
                       description=self.description.toPlainText().strip(),

@@ -26,6 +26,26 @@ class RunProblemTests(unittest.TestCase):
         self.panel.close()
         self.panel.deleteLater()
 
+    def test_defaults_and_frontend_only_launch_keep_skip_lec_valid(self):
+        self.assertTrue(self.panel.flags['skip_lec'].isChecked())
+        self.assertEqual(self.panel.frequency.text(), '')
+        self.panel.flags['skip_lec'].setChecked(False)
+        self.panel.frequency.setText('240')
+        self.panel.reset_design()
+        self.assertTrue(self.panel.flags['skip_lec'].isChecked())
+        self.assertEqual(self.panel.frequency.text(), '')
+        self.panel.flags['no_backend'].setChecked(True)
+        self.assertFalse(self.panel.flags['skip_lec'].isEnabled())
+        with patch('shared.gui.setup.launch', return_value=(Mock(), Path('/tmp/test-run'))) as launch, patch.object(
+                self.panel, 'poll'):
+            self.panel.start_run()
+            self.assertFalse(launch.call_args.args[0]['skip_lec'])
+        self.panel.timer.stop()
+        self.panel.process = None
+        self.panel.flags['no_backend'].setChecked(False)
+        self.assertTrue(self.panel.flags['skip_lec'].isEnabled())
+        self.assertTrue(self.panel.flags['skip_lec'].isChecked())
+
     def test_new_design_clears_finished_error_and_elapsed_without_changing_saved_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)

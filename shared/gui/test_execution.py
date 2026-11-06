@@ -15,6 +15,9 @@ class ExecutionTests(unittest.TestCase):
             for value in ('nan', '-1', 'inf'):
                 with self.assertRaises(ValueError):
                     validate(dict(base, target_mhz=value))
+            for value in ('', None, 'fast'):
+                with self.assertRaisesRegex(ValueError, 'Enter a target speed in MHz'):
+                    validate(dict(base, target_mhz=value))
             with self.assertRaises(ValueError):
                 validate(dict(base, skip_lec=True, no_backend=True))
 
