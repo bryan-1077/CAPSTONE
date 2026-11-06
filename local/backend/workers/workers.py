@@ -77,6 +77,18 @@ def _remote_python(state: FlowState) -> str:
     return shlex.quote(str(state.get("remote_python_cmd", "python3.11")).strip() or "python3.11")
 
 
+def _build_compute_python_command(state: FlowState, script: str, label: str) -> str:
+    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
+    inner_cmd = (
+        "set -e; "
+        f"cd {shlex.quote(project_root)}; "
+        f"printf '%s running on %s\\n' {shlex.quote('[BACKEND] ' + label)} "
+        '"${HOSTNAME:-unknown}" >&2; '
+        f"exec {_remote_python(state)} -c {shlex.quote(script)}"
+    )
+    return _build_inner_ssh_command(state, inner_cmd)
+
+
 def _positive_float_state_arg(state: FlowState, key: str, flag: str) -> str:
     value = state.get(key)
     if value in (None, ""):
@@ -123,6 +135,7 @@ def _build_gdsii_timing_closure_args(state: FlowState) -> str:
 
 
 def _build_prepare_command(state: FlowState) -> str:
+    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     outdir = state.get("remote_prepare_dir", "build_prep_mc_lang")
     input_name = state.get("remote_prepare_input", "MemoryController.zip")
     prepare_script = state.get("remote_prepare_script", DEFAULT_PREPARE_SCRIPT)
@@ -142,20 +155,23 @@ def _build_prepare_command(state: FlowState) -> str:
         ),
     ]
 
-    return (
+    inner_cmd = (
+        "set -e; "
+        f"cd {shlex.quote(project_root)}; "
         f"{'; '.join(exports)}; "
+        "printf '[PREP] Generation running on %s\\n' \"${HOSTNAME:-unknown}\"; "
         f"rm -rf {shlex.quote(outdir)} && "
         f"{remote_python} {shlex.quote(prepare_script)} "
         f"--input {shlex.quote(input_name)} "
         f"--outdir {shlex.quote(outdir)}"
         + (f" --top {shlex.quote(state['top_module'])}" if state.get("mailbox_source") and state.get("top_module") else "")
     )
+    return _build_inner_ssh_command(state, inner_cmd)
 
 
 def _build_prepare_review_command(state: FlowState, candidate_path: str) -> str:
     rules_text, preflight_errors = _load_universal_rules(state)
     rules_path = state.get("universal_rules_path") or ""
-    remote_python = _remote_python(state)
     recipe_library_payload = build_synthesis_recipe_library_payload()
 
     review_script = f"""
@@ -1905,7 +1921,7 @@ if summary_details:
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(review_script)}"
+    return _build_compute_python_command(state, review_script, "RTL prep review")
 
 
 def _build_prepare_fix_command(
@@ -1913,7 +1929,6 @@ def _build_prepare_fix_command(
     candidate_path: str,
     actions: list[dict[str, str]],
 ) -> str:
-    remote_python = _remote_python(state)
     actions_json = json.dumps(actions)
     memory_controller_impl_template = """// Generated synthesis-only adaptation for MemoryController.
 module MemoryController_impl
@@ -2683,7 +2698,7 @@ result["summary"] = (
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(fix_script)}"
+    return _build_compute_python_command(state, fix_script, "RTL prep fixes")
 
 
 def _build_stage_access_command(state: FlowState, stage_name: str) -> str:
@@ -2814,7 +2829,6 @@ def _build_netlist_review_command(
         label="Universal netlist",
     )
     rules_path = state.get("netlist_rules_path") or ""
-    remote_python = _remote_python(state)
 
     review_script = f"""
 import fnmatch
@@ -3683,7 +3697,7 @@ result["summary"] = (
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(review_script)}"
+    return _build_compute_python_command(state, review_script, "netlist review")
 
 
 def _build_netlist_edit_command(
@@ -3691,7 +3705,6 @@ def _build_netlist_edit_command(
     builddir: str,
     actions: list[dict[str, str]],
 ) -> str:
-    remote_python = _remote_python(state)
     actions_json = json.dumps(actions)
     edit_script = f"""
 import json
@@ -3891,7 +3904,7 @@ result["summary"] = (
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(edit_script)}"
+    return _build_compute_python_command(state, edit_script, "backend fixes")
 
 
 def _build_mapped_command(state: FlowState) -> str:
@@ -4021,7 +4034,6 @@ def _build_mapped_review_command(
         label="Universal mapped",
     )
     rules_path = state.get("mapped_rules_path") or ""
-    remote_python = _remote_python(state)
 
     review_script = f"""
 import fnmatch
@@ -4474,7 +4486,7 @@ result["summary"] = (
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(review_script)}"
+    return _build_compute_python_command(state, review_script, "mapped review")
 
 
 def _build_mapped_edit_command(
@@ -4619,7 +4631,6 @@ def _build_gdsii_review_command(
         label="Universal GDSII",
     )
     rules_path = state.get("gdsii_rules_path") or ""
-    remote_python = _remote_python(state)
 
     review_script = f"""
 import fnmatch
@@ -4989,7 +5000,7 @@ result["summary"] = (
 print(json.dumps(result))
 """
 
-    return f"{remote_python} -c {shlex.quote(review_script)}"
+    return _build_compute_python_command(state, review_script, "GDSII review")
 
 
 def _build_gdsii_edit_command(

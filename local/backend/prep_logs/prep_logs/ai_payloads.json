@@ -1,0 +1,37 @@
+{
+  "log_entries": {
+    "rtl_prep_fix_1_ai_error": "No module named 'openai'",
+    "rtl_prep_fix_1_ai_raw_response": "",
+    "rtl_prep_fix_1_ai_request_metadata": {
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "candidate_path": null,
+      "deterministic_action_count": 0,
+      "error_count": 1,
+      "model": "protected.gpt-5.4-nano",
+      "timeout_sec": 120.0,
+      "warning_count": 0
+    },
+    "rtl_prep_fix_2_ai_error": "No module named 'openai'",
+    "rtl_prep_fix_2_ai_raw_response": "",
+    "rtl_prep_fix_2_ai_request_metadata": {
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "candidate_path": null,
+      "deterministic_action_count": 0,
+      "error_count": 1,
+      "model": "protected.gpt-5.4-nano",
+      "timeout_sec": 120.0,
+      "warning_count": 0
+    },
+    "rtl_prep_fix_3_ai_error": "No module named 'openai'",
+    "rtl_prep_fix_3_ai_raw_response": "",
+    "rtl_prep_fix_3_ai_request_metadata": {
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "candidate_path": null,
+      "deterministic_action_count": 0,
+      "error_count": 1,
+      "model": "protected.gpt-5.4-nano",
+      "timeout_sec": 120.0,
+      "warning_count": 0
+    }
+  }
+}

@@ -603,7 +603,6 @@ def _run_rtl_prep_review(
     attempt: int,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     candidate_path = state.get("prep_candidate_path") or state.get(
         "remote_prepare_dir",
         "build_prep_mc_lang",
@@ -612,7 +611,6 @@ def _run_rtl_prep_review(
 
     review_result = ssh.run(
         _build_prepare_review_command(state, candidate_path),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -862,7 +860,6 @@ def _run_rtl_prep_fix(
     attempt: int,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     candidate_path = state.get("prep_candidate_path") or state.get(
         "remote_prepare_dir",
         "build_prep_mc_lang",
@@ -928,7 +925,6 @@ def _run_rtl_prep_fix(
 
     apply_result = ssh.run(
         _build_prepare_fix_command(state, candidate_path, actions),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -1367,12 +1363,10 @@ def _run_netlist_review(
     generation_result: dict,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
 
     review_result = ssh.run(
         _build_netlist_review_command(state, builddir, candidate_path),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -1616,7 +1610,6 @@ def _run_netlist_edit(
     builddir: str,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
     review_payload = state.get("validation", {}).get("netlist_review", {})
 
@@ -1694,7 +1687,6 @@ def _run_netlist_edit(
 
     apply_result = ssh.run(
         _build_netlist_edit_command(state, builddir, actions),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -2210,12 +2202,10 @@ def _run_mapped_review(
     generation_result: dict,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
 
     review_result = ssh.run(
         _build_mapped_review_command(state, builddir, candidate_path),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -2459,7 +2449,6 @@ def _run_mapped_edit(
     builddir: str,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
     review_payload = state.get("validation", {}).get("mapped_review", {})
 
@@ -2537,7 +2526,6 @@ def _run_mapped_edit(
 
     apply_result = ssh.run(
         _build_mapped_edit_command(state, builddir, actions),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -3059,12 +3047,10 @@ def _run_gdsii_review(
     generation_result: dict,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
 
     review_result = ssh.run(
         _build_gdsii_review_command(state, mappeddir, candidate_path),
-        cwd=project_root,
         timeout=300,
     )
 
@@ -3303,7 +3289,6 @@ def _run_gdsii_edit(
     attempt: int,
     log_label: str | None = None,
 ) -> tuple[dict, bool]:
-    project_root = state.get("remote_project_root", DEFAULT_PROJECT_ROOT)
     label = log_label or str(attempt)
     review_payload = state.get("validation", {}).get("gdsii_review", {})
 
@@ -3381,7 +3366,6 @@ def _run_gdsii_edit(
 
     apply_result = ssh.run(
         _build_gdsii_edit_command(state, actions),
-        cwd=project_root,
         timeout=300,
     )
 

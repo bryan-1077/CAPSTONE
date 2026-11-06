@@ -40,6 +40,7 @@ class FlowState(TypedDict, total=False):
     backend_log_dir: str
     mailbox_revision: str
     mailbox_file_hashes: Dict[str, str]
+    mailbox_transfer: Dict[str, Any]
     remote_python_cmd: str
     remote_prepare_script: str
     remote_prepare_dir: str

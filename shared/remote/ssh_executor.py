@@ -89,10 +89,14 @@ class SSHExecutor:
         use_srun: bool = False,
         srun_args: str | None = None,
         on_output=None,
+        stdin_path: str | Path | None = None,
     ) -> dict:
         wrapped_command = command
         chunks = {"stdout": [], "stderr": []}
         channel = None
+        sender = None
+        send_errors = []
+        send_finished = threading.Event()
         started = time.monotonic()
 
         try:
@@ -124,7 +128,23 @@ class SSHExecutor:
             )
 
             channel = stdout.channel
-            channel.shutdown_write()
+            if stdin_path is None:
+                channel.shutdown_write()
+                send_finished.set()
+            else:
+                def send_input():
+                    try:
+                        with Path(stdin_path).open("rb") as source:
+                            while data := source.read(65536):
+                                channel.sendall(data)
+                        channel.shutdown_write()
+                    except Exception as exc:
+                        send_errors.append(exc)
+                    finally:
+                        send_finished.set()
+
+                sender = threading.Thread(target=send_input, daemon=True)
+                sender.start()
             decoders = {name: codecs.getincrementaldecoder("utf-8")("replace") for name in chunks}
             def emit(name, data, final=False):
                 text = decoders[name].decode(data, final=final)
@@ -133,6 +153,8 @@ class SSHExecutor:
                     if on_output:
                         on_output(name, text)
             while True:
+                if send_errors:
+                    raise send_errors[0]
                 active = False
                 if channel.recv_ready():
                     emit("stdout", channel.recv(65536))
@@ -149,6 +171,12 @@ class SSHExecutor:
             for name in chunks:
                 emit(name, b"", final=True)
             exit_code = channel.recv_exit_status()
+            if sender is not None and exit_code == 0:
+                sender.join(timeout=1)
+            if exit_code == 0 and not send_finished.is_set():
+                raise RuntimeError("Remote command exited before input transfer completed")
+            if send_errors:
+                raise send_errors[0]
 
             return {
                 "ok": exit_code == 0,
@@ -171,6 +199,8 @@ class SSHExecutor:
         finally:
             if channel is not None:
                 channel.close()
+            if sender is not None:
+                sender.join(timeout=1)
 
     @contextmanager
     def _sftp_session(self, timeout: int):

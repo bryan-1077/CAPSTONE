@@ -135,7 +135,7 @@ class PrepTopTests(unittest.TestCase):
                                      (GENERATED_TCL.replace('elaborate $TOP', 'elaborate wrong_top'), False)):
                 with self.subTest(expected=expected):
                     (root / 'run_genus_mc.tcl').write_text(script)
-                    command = shlex.split(_build_prepare_review_command(state, str(root)))
+                    command = shlex.split(shlex.split(_build_prepare_review_command(state, str(root)))[-1])
                     result = subprocess.run([sys.executable, '-B', '-c', command[-1]], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     payload = json.loads(result.stdout)
@@ -145,7 +145,7 @@ class PrepTopTests(unittest.TestCase):
                 with self.subTest(macros=macros):
                     (root / 'README_prepared.txt').write_text('Top module: ' + TOP +
                         '\n\nPreprocessor macros detected in source:\n  - ' + macros + '\n')
-                    command = shlex.split(_build_prepare_review_command(state, str(root)))
+                    command = shlex.split(shlex.split(_build_prepare_review_command(state, str(root)))[-1])
                     result = subprocess.run([sys.executable, '-B', '-c', command[-1]], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertEqual(json.loads(result.stdout)['pass'], expected)
@@ -157,7 +157,7 @@ class PrepTopTests(unittest.TestCase):
                         top.unlink()
                     else:
                         top.write_text(value)
-                    command = shlex.split(_build_prepare_review_command(state, str(root)))
+                    command = shlex.split(shlex.split(_build_prepare_review_command(state, str(root)))[-1])
                     result = subprocess.run([sys.executable, '-B', '-c', command[-1]], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertFalse(json.loads(result.stdout)['pass'])

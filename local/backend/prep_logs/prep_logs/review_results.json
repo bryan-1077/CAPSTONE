@@ -1,0 +1,115 @@
+{
+  "prep_review_errors": [
+    "RTL prep review command failed on attempt 3 with exit code -1: \nTimeoutError: Remote command exceeded 300 seconds"
+  ],
+  "prep_review_passed": false,
+  "prep_review_warnings": [
+    "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'",
+    "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'",
+    "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'"
+  ],
+  "rtl_failure_category": "unknown",
+  "rtl_failure_handoff_owner": "unknown",
+  "rtl_failure_triage": {
+    "ai_triage": null,
+    "api_error": "No module named 'openai'",
+    "available": false,
+    "confidence": 0.2,
+    "enabled": false,
+    "evidence": [],
+    "failure_category": "unknown",
+    "handoff_owner": "unknown",
+    "model": "protected.gpt-5.4-nano",
+    "raw_response": "",
+    "report_path": "/home/bryan/Desktop/code/CAPSTONE/local/backend/logs/rtl_failure_triage/triage_03c96b4c8ee4408cb1b2e343e41b3467.md",
+    "request_metadata": {
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "local_failure_category": "unknown",
+      "local_handoff_owner": "unknown",
+      "local_review_failure_class": null,
+      "log_chars": 164,
+      "model": "protected.gpt-5.4-nano",
+      "rtl_file_count": 0
+    },
+    "signals": [],
+    "suggested_next_steps": [
+      "Collect richer RTL, tool log, and report evidence before assigning ownership."
+    ],
+    "summary": "No known RTL/front-end or implementation/back-end failure pattern was detected.",
+    "warnings": [
+      "OpenAI RTL failure triage skipped because the openai Python package is not installed."
+    ]
+  },
+  "rtl_failure_triage_payload": {
+    "ai_triage": null,
+    "api_error": "No module named 'openai'",
+    "available": false,
+    "confidence": 0.2,
+    "enabled": false,
+    "evidence": [],
+    "failure_category": "unknown",
+    "handoff_owner": "unknown",
+    "model": "protected.gpt-5.4-nano",
+    "raw_response": "",
+    "report_path": "/home/bryan/Desktop/code/CAPSTONE/local/backend/logs/rtl_failure_triage/triage_03c96b4c8ee4408cb1b2e343e41b3467.md",
+    "request_metadata": {
+      "base_url": "https://chat-api.tamu.ai/openai",
+      "local_failure_category": "unknown",
+      "local_handoff_owner": "unknown",
+      "local_review_failure_class": null,
+      "log_chars": 164,
+      "model": "protected.gpt-5.4-nano",
+      "rtl_file_count": 0
+    },
+    "signals": [],
+    "suggested_next_steps": [
+      "Collect richer RTL, tool log, and report evidence before assigning ownership."
+    ],
+    "summary": "No known RTL/front-end or implementation/back-end failure pattern was detected.",
+    "warnings": [
+      "OpenAI RTL failure triage skipped because the openai Python package is not installed."
+    ]
+  },
+  "validation_review": {
+    "attempt": 3,
+    "errors": [
+      "RTL prep review command failed on attempt 3 with exit code -1: \nTimeoutError: Remote command exceeded 300 seconds"
+    ],
+    "execution_context": {
+      "exit_code": -1,
+      "ok": false
+    },
+    "pass": false,
+    "prep_attempts_exhausted": 3,
+    "rtl_failure_triage": {
+      "ai_triage": null,
+      "api_error": "No module named 'openai'",
+      "available": false,
+      "confidence": 0.2,
+      "enabled": false,
+      "evidence": [],
+      "failure_category": "unknown",
+      "handoff_owner": "unknown",
+      "model": "protected.gpt-5.4-nano",
+      "raw_response": "",
+      "report_path": "/home/bryan/Desktop/code/CAPSTONE/local/backend/logs/rtl_failure_triage/triage_03c96b4c8ee4408cb1b2e343e41b3467.md",
+      "request_metadata": {
+        "base_url": "https://chat-api.tamu.ai/openai",
+        "local_failure_category": "unknown",
+        "local_handoff_owner": "unknown",
+        "local_review_failure_class": null,
+        "log_chars": 164,
+        "model": "protected.gpt-5.4-nano",
+        "rtl_file_count": 0
+      },
+      "signals": [],
+      "suggested_next_steps": [
+        "Collect richer RTL, tool log, and report evidence before assigning ownership."
+      ],
+      "summary": "No known RTL/front-end or implementation/back-end failure pattern was detected.",
+      "warnings": [
+        "OpenAI RTL failure triage skipped because the openai Python package is not installed."
+      ]
+    }
+  }
+}

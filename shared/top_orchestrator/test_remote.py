@@ -334,6 +334,74 @@ class TransportTests(unittest.TestCase):
         self.assertTrue(channel.closed)
         self.assertIsNone(ssh._client)
 
+    def test_binary_input_can_flow_while_remote_output_is_drained(self):
+        class Duplex(FakeChannel):
+            def __init__(self):
+                super().__init__()
+                self.sent = []
+                self.eof = False
+                self.output_read = threading.Event()
+
+            def sendall(self, data):
+                if not self.output_read.wait(2):
+                    raise RuntimeError('Sender blocked output draining')
+                self.sent.append(data)
+
+            def recv(self, size):
+                self.output_read.set()
+                return super().recv(size)
+
+            def shutdown_write(self):
+                self.eof = True
+
+            def exit_status_ready(self):
+                return self.eof and super().exit_status_ready()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            payload = bytes(range(256)) * 1000
+            source = Path(temporary) / 'archive'
+            source.write_bytes(payload)
+            channel = Duplex()
+            ssh = self.executor(channel)
+            with patch.object(ssh, 'connect'):
+                result = ssh.run('receiver', stdin_path=source)
+            self.assertTrue(result['ok'], result['stderr'])
+            self.assertEqual(b''.join(channel.sent), payload)
+            self.assertEqual(result['stdout'], 'hello€')
+            self.assertTrue(channel.closed)
+
+    def test_blocked_binary_send_obeys_the_command_deadline(self):
+        class Blocked(FakeChannel):
+            def __init__(self):
+                super().__init__(stalled=True)
+                self.released = threading.Event()
+
+            def sendall(self, data):
+                self.released.wait(2)
+
+            def close(self):
+                super().close()
+                self.released.set()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'archive'
+            source.write_bytes(b'payload')
+            channel = Blocked()
+            ssh = self.executor(channel)
+            with patch.object(ssh, 'connect'):
+                result = ssh.run('receiver', stdin_path=source, timeout=0.05)
+            self.assertFalse(result['ok'])
+            self.assertEqual(result['error_type'], 'TimeoutError')
+            self.assertTrue(channel.closed)
+
+    def test_missing_binary_input_is_reported_as_a_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            ssh = self.executor(FakeChannel())
+            with patch.object(ssh, 'connect'):
+                result = ssh.run('receiver', stdin_path=Path(temporary) / 'missing')
+            self.assertFalse(result['ok'])
+            self.assertEqual(result['error_type'], 'FileNotFoundError')
+
     def test_dependency_error_is_structured(self):
         with patch("shared.remote.ssh_executor.paramiko", None):
             result = SSHExecutor("host", "user").run("true")

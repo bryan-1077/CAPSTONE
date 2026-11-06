@@ -118,6 +118,17 @@ class ScopeTransportTests(unittest.TestCase):
         self.assertIn('--execution-request',receipt['remote_result']['command'])
         self.assertNotIn('source_coverage',receipt['remote_result'])
 
+    def test_shared_archive_includes_scoped_plan_and_helpers(self):
+        from .allocation import ENVIRONMENT
+        lease = dict(job_id='777', cpus=6, host='fake', username='fake', port=22)
+        with patch.dict('os.environ', {ENVIRONMENT: json.dumps(lease)}):
+            result, receipt, output = self.execute()
+        self.assertEqual(result.status, 'passed', result.message)
+        self.assertEqual(receipt['transfer']['mode'], 'compute_archive')
+        self.assertEqual(LocalSSH.instances[-1].uploads, [])
+        self.assertEqual((output / 'execution_plan.json').read_bytes(), self.plan_path.read_bytes())
+        self.assertIn('--execution-request', receipt['remote_result']['command'])
+
     def test_preflight_never_runs_agents(self):
         result,receipt,_=self.execute(preflight=True)
         self.assertEqual(result.status,'passed',result.message)
