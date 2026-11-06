@@ -1,0 +1,26 @@
+{
+  "log_action_entries": {
+    "rtl_prep_fix_1_plan": {
+      "actions": [],
+      "summary": "AI prep edit planning failed; no automated edits were applied.",
+      "warnings": [
+        "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'"
+      ]
+    },
+    "rtl_prep_fix_2_plan": {
+      "actions": [],
+      "summary": "AI prep edit planning failed; no automated edits were applied.",
+      "warnings": [
+        "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'"
+      ]
+    },
+    "rtl_prep_fix_3_plan": {
+      "actions": [],
+      "summary": "AI prep edit planning failed; no automated edits were applied.",
+      "warnings": [
+        "OpenAI prep editor failed and no automated edits were applied: No module named 'openai'"
+      ]
+    }
+  },
+  "prep_fix_summary": "AI prep edit planning failed; no automated edits were applied."
+}

@@ -1,0 +1,20 @@
+{
+  "candidate_paths": {
+    "prep_candidate_path": "build_prep_sa736987_200MHz_01",
+    "remote_prepare_dir": "build_prep_sa736987_200MHz_01"
+  },
+  "execution_context": {
+    "exit_code": -1,
+    "ok": false
+  },
+  "output_files": {
+    "generated_files": []
+  },
+  "prep_outputs": {
+    "generated_files": [],
+    "generated_top_file": null,
+    "generated_top_module": null,
+    "selected_top_file": null,
+    "selected_top_module": null
+  }
+}

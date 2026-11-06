@@ -1996,7 +1996,6 @@ def main():
         args.final_postroute_setup_opt,
     )
     # Persist ancestry even when PNG export is disabled, so later ECOs can find it.
-    import json
     source_checkpoint = None
     for option in ("timing_eco_json", "physical_repair_json"):
         raw = getattr(args, option, None)

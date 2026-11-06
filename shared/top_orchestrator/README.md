@@ -846,6 +846,18 @@ The configured main Agent 4 script and all proof/readiness gates still apply.
 Without `--shared-allocation`, the existing per-stage allocation behavior applies.
 Shared mode requires a verified full generation flow with backend enabled.
 
+In shared mode, validation packages the frozen input snapshot, request, and
+launcher/helper scripts into one local archive and streams it over SSH to a
+receiver step inside the allocation. The compute node unpacks the archive and
+checks each file's SHA-256 before verification starts; the login node forwards
+the bytes without writing the input files. `[TRANSFER]` messages identify the
+receiving node and verified file count. `validation_result.json` records the
+transfer receipt, and `validation_transfer.zip` preserves the transmitted bundle.
+The transfer has a 300-second deadline and cancels only its receiver step on a
+transport failure or interruption. Without a shared allocation, validation keeps
+the existing per-file SFTP path. Workspace setup and report downloads still use
+the SSH login node.
+
 The CPU count defaults to six. `--shared-allocation-hours` defaults to four hours
 for the whole remote flow, and `--shared-allocation-queue-hours` defaults to four
 hours of initial queue allowance (plus 90 seconds of SSH overhead). The Slurm

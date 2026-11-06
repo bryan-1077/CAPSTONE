@@ -338,20 +338,31 @@ def validation_node(config, run_dir: Path) -> StageResult:
                 checked(f"test ! -e {quoted} && test ! -L {quoted} || "
                         "{ echo 'Remote workspace already used; select a fresh workspace' >&2; exit 1; }")
             record["phase"] = "input_upload"
-            output("stdout", f"[TRANSFER] Uploading {len(files)} input files; each SFTP operation has a 120-second deadline.\n")
-            for index, path in enumerate(files, 1):
-                record["upload_file"] = path.relative_to(snapshot).as_posix()
-                output("stdout", f"[TRANSFER] {index}/{len(files)}: {record['upload_file']}\n")
-                ssh.upload_file(path, str(invocation / "input" / path.relative_to(snapshot).as_posix()), exclusive=True)
-            output("stdout", "[TRANSFER] Inputs uploaded; uploading verification launcher.\n")
-            ssh.upload_file(request_path, str(invocation / "request.json"), exclusive=True)
-            ssh.upload_file(Path(__file__).with_name("validation_runner.py"), str(invocation / "runner.py"), exclusive=True)
+            launchers = {"request.json": request_path, "runner.py": Path(__file__).with_name("validation_runner.py")}
             if module_probe:
-                ssh.upload_file(Path(__file__).with_name('module_probe.py'), str(invocation / 'module_probe.py'), exclusive=True)
+                launchers['module_probe.py'] = Path(__file__).with_name('module_probe.py')
                 if scoped_plan:
-                    for local, remote_name in ((plan_path, 'execution_plan.json'), (scope_request_path, 'scope_request.json'),
-                                               (Path(__file__).with_name('scope_probe.py'), 'scope_probe.py')):
-                        ssh.upload_file(local, str(invocation / remote_name), exclusive=True)
+                    launchers.update({'execution_plan.json': plan_path, 'scope_request.json': scope_request_path,
+                                      'scope_probe.py': Path(__file__).with_name('scope_probe.py')})
+            from .allocation import active_allocation
+            if active_allocation(remote) is not None:
+                from .compute_transfer import upload_validation_archive
+                sources = {"input/" + path.relative_to(snapshot).as_posix(): path for path in files}
+                sources.update(launchers)
+                archive_path = run_dir / "validation_transfer.zip"
+                artifacts["transfer_archive"] = str(archive_path)
+                record["transfer"] = upload_validation_archive(
+                    ssh, remote, invocation, sources, archive_path, job_name + "-transfer", output,
+                )
+            else:
+                output("stdout", f"[TRANSFER] Uploading {len(files)} input files; each SFTP operation has a 120-second deadline.\n")
+                for index, path in enumerate(files, 1):
+                    record["upload_file"] = path.relative_to(snapshot).as_posix()
+                    output("stdout", f"[TRANSFER] {index}/{len(files)}: {record['upload_file']}\n")
+                    ssh.upload_file(path, str(invocation / "input" / path.relative_to(snapshot).as_posix()), exclusive=True)
+                output("stdout", "[TRANSFER] Inputs uploaded; uploading verification launcher.\n")
+                for remote_name, local in launchers.items():
+                    ssh.upload_file(local, str(invocation / remote_name), exclusive=True)
             job_config = replace(remote, job_seconds=remote.job_seconds if config.preflight_only else remote.validation_job_seconds)
             command = slurm_command(job_config, [remote.python, "-u", str(invocation / "runner.py"), str(invocation)], job_name)
             record["command"] = command

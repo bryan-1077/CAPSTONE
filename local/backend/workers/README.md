@@ -17,19 +17,44 @@ and dependencies. Preserve the frontend's `rtl/manifest.json` to supply its
 `top_module`; without it the existing configured top remains in use. Other mailbox
 folders, such as `specs/` and verification reports, are not uploaded by backend.
 
-Backend freezes a temporary local copy, records SHA-256 hashes, uploads through
-its existing SSH credentials to a unique `mailbox_inputs/` directory under the
-remote project root, then passes that directory to prep using `--input` and the
-selected top using `--top`. Upload failure stops before the flow starts. Input
-paths and hashes are retained in the normal backend state log. Frequency sweeps
-reuse the same uploaded revision. No ZIP is required for this mode. Without
+Backend freezes a temporary local copy, records SHA-256 hashes, and packages the
+files into one archive automatically. It streams the archive through its existing
+SSH connection to a Slurm compute receiver. The receiver creates a unique
+`mailbox_inputs/` directory under the remote project root, extracts the files with
+exclusive creation, and verifies their sizes and SHA-256 hashes, including a
+read-back check. Directory creation and scratch reads/writes happen on compute;
+the login node relays the bytes. Prep receives that directory using `--input` and
+the selected top using `--top` only after verification succeeds. Upload failure
+stops before the flow starts. Input paths, hashes, and the compute transfer receipt
+(`mailbox_transfer`, including host, job ID, bytes, and elapsed time) are retained
+in backend state. Frequency sweeps reuse the same uploaded revision. Without
 `--mailbox`, standalone invocation retains the legacy `MemoryController.zip` input.
+
+Mailbox staging retries transient SSH/streaming transport failures up to three
+total attempts, waiting 2 seconds and then 4 seconds between attempts. Each attempt
+uses a fresh SSH connection and unique remote directory, reuploading the entire
+frozen local snapshot with exclusive file creation. Authentication, permission,
+input errors, failed remote checks, and interrupts stop immediately. Archive byte
+count, destination, execution host/job, 300-second command deadline, elapsed time,
+and failures are printed to the backend/session logs. Failed staging directories are left in place
+and their paths are logged; they are never reused by retries.
 
 This option transports an existing revision; it does not create the frontend
 mailbox or prove that validation passed. Automatic publication, remote validation,
 and the top-level gate for the exact validated revision still need integration.
 Directory input and `--top` follow the documented remote prep interface; they must
 also be available in the deployed `prepare_rtl_for_genus_universal.py`.
+
+Mailbox receiving, prep generation, all four deterministic stage reviews, and
+application of prep/netlist/mapped/GDSII edit actions run in Slurm compute steps.
+They reuse the shared allocation when present and request a standalone compute
+step otherwise. Output cleanup, project-directory changes, reviews, and edits
+happen inside those steps. `[PREP]` identifies the generation host; `[BACKEND]`
+review/edit host messages are recorded on stderr so stdout remains JSON. The
+existing 300-second generation/review/edit deadlines include step startup and any
+queue wait. AI requests and edit planning remain local; their bounded actions are
+applied on compute. Other helpers, timing-closure copies, build-name reservation,
+and report downloads retain their existing routing.
 
 At a high level, the flow is:
 

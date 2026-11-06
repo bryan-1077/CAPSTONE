@@ -2,6 +2,7 @@
 
 import json
 import hashlib
+import os
 import shlex
 import shutil
 import subprocess
@@ -122,8 +123,16 @@ class LocalSSH:
         self.commands.append(command)
         if command.startswith("srun "):
             script = shlex.split(command)[-1]
-            argv = shlex.split(script.splitlines()[-1])[1:]
-            result = subprocess.run(argv, capture_output=True, text=True)
+            argv = shlex.split(script.split("\nexec ", 1)[1])
+            environment = dict(os.environ)
+            for argument in shlex.split(command):
+                if argument.startswith('--jobid='):
+                    environment['SLURM_JOB_ID'] = argument.split('=', 1)[1]
+            if kwargs.get('stdin_path') is not None:
+                with Path(kwargs['stdin_path']).open('rb') as stream:
+                    result = subprocess.run(argv, stdin=stream, capture_output=True, text=True, env=environment)
+            else:
+                result = subprocess.run(argv, capture_output=True, text=True, env=environment)
         else:
             result = subprocess.run(["/bin/bash", "--noprofile", "--norc", "-c", command], capture_output=True, text=True)
         if kwargs.get("on_output"):
@@ -217,6 +226,27 @@ class ValidationTests(unittest.TestCase):
         record = json.loads((destination / 'validation_result.json').read_text())
         self.assertIn('--jobid=777', record['command'])
         self.assertIn('/shared/allocations/777/validation_runs/', record['remote_directory'])
+        self.assertEqual(LocalSSH.instances[-1].uploads, [])
+        self.assertEqual(record['transfer']['mode'], 'compute_archive')
+        self.assertEqual(record['transfer']['job_id'], '777')
+        self.assertEqual(record['transfer']['verified_files'],
+                         len([path for path in (destination / 'validation_input').rglob('*') if path.is_file()]) + 2)
+
+    def test_compute_transfer_failure_does_not_launch_validation(self):
+        from shared.top_orchestrator.allocation import ENVIRONMENT
+        destination = self.root / 'failed_shared_transfer'
+        destination.mkdir()
+        lease = dict(job_id='777', cpus=6, host='fake', username='fake', port=22)
+        with patch.dict('os.environ', {ENVIRONMENT: json.dumps(lease)}), patch(
+                'shared.top_orchestrator.validation.SSHExecutor', LocalSSH), patch(
+                'shared.top_orchestrator.compute_transfer.upload_validation_archive',
+                side_effect=RuntimeError('damaged archive')):
+            result = validation_node(self.config, destination)
+        self.assertEqual(result.status, 'needs_attention')
+        record = json.loads((destination / 'validation_result.json').read_text())
+        self.assertEqual(record['phase'], 'input_upload')
+        self.assertNotIn('command', record)
+        self.assertEqual(LocalSSH.instances[-1].uploads, [])
 
     def test_behavioral_failure_routes_to_debug_only_for_matching_live_rtl(self):
         from shared.top_orchestrator.mailbox import verify_frontend_revision
