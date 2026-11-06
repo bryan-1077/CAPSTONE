@@ -1,5 +1,4 @@
 """Approved-YAML launch validation and private worker startup."""
-import fcntl
 import json
 import math
 import os
@@ -40,6 +39,9 @@ def validate(config):
 
 
 def launch(config, password):
+    from .platform_support import require_local_execution
+    require_local_execution()
+    import fcntl
     config = validate(config)
     private = REPO_ROOT / 'shared/gui/.runtime'
     private.mkdir(mode=0o700, exist_ok=True)

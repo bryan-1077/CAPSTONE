@@ -20,7 +20,7 @@ def main():
     from .window import RunWindow
     app = QApplication(sys.argv[:1])
     window = RunWindow(args.runs)
-    window.show()
+    window.showMaximized()
     return app.exec()
 
 

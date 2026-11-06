@@ -38,9 +38,10 @@ class SavedRun:
     def files(self):
         # Bound discovery; reports remain accessible through their directory.
         paths = {self.directory / 'state.json'}
-        receipt = self.directory.parent / (self.directory.name + '.lifecycle.json')
-        if receipt.exists():
-            paths.add(receipt)
+        from .run_storage import lifecycle_path, worker_log_path
+        for path in (lifecycle_path(self.directory), worker_log_path(self.directory)):
+            if path.exists():
+                paths.add(path)
         for pattern in ('*.log', '*.json', '*.yaml', '*.txt', '*/*.log'):
             paths.update(self.directory.glob(pattern))
         for result in self.results:
@@ -99,6 +100,9 @@ def summary(run):
     lifecycle = read_record(lifecycle_path(run.directory))
     lines = ([f'Worker outcome: {lifecycle.get("lifecycle")}',
               f'Cleanup: {lifecycle.get("remote_cleanup", {}).get("status", "not recorded")}'] if lifecycle else [])
+    from .problems import run_connection_error, CONNECTION_TITLE, CONNECTION_REASON, CONNECTION_GUIDANCE
+    if run_connection_error(run.state):
+        lines = [CONNECTION_TITLE, CONNECTION_REASON, CONNECTION_GUIDANCE, ''] + lines
     lines += [f'Saved outcome: {run.status}',
              f'Flow: {run.config.get("frontend_flow", "expand-spec")}',
              f'Target clock: {run.config.get("target_mhz") or "not recorded"} MHz',

@@ -3,6 +3,8 @@ import json
 import os
 from pathlib import Path
 from .run_reader import REPO_ROOT
+from .platform_support import host_capabilities
+from .run_storage import lifecycle_path
 
 PRIVATE = REPO_ROOT / 'shared/gui/.runtime'
 ACTIVE = PRIVATE / 'active.json'
@@ -19,6 +21,8 @@ def atomic_write(path, value):
 
 
 def process_identity(pid):
+    if not host_capabilities().local_execution:
+        return None
     try:
         # comm may contain spaces or parentheses; fields follow its final ')'.
         fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
@@ -44,11 +48,6 @@ def read_record(path=ACTIVE):
         return {}
 
 
-def lifecycle_path(directory):
-    directory = Path(directory)
-    return directory.parent / (directory.name + '.lifecycle.json')
-
-
 class WorkerHandle:
     """Popen-like monitor for a worker launched by an earlier GUI process."""
     def __init__(self, record):
@@ -65,6 +64,9 @@ class WorkerHandle:
 
 
 def discover_worker():
+    # Viewing Linux history on another OS must never rewrite its worker receipts.
+    if not host_capabilities().local_execution:
+        return None
     record = read_record()
     if not alive(record):
         if record.get('run_dir'):
@@ -75,6 +77,9 @@ def discover_worker():
                 saved.update(lifecycle='interrupted', returncode=1,
                              remote_cleanup={'status': 'cleanup_unconfirmed',
                                              'reason': 'Worker died without a cleanup receipt.'})
+                # The process may have died before the orchestrator created its
+                # directory or before the worker staged any startup evidence.
+                path.parent.mkdir(parents=True, exist_ok=True)
                 atomic_write(path, saved)
         return None
     # Socket handshake is checked by the UI; liveness alone never authorizes input.

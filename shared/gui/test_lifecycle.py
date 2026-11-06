@@ -28,6 +28,7 @@ class IdentityTests(unittest.TestCase):
     def test_dead_worker_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             run = Path(tmp) / 'run'
+            run.mkdir()
             atomic_write(lifecycle_path(run), {'returncode': 130, 'lifecycle': 'cancelled'})
             handle = WorkerHandle(dict(identity={'pid': 99999999}, socket_path='/absent',
                                        worker_id='id', run_dir=str(run)))
@@ -106,16 +107,23 @@ class CloseDialogTests(unittest.TestCase):
         from types import SimpleNamespace
         app = QApplication.instance() or QApplication([])
         with tempfile.TemporaryDirectory() as tmp:
-            window = RunWindow(tmp)
+            with patch('shared.gui.registry.discover_worker', return_value=None), patch(
+                    'shared.gui.registry.read_record', return_value={}):
+                window = RunWindow(tmp, preferences_path=__import__('pathlib').Path(tmp) / 'ui.json')
             window.setup.process = SimpleNamespace(poll=lambda: None)
-            for choice, expected in [('keep', False), ('leave', True)]:
+            for choice, expected, stop_accepted in [('keep', False, False), ('leave', True, False),
+                                                   ('stop', False, True), ('stop', False, False)]:
+                labels = []
                 class Dialog:
                     ButtonRole = SimpleNamespace(RejectRole=0, AcceptRole=1, DestructiveRole=2)
                     def __init__(self, parent):
                         self.default = None
-                    def setWindowTitle(self, text): pass
+                    def setWindowTitle(self, text):
+                        self_test.assertEqual(text, 'Close?')
                     def setText(self, text): pass
-                    def addButton(self, text, role): return ['keep', 'leave', 'stop'][role]
+                    def addButton(self, text, role):
+                        labels.append(text)
+                        return ['keep', 'leave', 'stop'][role]
                     def setDefaultButton(self, button):
                         self.default = button
                         self_test.assertEqual(button, 'keep')
@@ -123,9 +131,28 @@ class CloseDialogTests(unittest.TestCase):
                     def exec(self): pass
                     def clickedButton(self): return choice
                 self_test = self
-                with patch('shared.gui.window.QMessageBox', Dialog):
+                with patch('shared.gui.window.QMessageBox', Dialog), patch.object(
+                        window.setup, 'stop_run', return_value=stop_accepted) as stop_run:
                     event = QCloseEvent()
                     window.closeEvent(event)
                     self.assertEqual(event.isAccepted(), expected)
+                    self.assertEqual(labels, ['Stop Run and Close', 'Maintain Run and Close', 'Cancel'])
+                    if choice == 'stop':
+                        stop_run.assert_called_once_with(confirm=False)
+                    else:
+                        stop_run.assert_not_called()
+                    self.assertEqual(window.close_when_stopped, stop_accepted)
+                    if stop_accepted:
+                        self.assertTrue(window.close_timer.isActive())
+                        with patch.object(window, 'close') as close:
+                            window.finish_close()
+                            close.assert_not_called()
+                            window.setup.process = SimpleNamespace(poll=lambda: 130)
+                            window.finish_close()
+                            close.assert_called_once()
+                        window.setup.process = SimpleNamespace(poll=lambda: None)
+                        window.close_when_stopped = False
+                    else:
+                        self.assertFalse(window.close_timer.isActive())
             window.setup.process = None
             window.close()

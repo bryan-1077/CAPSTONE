@@ -42,6 +42,28 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(widget.bar.value(), 1)
         widget.close()
 
+    def test_four_nodes_group_active_repair_under_generation(self):
+        state = {'current_stage': 'debug', 'results': [
+            {'stage': 'generate', 'status': 'passed'},
+            {'stage': 'validation', 'status': 'failed', 'failure': {'source': 'verif'}}]}
+        statuses, title, *_ = progress_state(state, alive=True, connected=True)
+        self.assertEqual(statuses['generate'], 'running')
+        self.assertEqual(statuses['validation'], 'failed')
+        self.assertEqual(len(statuses), 4)
+        self.assertEqual(title, 'Repairing RTL')
+        os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+        from PySide6.QtWidgets import QApplication
+        from .progress import FlowStatus
+        app = QApplication.instance() or QApplication([])
+        widget = FlowStatus()
+        widget.update_run(state, alive=True, connected=True)
+        widget.show()
+        app.processEvents()
+        self.assertEqual(len(widget.stages), 4)
+        self.assertEqual(widget.stages['generate'].property('flowState'), 'running')
+        self.assertFalse(widget.graph.grab().isNull())
+        widget.close()
+
     def test_forge_keeps_ticking_across_cycles_and_status_refreshes(self):
         os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
         from PySide6.QtWidgets import QApplication
@@ -60,7 +82,7 @@ class ProgressTests(unittest.TestCase):
         self.assertGreater(first, 15)
         self.assertGreater(ticks.count(), first + 15)
         self.assertGreater(widget.forge.clock.elapsed(), 2000)
-        self.assertLess(widget.activity.geometry().x(), widget.forge.geometry().x())
+        self.assertGreater(widget.activity.geometry().x(), widget.forge.geometry().x())
         widget.forge.timer.stop()
         widget.update_run({'current_stage': 'generate'}, **running)
         self.assertTrue(widget.forge.timer.isActive())
@@ -85,7 +107,80 @@ class ProgressTests(unittest.TestCase):
             widget.update_run({'current_stage': 'generate'}, **runtime)
             self.assertTrue(widget.forge.running)
             self.assertTrue(widget.forge.timer.isActive())
+            self.assertTrue(widget.bar.running)
+            self.assertEqual(widget.bar.timer.isActive(), not bool(runtime.get('pending')))
+            self.assertEqual(widget.bar.maximum(), 0)
         widget.update_run({}, alive=False, lifecycle='cancelled')
         self.assertFalse(widget.forge.running)
         self.assertFalse(widget.forge.timer.isActive())
+        self.assertFalse(widget.bar.timer.isActive())
+        self.assertEqual(widget.bar.value(), 0)
+        widget.close()
+
+    def test_bar_frames_keep_moving_across_refreshes_and_multiple_cycles(self):
+        os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+        from PySide6.QtWidgets import QApplication
+        from PySide6.QtTest import QTest, QSignalSpy
+        from .progress import FlowStatus
+        from .theme import apply_theme
+        app = QApplication.instance() or QApplication([])
+        apply_theme(app)
+        widget = FlowStatus()
+        widget.show()
+        widget.update_run({}, alive=True, connected=True)
+        ticks = QSignalSpy(widget.bar.timer.timeout)
+        for runtime in (dict(connected=True),
+                        dict(connected=True),
+                        dict(connected=False),
+                        dict(connected=True, lifecycle='cancelling')):
+            QTest.qWait(800)
+            elapsed = widget.bar.clock.elapsed()
+            widget.update_run({}, alive=True, **runtime)
+            self.assertGreaterEqual(widget.bar.clock.elapsed(), elapsed)
+            before = widget.bar.grab().toImage()
+            QTest.qWait(160)
+            self.assertNotEqual(before, widget.bar.grab().toImage())
+        self.assertGreater(ticks.count(), 65)
+        self.assertGreater(widget.bar.clock.elapsed(), 3600)
+        widget.hide()
+        self.assertFalse(widget.bar.timer.isActive())
+        widget.show()
+        self.assertTrue(widget.bar.timer.isActive())
+        widget.update_run({'status': 'complete'}, alive=False)
+        self.assertFalse(widget.bar.timer.isActive())
+        self.assertEqual(widget.bar.value(), 1)
+        widget.close()
+
+    def test_bar_pauses_for_input_and_resumes_after_response(self):
+        os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+        from PySide6.QtWidgets import QApplication
+        from PySide6.QtTest import QTest
+        from .progress import FlowStatus
+        app = QApplication.instance() or QApplication([])
+        widget = FlowStatus()
+        widget.show()
+        widget.update_run({}, alive=True, connected=True)
+        QTest.qWait(220)
+        for kind in ('spec_approval', 'credential', 'frequency', 'description'):
+            runtime = dict(alive=True, connected=True, pending={'kind': kind})
+            widget.update_run({}, **runtime)
+            self.assertFalse(widget.bar.timer.isActive())
+            self.assertTrue(widget.forge.timer.isActive())
+            frozen = widget.bar.grab().toImage()
+            QTest.qWait(120)
+            widget.update_run({}, **runtime)
+            self.assertEqual(frozen, widget.bar.grab().toImage())
+            widget.hide()
+            widget.show()
+            self.assertFalse(widget.bar.timer.isActive())
+            paused_elapsed = widget.bar.pause_started - widget.bar.paused_total
+            widget.update_run({}, alive=True, connected=True)
+            self.assertTrue(widget.bar.timer.isActive())
+            self.assertLess(abs(widget.bar.clock.elapsed() - widget.bar.paused_total - paused_elapsed), 40)
+            resumed = widget.bar.grab().toImage()
+            self.assertNotEqual(frozen, resumed)
+            QTest.qWait(160)
+            self.assertNotEqual(resumed, widget.bar.grab().toImage())
+        widget.update_run({'status': 'complete'})
+        self.assertEqual(widget.bar.value(), 1)
         widget.close()

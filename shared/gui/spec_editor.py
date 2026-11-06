@@ -9,13 +9,14 @@ CHOICES = {('memory', 'protocol'): ['DDR4'], ('memory', 'speed'): ['2400', '3200
            ('features', 'scheduler'): ['simple', 'round_robin'],
            ('features', 'page_policy'): ['open_page', 'close_page']}
 LABELS = {'design_name': 'Design name', 'profile': 'Design profile', 'type': 'Profile',
-          'memory': 'Memory', 'protocol': 'Memory standard', 'speed': 'DDR transfer rate (MT/s)',
-          'topology': 'Organization', 'banks': 'Memory banks', 'features': 'Controller features',
-          'scheduler': 'Scheduling policy', 'page_policy': 'Page policy',
+          'memory': 'Memory', 'protocol': 'Memory Standard', 'speed': 'DDR Transfer Rate (MT/s)',
+          'topology': 'Organization', 'banks': 'Memory Banks', 'features': 'Controller Features',
+          'scheduler': 'Scheduling Policy', 'page_policy': 'Page Policy',
           'refresh': 'Automatic refresh', 'tFAW': 'Four-activation timing (tFAW)',
           'tRRD': 'Row-to-row timing (tRRD)'}
 DISPLAY = {'simple': 'Simple', 'round_robin': 'Round robin', 'open_page': 'Keep pages open',
            'close_page': 'Close pages after use', 'basic': 'Basic'}
+HIDDEN_FIELDS = {'design_name', 'profile'}
 
 
 class SpecificationEditor(QWidget):
@@ -34,9 +35,13 @@ class SpecificationEditor(QWidget):
                 item.widget().deleteLater()
         grid_host = QWidget()
         grid = QGridLayout(grid_host)
-        for index, (key, value) in enumerate(candidate.items()):
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(12)
+        visible = [(key, value) for key, value in candidate.items() if key not in HIDDEN_FIELDS]
+        for index, (key, value) in enumerate(visible):
             group = QGroupBox(LABELS.get(key, key.replace('_', ' ').capitalize()))
             form = QFormLayout(group)
+            form.setVerticalSpacing(10)
             if isinstance(value, dict):
                 self.add_fields(form, value, (key,))
             else:

@@ -13,17 +13,22 @@ class EditorTests(unittest.TestCase):
         from .spec_editor import SpecificationEditor
         app = QApplication.instance() or QApplication([])
         editor = SpecificationEditor()
-        candidate = dict(design_name='controller', memory={'protocol': 'DDR4', 'speed': '3200'},
+        candidate = dict(design_name='controller', profile={'type': 'basic'},
+                         memory={'protocol': 'DDR4', 'speed': '3200'},
                          topology={'banks': 4}, features={'refresh': True, 'scheduler': 'simple'},
                          extra={'list': [1, 2]})
         editor.load(candidate)
         self.assertEqual(editor.configuration(), candidate)
+        self.assertNotIn(('design_name',), editor.fields)
+        self.assertNotIn(('profile', 'type'), editor.fields)
         editor.fields[('topology', 'banks')][0].setCurrentIndex(0)
         editor.fields[('features', 'refresh')][0].setChecked(False)
         result = editor.configuration()
         self.assertEqual(result['topology']['banks'], 1)
         self.assertIs(result['features']['refresh'], False)
         self.assertEqual(result['extra'], candidate['extra'])
+        self.assertEqual(result['design_name'], candidate['design_name'])
+        self.assertEqual(result['profile'], candidate['profile'])
         self.assertIsInstance(result['memory']['speed'], str)
         editor.close()
 

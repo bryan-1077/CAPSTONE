@@ -135,7 +135,8 @@ def execute(config, password, directory, interaction=None):
 
 
 def main():
-    from .registry import ACTIVE, read_record, atomic_write, lifecycle_path
+    from .registry import ACTIVE, read_record, atomic_write
+    from .run_storage import RunStorage, RunOutput
     from .lifecycle import RunCancelled, cleanup_local, remote_cleanup
     from .interaction import Interaction
     directory = Path(sys.argv[1])
@@ -146,8 +147,7 @@ def main():
     directory.parent.mkdir(parents=True, exist_ok=True)
     record = read_record(ACTIVE)
     record.update(lifecycle='running')
-    receipt = lifecycle_path(directory)
-    atomic_write(receipt, record)
+    storage = RunStorage(directory, record)
     interaction = None
     cancelling = False
     def interrupted(number, frame):
@@ -159,10 +159,11 @@ def main():
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGINT, interrupted)
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
-    directory.parent.mkdir(parents=True, exist_ok=True)
-    log_path = directory.parent / (directory.name + '.worker.log')
     outcome, code = 'failed', 1
-    with log_path.open('w', encoding='utf-8', buffering=1) as output:
+    startup_message = 'Worker stopped before the design flow initialized.'
+    original_stdout, original_stderr = sys.stdout, sys.stderr
+    with storage.log.open('w', encoding='utf-8', buffering=1) as stream:
+        output = RunOutput(storage, stream)
         sys.stdout = output
         sys.stderr = output
         try:
@@ -173,8 +174,10 @@ def main():
             code = 0 if outcome == 'complete' else 2
         except RunCancelled:
             outcome, code = 'cancelled', 130
+            startup_message = 'Run cancelled before initialization completed.'
             print('Run cancelled; adapter cleanup attempted.', flush=True)
-        except BaseException:
+        except BaseException as exc:
+            startup_message = f'{type(exc).__name__}: {exc}'
             if cancelling:
                 outcome, code = 'cancelled', 130
             traceback.print_exc()
@@ -188,7 +191,12 @@ def main():
                                                     and request['config'].get('no_backend')))
             record.update(lifecycle=outcome, returncode=code, finished=time.time(),
                           local_cleanup=local, remote_cleanup=remote)
-            atomic_write(receipt, record)
+            storage.publish(create=True)
+            if not (directory / 'state.json').exists():
+                atomic_write(directory / 'state.json', dict(
+                    config=request['config'], status=outcome, current_stage=None,
+                    results=[dict(stage='generate', status=outcome, message=startup_message, artifacts={})]))
+            atomic_write(directory / 'gui_lifecycle.json', record)
             # The lock is still held: another worker cannot replace this entry yet.
             atomic_write(ACTIVE, record)
             if interaction is not None:
@@ -197,6 +205,7 @@ def main():
                 Path(sys.argv[4]).parent.rmdir()
             except OSError:
                 pass
+    sys.stdout, sys.stderr = original_stdout, original_stderr
     return code
 
 

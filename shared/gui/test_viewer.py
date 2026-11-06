@@ -46,13 +46,21 @@ class ReaderTests(unittest.TestCase):
 class WindowTests(unittest.TestCase):
     def test_saved_results_and_empty_history(self):
         os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
-        from PySide6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication, QLabel
         from .window import RunWindow
         app = QApplication.instance() or QApplication([])
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            window = RunWindow(root)
-            self.assertIn('No saved runs', window.overview.toPlainText())
+            window = RunWindow(root, preferences_path=Path(tmp) / 'ui.json')
+            self.assertTrue(all(window.tabs.isTabVisible(i) for i in range(window.tabs.count())))
+            self.assertEqual([window.tabs.tabText(i) for i in range(3)], ['Run', 'Results', 'Files'])
+            stages_card = window.results
+            window.tabs.setCurrentWidget(stages_card)
+            window.history_toggle.setChecked(True)
+            window.history_toggle.setChecked(False)
+            self.assertIs(window.tabs.currentWidget(), stages_card)
+            self.assertTrue(all(window.tabs.isTabVisible(i) for i in range(window.tabs.count())))
+            self.assertIsNone(window.run)
             run = root / 'example'
             run.mkdir()
             (run / 'state.json').write_text(json.dumps({
@@ -60,12 +68,20 @@ class WindowTests(unittest.TestCase):
                 'results': [{'stage': 'validation', 'status': 'needs_attention',
                              'message': 'System coverage pending', 'artifacts': {}}]}))
             window.refresh()
+            window.history.setCurrentRow(0)
             window.show()
+            window.history_toggle.setChecked(True)
+            window.location.set_path('/home/example/projects/CAPSTONE/shared/top_orchestrator/runs')
+            window.sync_history_header()
             app.processEvents()
+            self.assertGreaterEqual(window.location.height(), window.location.heightForWidth(window.location.width()))
+            self.assertEqual(window.tabs.tabBar().tabRect(0).height(), window.history_heading.height())
             self.assertEqual(window.history.count(), 1)
-            self.assertEqual(window.stages.topLevelItemCount(), 1)
-            self.assertIn('System coverage pending', window.overview.toPlainText())
-            window.files.setCurrentRow(0)
+            self.assertIs(window.review.run, window.run)
+            self.assertIn('System coverage pending', '\n'.join(label.text() for label in window.results.findChildren(QLabel)))
+            window.files.setCurrentItem(next(window.files.run_root.child(i)
+                for i in range(window.files.run_root.childCount())
+                if window.files.run_root.child(i).text(0) == 'state.json'))
             self.assertIn('needs_attention', window.text.toPlainText())
             window.close()
 

@@ -8,6 +8,9 @@ from .run_reader import REPO_ROOT, DEFAULT_RUNS
 
 
 def inspect_environment():
+    from .platform_support import host_capabilities
+    from .fonts import bundled_font_paths
+    host = host_capabilities()
     packages = {}
     for distribution, module in [('PySide6', 'PySide6'), ('PyYAML', 'yaml'),
                                  ('requests', 'requests'), ('paramiko', 'paramiko'),
@@ -19,9 +22,12 @@ def inspect_environment():
     return dict(python=sys.version.split()[0], platform=platform.system(),
                 repository=str(REPO_ROOT), history_available=DEFAULT_RUNS.is_dir(),
                 packages=packages,
+                capabilities=host.as_dict(),
+                bundled_fonts=[path.name for path in bundled_font_paths()],
                 tools={name: bool(shutil.which(name)) for name in
                        ('bash', 'make', 'g++', 'verilator', 'iverilog', 'ssh')},
-                desktop_display_available=bool(os.getenv('DISPLAY') or os.getenv('WAYLAND_DISPLAY')),
+                desktop_display_available=(bool(os.getenv('DISPLAY') or os.getenv('WAYLAND_DISPLAY'))
+                                           if host.system == 'Linux' else None),
                 note='Local inspection only. Remote access, provider credentials, PDK, and EDA tools are not verified.')
 
 
