@@ -80,7 +80,8 @@ class RunReview(QWidget):
             elapsed = max(0, int(finished - started))
             self.flow_status.elapsed_label.setText(f'Elapsed {elapsed // 60}m {elapsed % 60:02d}s')
         self.flow_status.elapsed_label.setVisible(known_elapsed)
-        from .approved_spec import approved_spec_path
+        from .approved_spec import approved_spec_path, approved_spec_button_text
+        self.spec.setText(approved_spec_button_text(run.directory))
         self.spec.setEnabled(approved_spec_path(run.directory) is not None)
         if changed:
             keys = dict(MAIN_NODES)

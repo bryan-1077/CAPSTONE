@@ -1,5 +1,7 @@
 """Read-only access to the specification saved with a run."""
 from pathlib import Path
+import json
+import math
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QPlainTextEdit,
                               QTabWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout)
@@ -15,6 +17,25 @@ def approved_spec_path(directory):
         if path.is_file():
             return path
     return None
+
+
+def target_speed_text(directory):
+    if directory is not None:
+        for filename in ('state.json', 'frequency_selection.json', 'gui_frequency_review.json'):
+            try:
+                data = json.loads((Path(directory) / filename).read_text(encoding='utf-8'))
+                value = data.get('config', {}).get('target_mhz') if filename == 'state.json' else data.get('target_mhz')
+                number = float(value) if not isinstance(value, bool) else float('nan')
+                if math.isfinite(number) and number > 0:
+                    return f'{number:g} MHz'
+            except (OSError, ValueError, TypeError, AttributeError):
+                continue
+    return 'Not recorded'
+
+
+def approved_spec_button_text(directory):
+    speed = target_speed_text(directory)
+    return 'Approved Specification' + (f' · {speed}' if speed != 'Not recorded' else '')
 
 
 class ApprovedSpecification(QDialog):
@@ -33,6 +54,10 @@ class ApprovedSpecification(QDialog):
         self.source.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.source.setWordWrap(True)
         layout.addWidget(self.source)
+        self.target_speed = QLabel('Target controller speed: ' + target_speed_text(directory))
+        self.target_speed.setObjectName('sectionTitle')
+        self.target_speed.setToolTip('Selected clock target for this run, not measured achieved frequency.')
+        layout.addWidget(self.target_speed)
         tabs = QTabWidget()
         self.fields = DisplayTree()
         self.fields.setHeaderLabels(['Specification', 'Approved Value'])
