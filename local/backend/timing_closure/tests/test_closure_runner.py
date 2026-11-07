@@ -85,6 +85,27 @@ class ClosureTests(unittest.TestCase):
     def run_closure(self, ssh):
         return closure.run_setup_closure(self.state, ssh, self.implementation, lambda state, updates: {**state, **updates})
 
+    def test_negative_zero_setup_retries_and_hold_cannot_pass(self):
+        result = self.run_closure(FakeSSH([-0.0, 0.012]))
+        self.assertEqual(result["timing_closure_status"], "passed")
+        self.assertEqual(len(self.states), 2)
+        self.assertEqual(result["timing_closure_attempts"][0]["setup_status"], "violated")
+
+        ssh = FakeSSH([0.012] * 3)
+        fetch = ssh.fetch_file
+
+        def negative_zero_hold(remote, local):
+            result = fetch(remote, local)
+            if remote.endswith("hold_postroute.rpt"):
+                Path(local).write_text(Path(local).read_text().replace("0.020", "-0.000"))
+            return result
+
+        ssh.fetch_file = negative_zero_hold
+        result = self.run_closure(ssh)
+        self.assertNotEqual(result["timing_closure_status"], "passed")
+        self.assertTrue(all(a["status"] == "hold_violated"
+                            for a in result["timing_closure_attempts"]))
+
     def test_negative_then_positive_retries_with_distinct_outputs_and_settings(self):
         ssh = FakeSSH([-0.119, 0.012])
         result = self.run_closure(ssh)

@@ -124,6 +124,22 @@ class PhysicalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             violation_count("No DRC violations were found\nTotal Violations: 2\n", "drc")
 
+    def test_negative_zero_hold_rejected_even_when_setup_not_required(self):
+        for require_setup in (True, False):
+            with self.subTest(require_setup=require_setup):
+                ssh = FakeSSH(drc=0)
+                fetch = ssh.fetch_file
+
+                def negative_zero_hold(remote, local):
+                    result = fetch(remote, local)
+                    if remote.endswith("hold_postroute.rpt"):
+                        Path(local).write_text(Path(local).read_text().replace("0.020", "-0.000"))
+                    return result
+
+                ssh.fetch_file = negative_zero_hold
+                result, _ = self.run_closure(ssh, require_setup_timing=require_setup)
+                self.assertNotEqual(result["physical_verification_status"], "passed")
+
     def test_innovus_clean_reports_skip_planner_and_implementation(self):
         ssh = FakeSSH(drc=0)
         fetch = ssh.fetch_file

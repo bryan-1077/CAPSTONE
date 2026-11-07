@@ -45,6 +45,16 @@ class HoldRecoveryTests(unittest.TestCase):
     def test_no_targets_returns_no_fallback(self):
         self.assertIsNone(fallback_hold_plan({}, self.buffers, "checkpoint", set()))
 
+    def test_negative_rounded_zero_remains_a_repair_target(self):
+        self.report.paths[0].slack = -0.0
+        targets = legal_hold_targets(self.report, self.buffers)
+        self.assertIn("queue_reg[0]/D", targets)
+        plan = fallback_hold_plan(targets, self.buffers, "checkpoint", set())
+        self.assertIsNotNone(plan)
+        # Positive zero is passing and must not become a fallback target.
+        self.report.paths[0].slack = 0.0
+        self.assertNotIn("queue_reg[0]/D", legal_hold_targets(self.report, self.buffers))
+
     def test_unsupported_cells_cannot_enter_fallback(self):
         for cell in ("sky130_fd_sc_hd__inv_2", "unknown_buffer"):
             self.buffers["queue_reg[0]/D"]["allowed_cells"] = [cell]

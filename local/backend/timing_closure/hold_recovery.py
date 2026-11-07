@@ -4,6 +4,7 @@ import math
 import re
 
 from agents.openai_timing_closure import validate_plan
+from timing_closure.timing_analyzer import negative_slack
 
 
 def plan_signature(source_outdir, actions):
@@ -18,7 +19,7 @@ def legal_hold_targets(hold_report, buffers):
     """Intersect negative-slack endpoints with the executor's verified choices."""
     targets = {}
     for path in hold_report.paths:
-        if (path.slack is None or not math.isfinite(path.slack) or path.slack >= 0
+        if (path.slack is None or not math.isfinite(path.slack) or not negative_slack(path.slack)
                 or path.endpoint not in buffers):
             continue
         pin = path.endpoint
