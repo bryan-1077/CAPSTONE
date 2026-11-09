@@ -297,8 +297,9 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
             reservation = ssh.run(f"mkdir -- {shlex.quote(outdir)}", cwd=project_root, timeout=300)
             if not reservation["ok"]:
                 return fail(f"Cannot reserve fresh timing output directory {outdir}; existing builds are never overwritten: {reservation['stderr']}")
-            script = (f".timing_closure_runner_{frequency}_{run_id[:8]}_{attempt:02d}.py" if is_ai or recovery_source
-                      else f".timing_closure_runner_{frequency}_{attempt:02d}.py")
+            # Every attempt uploads exclusively into a shared server directory.
+            # Include the full run ID even for ordinary preset attempts.
+            script = f".timing_closure_runner_{frequency}_{run_id}_{attempt:02d}.py"
             ssh.upload_file(repo / "probes" / "run_innovus_GDSII_universal.py", f"{project_root}/{script}", exclusive=True)
             entry = {"attempt": attempt, "outdir": outdir, "mapped_snapshot": snapshot_dir, "target_period_ns": target, "settings": settings, "status": "running",
                      "top_module": next((working.get(key) for key in ("mapped_resolved_top", "mapped_top_module", "top_module") if working.get(key)), ""),

@@ -85,6 +85,17 @@ class ClosureTests(unittest.TestCase):
     def run_closure(self, ssh):
         return closure.run_setup_closure(self.state, ssh, self.implementation, lambda state, updates: {**state, **updates})
 
+    def test_same_frequency_separate_runs_do_not_reuse_upload_paths(self):
+        first = FakeSSH([0.012])
+        second = FakeSSH([0.012])
+        self.run_closure(first)
+        self.run_closure(second)
+        self.assertEqual(len(first.uploads), 1)
+        self.assertEqual(len(second.uploads), 1)
+        self.assertNotEqual(first.uploads[0], second.uploads[0])
+        for ssh in (first, second):
+            self.assertRegex(ssh.uploads[0], r"\.timing_closure_runner_210MHz_[0-9a-f]{32}_01\.py$")
+
     def test_negative_then_positive_retries_with_distinct_outputs_and_settings(self):
         ssh = FakeSSH([-0.119, 0.012])
         result = self.run_closure(ssh)
@@ -103,8 +114,8 @@ class ClosureTests(unittest.TestCase):
             self.assertIn("--final-postroute-setup-opt", command)
             self.assertNotIn("rm -rf", command)
         self.assertEqual(len(ssh.uploads), 2)
-        self.assertTrue(ssh.uploads[0].endswith(".timing_closure_runner_210MHz_01.py"))
-        self.assertTrue(ssh.uploads[1].endswith(".timing_closure_runner_210MHz_02.py"))
+        self.assertRegex(ssh.uploads[0], r"\.timing_closure_runner_210MHz_[0-9a-f]{32}_01\.py$")
+        self.assertEqual(ssh.uploads[1], ssh.uploads[0].removesuffix("_01.py") + "_02.py")
         status = json.loads((self.repo / "logs" / "timing_closure" / "timing_closure_status.json").read_text())
         self.assertEqual(status["run_name"], "target_210MHz")
         self.assertEqual(result["timing_closure_run_name"], "target_210MHz")

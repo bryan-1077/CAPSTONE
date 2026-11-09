@@ -35,6 +35,16 @@ class NavigationIcon(QIconEngine):
             painter.drawPath(shape)
             painter.drawLine(QPointF(15, 12), QPointF(15, 18))
             painter.drawLine(QPointF(12, 15), QPointF(18, 15))
+        elif self.kind == 'refresh':
+            shape.moveTo(17, 11)
+            shape.cubicTo(16.5, 17, 9, 19, 5, 15)
+            shape.cubicTo(1, 11, 3, 4, 8, 3)
+            shape.cubicTo(11.5, 2, 14.5, 3.5, 16, 6)
+            painter.drawPath(shape)
+            arrow = QPainterPath(QPointF(12, 6))
+            arrow.lineTo(16, 6)
+            arrow.lineTo(16, 2)
+            painter.drawPath(arrow)
         elif self.kind == 'approved-spec':
             shape.moveTo(4, 2)
             for x, y in [(12, 2), (16, 6), (16, 18), (4, 18), (4, 2)]:
