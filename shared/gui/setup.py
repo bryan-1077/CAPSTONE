@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtWidgets import (QWidget, QFormLayout, QLineEdit, QPushButton,
                               QFileDialog, QCheckBox, QLabel, QPlainTextEdit, QMessageBox,
-                              QVBoxLayout, QHBoxLayout, QGroupBox, QScrollArea, QSplitter)
+                              QVBoxLayout, QHBoxLayout, QGroupBox, QScrollArea, QSplitter, QFrame)
 from .execution import launch
 from .run_reader import load_run, summary, preview
 from .action_button import ActionButton
@@ -155,23 +155,35 @@ class SetupPanel(QWidget):
         self.details = QWidget()
         details_layout = QVBoxLayout(self.details)
         details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.setSpacing(0)
+        log_header = QFrame()
+        log_header.setObjectName('runLogHeader')
+        header_layout = QVBoxLayout(log_header)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setSpacing(4)
+        output_controls = QHBoxLayout()
+        log_title = QLabel('Run Log')
+        log_title.setObjectName('runLogTitle')
+        output_controls.addWidget(log_title)
+        output_controls.addStretch()
+        header_layout.addLayout(output_controls)
         self.status = QLabel('')
+        self.status.setObjectName('runLogStatus')
         self.status.setWordWrap(True)
-        details_layout.addWidget(self.status)
+        header_layout.addWidget(self.status)
+        details_layout.addWidget(log_header)
         from .live_output import LiveOutput
         self.output = LiveOutput()
+        self.output.setObjectName('runLogOutput')
         self.output.setProperty('technicalText', True)
         self.output.setMinimumSize(120, 80)
-        output_controls = QHBoxLayout()
-        output_controls.addStretch()
         self.latest_output = QPushButton('Jump to Latest')
-        self.latest_output.setObjectName('primaryAction')
+        self.latest_output.setObjectName('runLogLatest')
         self.latest_output.setToolTip('Scroll to the newest line and resume following output.')
         self.latest_output.clicked.connect(self.output.jump_to_latest)
         self.latest_output.hide()
         self.output.following_changed.connect(lambda following: self.latest_output.setVisible(not following))
         output_controls.addWidget(self.latest_output)
-        details_layout.addLayout(output_controls)
         details_layout.addWidget(self.output, 1)
         self.module_split.addWidget(self.details)
         self.module_split.setSizes([480, 520])
@@ -427,7 +439,12 @@ class SetupPanel(QWidget):
                 end = max(evidence) if evidence else self.started.timestamp()
         elapsed = max(0, int(end - self.started.timestamp()))
         label = (remote_state if connected else 'Disconnected; worker process still alive') if code is None else 'Worker exited: ' + str(code)
-        self.status.setText(f'Run Log · {label}')
+        self.status.setText(label.replace('_', ' ').capitalize())
+        self.status.setProperty('activityState',
+                                'running' if code is None and connected and not pending else
+                                'waiting' if code is None else '')
+        self.status.style().unpolish(self.status)
+        self.status.style().polish(self.status)
         self.status.setToolTip(str(self.directory))
         self.flow_status.update_run(state.state, alive=code is None, connected=connected,
                                     pending=pending, lifecycle=remote_state if code is None else receipt.get('lifecycle', 'interrupted'),

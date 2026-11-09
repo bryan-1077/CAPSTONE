@@ -97,6 +97,14 @@ def apply_theme(app, name=None):
         QLabel[activityState="running"] { color: #79d6e8; }
         QLabel[activityState="passed"] { color: #8bd6a5; }
         QLabel[activityState="failed"], QLabel[activityState="needs_attention"], QLabel[activityState="interrupted"] { color: #f29ca6; }
+        QFrame#runLogHeader { background: $button; border: 1px solid $border; border-bottom: none; border-top-left-radius: 2px; border-top-right-radius: 2px; }
+        QLabel#runLogTitle { color: $text; font-size: 14px; font-weight: 600; }
+        QLabel#runLogStatus { font-size: 12px; color: $muted; }
+        QLabel#runLogStatus[activityState="running"] { color: #79d6e8; }
+        QLabel#runLogStatus[activityState="waiting"] { color: $warning; }
+        QPushButton#runLogLatest { padding: 3px 7px; font-size: 12px; background: transparent; }
+        QPushButton#runLogLatest:hover { background: $hover; }
+        QPlainTextEdit#runLogOutput { border-top-left-radius: 0; border-top-right-radius: 0; }
         QLineEdit, QPlainTextEdit, QListWidget, QTreeWidget { background: $field; color: $text; border: 1px solid $border; border-radius: 2px; }
         QTreeWidget#artifactBrowser { selection-background-color: $hover; selection-color: $text; }
         QTreeWidget#artifactBrowser::item:selected { background: $hover; color: $text; }
