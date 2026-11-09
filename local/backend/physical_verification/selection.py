@@ -5,7 +5,7 @@ from pathlib import Path
 from physical_verification.reports import analyze_physical_reports
 from timing_closure.remote_analyze import fetch_remote_reports
 from timing_closure.recovery_context import excerpt
-from timing_closure.timing_analyzer import parse_timing_report
+from timing_closure.timing_analyzer import negative_slack, parse_timing_report
 from timing_closure.constraints import MAX_DIE_AREA_MM2, MAX_POWER_W
 
 
@@ -50,9 +50,9 @@ def build_selection_context(state, ssh, staging, attempts, candidates, target):
             if hold_report.wns is None or not math.isfinite(hold_report.wns) or not hold_report.paths:
                 raise ValueError("Fresh hold report contains no usable slack/paths.")
             hold_passed = (hold_report.wns is not None and math.isfinite(hold_report.wns)
-                           and bool(hold_report.paths) and hold_report.wns >= 0
+                           and bool(hold_report.paths) and not negative_slack(hold_report.wns)
                            and not hold_report.violating_path_count
-                           and (hold_report.tns is None or hold_report.tns >= 0))
+                           and not negative_slack(hold_report.tns))
             item.update(drc_count=counts["drc_count"], antenna_count=counts["antenna_count"],
                         setup_wns_ns=setup_report.wns, setup_tns_ns=setup_report.tns,
                         hold_wns_ns=hold_report.wns, hold_passed=hold_passed)

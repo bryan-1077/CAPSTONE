@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import math
 import re
 import tarfile
 from dataclasses import asdict, dataclass, field
@@ -45,6 +46,11 @@ class TimingReport:
     clock_period: float | None = None
     paths: list[TimingPath] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+
+
+def negative_slack(value: float | None) -> bool:
+    """Reject negative slack, including a negative value rounded to signed zero."""
+    return value is not None and math.copysign(1.0, value) < 0
 
 
 def _unique(values: Iterable[str]) -> list[str]:
@@ -163,12 +169,19 @@ def _extract_violating_path_count(text: str) -> int | None:
         r"\bnum(?:ber)?\s+of\s+violating\s+paths?\s*[:=]\s*(?P<count>\d+)",
         r"\bpaths?\s+violated\s*[:=]\s*(?P<count>\d+)",
     ]
-    for pattern in patterns:
-        match = re.search(pattern, text, flags=re.IGNORECASE)
-        if match:
-            return int(match.group("count"))
-    negative_slacks = [value for value in _extract_slack_values(text) if value < 0]
-    return len(negative_slacks) if negative_slacks else None
+    counts = [int(match.group("count")) for pattern in patterns
+              for match in re.finditer(pattern, text, flags=re.IGNORECASE)]
+    # Inspect every path, even those omitted from the detailed max_paths output.
+    # Tool classifications and signed-zero slack override a clean summary count.
+    starts = _path_section_starts(text)
+    sections = [text[start:starts[index + 1] if index + 1 < len(starts) else len(text)]
+                for index, start in enumerate(starts)] or [text]
+    observed = sum(
+        bool(re.search(r"(?im)^\s*Path\s+\d+\s*:\s*VIOLATED\b|\bslack\s*\(VIOLATED\)", section))
+        or any(negative_slack(value) for value in _extract_slack_values(section))
+        for section in sections
+    )
+    return max([observed, *counts]) if counts or observed else None
 
 
 def _extract_slack_values(text: str) -> list[float]:
@@ -405,7 +418,7 @@ def parse_timing_report(path: Path, *, max_paths: int = 10) -> TimingReport:
         report.wns = report.paths[0].slack
     if report.violating_path_count is None and report.paths:
         report.violating_path_count = len(
-            [path for path in report.paths if path.slack is not None and path.slack < 0]
+            [path for path in report.paths if negative_slack(path.slack)]
         )
     if report.clock_period is None:
         periods = [path.clock_period for path in report.paths if path.clock_period is not None]

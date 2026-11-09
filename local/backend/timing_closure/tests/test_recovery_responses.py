@@ -73,12 +73,51 @@ class RecoveryResponseTests(unittest.TestCase):
         self.assertEqual(len(data["requests"]), 2)
         self.assertIn("raw_response", data["requests"][1])
 
-    def test_invalid_plan_is_not_retried_or_accepted(self):
+    def test_invalid_plan_retries_are_bounded_and_not_accepted(self):
         self.client.responses.create.return_value = SimpleNamespace(output_text='{"actions": []}')
         with self.assertRaises(ValueError):
             self.run_plan()
         self.client.chat.completions.create.assert_not_called()
-        self.assertEqual(json.loads(self.path.read_text())["status"], "failed")
+        self.assertEqual(self.client.responses.create.call_count, 3)
+        data = json.loads(self.path.read_text())
+        self.assertEqual(data["status"], "failed")
+        self.assertEqual(len(data["validation_errors"]), 3)
+
+    def test_stale_buffer_target_is_corrected_using_current_source(self):
+        stale = {"summary": "Repair old attempt 3", "actions": [{
+            "operation": "insert_buffer", "pin": "queue_reg[28]/D",
+            "cell": "sky130_fd_sc_hd__buf_2", "reason": "Old hold path",
+        }]}
+        corrected = {"summary": "Repair current attempt 4", "actions": [{
+            **stale["actions"][0], "pin": "queue_reg[10]/D", "reason": "Current hold violation",
+        }]}
+        context = {"source_attempt": {"attempt": 4, "outdir": "current_build"},
+                   "resize_choices": {}, "buffer_choices": {"queue_reg[10]/D": {
+                       "from_cell": "sky130_fd_sc_hd__dfxtp_1",
+                       "allowed_cells": ["sky130_fd_sc_hd__buf_2"],
+                   }}}
+        for api in ("responses", "chat_completions"):
+            with self.subTest(api=api):
+                self.client.reset_mock(side_effect=True)
+                if api == "responses":
+                    endpoint = self.client.responses.create
+                    endpoint.side_effect = [SimpleNamespace(output_text=json.dumps(p))
+                                            for p in (stale, corrected)]
+                else:
+                    self.client.responses.create.side_effect = RuntimeError("404 Not Found")
+                    endpoint = self.client.chat.completions.create
+                    endpoint.side_effect = [chat_stream(json.dumps(p)) for p in (stale, corrected)]
+                result = agent.plan_timing_recovery(context, diagnostics_path=self.path)
+                self.assertEqual(result, corrected)
+                self.assertEqual(endpoint.call_count, 2)
+                kwargs = endpoint.call_args.kwargs
+                feedback = json.loads(kwargs.get("input", kwargs.get("messages"))[-1]["content"])
+                self.assertIn("absent from current source", feedback["validation_error"])
+                self.assertEqual(feedback["source_attempt"]["attempt"], 4)
+                self.assertEqual(feedback["buffer_choices"], context["buffer_choices"])
+                data = json.loads(self.path.read_text())
+                self.assertEqual(data["status"], "validated")
+                self.assertEqual(len(data["validation_errors"]), 1)
 
     def test_auth_error_does_not_fallback(self):
         self.client.responses.create.side_effect = RuntimeError("401 unauthorized")

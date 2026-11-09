@@ -1,3 +1,7 @@
+import math
+
+import tempfile
+import unittest
 from pathlib import Path
 
 from timing_closure.timing_analyzer import analyze_reports, parse_timing_report
@@ -54,3 +58,29 @@ def test_innovus_beginpoint_slack_time_fixture():
     assert analysis["worst_slack"] == -0.119
     assert analysis["worst_category"] == "synthesized memory/flop-array read mux"
     assert report.clock_period == 5.000
+
+
+class RoundedSlackTests(unittest.TestCase):
+    def test_rounded_zero_and_tool_classification(self):
+        cases = [("-0.000", "VIOLATED", 1), ("-0.000", "MET", 1),
+                 ("0.000", "VIOLATED", 1), ("0.000", "MET", 0),
+                 ("+0.000", "MET", 0), ("0.020", "MET", 0)]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "timing.rpt"
+            for slack, marker, count in cases:
+                with self.subTest(slack=slack, marker=marker):
+                    path.write_text(f"Path 1: {marker} Hold Check with Pin sink/CLK\n"
+                                    f"Beginpoint: input\nEndpoint: sink/D\nSlack Time {slack}\n")
+                    report = parse_timing_report(path)
+                    self.assertEqual(report.violating_path_count, count)
+                    self.assertEqual(math.copysign(1, report.wns), -1 if slack.startswith("-") else 1)
+
+    def test_violation_beyond_path_limit_overrides_clean_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "timing.rpt"
+            path.write_text("Violating paths: 0\n"
+                            "Path 1: MET Hold Check\nSlack Time 0.020\n"
+                            "Path 2: VIOLATED Hold Check\nSlack Time -0.000\n")
+            report = parse_timing_report(path, max_paths=1)
+            self.assertEqual(report.violating_path_count, 1)
+            self.assertEqual(len(report.paths), 1)
