@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -111,8 +112,9 @@ def derive_outdir(mappeddir, explicit_outdir=None):
 
 
 def find_innovus(explicit_innovus=None):
+    # Cadence selects its tool by the launcher name; do not resolve this symlink.
     if explicit_innovus:
-        p = Path(explicit_innovus).expanduser().resolve()
+        p = Path(explicit_innovus).expanduser().absolute()
         if not p.exists():
             raise SystemExit("Innovus executable not found: {0}".format(p))
         return p
@@ -130,7 +132,7 @@ def find_innovus(explicit_innovus=None):
     )
     candidate = which.stdout.strip()
     if candidate:
-        return Path(candidate).resolve()
+        return Path(candidate).absolute()
 
     raise SystemExit("Could not find innovus executable. Pass --innovus explicitly.")
 
@@ -631,6 +633,7 @@ def build_innovus_tcl(
     antenna_diode_cell,
     tiehi_net,
     tielo_net,
+    screenshots=False,
 ):
     results_dir = "$OUTDIR/results"
     reports_dir = "$OUTDIR/reports"
@@ -699,6 +702,7 @@ def build_innovus_tcl(
     lines.append("file mkdir $CHECKS_DIR")
     lines.append("file mkdir $TIMING_DIR")
     lines.append("file mkdir $LOGS_DIR")
+    lines.append(inline_screenshot_tcl(screenshots))
     lines.append("")
     lines.append("foreach benign_warning_id {{ {0} }} {{".format(" ".join(benign_warning_ids)))
     lines.append("    catch {suppressMessage $benign_warning_id}")
@@ -905,12 +909,14 @@ def build_innovus_tcl(
     lines.append("")
     lines.append('puts "INFO: skipping intermediate checkDesign -all; final post-route checkDesign will run once to avoid duplicate structural warnings for this padless core top"')
     lines.append("saveDesign $DBS_DIR/02_powerplan.enc")
+    lines.append("eda_capture_stage floorplan fplan")
     lines.append("")
     lines.append('if {[catch {setPlaceMode -place_global_place_io_pins true} place_mode_err]} {')
     lines.append('    puts "WARN: setPlaceMode failed: $place_mode_err"')
     lines.append("}")
     lines.append("placeDesign")
     lines.append("saveDesign $DBS_DIR/03_place.enc")
+    lines.append("eda_capture_stage placement place")
     lines.append("")
     lines.append('if {[catch {applyGlobalNets} apply_gn_post_place_err]} {')
     lines.append('    puts "WARN: applyGlobalNets after placement reported: $apply_gn_post_place_err"')
@@ -1128,6 +1134,7 @@ def build_innovus_tcl(
     lines.append('    puts "INFO: GDS stream-out complete"')
     lines.append("}")
     lines.append("catch {saveDesign $DBS_DIR/06_final.enc}")
+    lines.append("eda_capture_stage routing physical")
     lines.append('puts "INFO: organizing root-level generated artifacts"')
     lines.append('if {[catch {move_root_artifacts $OUTDIR $REPORTS_DIR $RESULTS_DIR} move_artifacts_err]} {')
     lines.append('    puts "WARN: artifact organization failed: $move_artifacts_err"')
@@ -1170,6 +1177,7 @@ def write_tcl(
     antenna_diode_cell,
     tiehi_net,
     tielo_net,
+    screenshots=False,
 ):
     txt = build_innovus_tcl(
         top=top,
@@ -1200,6 +1208,7 @@ def write_tcl(
         antenna_diode_cell=antenna_diode_cell,
         tiehi_net=tiehi_net,
         tielo_net=tielo_net,
+        screenshots=screenshots,
     )
     write_text(tcl_path, txt)
 
@@ -1245,7 +1254,7 @@ def build_screenshot_tcl(checkpoint, image, view):
         "    redraw",
         "    update",
         '    puts "SCREENSHOT: exporting PNG"; flush stdout',
-        "    dumpToPNG " + screenshot_tcl_word(image),
+        "    gui_dump_picture " + screenshot_tcl_word(image) + " -format PNG",
         "} screenshot_error]} {",
         '    puts "ERROR: screenshot export failed: $screenshot_error"',
         '    puts $::errorInfo; flush stdout',
@@ -1349,6 +1358,111 @@ def screenshot_png_size(path):
                 return dimensions
 
 
+def inline_screenshot_tcl(enabled):
+    """Capture the loaded design without restoring or opening another session."""
+    return """
+set EDA_SCREENSHOTS_ENABLED %s
+proc eda_capture_stage {stage view} {
+    if {!$::EDA_SCREENSHOTS_ENABLED} {return}
+    # Export errors are diagnostic; they must not abort implementation.
+    if {[catch {
+        set image [file join $::RESULTS_DIR screenshots ${stage}.png]
+        set log [file join $::LOGS_DIR screenshot_${stage}.log]
+        file mkdir [file dirname $image]
+        set output [open $log w]
+        puts $output "Screenshot stage: $stage (live implementation session)"
+        if {[catch {
+            setDrawView $view
+            foreach layer [dbGet head.layers.name] {
+                catch {setLayerPreference $layer -isVisible 1}
+            }
+            deselectAll
+            fit
+            redraw
+            update
+            gui_dump_picture $image -format PNG
+        } capture_error]} {
+            puts $output "EXPORT ERROR: $capture_error"
+            puts $output $::errorInfo
+            catch {file delete $image}
+            puts "WARN: $stage screenshot failed: $capture_error"
+        } else {
+            puts $output "SCREENSHOT: exported $image"
+            puts "SCREENSHOT: exported $image"
+        }
+        close $output
+    } screenshot_error]} {
+        puts "WARN: $stage screenshot failed: $screenshot_error"
+    }
+}
+""" % int(bool(enabled))
+
+
+def implementation_command(innovus, mode):
+    """Keep graphics in the implementation session when a display is available."""
+    import os
+    command = [str(innovus)]
+    if mode == "off":
+        return command + ["-no_gui"], "off"
+    xvfb = shutil.which("xvfb-run") if mode in ("auto", "xvfb") else None
+    if xvfb:
+        return [xvfb, "-a", "-s", "-screen 0 1920x1080x24"] + command, "xvfb"
+    if mode == "xvfb":
+        raise SystemExit("Screenshot mode xvfb requires Xvfb/xvfb-run and xauth")
+    if os.environ.get("DISPLAY"):
+        return command, "display"
+    if mode == "display":
+        raise SystemExit("DISPLAY is unset; use --screenshots xvfb or enable X forwarding")
+    print("WARN: No screenshot display available; running implementation without graphics.")
+    return command + ["-no_gui"], "unavailable"
+
+
+def prepare_inline_screenshots(outdir):
+    """Do not accept images or capture logs left over from a previous invocation."""
+    folder = outdir / "results" / "screenshots"
+    folder.mkdir(parents=True, exist_ok=True)
+    for stage, _, _ in SCREENSHOT_STAGES:
+        for path in (folder / (stage + ".png"), outdir / "logs" / ("screenshot_" + stage + ".log")):
+            if path.exists():
+                path.unlink()
+    write_text(folder / "manifest.json", '{"status": "running", "method": "inline", "images": []}\n')
+
+
+def collect_inline_screenshots(outdir, mode, display_mode, source_build=None):
+    """Validate live captures; ECOs reuse earlier stage images from their ancestor."""
+    import json
+    outdir = outdir.resolve()
+    folder = outdir / "results" / "screenshots"
+    manifest = {"mode": mode, "method": "inline", "display_mode": display_mode, "images": []}
+    for stage, name, _ in SCREENSHOT_STAGES:
+        image = folder / (stage + ".png")
+        log = outdir / "logs" / ("screenshot_" + stage + ".log")
+        entry = {"stage": stage, "checkpoint": str(outdir / "db" / name),
+                 "file": str(image), "log": str(log), "status": "failed",
+                 "source_build": str(outdir), "origin": "current_build"}
+        manifest["images"].append(entry)
+        try:
+            # A failed local capture must never be replaced with an ancestor's image.
+            if stage != "routing" and not log.exists() and not (outdir / "db" / name).exists():
+                checkpoint, origin = screenshot_checkpoint(outdir, stage, name, source_build)
+                source_image = origin / "results" / "screenshots" / (stage + ".png")
+                screenshot_png_size(source_image)
+                shutil.copyfile(str(source_image), str(image))
+                write_text(log, "Reused stage capture from " + str(source_image) + "\n")
+                entry.update(checkpoint=str(checkpoint), source_build=str(origin), origin="ancestor_build")
+            width, height = screenshot_png_size(image)
+            entry.update(status="success", width=width, height=height)
+        except (OSError, RuntimeError, ValueError) as error:
+            entry["error"] = str(error)
+            if log.exists():
+                entry["log_tail"] = log.read_text(errors="replace")[-6000:]
+            else:
+                entry["error"] = "Stage capture was not produced: " + str(error)
+    manifest["status"] = "success" if all(e["status"] == "success" for e in manifest["images"]) else "failed"
+    write_text(folder / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+    return manifest["status"] == "success"
+
+
 def export_screenshots(outdir, innovus, mode="auto", timeout=300, source_build=None):
     """Export each checkpoint independently; record failures without losing GDS."""
     import os
@@ -1393,7 +1507,7 @@ def export_screenshots(outdir, innovus, mode="auto", timeout=300, source_build=N
                     raise RuntimeError("No virtual display: install Xvfb/xvfb-run and xauth, or use --screenshots display with DISPLAY set")
                 command = [xvfb, "-a", "-s", "-screen 0 1920x1080x24"] + command
             entry["command"] = command
-            # A GUI is intentional here: the main implementation still uses -no_gui.
+            # Checkpoint-only exports also require a graphics-enabled session.
             with log.open("a", encoding="utf-8") as output:
                 # A separate process group lets timeout terminate Xvfb and Innovus.
                 process = subprocess.Popen(command, cwd=str(outdir), env=environment,
@@ -1473,11 +1587,11 @@ def main():
     parser.add_argument("--tielo-net", default=None)
     parser.add_argument("--setup-only", action="store_true")
     parser.add_argument("--screenshots", choices=("auto", "display", "xvfb", "off"), default="auto",
-                        help="Export stage PNGs after GDS; auto prefers xvfb-run, then DISPLAY.")
+                        help="Capture PNGs after each stage in the implementation session; auto prefers xvfb-run, then DISPLAY.")
     parser.add_argument("--screenshots-only", action="store_true",
                         help="Export existing checkpoints in --outdir without running implementation.")
     parser.add_argument("--screenshot-timeout", type=int, default=300,
-                        help="Maximum seconds per screenshot session (default: 300).")
+                        help="Maximum seconds per --screenshots-only session (default: 300).")
     parser.add_argument("--screenshot-source-build",
                         help="Explicit ancestor build for missing floorplan/placement checkpoints; routing stays local.")
     args = parser.parse_args()
@@ -1626,6 +1740,7 @@ def main():
         antenna_diode_cell=args.antenna_diode_cell,
         tiehi_net=tiehi_net,
         tielo_net=tielo_net,
+        screenshots=args.screenshots != "off",
     )
 
     summary = (
@@ -1705,6 +1820,9 @@ def main():
         print("Generated Innovus setup only. No run launched.")
         return 0
 
+    launch, display_mode = implementation_command(innovus, args.screenshots)
+    if args.screenshots != "off":
+        prepare_inline_screenshots(outdir)
     innovus_dir = str(innovus.parent)
     bash_cmd = "\n".join(
         [
@@ -1716,15 +1834,18 @@ def main():
             'echo "CDS_LIC_FILE=${CDS_LIC_FILE-}"',
             'echo "LM_LICENSE_FILE=${LM_LICENSE_FILE-}"',
             "which innovus || true",
-            'innovus -no_gui -log "{0}" -files "{1}" | tee "{2}"'.format(
-                native_log,
-                tcl_path,
-                innovus_log,
-            ),
+            shlex.join(launch + ["-log", str(native_log), "-files", str(tcl_path)])
+            + " | tee " + shlex.quote(str(innovus_log)),
         ]
     )
 
-    run_bash(bash_cmd, logfile=wrapper_log, cwd=outdir)
+    try:
+        run_bash(bash_cmd, logfile=wrapper_log, cwd=outdir)
+    finally:
+        # Preserve earlier stage captures even if a later implementation step fails.
+        if args.screenshots != "off":
+            if not collect_inline_screenshots(outdir, args.screenshots, display_mode, args.screenshot_source_build):
+                print("WARN: Stage screenshots are incomplete. Check results/screenshots/manifest.json.")
 
     gds_path = resultsdir / "{0}.gds".format(top)
     if not gds_path.exists():
@@ -1735,11 +1856,6 @@ def main():
                 innovus_log,
             )
         )
-
-    if args.screenshots != "off":
-        if not export_screenshots(outdir, innovus, args.screenshots, args.screenshot_timeout, args.screenshot_source_build):
-            print("WARN: GDS is available, but screenshots are incomplete. "
-                  "Check results/screenshots/manifest.json; retry with --screenshots-only --outdir.")
 
     return 0
 

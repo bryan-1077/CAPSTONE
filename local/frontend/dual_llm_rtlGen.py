@@ -40,7 +40,8 @@ from rtl_response_payload import (json_input, decode_json, validate_payload,
                                   ALLOWED_STATUS as _ALLOWED_STATUS,
                                   ALLOWED_ISSUE_TYPES as _ALLOWED_ISSUE_TYPES,
                                   STATUS_ALIASES as _STATUS_ALIASES)
-from ir_to_llm_context import build_llm_context
+from ir_to_llm_context import (build_llm_context, ANSI_PORT_WIDTH_RULE,
+                              QUEUE_INDEX_WIDTH_RULES)
 from prompt_context import serialize_context
 from width_safety import enforce_width_safety
 
@@ -1114,9 +1115,7 @@ Rules:
 - Any expression involving parameters or constants MUST be explicitly sized to match the destination signal.
 - Do not rely on implicit truncation or width expansion; use explicit casts, sized literals, or width-matched localparams.
 - For request queues, define localparam int REQUEST_WIDTH = 51.
-- For queue indices, define localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).
 - Never cast a packed request struct with logic'(some_request_struct); use direct assignment when widths match or REQUEST_WIDTH'(expr) when an explicit packed request-width cast is needed.
-- Do not hardcode queue index width as 2; use SEL_WIDTH for sel_idx, first_free_idx, insert_idx, and loop-derived index casts.
 - Reset behavior must match STRUCTURED LLM CONTEXT exactly.
 - Preserve the stated implementation constraints and forbidden patterns exactly.
 - Use logic types (not reg/wire) throughout.
@@ -1135,7 +1134,6 @@ Rules:
   and AMBIGUOUS must include an AMBIGUITY explaining the missing/conflicting context.
 - "issues" should usually be empty for generation unless the spec is ambiguous or conflicting.
 - "corrected_rtl" must contain the full SystemVerilog module only, with no markdown fences.
-- Do not use localparams in ANSI port declarations. Any symbol used in a port width must be a literal, a package-visible type/constant, or a parameter declared in the module parameter list.
 """
 
 _SYS_REVIEWER = """\
@@ -1175,7 +1173,6 @@ Rules:
 - Each issue description must be one sentence.
 - If context is ambiguous, return AMBIGUOUS with an AMBIGUITY issue. Otherwise return INVALID
   with at least one SPEC_VIOLATION, or VALID with issues [] when no violations remain.
-- Flag use of localparams in ANSI port widths as a SPEC_VIOLATION unless the symbol is declared as a module parameter before the port list.
 - If a LOCAL VERILATOR LINT REPORT is provided and it reports FAIL, treat each actionable lint diagnostic as a SPEC_VIOLATION implementation blocker.
 """
 
@@ -1246,9 +1243,7 @@ Rules:
 - Do NOT introduce decrement logic, background aging, or wraparound handling unless explicitly required by STRUCTURED LLM CONTEXT.
 - Preserve explicit width matching on every parameter/constant arithmetic, comparison, and assignment.
 - For request queues, preserve localparam int REQUEST_WIDTH = 51.
-- For queue indices, preserve localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).
 - Never cast a packed request struct with logic'(some_request_struct); use direct assignment when widths match or REQUEST_WIDTH'(expr) when an explicit packed request-width cast is needed.
-- Do not hardcode queue index width as 2; use SEL_WIDTH for sel_idx, first_free_idx, insert_idx, and loop-derived index casts.
 - Do not declare module-scope loop variables for procedural for-loops.
 - Use block-local loop variables: for (int i = 0; i < N; i++) begin.
 - Do not reuse the same loop variable across multiple always_comb/always_ff blocks.
@@ -1257,6 +1252,15 @@ Rules:
 - Do not echo invariants or context; the compiler retains them independently.
 - "corrected_rtl" must contain the full merged SystemVerilog module only, with no markdown fences.
 """
+
+# Keep full/compact review and repair in agreement with generated context.
+_QUEUE_WIDTH_POLICY = "\nQueue index and ANSI port width policy:\n" + "\n".join(
+    "- " + rule for rule in (ANSI_PORT_WIDTH_RULE, *QUEUE_INDEX_WIDTH_RULES)
+)
+_SYS_GENERATOR += _QUEUE_WIDTH_POLICY
+_SYS_REVIEWER += _QUEUE_WIDTH_POLICY
+_SYS_REVIEWER_COMPACT += _QUEUE_WIDTH_POLICY
+_SYS_MERGER += _QUEUE_WIDTH_POLICY
 
 
 # ---------------------------------------------------------------------------

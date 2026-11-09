@@ -11,7 +11,7 @@ from physical_verification.reports import analyze_physical_reports
 from timing_closure.closure_runner import evaluate_setup_report
 from timing_closure.constraints import evaluate_limits
 from timing_closure.remote_analyze import fetch_remote_reports
-from timing_closure.timing_analyzer import parse_timing_report
+from timing_closure.timing_analyzer import negative_slack, parse_timing_report
 from session_log_utils import SessionLogCapture
 
 
@@ -44,8 +44,8 @@ def measure(state, ssh, outdir, staging, *, require_setup_timing=True):
     if hold.wns is None or not math.isfinite(hold.wns) or not hold.paths:
         raise ValueError("Fresh hold report contains no usable slack/paths.")
     limits = evaluate_limits(area.read_text(), power.read_text())
-    hold_passed = (hold.wns >= 0 and not hold.violating_path_count
-                   and (hold.tns is None or hold.tns >= 0))
+    hold_passed = (not negative_slack(hold.wns) and not hold.violating_path_count
+                   and not negative_slack(hold.tns))
     evidence.update(outdir=outdir, report_paths=[str(path) for path in paths], remote_fetch=fetched,
         setup_wns_ns=setup.wns, hold_wns_ns=hold.wns, target_period_ns=target,
         setup_passed=setup_status == "passed", hold_passed=hold_passed,

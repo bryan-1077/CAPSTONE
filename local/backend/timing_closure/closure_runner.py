@@ -12,7 +12,7 @@ from uuid import uuid4
 from timing_closure.remote_analyze import fetch_remote_reports
 from timing_closure.recovery_context import build_recovery_evidence, excerpt
 from timing_closure.hold_recovery import legal_hold_targets, fallback_hold_plan, plan_signature
-from timing_closure.timing_analyzer import analyze_reports, parse_timing_report, render_markdown
+from timing_closure.timing_analyzer import analyze_reports, negative_slack, parse_timing_report, render_markdown
 from services.path_naming import resolve_prepare_dir, resolve_netlist_dir_choice, resolve_mapped_dir_choice
 from services import mapped_snapshot
 from services.build_names import frequency_label
@@ -34,7 +34,7 @@ def evaluate_setup_report(report, target_period: float) -> tuple[str, str]:
         return "error", f"Routed report does not confirm the requested {target_period:.3f} ns period."
     if report.wns is None or not math.isfinite(report.wns) or not report.paths:
         return "error", "Routed report contains no usable setup paths/slack."
-    if report.wns < 0 or (report.tns is not None and report.tns < 0) or report.violating_path_count:
+    if negative_slack(report.wns) or negative_slack(report.tns) or report.violating_path_count:
         return "violated", f"Setup timing failed: WNS {report.wns:.3f} ns at {target_period:.3f} ns."
     return "passed", f"Setup timing passed: WNS {report.wns:.3f} ns at {target_period:.3f} ns."
 
@@ -416,7 +416,7 @@ def _run_setup_closure(state, ssh, implementation_runner, merge, *, run_id=None)
                 entry["status"] = "hold_missing"
                 return fail("Recovery candidate hold timing cannot be verified.")
             entry["hold_wns_ns"] = hold.wns
-            if hold.wns < 0 or (hold.tns is not None and hold.tns < 0) or hold.violating_path_count:
+            if negative_slack(hold.wns) or negative_slack(hold.tns) or hold.violating_path_count:
                 status = "hold_violated"
                 message = f"Recovery candidate rejected: hold slack {hold.wns:.3f} ns."
             entry["status"] = status
