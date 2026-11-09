@@ -39,15 +39,28 @@ REQUEST_PAYLOAD_COMPATIBILITY_RULES = [
     "If packed vector ports are used, internally unpack into request_t before applying policy logic.",
 ]
 
+# Shared by the structured context and every RTL model stage. Project tooling
+# keeps body localparams out of ports; internal signal names are a separate policy.
+ANSI_PORT_WIDTH_RULE = (
+    "Do not use module-body localparams in ANSI port widths. Port widths may use "
+    "constant expressions over parameters declared before the port list, literals, "
+    "or package-visible types/constants."
+)
+QUEUE_INDEX_WIDTH_RULES = (
+    "For request queues, define module-body localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).",
+    "For request queues, use SEL_WIDTH for internal queue indices (including first_free_idx and insert_idx) and loop-derived index casts; do not require the SEL_WIDTH symbol in the sel_idx port declaration.",
+    "For request queues, declare sel_idx with the guarded inline port range [((DEPTH <= 1) ? 1 : $clog2(DEPTH))-1:0]; DEPTH is the only configurable source of queue index width, so do not introduce an independently overrideable index-width parameter such as SEL_IDX_WIDTH.",
+    "For request queues, sel_idx and internal index widths must match for every supported positive DEPTH, including DEPTH=1; do not hardcode the width as 2 or use unguarded $clog2(DEPTH) for sel_idx.",
+    "These port and internal width forms are compatible requirements; an incorrect candidate width is a SPEC_VIOLATION to repair, not a specification AMBIGUITY.",
+)
+
 REQUEST_QUEUE_WIDTH_RULES = [
     "Define localparam int REQUEST_WIDTH = 51.",
-    "Define localparam int SEL_WIDTH = (DEPTH <= 1) ? 1 : $clog2(DEPTH).",
+    *QUEUE_INDEX_WIDTH_RULES,
     "Never cast a packed request struct using logic'(some_request_struct).",
     "If a packed request struct must be assigned to a vector, use direct assignment when widths match or use REQUEST_WIDTH'(expr).",
-    "Do not hardcode queue index width as 2.",
-    "Use SEL_WIDTH for sel_idx, first_free_idx, insert_idx, and loop-derived index casts.",
     "Use block-local loop variables: for (int i = 0; i < DEPTH; i++) begin.",
-    "Do not use localparams in ANSI port widths. Any symbol used in a port width must be a literal, package-visible typedef/constant, or a parameter declared in the module parameter list.",
+    ANSI_PORT_WIDTH_RULE,
 ]
 
 LOOP_VARIABLE_GUIDANCE = [
