@@ -72,12 +72,14 @@ def apply_theme(app, name=None):
         palette.setColor(getattr(QPalette.ColorRole, role), QColor(Template(color).substitute(tokens)))
     app.setPalette(palette)
     stylesheet = Template('''
-        QPushButton { padding: 7px 12px; border: 1px solid $border; border-radius: 2px; background: $button; color: $text; }
-        QPushButton:hover { background: $hover; border-color: $gold; }
-        QPushButton:pressed, QPushButton:checked { background: $border; }
+        QPushButton { padding: 7px 12px; border: 1px solid $border; border-bottom-width: 3px; border-radius: 2px; background: $button; color: $text; }
+        QPushButton:hover { background: $hover; border-color: $trace; }
+        QPushButton:pressed { background: $border; }
+        QPushButton:checked, QPushButton:checked:hover { background: $hover; border-color: $gold; color: $gold; }
+        QToolButton:checked { background: $hover; border: 1px solid $gold; border-bottom-width: 3px; color: $gold; }
         QPushButton#historyToggle { min-width: 64px; padding: 7px 16px; font-weight: 600; }
         QPushButton#historyToggle[headerAction="true"], QPushButton#primaryAction[headerAction="true"] { padding: 8px 14px; min-height: 20px; }
-        QPushButton#historyToggle:checked { background: #7892a7; color: $field; border-color: #a9c0d0; }
+        QPushButton#historyToggle:checked { background: $hover; color: $gold; border-color: $gold; }
         QPushButton:disabled { background: $panel; color: $disabled; border-color: $disabled_border; }
         QPushButton#primaryAction { background: $gold; color: $field; border-color: $gold; font-weight: 700; }
         QPushButton[runControl="true"] { font-size: 16px; font-weight: 700; min-width: 160px; min-height: 48px; padding: 10px 16px; }
@@ -102,6 +104,20 @@ def apply_theme(app, name=None):
         QLabel#runLogStatus { font-size: 12px; color: $muted; }
         QLabel#runLogStatus[activityState="running"] { color: #79d6e8; }
         QLabel#runLogStatus[activityState="waiting"] { color: $warning; }
+        QGraphicsView#layoutCanvas { background: $field; border: 1px solid $border; }
+        QLabel#layoutTitle { font-size: 15px; font-weight: 600; color: $text; }
+        QLabel#layoutHint { font-size: 11px; color: $muted; }
+        QLabel#layoutDetails { font-size: 12px; color: $muted; padding: 6px; background: $field; }
+        QToolButton#galleryAction { padding: 4px 7px; border: 1px solid $border; border-bottom-width: 3px; border-radius: 2px; background: $button; color: $text; }
+        QToolButton#galleryAction:hover { background: $hover; border-color: $trace; }
+        QToolButton#galleryAction:checked, QToolButton#galleryAction:checked:hover { background: $hover; border-color: $gold; color: $gold; }
+        QToolButton#galleryAction:disabled { color: $disabled; background: $panel; }
+        QToolButton#galleryAction:focus { border-color: #79d6e8; }
+        QToolButton#imageCardAction { padding: 3px 4px; border: 1px solid $border; border-bottom-width: 3px; border-radius: 2px; background: $button; color: $text; }
+        QToolButton#imageCardAction:hover { background: $hover; border-color: $trace; }
+        QToolButton#imageCardAction:checked { background: $hover; border-color: $gold; color: $gold; }
+        QToolButton#imageCardAction:disabled { color: $disabled; background: $panel; }
+        QToolButton#imageCardAction:focus { border-color: #79d6e8; }
         QPushButton#runLogLatest { padding: 3px 7px; font-size: 12px; background: transparent; }
         QPushButton#runLogLatest:hover { background: $hover; }
         QPlainTextEdit#runLogOutput { border-top-left-radius: 0; border-top-right-radius: 0; }
@@ -142,6 +158,7 @@ def apply_theme(app, name=None):
         QLabel#consoleCaption { color: $gold; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
         QLabel#flowNodeNumber { color: $gold; font-family: "$mono_font"; font-size: 11px; font-weight: 600; }
         QLabel#selectedRunName { color: $muted; font-family: "$mono_font"; font-size: 12px; }
+        QLabel#selectedRunName[emptyWorkspace="true"] { color: $gold; font-family: "$ui_font"; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
         QLabel#selectedRunDetails { color: $text; font-size: 19px; font-weight: 600; }
         QLabel#brandCaption { font-size: 12px; color: $muted; letter-spacing: 1px; }
         QLabel#flowHeading { font-size: 18px; font-weight: 600; }
@@ -149,6 +166,7 @@ def apply_theme(app, name=None):
         QLabel#elapsed { font-family: "$mono_font"; font-size: 12px; color: $muted; }
         QLabel#interpretationNotes { padding: 10px; color: $muted; background: $field; border: 1px solid $border; border-radius: 2px; }
         QPushButton:focus { border-color: #79d6e8; }
+        QPushButton:checked:focus { border-bottom-color: $gold; }
         QLineEdit, QComboBox { padding: 6px 8px; min-height: 18px; }
         QComboBox { background: $field; color: $text; border: 1px solid $border; border-radius: 2px; }
         QComboBox:focus { border-color: #79d6e8; }

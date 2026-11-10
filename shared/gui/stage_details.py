@@ -95,6 +95,13 @@ class StageDetails(SectionCard):
         self.physical.header().setStretchLastSection(True)
         self.pages.addTab(self.physical, 'Physical Steps')
         self.pages.setTabVisible(3, False)
+        from .layout_images import LayoutImages
+        self.layout_images = LayoutImages()
+        self.layout_images.images_available.connect(self.show_layout_images)
+        self.pages.addTab(self.layout_images, 'Layout Images')
+        self.pages.setTabVisible(4, False)
+        self.pages.currentChanged.connect(lambda: self.description.setVisible(
+            self.pages.currentWidget() is not self.layout_images))
         self.add_widget(self.pages, 1)
         self._rows = None
         self._stage = None
@@ -102,6 +109,9 @@ class StageDetails(SectionCard):
     def toggle_agent_details(self, item, column):
         if column == 0 and item.parent() is None and item.childCount():
             item.setExpanded(not item.isExpanded())
+
+    def show_layout_images(self):
+        self.pages.setCurrentWidget(self.layout_images)
 
     def display(self, run, stage, *, alive=False):
         if getattr(self, '_run_directory', None) != run.directory:
@@ -114,6 +124,9 @@ class StageDetails(SectionCard):
         self.title.setText(dict(MAIN_NODES)[stage])
         self.pages.setTabVisible(2, stage == 'validation')
         self.pages.setTabVisible(3, stage == 'backend')
+        self.pages.setTabVisible(4, stage == 'backend')
+        if stage == 'backend':
+            self.layout_images.display(run)
         rows = evidence_rows(run, stage, alive=alive)
         modules = module_progress(run, alive=alive and run.state.get('current_stage') in ('generate', 'debug'))
         if stage == 'generate' and modules:
@@ -136,7 +149,8 @@ class StageDetails(SectionCard):
                 from .verification_details import populate_agents
                 populate_agents(self.physical, physical_steps(run, alive=alive))
                 if self._stage != stage:
-                    self.pages.setCurrentWidget(self.physical)
+                    self.pages.setCurrentWidget(self.layout_images if self.layout_images.images
+                                                else self.physical)
             else:
                 self.pages.setCurrentWidget(self.evidence)
         self._stage = stage

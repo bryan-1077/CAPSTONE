@@ -82,18 +82,33 @@ class RunWindow(QMainWindow):
         context = QHBoxLayout()
         self.selection_label = QLabel('New Design')
         self.selection_label.setObjectName('selectedRunName')
-        self.selection_label.setWordWrap(True)
+        self.selection_label.setWordWrap(False)
+        self.selection_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.selection_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.selection_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         selection_info = QVBoxLayout()
         selection_info.setSpacing(3)
         selection_info.addWidget(self.selection_label)
         self.selection_details = QLabel()
         self.selection_details.setObjectName('selectedRunDetails')
         self.selection_details.setTextFormat(Qt.TextFormat.PlainText)
-        self.selection_details.setWordWrap(True)
-        self.selection_details.hide()
+        self.selection_details.setWordWrap(False)
+        details_policy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        details_policy.setRetainSizeWhenHidden(True)
+        self.selection_details.setSizePolicy(details_policy)
+        # Reserve the same two text lines before and after selecting a run.
+        # Fixed line heights prevent long IDs or metadata from moving the tabs.
+        for label in (self.selection_label, self.selection_details):
+            label.ensurePolished()
+            label.setFixedHeight(label.fontMetrics().height())
+        self.show_empty_header()
         selection_info.addWidget(self.selection_details)
         context.addLayout(selection_info, 1)
+        self.copy_run_button = QPushButton('Copy Run Name')
+        self.copy_run_button.setToolTip('Copy the selected run’s full directory name.')
+        self.copy_run_button.clicked.connect(self.copy_run_name)
+        self.copy_run_button.hide()
+        context.addWidget(self.copy_run_button)
         self.selection_status = QLabel('Ready to Start')
         self.selection_status.setObjectName('historyBadge')
         context.setSpacing(12)
@@ -263,7 +278,12 @@ class RunWindow(QMainWindow):
         self.text.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.text.setProperty('technicalText', True)
         self.text.setMinimumHeight(100)
-        preview_layout.addWidget(self.text, 1)
+        self.preview_stack = QStackedWidget()
+        self.preview_stack.addWidget(self.text)
+        from .image_preview import ImagePreview
+        self.image_preview = ImagePreview()
+        self.preview_stack.addWidget(self.image_preview)
+        preview_layout.addWidget(self.preview_stack, 1)
         self.artifact_split.addWidget(preview_panel)
         self.artifact_split.setStretchFactor(0, 0)
         self.artifact_split.setStretchFactor(1, 1)
@@ -337,6 +357,17 @@ class RunWindow(QMainWindow):
         self.active_run.style().unpolish(self.active_run)
         self.active_run.style().polish(self.active_run)
 
+    def show_empty_header(self):
+        self.selection_label.setText('DESIGN WORKSPACE')
+        self.selection_label.setProperty('emptyWorkspace', True)
+        self.selection_label.style().unpolish(self.selection_label)
+        self.selection_label.style().polish(self.selection_label)
+        hint = 'Describe a controller below, or open Saved Runs to review previous work.'
+        self.selection_label.setToolTip(hint)
+        self.selection_details.setText('Create a controller')
+        self.selection_details.setToolTip(hint)
+        self.selection_details.show()
+
     def open_design(self):
         self.update_design_action()
         if self.setup.process is not None and self.setup.process.poll() is None:
@@ -350,8 +381,8 @@ class RunWindow(QMainWindow):
             self.history.itemWidget(self.history.item(index)).set_selected(False)
         self.run_page.setCurrentWidget(self.setup)
         self.tabs.setCurrentWidget(self.run_page)
-        self.selection_label.setText('New Design')
-        self.selection_details.hide()
+        self.show_empty_header()
+        self.copy_run_button.hide()
         self.selection_status.setText('Ready to Start')
         self.selection_status.setProperty('historyState', 'idle')
         self.selection_status.style().unpolish(self.selection_status)
@@ -379,7 +410,13 @@ class RunWindow(QMainWindow):
         from .history import hardware_summary, run_status, LABELS
         status, _ = run_status(run)
         self.selection_label.setText('Selected Run · ' + run.directory.name)
+        self.selection_label.setProperty('emptyWorkspace', False)
+        self.selection_label.style().unpolish(self.selection_label)
+        self.selection_label.style().polish(self.selection_label)
+        self.selection_label.setToolTip(run.directory.name)
+        self.copy_run_button.show()
         self.selection_details.setText(hardware_summary(run).replace(' MHz', ' MHz Target'))
+        self.selection_details.setToolTip(self.selection_details.text())
         self.selection_details.show()
         self.selection_status.setText(LABELS.get(status, status.replace('_', ' ').title()))
         if (self.setup.directory == run.directory and self.setup.process is not None
@@ -561,8 +598,15 @@ class RunWindow(QMainWindow):
             return
         self.history.setCurrentItem(item)
         menu = QMenu(self.history)
+        menu.addAction('Copy Run Name', self.copy_run_name)
         menu.addAction('Open Run Folder', self.open_folder)
         menu.exec(self.history.viewport().mapToGlobal(position))
+
+    def copy_run_name(self):
+        if self.run is not None:
+            from PySide6.QtWidgets import QApplication
+            QApplication.clipboard().setText(self.run.directory.name)
+            self.statusBar().showMessage('Run name copied.', 2500)
 
     def show_saved_specification(self):
         if self.run is None:
@@ -589,6 +633,17 @@ class RunWindow(QMainWindow):
             self.preview_location.setText(' › '.join(relative.parts))
             self.preview_location.setToolTip(str(path))
             self.preview_open.setEnabled(path.exists())
+            self.update_preview(path)
+
+    def update_preview(self, path):
+        from .image_preview import IMAGE_SUFFIXES
+        if path.suffix.lower() in IMAGE_SUFFIXES:
+            self.text.clear()
+            self.preview_stack.setCurrentWidget(self.image_preview)
+            self.image_preview.show_image(path)
+        else:
+            self.image_preview.clear()
+            self.preview_stack.setCurrentWidget(self.text)
             self.text.setPlainText(preview(path))
 
     def clear_preview(self):
@@ -599,6 +654,8 @@ class RunWindow(QMainWindow):
         self.preview_location.setToolTip('')
         self.preview_open.setEnabled(False)
         self.text.clear()
+        self.image_preview.clear()
+        self.preview_stack.setCurrentWidget(self.text)
 
     def open_preview(self):
         if self.preview_path is not None:
@@ -608,7 +665,7 @@ class RunWindow(QMainWindow):
         if self.run is not None:
             self.files.refresh_loaded_folders()
             if self.preview_path is not None:
-                self.text.setPlainText(preview(self.preview_path))
+                self.update_preview(self.preview_path)
 
     def file_context_menu(self, position):
         item = self.files.itemAt(position)

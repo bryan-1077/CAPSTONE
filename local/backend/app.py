@@ -207,7 +207,22 @@ def _resume_at_lec(args):
         with warnings.catch_warnings():
             warnings.simplefilter("error", getpass.GetPassWarning)
             ssh_config["password"] = getpass.getpass(f"SSH password for {state['ssh_user']}@{state['ssh_host']}: ")
-    return run_flow(initial_state=state, ssh_config=ssh_config, thread_id="eda-flow-lec-resume")
+    result = run_flow(initial_state=state, ssh_config=ssh_config, thread_id="eda-flow-lec-resume")
+    _download_layout_images(result, ssh_config, args.log_dir)
+    return result
+
+
+def _download_layout_images(result, ssh_config, log_dir):
+    if not log_dir or result.get('stage_status', {}).get('gdsii') != 'success':
+        return
+    from services.layout_images import collect_layout_images
+    try:
+        result['layout_images'] = collect_layout_images(
+            result, ssh_config, Path(log_dir).expanduser().resolve() / 'layout_images')
+    except Exception as exc:
+        # Optional presentation artifacts never change the design outcome.
+        result['layout_images'] = {'status': 'unavailable',
+                                   'reason': f'Could not save screenshots ({type(exc).__name__}).'}
 
 
 def _apply_shared_allocation(state):
@@ -441,6 +456,7 @@ def _run_single_target(args, *, require_timing_closure=False):
         ssh_config=ssh_config,
         thread_id="eda-flow-run",
     )
+    _download_layout_images(result, ssh_config, getattr(args, 'log_dir', None))
     return result
 
 

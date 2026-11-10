@@ -49,8 +49,8 @@ class ActionButton(QPushButton):
         from .theme import theme_colors
         colors = theme_colors()
         foreground = (colors['disabled'] if not self.isEnabled() else
-                      colors['field'] if self.objectName() == 'primaryAction' or (
-                          self.objectName() == 'historyToggle' and self.isChecked()) else colors['text'])
+                      colors['field'] if self.objectName() == 'primaryAction' else
+                      colors['gold'] if self.isChecked() else colors['text'])
         palette = QPalette(option.palette)
         palette.setColor(QPalette.ColorRole.ButtonText, QColor(foreground))
         self.style().drawItemText(painter, text_rect, Qt.AlignmentFlag.AlignCenter,

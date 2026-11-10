@@ -10,11 +10,11 @@ AGENTS = {
 }
 
 
-def small_json(path):
+def small_json(path, *, limit=512 * 1024):
     try:
         with Path(path).open('rb') as handle:
-            raw = handle.read(512 * 1024 + 1)
-        value = json.loads(raw) if len(raw) <= 512 * 1024 else {}
+            raw = handle.read(limit + 1)
+        value = json.loads(raw) if len(raw) <= limit else {}
         return value if isinstance(value, dict) else {}
     except (OSError, ValueError):
         return {}

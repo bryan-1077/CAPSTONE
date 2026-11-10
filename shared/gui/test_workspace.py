@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+from PySide6.QtCore import QPoint
 from .window import RunWindow
 from .run_reader import load_run
 from .physical_details import measured_results, physical_steps
@@ -49,6 +50,28 @@ class WorkspaceTests(unittest.TestCase):
 
     def labels(self):
         return '\n'.join(widget.text() for widget in self.window.results.findChildren(QLabel))
+
+    def test_selecting_saved_runs_keeps_header_and_workspace_in_place(self):
+        self.window.history_toggle.setChecked(True)
+        for _ in range(3):
+            self.app.processEvents()
+        def positions():
+            return (self.window.workspace_split.mapTo(self.window, QPoint()).y(),
+                    self.window.tabs.tabBar().mapTo(self.window, QPoint()).y(),
+                    self.window.history_heading.mapTo(self.window, QPoint()).y())
+        original = positions()
+        long_run = self.make_run('long_' + 'x' * 180, 'complete', 'backend')
+        for directory in (self.old, self.active, long_run):
+            with patch('shared.gui.history.hardware_summary', return_value='DDR4 · 4 banks · 200 MHz ' * 12):
+                self.window.display_run(load_run(directory))
+            for _ in range(3):
+                self.app.processEvents()
+            self.assertEqual(positions(), original)
+            self.assertEqual(self.window.selection_label.toolTip(), directory.name)
+        self.window.open_design()
+        for _ in range(3):
+            self.app.processEvents()
+        self.assertEqual(positions(), original)
 
     def test_history_updates_every_tab_without_hijacking_active_run(self):
         self.assertIsNone(self.window.run)
@@ -120,7 +143,8 @@ class WorkspaceTests(unittest.TestCase):
         self.window.open_design()
         self.assertIsNone(self.window.run)
         self.assertEqual(self.window.files.topLevelItemCount(), 0)
-        self.assertEqual(self.window.selection_label.text(), 'New Design')
+        self.assertEqual(self.window.selection_label.text(), 'DESIGN WORKSPACE')
+        self.assertEqual(self.window.selection_details.text(), 'Create a controller')
         self.assertFalse(self.window.setup.scroll.isHidden())
         self.preferences.write_text(json.dumps(dict(show_run_log=True, files_split=[210, 430],
                                                    history_split=[850, 410])))

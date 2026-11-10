@@ -40,8 +40,9 @@ class WorkerTests(unittest.TestCase):
         from .registry import REPO_ROOT
         script = '''
 import sys
-from shared.gui import worker, registry
+from shared.gui import worker, registry, run_storage
 registry.ACTIVE = __import__('pathlib').Path(sys.argv[5])
+run_storage.RUNTIME_WORKERS = registry.ACTIVE.parent / 'private-workers'
 def fake_execute(config, password, directory, interaction):
     import subprocess, json, time
     child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])

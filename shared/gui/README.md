@@ -22,14 +22,17 @@ shared/gui/.venv/bin/python -m shared.gui
 
 The default history folder is `shared/top_orchestrator/runs`. The History
 sidebar's options menu provides Change History Folder, Refresh, and Open Run
-Folder. A run's context menu also opens its folder.
+Folder. A run's context menu also opens its folder and copies its full run name.
+Copy Run Name is also available beside the selected-run header.
 
 The workspace has three permanent tabs, all describing the selected run:
 
 - **Run** contains design setup or the four stage nodes and selected stage details.
   RTL has module activity, verification has expandable agents, and physical design
   has expandable preparation, synthesis, mapping, equivalence, and implementation
-  steps. Stage Notes preserves attempts and artifact references. The optional log
+  steps. Layout Images previews downloaded floorplan, placement, and routing PNGs
+  side by side, with a separate window for inspecting an individual image.
+  Stage Notes preserves attempts and artifact references. The optional log
   shares a resizable splitter with stage details and follows output until scrolled.
 - **Results** presents the design summary, outcome, failures and coverage gaps,
   stage summaries, recorded physical measurements, and published deliverables.
@@ -37,11 +40,14 @@ The workspace has three permanent tabs, all describing the selected run:
   establish a pass. Open Stage Details navigates to the corresponding Run node;
   View Evidence opens the exact supporting file in Files.
 - **Files** browses the actual run folder and recorded external artifacts. Text
-  previews show at most the final 256 KiB; full reports open externally. Raw
+  previews show at most the final 256 KiB; supported raster images open in an
+  image preview. Full reports open externally. Raw
   configuration remains available in state.json.
 
 History selection preserves the current top tab. The selected run name and status
-stay above the tabs. Browsing history never changes the independent worker.
+stay above the tabs. The header reserves both text lines even in New Design, so
+selecting a saved run does not move the workspace down. Run names and summaries
+stay on one line with full-text tooltips. Browsing history never changes the independent worker.
 A separate Active Run button returns to it and says Waiting for You when input is
 pending. New Design clears the prior selection and setup; it is disabled while a
 worker is alive. Startup shows a living active run or a fresh setup. No dialogs
@@ -53,12 +59,34 @@ Validation reports under `001_validation/reports/` and backend evidence under
 loads folder contents on expansion, lists up to 1,000 entries per folder, and does
 not traverse directory symlinks. Published mailbox snapshots and mutable frontend
 working outputs are labeled separately. Existing absolute in-run paths are rebased
-when moving a run without renaming its directory. The GUI does not fetch,
-regenerate, or relocate evidence. Innovus PNG viewing remains deferred until image
-export and delivery are ready.
+when moving a run without renaming its directory. Backend execution retrieves optional screenshots
+from the final recorded implementation build into `backend_reports/layout_images/`,
+alongside the export manifest and a collection receipt. Capture or download failures
+do not change design outcomes. Inherited captures identify their source build.
+For older runs, use the download arrow on each image card under Physical Design →
+Layout Images. Manual downloads retrieve only that image; new runs still retrieve
+all available captures automatically. The masked
+password prompt also permits a blank password to use SSH keys. Credentials are not
+saved. Downloads run in the background and publish completed files atomically;
+failed retries preserve images already downloaded from the same build.
+When captures become available, PD opens Layout Images with every available stage
+shown side by side. This is the only embedded view; there is no Compare toggle
+or thumbnail mode. Stage icons and short captions explain floorplan, placement,
+and routing. Each card has its own open-window, information, and download actions;
+there is no shared image toolbar. Click an image or its external-link arrow to
+open that stage in a separate resizable window. Zoom, fit, pan, previous/next,
+and arrow-key navigation are available in the separate viewer.
+Capture paths and inherited-build provenance open in a per-image information
+window, keeping the previews in place. Missing images retain their own download
+card. The
+larger viewer includes labeled previous/next and Close controls, zoom tooltips,
+and a short mouse/keyboard guide. Controls retain gold highlighting when toggled.
+Subsequent polling preserves manual tab and image selection. Browsing a run alone
+does not initiate SSH. Backend reports use a separate bounded 16 MiB reader
+and cache the displayed fields; verification JSON retains its 512 KiB limit.
 
 A saved `running` status does not prove a worker is alive. The history viewer does not
-resume interrupted executions. The active-run panel reconnects only to a living worker. Layout viewing is deferred.
+resume interrupted executions. The active-run panel reconnects only to a living worker.
 
 Offline checks, including Qt window startup:
 

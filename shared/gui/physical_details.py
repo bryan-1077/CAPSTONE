@@ -1,5 +1,29 @@
 """Physical-design summaries from the selected backend attempt only."""
 from .verification_details import small_json
+from functools import lru_cache
+
+
+@lru_cache(maxsize=8)
+def _read_backend(path, modified, size):
+    # Backend state includes repair histories and tool payloads. Retain a bounded
+    # read, then cache only the fields presented by the GUI between polls.
+    report = small_json(path, limit=16 * 1024 * 1024)
+    fields = {'stage_status', 'last_error', 'timing_closure_status',
+              'physical_verification_status', 'timing_closure_analysis', 'outputs',
+              'layout_images', 'ssh_host', 'ssh_user', 'ssh_port', 'ssh_key_file'}
+    for _, _, prefix in STEPS:
+        fields.update(prefix + suffix for suffix in
+                      ('_iteration', '_review_errors', '_review_warnings'))
+    summary = {key: report[key] for key in fields if key in report}
+    chosen = report.get('timing_closure_best_attempt')
+    if isinstance(chosen, dict):
+        summary['timing_closure_best_attempt'] = {
+            key: chosen[key] for key in ('wns_ns', 'hold_wns_ns', 'limits', 'build_dir', 'outdir', 'report')
+            if key in chosen}
+    if not report:
+        summary['_read_error'] = ('Backend report exceeds the 16 MiB viewer limit.' if size > 16 * 1024 * 1024
+                                  else 'Backend report is empty, unreadable, or incomplete.')
+    return summary
 
 STEPS = [('rtl_prep', 'RTL Preparation', 'prep'), ('netlist', 'Synthesis', 'netlist'),
          ('mapped_netlist', 'Technology Mapping', 'mapped'), ('lec', 'Equivalence Checking', 'lec'),
@@ -9,7 +33,13 @@ STEPS = [('rtl_prep', 'RTL Preparation', 'prep'), ('netlist', 'Synthesis', 'netl
 def backend_report(run):
     paths = sorted(run.directory.glob('[0-9]*_backend/backend_result.json'))
     path = paths[-1] if paths else None
-    return path, small_json(path) if path else {}
+    if path is None:
+        return None, {}
+    try:
+        stat = path.stat()
+        return path, _read_backend(path, stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        return path, {'_read_error': 'Backend report cannot be read.'}
 
 
 def physical_steps(run, *, alive=False):
@@ -31,6 +61,8 @@ def physical_steps(run, *, alive=False):
             status = {'success': 'Passed', 'running': 'In progress' if alive else 'Unconfirmed'}.get(
                 saved, str(saved).replace('_', ' ').capitalize())
         rows = []
+        if report.get('_read_error'):
+            rows.append(('Report availability', report['_read_error']))
         iteration = report.get(prefix + '_iteration')
         if isinstance(iteration, int) and iteration > 0:
             rows.append(('Review iterations', str(iteration)))
@@ -62,7 +94,7 @@ def measured_results(report):
                 value = limits.get(key)
                 if isinstance(value, (int, float)) and not isinstance(value, bool):
                     rows.append((title, f'{value:g} {unit}'))
-        provenance = chosen.get('build_dir') or chosen.get('report')
+        provenance = chosen.get('build_dir') or chosen.get('outdir') or chosen.get('report')
         if provenance:
             rows.append(('Measured Build', str(provenance)))
     analysis = report.get('timing_closure_analysis', {})

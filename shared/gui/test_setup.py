@@ -18,6 +18,11 @@ class RunProblemTests(unittest.TestCase):
         cls.app = QApplication.instance() or QApplication([])
 
     def setUp(self):
+        startup = tempfile.TemporaryDirectory()
+        self.addCleanup(startup.cleanup)
+        runtime = patch('shared.gui.run_storage.RUNTIME_WORKERS', Path(startup.name))
+        runtime.start()
+        self.addCleanup(runtime.stop)
         with patch('shared.gui.registry.discover_worker', return_value=None), patch(
                 'shared.gui.registry.read_record', return_value={}):
             self.panel = SetupPanel()
