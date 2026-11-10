@@ -66,6 +66,8 @@ class PrepTriageTests(unittest.TestCase):
             "rtl_failure_handoff_owner": "frontend", "rtl_failure_category": "poor_logic_design",
         }
         events = []
+        self.edit_states = []
+        self.review_requests = []
         real_review = flow._run_rtl_prep_review
         def review(state, ssh, *, attempt, log_label):
             events.append("review:" + log_label)
@@ -74,14 +76,18 @@ class PrepTriageTests(unittest.TestCase):
             stdout = "invalid JSON " + log_label if invalid_output else json.dumps(payload)
             ssh.run.return_value = {"ok": True, "exit_code": 0, "stdout": stdout, "stderr": "", "command": "review"}
             return real_review(state, ssh, attempt=attempt, log_label=log_label)
-        def edit(*args, attempt, **kwargs):
+        def edit(state, *args, attempt, **kwargs):
             events.append(f"edit:{attempt}")
+            self.edit_states.append(copy.deepcopy(state))
             return {}, fix_applied
+        def ai_review(**kwargs):
+            self.review_requests.append(copy.deepcopy(kwargs["local_review"]))
+            return {}
         self.triage.side_effect = lambda **kw: events.append("triage") or self.diagnosis
         with (
             patch.object(flow, "_run_rtl_prep_generation", return_value=({}, True)),
             patch.object(flow, "_build_prepare_review_command", return_value="review"),
-            patch.object(flow, "run_openai_prep_review", return_value={}),
+            patch.object(flow, "run_openai_prep_review", side_effect=ai_review),
             patch.object(flow, "merge_prep_review_results", side_effect=lambda **kw: copy.deepcopy(kw["local_review"])),
             patch.object(flow, "_run_rtl_prep_review", side_effect=review),
             patch.object(flow, "_run_rtl_prep_fix", side_effect=edit),
@@ -131,6 +137,65 @@ class PrepTriageTests(unittest.TestCase):
         self.assertEqual(len(events), 7)
         self.triage.assert_called_once()
         self.assertEqual(self.triage.call_args.kwargs["logs"]["stdout"], "invalid JSON 3")
+
+    def backend_diagnosis(self):
+        self.diagnosis.update({
+            "handoff_owner": "backend", "failure_category": "sdc_constraint",
+            "summary": "Top selection needs a prep repair.",
+            "suggested_next_steps": ["Repair top selection in the prepared Tcl."],
+        })
+
+    def test_backend_triage_reaches_both_agents_and_recovers(self):
+        self.backend_diagnosis()
+        output, events = self.run_loop(fix_applied=True, pass_label="triage_1_post_fix")
+        self.assertEqual(events[-4:], ["triage", "review:triage_1", "edit:4", "review:triage_1_post_fix"])
+        self.assertEqual(self.edit_states[-1]["rtl_failure_triage_payload"], self.diagnosis)
+        self.assertEqual(self.review_requests[-1]["context"]["rtl_failure_triage"], self.diagnosis)
+        self.assertEqual(output["stage_status"]["rtl_prep"], "success")
+        self.assertTrue(output["prep_review_passed"])
+        self.assertIsNone(output["last_error"])
+        self.assertIsNone(output["rtl_failure_handoff_owner"])
+        self.assertEqual(output["rtl_failure_triage_payload"], {})
+        self.assertIn("rtl_bundle_remote", output["outputs"])
+        self.assertIn("rtl_prep_rtl_failure_triage_exhausted", output["logs"])
+        self.triage.assert_called_once()
+
+    def test_backend_recovery_is_bounded_and_keeps_latest_review(self):
+        self.backend_diagnosis()
+        output, events = self.run_loop(fix_applied=True)
+        self.assertEqual(len([event for event in events if event.startswith("edit:")]), 6)
+        self.assertEqual(events[-1], "review:triage_3_post_fix")
+        self.assertEqual(output["stage_status"]["rtl_prep"], "failed")
+        self.assertIn("3 triage-guided repair attempts", output["last_error"])
+        self.assertEqual(output["validation"]["rtl_prep_review"]["errors"], ["Missing dependency triage_3_post_fix"])
+        self.triage.assert_called_once()
+
+    def test_backend_recovery_no_actions_still_stops(self):
+        self.backend_diagnosis()
+        output, events = self.run_loop(fix_applied=False)
+        self.assertEqual(events[-2:], ["review:triage_3", "edit:6"])
+        self.assertEqual(output["stage_status"]["rtl_prep"], "failed")
+        self.triage.assert_called_once()
+
+    def test_frontend_diagnosis_does_not_trigger_prep_recovery(self):
+        self.diagnosis.update({"handoff_owner": "frontend", "failure_category": "poor_logic_design"})
+        output, events = self.run_loop(fix_applied=True)
+        self.assertEqual(events[-1], "triage")
+        self.assertEqual(output["rtl_failure_handoff_owner"], "frontend")
+        self.assertEqual(len(self.edit_states), 3)
+
+    def test_editor_receives_triage_in_its_request_context(self):
+        self.backend_diagnosis()
+        state = {
+            **self.state, "rtl_failure_triage_payload": self.diagnosis,
+            "validation": {"rtl_prep_review": {"errors": ["bad top"], "context": {"key_files": {"top_module.txt": "top"}}}},
+        }
+        with patch.object(flow, "run_openai_prep_edit", return_value={"actions": []}) as editor:
+            _, applied = flow._run_rtl_prep_fix(state, Mock(), attempt=4, log_label="triage_1")
+        self.assertFalse(applied)
+        context = editor.call_args.kwargs["review_payload"]["context"]
+        self.assertEqual(context["rtl_failure_triage"], self.diagnosis)
+        self.assertEqual(context["key_files"], {"top_module.txt": "top"})
 
 
 if __name__ == "__main__":

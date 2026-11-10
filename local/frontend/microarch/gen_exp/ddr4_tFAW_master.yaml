@@ -1,0 +1,9 @@
+design_name: ddr4_tFAW
+design_type: top_level
+source_feature: tFAW_tracker
+jedec_profile: DDR4-3200
+submodules:
+- name: tFAW_tracker
+  spec: ddr4_tFAW_tFAW_tracker.yaml
+  design_name: ddr4_tFAW_tFAW_tracker
+interfaces: []

@@ -1374,6 +1374,9 @@ def run_openai_prep_edit(
         "Keep language selection in run_genus_mc.tcl instead. "
         "If duplicate filelist entries are present, prefer a bounded normalization that keeps only the first occurrence of each allowed source/directive line. "
         "If an issue cannot be safely fixed automatically, return no action for it and mention that in the summary. "
+        "If review_context.rtl_failure_triage is present, use its diagnosis, evidence, and suggested_next_steps "
+        "alongside the current review to repair the underlying prep problem rather than repeat unsuccessful edits. "
+        "Keep repairs within the existing prep edit authority and do not bypass blocking validation. "
         "Prefer the smallest edit set that directly addresses the current review findings."
     )
 

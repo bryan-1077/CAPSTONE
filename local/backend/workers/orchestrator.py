@@ -681,6 +681,8 @@ def _run_rtl_prep_review(
     current_local_errors = [str(item) for item in local_payload.get("errors", [])]
     iteration_context = _build_prep_iteration_context(state, current_local_errors)
     local_context["iteration_context"] = iteration_context
+    if state.get("rtl_failure_triage_payload"):
+        local_context["rtl_failure_triage"] = state["rtl_failure_triage_payload"]
     local_payload["context"] = local_context
 
     ai_review = run_openai_prep_review(
@@ -876,6 +878,8 @@ def _run_rtl_prep_fix(
     review_context["prior_fix_history"] = _ordered_unique_strings(
         state.get("prep_fix_history", [])
     )
+    if state.get("rtl_failure_triage_payload"):
+        review_context["rtl_failure_triage"] = state["rtl_failure_triage_payload"]
     review_payload["context"] = review_context
 
     fix_plan = run_openai_prep_edit(
@@ -1200,18 +1204,82 @@ def _make_rtl_prep_runner(ssh: SSHExecutor) -> Callable[[FlowState], dict]:
         triage_updates = _prep_triage_updates(
             payload, result, logs, label="exhausted", candidate_path=candidate_path,
         )
-        return _merge_state(
+        working_state = _merge_state(
             working_state,
             {
                 **triage_updates,
                 "logs": logs,
                 "validation": {**working_state.get("validation", {}), "rtl_prep_review": payload},
+            },
+        )
+
+        # Give the existing prep agents a bounded repair budget informed by triage.
+        # Frontend/unknown diagnoses still leave prep through the normal failure handoff.
+        if triage_updates.get("rtl_failure_handoff_owner") == "backend":
+            working_state = _merge_state(
+                working_state,
+                {"history": working_state["history"] + [
+                    "rtl_prep triage handed off to prep AI reviewer and editor"
+                ]},
+            )
+            for recovery_attempt in range(1, prep_max_iterations + 1):
+                attempt = prep_max_iterations + recovery_attempt
+                label = f"triage_{recovery_attempt}"
+                review_updates, review_passed = _run_rtl_prep_review(
+                    working_state, ssh, attempt=attempt, log_label=label,
+                )
+                working_state = _merge_state(working_state, review_updates)
+                if not review_passed:
+                    working_state = _merge_state(
+                        working_state,
+                        {"history": working_state["history"] + [
+                            f"rtl_prep triage fix attempt {recovery_attempt}"
+                        ]},
+                    )
+                    fix_updates, fix_applied = _run_rtl_prep_fix(
+                        working_state, ssh, attempt=attempt, log_label=label,
+                    )
+                    working_state = _merge_state(working_state, fix_updates)
+                    if fix_applied:
+                        review_updates, review_passed = _run_rtl_prep_review(
+                            working_state, ssh, attempt=attempt, log_label=f"{label}_post_fix",
+                        )
+                        working_state = _merge_state(working_state, review_updates)
+                if review_passed:
+                    return _merge_state(
+                        working_state,
+                        {
+                            "stage_status": {**working_state["stage_status"], "rtl_prep": "success"},
+                            "outputs": {
+                                **working_state["outputs"],
+                                "rtl_bundle_remote": f"{project_root}/{candidate_path}",
+                            },
+                            "history": working_state["history"] + ["rtl_prep triage recovery passed"],
+                            "last_error": None,
+                            "rtl_failure_handoff_owner": None,
+                            "rtl_failure_category": None,
+                            "rtl_failure_triage_payload": {},
+                        },
+                    )
+            failure_message = (
+                f"RTL prep review failed after {prep_max_iterations} iterations and "
+                f"{prep_max_iterations} triage-guided repair attempts: "
+                + "; ".join(working_state.get("prep_review_errors", []))
+            )
+        return _merge_state(
+            working_state,
+            {
                 "stage_status": {
                     **working_state["stage_status"],
                     "rtl_prep": "failed",
                 },
                 "history": working_state["history"] + [
-                    f"rtl_prep failed after {prep_max_iterations} prep iterations"
+                    (
+                        f"rtl_prep failed after {prep_max_iterations} prep iterations and "
+                        f"{prep_max_iterations} triage-guided repair attempts"
+                        if triage_updates.get("rtl_failure_handoff_owner") == "backend"
+                        else f"rtl_prep failed after {prep_max_iterations} prep iterations"
+                    )
                 ],
                 "last_error": failure_message,
             },

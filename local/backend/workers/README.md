@@ -4,6 +4,15 @@ This folder contains the stage orchestrator and command builders used by the EDA
 
 ## Real Loop
 
+If RTL prep exhausts its normal review/edit iterations, failure triage diagnoses
+the remaining errors. A backend-owned diagnosis is handed back to the prep AI
+reviewer and editor with its evidence and suggested next steps. They receive up
+to `prep_max_iterations` additional repair attempts on the existing prepared
+bundle, without regenerating it. Applied edits must pass a fresh review before
+the flow advances to synthesis. If recovery fails, the latest review and the
+original diagnosis remain available in the reports. Frontend-owned and unknown
+diagnoses retain the failure handoff rather than triggering backend prep edits.
+
 ### Mailbox input
 
 From the repository root, use an explicitly selected local revision:
