@@ -65,6 +65,10 @@ class ReviewChangesRequired(SpecificationError):
         self.report_path = Path(report_path)
 
 
+class DesignReviewRequired(ReviewChangesRequired):
+    """Design choices require explicit disposition rather than another model call."""
+
+
 class ReviewReferenceErrors(SpecificationErrors):
     """Otherwise valid verdict with invalid evidence locations only."""
     def __init__(self, issues):

@@ -81,7 +81,7 @@ class SectionCard(QFrame):
 
     def add_widget(self, widget, stretch=0):
         if widget.objectName() == 'historyBadge':
-            self.content.addWidget(widget, stretch, Qt.AlignmentFlag.AlignLeft)
+            self.content.addWidget(widget, stretch, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         else:
             self.content.addWidget(widget, stretch)
 

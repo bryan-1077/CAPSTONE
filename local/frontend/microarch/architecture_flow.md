@@ -3116,3 +3116,54 @@ approvals and verification results, unsupported check profiles, and accidental
 reads from global legacy outputs. Live paid LLM runs remain user-operated; offline
 adapter and regression tests should not contact model endpoints. Initial
 orchestrator implementation and subsequent user-operated live acceptance are described above.
+
+## Bounded specification recovery defaults
+
+Specification generation now allows four total attempts per stage. Automatic
+semantic repair allows two cycles, each compiled and reviewed before proceeding.
+Cycle one retains the existing `repair/source`, `repair/architecture.yaml` and
+`repair/review` paths. Subsequent revisions use `repair/cycle_002/` and later
+numbered directories; `repair/repair_status.json` records the current revision,
+review report, stop reason and shared repair budget. Parent revisions are retained.
+
+The following positive-integer environment settings apply to the specification
+frontend and its standalone repair command:
+
+| Setting | Default | Scope |
+| --- | --- | --- |
+| `SPECIFICATION_STAGE_ATTEMPTS` | 4 | Total attempts per generation stage, including the first call |
+| `SPECIFICATION_SEMANTIC_CYCLES` | 2 | Automatic semantic repair cycles |
+| `SPECIFICATION_REPAIR_MAX_CALLS` | 12 | Model calls across all repair cycles, including reviews and reference corrections |
+| `SPECIFICATION_REPAIR_MAX_TOKENS` | 400000 | Cumulative estimated input plus full output allowances across repair calls |
+
+The token ceiling reserves work before each call using the TPM input heuristic.
+It is conservative and is not an actual-usage or dollar billing limit. Failed
+calls retain their reservations. The repair budget excludes initial generation
+and its initial review; those remain separately bounded by stage attempts and
+the existing review/reference-correction limits. `SPECIFICATION_MAX_TOKENS`
+continues to control each generation call's maximum output (default 24000).
+
+Two consecutive identical rejections against the same base stop early. For
+blocked object edits, this compares the rejected operation and error so unrelated
+changes elsewhere in the proposal do not prolong a failing retry. Compiler
+repairs still retain successfully applied candidate edits for the next attempt.
+Rejected edit feedback includes the rejected proposal, the intact current base,
+and concrete editable field paths. For example, correcting a request-accept
+payload endpoint edits `/verification/events/request_accept/payload/request/endpoint`
+rather than replacing its containing object. Existing scope and preservation
+checks remain enforced. Rejected semantic repairs with no source changes or a
+previously seen source snapshot stop without spending another cycle.
+
+When only recorded external agreement or readiness questions remain, recovery
+records `design_review_required` with the pending questions, assumptions and
+decisions, plus the architecture export and report paths. No further model call
+or RTL approval occurs. The shared Experimental adapter presents this as
+`needs_attention` with a design-review message, instead of a generic generation
+failure. This change reports the required decisions; it does not invent their
+answers or add an interactive decision editor.
+
+Offline regressions cover the November 12 acceptance-binding failures, recovery
+on the fourth attempt, a successful second semantic cycle, rerouting a later
+system finding, finding-ledger continuity, repeated/no-progress stops, shared
+call/token limits, and the design-review handoff. Live paid runs remain
+user-operated.

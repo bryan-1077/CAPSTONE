@@ -143,9 +143,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--prior-spec-review-report', type=Path, action='append', default=[],
                         help='Carry findings from an earlier review of this exact artifact (repeatable).')
     parser.add_argument('--auto-spec-repair', action='store_true',
-                        help='With automated review, allow one semantic repair cycle then review the new revision.')
+                        help='With automated review, allow bounded semantic repair (default: two cycles), reviewing each revision.')
     parser.add_argument('--spec-repair-output', type=Path,
-                        help='Fresh directory for the single repaired revision; requires --auto-spec-repair.')
+                        help='Fresh directory for repaired revisions and review reports; requires --auto-spec-repair.')
     return parser.parse_args()
 
 
@@ -831,11 +831,12 @@ def main() -> int:
     usage_root = args.build_dir.resolve().parent / 'usage' if args.build_dir else SCRIPT_DIR / 'microarch/usage'
     with UsageRun(usage_root) as usage:
         result = _run_flow(args)
-        usage.status = 'completed' if result == 0 else 'failed'
+        usage.status = 'completed' if result == 0 else 'needs_attention' if result == 2 else 'failed'
         return result
 
 
 def _run_flow(args) -> int:
+    from review_specification import DesignReviewRequired
     start_time = time.time()
     validated_user_config: ValidatedUserConfig | None = None
     input_path = Path(args.input_yaml).expanduser()
@@ -886,6 +887,9 @@ def _run_flow(args) -> int:
             print("[LINT] Full system lint skipped by --no-lint.")
         else:
             run_full_system_lint()
+    except DesignReviewRequired as exc:
+        print(f'[FLOW] DESIGN REVIEW REQUIRED: {exc}')
+        return 2
     except (subprocess.CalledProcessError, ValueError, OSError, yaml.YAMLError) as exc:
         if isinstance(exc, subprocess.CalledProcessError):
             print(f"[FLOW] ERROR: Command failed with exit code {exc.returncode}: {exc.cmd}")

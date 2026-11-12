@@ -119,10 +119,10 @@ def populate_agents(tree, agents):
     tree._agents = agents
     tree.clear()
     for key, title, status, details in agents:
-        label = {'PASS': 'Passed', 'PASS_WITH_GAPS': 'Passed with gaps', 'FAIL': 'Failed',
+        label = {'PASS': 'Passed', 'PASS_WITH_GAPS': 'Passed', 'FAIL': 'Failed',
                  'RUNNING': 'Running', 'NOT_REPORTED': 'Not reported',
                  'UNCONFIRMED': 'Unconfirmed', 'SKIPPED': 'Skipped'}.get(status, status.replace('_', ' ').capitalize())
-        color = {'PASS': 'passed', 'PASS_WITH_GAPS': 'needs_attention', 'FAIL': 'failed',
+        color = {'PASS': 'passed', 'PASS_WITH_GAPS': 'passed', 'FAIL': 'failed',
                  'RUNNING': 'running', 'Passed': 'passed', 'Failed': 'failed',
                  'In progress': 'running', 'Skipped': 'skipped'}.get(status, 'unconfirmed')
         item = QTreeWidgetItem(tree, [title, label])

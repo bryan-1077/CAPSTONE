@@ -130,10 +130,10 @@ class SystemRepairEditsTests(unittest.TestCase):
         self.assertEqual([e['status'] for e in journal], ['rejected', 'accepted', 'accepted'])
         self.assertEqual(journal[0]['repair_base_fingerprint'], journal[1]['repair_base_fingerprint'])
 
-    def test_complete_system_rewrites_are_rejected_with_existing_limit(self):
+    def test_repeated_complete_system_rewrites_stop_early(self):
         with self.assertRaisesRegex(SpecificationError, 'base_fingerprint and edits only'):
             self.execute([self.responses['system']] * 3)
-        self.assertEqual(len(self.prompts), 3)
+        self.assertEqual(len(self.prompts), 2)
         self.assertFalse((self.destination / 'source').exists())
         self.assertFalse((self.destination / 'review').exists())
 

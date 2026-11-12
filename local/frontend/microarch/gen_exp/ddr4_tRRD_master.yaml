@@ -1,0 +1,9 @@
+design_name: ddr4_tRRD
+design_type: top_level
+source_feature: tRRD
+jedec_profile: DDR4-3200
+submodules:
+- name: simple_tRRD
+  spec: ddr4_tRRD_simple_tRRD.yaml
+  design_name: ddr4_tRRD_simple_tRRD
+interfaces: []

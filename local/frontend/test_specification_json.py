@@ -106,9 +106,9 @@ class SpecificationJSONTests(unittest.TestCase):
             with self.assertRaisesRegex(SpecificationError, 'no review may be fabricated'):
                 propose_specification(request, output_dir=root / 'source', caller=caller)
             journal = json.loads((root / 'source.attempts.json').read_text())
-            self.assertEqual(len(calls), 3)
+            self.assertEqual(len(calls), 2)
             self.assertTrue(all(a['status'] == 'rejected' and a['parse_recovery'] for a in journal['attempts']))
-            self.assertEqual([a['response'] for a in journal['attempts']], [raw] * 3)
+            self.assertEqual([a['response'] for a in journal['attempts']], [raw] * 2)
             self.assertFalse((root / 'source').exists())
 
 

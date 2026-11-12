@@ -75,6 +75,28 @@ class SpecificationFrontendTests(unittest.TestCase):
             self.assertEqual(execute.call_count, 1)
             self.assertEqual(state.repair_cycles, 0)
 
+    def test_design_review_returns_needs_attention_without_retry_or_publication(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config = RunConfig('generate', frontend_flow='specification', intake=self.fixture(root),
+                               skip_verification=True, no_backend=True)
+            def execute(command, log):
+                repair = log.parent / 'repair'
+                repair.mkdir()
+                (repair / 'repair_status.json').write_text(json.dumps({
+                    'status': 'design_review_required', 'architecture': str(repair / 'architecture.yaml'),
+                    'review_report': str(repair / 'review/report.json'),
+                    'pending_decisions': {'open_questions': {'Q_INTERFACE': {'question': 'Which interface?'}}}}))
+                return 2
+            with patch('shared.top_orchestrator.specification_frontend.stream_command', side_effect=execute) as calls, \
+                 patch('shared.top_orchestrator.specification_mailbox.publish_specification') as publish:
+                state = run(config, root / 'run')
+            self.assertEqual(state.status, 'needs_attention')
+            self.assertIn('Q_INTERFACE', state.results[0].message)
+            self.assertIn('design_review_report', state.results[0].artifacts)
+            self.assertEqual(calls.call_count, 1)
+            publish.assert_not_called()
+
     def test_cli_plan_has_no_writes(self):
         from .__main__ import main
         with tempfile.TemporaryDirectory() as tmp:

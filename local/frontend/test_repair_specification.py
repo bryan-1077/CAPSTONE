@@ -13,7 +13,8 @@ from architecture import fingerprint
 from generate_specification import propose_specification
 from repair_specification import plan_repair, repair_and_review
 from finding_ledger import obligations
-from review_specification import ASPECTS, REVIEW_REVISION, ReviewChangesRequired
+from review_specification import ASPECTS, REVIEW_REVISION, ReviewChangesRequired, DesignReviewRequired
+from specification_recovery import RecoveryLimits
 from specification import SpecificationError, read_document
 from specification_lowering import _compile_snapshot, compile_package, require_approval
 from specification_request import system_projection
@@ -58,12 +59,13 @@ class RepairSpecificationTests(unittest.TestCase):
                                   'requirement_ids': [manifest['requirements'][0]['id']]}
                                  for i, scope in enumerate(scopes)]}}
 
-    def run_repair(self, report=None, replies=None, final=None, manifest=None):
+    def run_repair(self, report=None, replies=None, final=None, manifest=None, limits=None):
         responses = copy.deepcopy(self.responses)
         responses['architecture']['modules']['contracts']['stage']['dependency_note'] = 'Explicit registered-byte dependency statement.'
         if replies is None:
             replies = [responses['architecture']]
         replies = iter(replies)
+        verdicts = iter(final) if isinstance(final, list) else None
         def generate(prompt, model):
             self.generation_prompts.append(prompt)
             reply = next(replies)
@@ -84,8 +86,13 @@ class RepairSpecificationTests(unittest.TestCase):
             return json.dumps(reply)
         def review(prompt, model):
             self.review_prompts.append(prompt)
-            value = copy.deepcopy(final or {'status': 'passed', 'reviewed_aspects': list(ASPECTS), 'findings': []})
-            original = (report or self.report())['verdict']['findings']
+            value = copy.deepcopy(next(verdicts) if verdicts is not None else final or {
+                'status': 'passed', 'reviewed_aspects': list(ASPECTS), 'findings': []})
+            directory = self.root / 'repair'
+            if len(self.review_prompts) > 1:
+                directory = directory / f'cycle_{len(self.review_prompts):03d}'
+            context = read_document(directory / 'repair_review_context.json')
+            original = context['findings']
             open_ids = [f['id'] for f in value['findings'] if f['resolution'] == 'design_repair']
             value['repair_assessments'] = [
                 {'finding_id': f['id'], 'status': 'unresolved' if open_ids else 'resolved',
@@ -95,16 +102,15 @@ class RepairSpecificationTests(unittest.TestCase):
             value['preservation_assessment'] = {'status': 'preserved',
                 'explanation': 'Offline fixture preservation assessment.',
                 'references': ['/documents/shared/events/capture'], 'regression_finding_ids': []}
-            context = read_document(self.root / 'repair/repair_review_context.json')
             pending = obligations(context.get('finding_history', []), context)
             if pending:
-                value['finding_assessments'] = [{'ledger_key': e['key'], 'status': 'resolved',
+                value['finding_assessments'] = [{'ledger_key': e['key'], 'status': 'unresolved' if open_ids else 'resolved',
                     'explanation': 'Mocked disposition; independent readiness still applies.',
-                    'references': ['/documents/shared/events/capture'], 'remaining_finding_ids': []} for e in pending]
+                    'references': ['/documents/shared/events/capture'], 'remaining_finding_ids': open_ids} for e in pending]
             return json.dumps(value)
         with contextlib.redirect_stdout(io.StringIO()):
             return repair_and_review(manifest or self.manifest, report or self.report(), output_dir=self.root / 'repair',
-                                     generation_caller=generate, review_caller=review)
+                                     generation_caller=generate, review_caller=review, limits=limits)
 
     def test_architecture_route_preserves_locked_system_library_and_request(self):
         original = copy.deepcopy(self.manifest)
@@ -172,12 +178,94 @@ class RepairSpecificationTests(unittest.TestCase):
     def test_failed_second_review_stops_after_one_cycle_and_retains_report(self):
         final = self.report()['verdict']
         with self.assertRaises(ReviewChangesRequired):
-            self.run_repair(final=final)
+            self.run_repair(final=final, limits=RecoveryLimits(semantic_cycles=1))
         self.assertEqual(len(self.generation_prompts), 1)
         self.assertEqual(len(self.review_prompts), 1)
         self.assertEqual(read_document(self.root / 'repair/repair_status.json')['status'], 'stopped')
         self.assertTrue((self.root / 'repair/review/report.json').exists())
         self.assertFalse((self.root / 'repair/review/approval.json').exists())
+
+    def test_second_cycle_uses_latest_manifest_and_preserves_finding_history(self):
+        first = copy.deepcopy(self.responses['architecture'])
+        first['modules']['contracts']['stage']['dependency_note'] = 'First clarification.'
+        second = copy.deepcopy(first)
+        second['modules']['contracts']['stage']['handshakes']['capture'] += ' Second clarification.'
+        rejected = self.report()['verdict']
+        passed = {'status': 'passed', 'reviewed_aspects': list(ASPECTS), 'findings': []}
+        repaired, approval, export = self.run_repair(replies=[first, second], final=[rejected, passed])
+        self.assertEqual(len(self.generation_prompts), 2)
+        self.assertEqual(len(self.review_prompts), 2)
+        root = self.root / 'repair'
+        parent = read_document(root / 'architecture.yaml')
+        context = read_document(root / 'cycle_002/repair_review_context.json')
+        prior = read_document(root / 'review/report.json')
+        self.assertEqual(context['parent_manifest_fingerprint'], fingerprint(parent))
+        self.assertEqual(context['parent_report_fingerprint'], fingerprint(prior))
+        self.assertEqual(context['finding_history'][0]['report_fingerprint'], fingerprint(prior))
+        self.assertEqual(read_document(root / 'repair_status.json')['semantic_cycles'], 2)
+        self.assertEqual(export, root / 'cycle_002/architecture.yaml')
+        self.assertEqual(read_document(root / 'cycle_002/repair_plan.json')['stage'], 'architecture')
+        require_approval(repaired, approval)
+        self.assertFalse((root / 'review/approval.json').exists())
+
+    def test_two_rejected_cycles_stop_at_limit_with_both_reports(self):
+        first = copy.deepcopy(self.responses['architecture'])
+        first['modules']['contracts']['stage']['dependency_note'] = 'First clarification.'
+        second = copy.deepcopy(first)
+        second['modules']['contracts']['stage']['dependency_note'] = 'Second clarification.'
+        with self.assertRaises(ReviewChangesRequired):
+            self.run_repair(replies=[first, second], final=self.report()['verdict'])
+        status = read_document(self.root / 'repair/repair_status.json')
+        self.assertEqual(status['semantic_cycles'], 2)
+        self.assertEqual(status['stop_reason'], 'semantic_cycle_limit')
+        self.assertEqual(status['budget']['model_calls'], 4)
+        self.assertTrue((self.root / 'repair/cycle_002/review/report.json').is_file())
+        self.assertFalse(list((self.root / 'repair').rglob('approval.json')))
+
+    def test_second_cycle_reroutes_new_system_finding_and_regenerates_architecture(self):
+        first = copy.deepcopy(self.responses['architecture'])
+        first['modules']['contracts']['stage']['dependency_note'] = 'Retain this architecture clarification.'
+        system = copy.deepcopy(self.responses['system'])
+        system['shared']['events']['capture']['effect'] += ' Preserve cancellation at reset.'
+        rejected = self.report(('system',))['verdict']
+        rejected['findings'][0]['id'] = 'F_SYSTEM_REMAINING'
+        passed = {'status': 'passed', 'reviewed_aspects': list(ASPECTS), 'findings': []}
+        repaired, approval, _ = self.run_repair(replies=[first, system, first], final=[rejected, passed])
+        self.assertEqual(len(self.generation_prompts), 3)
+        self.assertIn('SYSTEM EDIT MODE:', self.generation_prompts[1])
+        self.assertIn('FRESH DECOMPOSITION:', self.generation_prompts[2])
+        self.assertEqual(read_document(self.root / 'repair/cycle_002/repair_plan.json')['stage'], 'system')
+        self.assertEqual(repaired['provenance']['specification']['snapshot']['documents']['shared']['events']['capture'],
+                         system['shared']['events']['capture'])
+        require_approval(repaired, approval)
+
+    def test_flow_reports_design_review_without_lowering_or_rtl(self):
+        from run_flow import parse_args, _run_flow
+        parent = self.root / 'parent.yaml'
+        parent.write_text(json.dumps(self.manifest))
+        report_path = self.root / 'pending_review.json'
+        argv = ['run_flow.py', str(parent), '--automated-spec-review', '--auto-spec-repair']
+        with patch.object(sys, 'argv', argv):
+            args = parse_args()
+        with patch('review_specification.review_specification', side_effect=ReviewChangesRequired('pending', report_path)), \
+             patch('repair_specification.repair_and_review', side_effect=DesignReviewRequired('Explicit design choices needed', report_path)), \
+             patch('architecture.lower_architecture') as lower, \
+             patch('run_flow.run_command') as rtl, contextlib.redirect_stdout(io.StringIO()) as log:
+            # The repair entry point normally validates this report; this test
+            # isolates CLI exception routing after a validated repair handoff.
+            report_path.write_text(json.dumps(self.report()))
+            self.assertEqual(_run_flow(args), 2)
+        self.assertIn('DESIGN REVIEW REQUIRED', log.getvalue())
+        lower.assert_not_called()
+        rtl.assert_not_called()
+
+    def test_rejected_noop_repair_stops_without_spending_second_cycle(self):
+        with self.assertRaisesRegex(ReviewChangesRequired, 'made no progress'):
+            self.run_repair(replies=[self.responses['architecture']], final=self.report()['verdict'])
+        status = read_document(self.root / 'repair/repair_status.json')
+        self.assertEqual(status['stop_reason'], 'no_semantic_progress')
+        self.assertEqual(len(self.generation_prompts), 1)
+        self.assertFalse((self.root / 'repair/cycle_002').exists())
 
     def test_malformed_or_stale_report_stops_before_generation_and_output(self):
         for key, value in [('status', 'failed'), ('review_revision', REVIEW_REVISION + 1),
@@ -208,16 +296,22 @@ class RepairSpecificationTests(unittest.TestCase):
                 'message': 'External timing provenance requires agreement.',
                 'references': ['/package/assumptions/EXTERNAL'], 'requirement_ids': []}
 
-    def test_external_only_finding_stops_before_calls_or_output(self):
+    def test_external_only_finding_saves_design_review_result_without_calls(self):
         parent = self.external_parent()
         report = self.report(manifest=parent)
         report['verdict']['findings'] = [self.external_finding()]
         report['readiness_error'] = 'EXTERNAL requires agreement'
-        with self.assertRaisesRegex(SpecificationError, 'external agreement requires explicit disposition'):
+        with self.assertRaisesRegex(DesignReviewRequired, 'explicit disposition'):
             self.run_repair(report=report, manifest=parent)
         self.assertEqual(self.generation_prompts, [])
         self.assertEqual(self.review_prompts, [])
-        self.assertFalse((self.root / 'repair').exists())
+        status = read_document(self.root / 'repair/repair_status.json')
+        self.assertEqual(status['status'], 'design_review_required')
+        self.assertEqual(status['semantic_cycles'], 0)
+        self.assertEqual(status['budget']['model_calls'], 0)
+        self.assertIn('EXTERNAL', status['pending_decisions']['assumptions'])
+        self.assertTrue(Path(status['architecture']).is_file())
+        self.assertTrue(Path(status['review_report']).is_file())
 
     def test_mixed_findings_route_architecture_preserve_blocker_and_recheck(self):
         parent = self.external_parent()
@@ -243,6 +337,7 @@ class RepairSpecificationTests(unittest.TestCase):
                          parent['provenance']['specification']['snapshot']['package']['assumptions']['EXTERNAL'])
         self.assertFalse((self.root / 'repair/review/approval.json').exists())
         self.assertEqual(parent, before)
+        self.assertEqual(read_document(self.root / 'repair/repair_status.json')['status'], 'design_review_required')
 
     def test_repairable_system_issue_still_dominates_external_and_architecture(self):
         parent = self.external_parent()
@@ -262,7 +357,7 @@ class RepairSpecificationTests(unittest.TestCase):
         with self.assertRaisesRegex(SpecificationError, 'decision requiring external review'):
             self.run_repair(report=self.report(('system',), parent), manifest=parent,
                             replies=[copy.deepcopy(self.responses['system'])] * 3)
-        self.assertEqual(len(self.generation_prompts), 3)
+        self.assertEqual(len(self.generation_prompts), 2)
         self.assertEqual(self.review_prompts, [])
 
     def test_compiler_repairs_remain_bounded_and_keep_semantic_findings(self):
@@ -270,7 +365,7 @@ class RepairSpecificationTests(unittest.TestCase):
         broken['system'] = {'attempted': 'locked-system mutation'}
         with self.assertRaises(SpecificationError):
             self.run_repair(replies=[broken] * 3)
-        self.assertEqual(len(self.generation_prompts), 3)
+        self.assertEqual(len(self.generation_prompts), 2)
         self.assertTrue(all('F0' in prompt for prompt in self.generation_prompts))
         self.assertEqual(self.review_prompts, [])
         self.assertFalse((self.root / 'repair/source').exists())
@@ -284,7 +379,7 @@ class RepairSpecificationTests(unittest.TestCase):
         replies = [copy.deepcopy(self.responses['system'])] * 3  # Omits EXTERNAL.
         with self.assertRaisesRegex(SpecificationError, 'cannot remove or resolve'):
             self.run_repair(report=self.report(('system',), parent), manifest=parent, replies=replies)
-        self.assertEqual(len(self.generation_prompts), 3)
+        self.assertEqual(len(self.generation_prompts), 2)
         self.assertEqual(self.review_prompts, [])
         self.assertFalse((self.root / 'repair/source').exists())
 
@@ -297,7 +392,7 @@ class RepairSpecificationTests(unittest.TestCase):
         with self.assertRaisesRegex(SpecificationError, 'question requiring agreement'):
             self.run_repair(report=self.report(('system',), parent), manifest=parent,
                             replies=[copy.deepcopy(self.responses['system'])] * 3)
-        self.assertEqual(len(self.generation_prompts), 3)
+        self.assertEqual(len(self.generation_prompts), 2)
         self.assertEqual(self.review_prompts, [])
 
     def test_selected_configuration_is_preserved(self):

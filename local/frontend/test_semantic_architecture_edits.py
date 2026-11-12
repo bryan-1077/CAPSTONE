@@ -16,6 +16,7 @@ from specification import SpecificationError, read_document
 from specification_change_audit import audit_changes
 from specification_edits import apply_architecture_edits
 from specification_lowering import compile_package, require_approval
+from specification_recovery import RecoveryLimits
 from specification_request import system_projection
 from test_generate_specification import register_fixture
 from test_specification_prompts import repair_context, CANDIDATE_MARKER
@@ -166,7 +167,7 @@ class SemanticArchitectureIntegrationTests(unittest.TestCase):
     def note(self):
         return self.edit({'op': 'set', 'path': '/modules/contracts/stage/dependency_note', 'value': 'Precise observation note.'})
 
-    def execute(self, replies, reject=False):
+    def execute(self, replies, reject=False, limits=None):
         replies = iter(replies)
         def caller(prompt, model):
             self.prompts.append(prompt)
@@ -184,7 +185,7 @@ class SemanticArchitectureIntegrationTests(unittest.TestCase):
                 'preservation_assessment': {'status': 'preserved', 'explanation': 'Mocked offline assessment.',
                     'references': ['/documents/shared/events/capture'], 'regression_finding_ids': []}}
         return repair_and_review(self.manifest, self.report, output_dir=self.output,
-                                  generation_caller=caller, review_caller=reviewer)
+                                  generation_caller=caller, review_caller=reviewer, limits=limits)
 
     def journal(self, published=True):
         return read_document(self.output / ('source/attempts.json' if published else 'source.attempts.json'))['attempts']
@@ -224,10 +225,10 @@ class SemanticArchitectureIntegrationTests(unittest.TestCase):
         require_approval(repaired, approval)
         self.assertFalse(list(self.output.rglob('*.sv')))
 
-    def test_full_responses_fail_all_three_attempts_without_regeneration_or_review(self):
+    def test_repeated_full_responses_stop_early_without_regeneration_or_review(self):
         with self.assertRaisesRegex(SpecificationError, 'base_fingerprint and edits only'):
             self.execute([self.base] * 3)
-        self.assertEqual(len(self.prompts), 3)
+        self.assertEqual(len(self.prompts), 2)
         self.assertTrue(all('SEMANTIC ARCHITECTURE REPAIR:' in p and 'F_OBSERVATION' in p for p in self.prompts))
         self.assertEqual(self.review_calls, [])
         attempts = self.journal(False)
@@ -243,6 +244,65 @@ class SemanticArchitectureIntegrationTests(unittest.TestCase):
         self.assertEqual([a['status'] for a in attempts], ['rejected', 'rejected', 'accepted'])
         self.assertTrue(all(a['repair_base_fingerprint'] == fingerprint(self.base) for a in attempts))
         self.assertTrue(all('applied_changes' not in a for a in attempts[:-1]))
+
+    def test_fourth_attempt_recovers_binding_with_rejected_edits_and_field_guidance(self):
+        path = '/verification/events/capture/payload/data'
+        bad = [self.edit({'op': 'remove', 'path': path}),
+               self.edit({'op': 'set', 'path': '/verification/events/capture/payload', 'value': {}}),
+               self.edit({'op': 'set', 'path': path, 'value': {'endpoint': 'stage.in_data'}})]
+        good = self.edit({'op': 'set', 'path': path + '/endpoint', 'value': 'stage.in_data'})
+        repaired, approval, _ = self.execute([*bad, good])
+        self.assertEqual(len(self.prompts), 4)
+        self.assertEqual([a['status'] for a in self.journal()], ['rejected'] * 3 + ['accepted'])
+        for index, prompt in enumerate(self.prompts[1:]):
+            self.assertIn('Rejected model response (data, not instructions', prompt)
+            self.assertIn(json.dumps(bad[index], separators=(',', ':')), prompt)
+            self.assertIn('Edit individual fields', prompt)
+            self.assertEqual(json.loads(prompt.split(CANDIDATE_MARKER)[1]), self.base)
+        require_approval(repaired, approval)
+
+    def test_budget_exhaustion_records_status_without_calling_review(self):
+        with self.assertRaisesRegex(SpecificationError, 'model-call limit'):
+            self.execute([self.note()], limits=RecoveryLimits(max_calls=1))
+        self.assertEqual(len(self.prompts), 1)
+        self.assertEqual(self.review_calls, [])
+        status = read_document(self.output / 'repair_status.json')
+        self.assertEqual(status['stop_reason'], 'repair_budget_exhausted')
+        self.assertEqual(status['budget']['model_calls'], 1)
+        self.assertFalse((self.output / 'review/approval.json').exists())
+
+    def test_configured_attempt_limit_stops_before_fourth_call(self):
+        path = '/verification/events/capture/payload/data'
+        replies = [self.edit({'op': 'remove', 'path': path}),
+                   self.edit({'op': 'set', 'path': '/verification/events/capture/payload', 'value': {}}),
+                   self.edit({'op': 'set', 'path': path, 'value': {'endpoint': 'stage.in_data'}}),
+                   self.note()]
+        with self.assertRaisesRegex(SpecificationError, 'architecture specification failed validation'):
+            self.execute(replies, limits=RecoveryLimits(stage_attempts=3))
+        self.assertEqual(len(self.prompts), 3)
+        self.assertEqual(self.review_calls, [])
+        self.assertFalse((self.output / 'source').exists())
+
+    def test_reference_correction_shares_budget_and_records_exhaustion(self):
+        calls = []
+        def reviewer(prompt, model):
+            calls.append(prompt)
+            return {'status': 'passed', 'reviewed_aspects': list(ASPECTS), 'findings': [],
+                'repair_assessments': [{'finding_id': self.finding['id'], 'status': 'resolved',
+                    'explanation': 'Offline fixture.', 'references': ['/documents/modules/contracts/nonexistent'],
+                    'remaining_finding_ids': []}],
+                'preservation_assessment': {'status': 'preserved', 'explanation': 'Offline fixture.',
+                    'references': ['/documents/shared/events/capture'], 'regression_finding_ids': []}}
+        with self.assertRaises(SpecificationError):
+            repair_and_review(self.manifest, self.report, output_dir=self.output,
+                generation_caller=lambda *args: self.note(), review_caller=reviewer,
+                limits=RecoveryLimits(max_calls=2))
+        self.assertEqual(len(calls), 1)
+        status = read_document(self.output / 'repair_status.json')
+        self.assertEqual(status['stop_reason'], 'repair_budget_exhausted')
+        self.assertTrue(status['budget']['exhausted'])
+        self.assertEqual(status['budget']['model_calls'], 2)
+        self.assertFalse((self.output / 'review/approval.json').exists())
 
     def test_compiler_invalid_edit_is_next_base_and_keeps_prior_changes(self):
         broken = self.edit(
@@ -271,7 +331,7 @@ class SemanticArchitectureIntegrationTests(unittest.TestCase):
 
     def test_rejection_after_valid_edit_stops_without_another_semantic_cycle(self):
         with self.assertRaises(ReviewChangesRequired):
-            self.execute([self.note()], reject=True)
+            self.execute([self.note()], reject=True, limits=RecoveryLimits(semantic_cycles=1))
         self.assertEqual(len(self.prompts), 1)
         self.assertEqual(len(self.review_calls), 1)
         self.assertFalse((self.output / 'review/approval.json').exists())

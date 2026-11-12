@@ -126,7 +126,7 @@ def parse_args(argv=None):
     parser.set_defaults(rtl_recovery=None)
     parser.add_argument('--rtl-generator-model', help='Optional generator/merger override; existing default otherwise')
     parser.add_argument('--specification-response', type=Path, help='Offline staged-response replay; use with --microarch-only')
-    parser.add_argument('--no-auto-spec-repair', action='store_true', help='Stop on semantic rejection without the optional single repair cycle')
+    parser.add_argument('--no-auto-spec-repair', action='store_true', help='Stop on semantic rejection without bounded automatic repair')
     parser.add_argument('--no-lint', action='store_true', help='Forward the existing frontend lint opt-out')
     parser.add_argument('--interactive', action='store_true', help='Forward the existing frontend stage-interaction option')
     args = parser.parse_args(argv)

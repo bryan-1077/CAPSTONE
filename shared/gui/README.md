@@ -294,8 +294,9 @@ Pending approval hides the workspace and prioritizes the decision card.
 Verification opens an Agents tab with expandable rows for Agent 1 (structural
 validation), Agent 2 (functional verification), and Agent 3 (protocol and timing).
 Each row includes its role, available status, scope, checks, simulation/traffic
-counts, vector results, and coverage gaps as reported. Passed with gaps remains
-an amber outcome. Expansion and the selected tab survive polling refreshes.
+counts, vector results, and coverage gaps as reported. PASS_WITH_GAPS displays
+as a green pass; stored reports retain their original status. Expansion and the
+selected tab survive polling refreshes.
 Live statuses come from explicit agent start/result lines in the latest attempt's
 validation log; a missing result stays Not reported or Unconfirmed. Retrieved
 final reports supply authoritative agent outcomes and additional details.

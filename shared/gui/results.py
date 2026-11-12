@@ -1,9 +1,8 @@
 """Curated result summaries backed by bounded, run-local evidence reads."""
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-                              QScrollArea, QTreeWidgetItem, QGridLayout, QFrame)
+                              QScrollArea, QGridLayout, QFrame)
 from .cards import SectionCard, status_badge
-from .display_tree import DisplayTree
 from .node_graph import MAIN_NODES
 from .stage_details import evidence_rows
 from .verification_details import small_json, validation_directory
@@ -86,9 +85,6 @@ class ResultsPanel(QScrollArea):
         vectors = verification.get('vectors', {})
         if isinstance(vectors, dict) and type(vectors.get('passed')) is int:
             metrics.append(('Test Vectors', f'{vectors["passed"]} Passed', 'Recorded vector outcomes'))
-        gaps = verification.get('coverage_limitations')
-        if isinstance(gaps, list):
-            metrics.append(('Coverage Limitations', f'{len(gaps)} Reported', 'See verification scope and gaps'))
         if not metrics:
             return
         row = QWidget()
@@ -140,36 +136,15 @@ class ResultsPanel(QScrollArea):
             if latest.get('status') in ('failed', 'needs_attention', 'interrupted'):
                 reason = CONNECTION_REASON if is_connection_error(latest) else latest.get('message', 'Review stage evidence.')
                 issues.append(f'{title}: {reason}')
-        gaps = verification.get('coverage_limitations', [])
-        gaps = gaps if isinstance(gaps, list) else []
         cleanup = read_record(lifecycle_path(run.directory)).get('remote_cleanup', {})
         if cleanup.get('status') == 'cleanup_unconfirmed':
             issues.append('Remote cleanup is unconfirmed. Inspect the lifecycle receipt before retrying remote work.')
-        if gaps or verification.get('status') == 'PASS_WITH_GAPS':
-            issues.append(f'Verification passed with gaps. {len(gaps)} coverage limitations reported; physical timing is a separate check.')
         if issues:
             attention = SectionCard('Attention and Limitations', 'Review these before using the generated design.')
             attention.setProperty('emphasis', 'attention')
             attention.add_widget(status_badge('needs_attention', 'Review Required'))
             for issue in issues:
                 attention.add_widget(label(issue))
-            if gaps:
-                toggle = QPushButton(f'Show Coverage Limitations ({len(gaps)})')
-                toggle.setCheckable(True)
-                details = DisplayTree()
-                details.setHeaderLabels(['Timing Rule', 'Limitation'])
-                details.setMinimumHeight(180)
-                for gap in gaps:
-                    if isinstance(gap, dict):
-                        QTreeWidgetItem(details, [str(gap.get('timing_rule', '')), str(gap.get('reason', ''))])
-                    else:
-                        QTreeWidgetItem(details, ['', str(gap)])
-                details.header().setStretchLastSection(True)
-                details.setWordWrap(True)
-                details.hide()
-                toggle.toggled.connect(details.setVisible)
-                attention.add_widget(toggle)
-                attention.add_widget(details)
             self.body.addWidget(attention)
 
         self.add_metrics(verification)
@@ -190,9 +165,10 @@ class ResultsPanel(QScrollArea):
                 card.add_widget(label('RTL generation and local simulation outcomes apply to their recorded scope.'))
             elif stage == 'validation':
                 if verification:
-                    card.add_widget(status_badge('needs_attention' if verification.get('status') == 'PASS_WITH_GAPS' else
-                                                 'passed' if verification.get('status') == 'PASS' else 'failed',
-                                                 str(verification.get('status', 'Unknown')).replace('_', ' ').title()))
+                    verification_status = verification.get('status', 'Unknown')
+                    passed = verification_status in ('PASS', 'PASS_WITH_GAPS')
+                    card.add_widget(status_badge('passed' if passed else 'failed',
+                                                 'Pass' if passed else str(verification_status).replace('_', ' ').title()))
                     for key, title_text in [('requirements', 'Requirements'), ('vectors', 'Test Vectors')]:
                         values = verification.get(key, {})
                         if isinstance(values, dict) and values:
@@ -215,7 +191,19 @@ class ResultsPanel(QScrollArea):
                 if backend.get('last_error'):
                     card.add_widget(label(backend['last_error']))
             else:
-                card.add_widget(label('Layout validation applies to the delivered layout and the checks recorded in its report.'))
+                description = label('Layout validation applies to the delivered layout and the checks recorded in its report.')
+                if state == 'Passed':
+                    card.description.hide()
+                    outcome = QVBoxLayout()
+                    outcome.setContentsMargins(0, 0, 0, 0)
+                    outcome.setSpacing(0)
+                    outcome.setAlignment(Qt.AlignmentFlag.AlignTop)
+                    outcome.addWidget(status_badge('passed', 'Passed'), 0,
+                                      Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+                    outcome.addWidget(description)
+                    card.content.addLayout(outcome)
+                else:
+                    card.add_widget(description)
             controls = QHBoxLayout()
             inspect = QPushButton('Open Stage Details')
             inspect.clicked.connect(lambda checked=False, key=stage: self.stage_requested.emit(key))

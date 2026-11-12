@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 from .run_reader import SavedRun
 from .verification_details import verification_agents
 from .stage_details import StageDetails
@@ -49,7 +49,9 @@ class VerificationDetailsTests(unittest.TestCase):
                 self.assertIs(view.pages.currentWidget(), view.agents)
                 self.assertEqual(view.agents.topLevelItemCount(), 3)
                 agent3 = view.agents.topLevelItem(2)
-                self.assertEqual(agent3.text(1), 'Passed with gaps')
+                self.assertEqual(agent3.text(1), 'Passed')
+                badge = view.agents.itemWidget(agent3, 1).findChild(QLabel, 'historyBadge')
+                self.assertEqual(badge.property('historyState'), 'passed')
                 self.assertTrue(any('Boundary not observed' in agent3.child(i).text(1)
                                     for i in range(agent3.childCount())))
                 agent3.setExpanded(True)

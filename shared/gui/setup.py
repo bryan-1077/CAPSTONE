@@ -110,6 +110,42 @@ class SetupPanel(QWidget):
         self.description.setPlaceholderText('Describe the controller you want to build. You will review it before generation starts.')
         self.description.setMaximumHeight(100)
         form.addRow('Design Description', self.description)
+        self.spec_guide_toggle = QPushButton('Show Specification Guide')
+        self.spec_guide_toggle.setCheckable(True)
+        form.addRow(self.spec_guide_toggle)
+        self.spec_guide = QGroupBox('Specification Guide')
+        guide = QFormLayout(self.spec_guide)
+        from .spec_editor import CHOICES, DISPLAY
+        for title, path, unit in [
+                ('Memory Standard', ('memory', 'protocol'), ''),
+                ('Memory Transfer Rate', ('memory', 'speed'), ' MT/s'),
+                ('Memory Banks', ('topology', 'banks'), ''),
+                ('Scheduling Policy', ('features', 'scheduler'), ''),
+                ('Page Policy', ('features', 'page_policy'), '')]:
+            options = QLabel(' · '.join(DISPLAY.get(str(value), str(value)) + unit
+                                       for value in CHOICES[path]))
+            options.setWordWrap(True)
+            guide.addRow(title, options)
+        features = QLabel('Refresh · Four-activation timing (tFAW) · Row-to-row timing (tRRD)')
+        features.setWordWrap(True)
+        guide.addRow('Optional Features', features)
+        for row in range(guide.rowCount()):
+            category = guide.itemAt(row, QFormLayout.ItemRole.LabelRole).widget()
+            category.setText(category.text() + ':')
+            category.setObjectName('fieldHeading')
+        for text in [
+                'With 2 or 4 banks, use simple scheduling. Round-robin scheduling is supported only with 1 bank.',
+                'Example: DDR4 2400 with 4 banks, simple scheduling, open-page policy, and refresh enabled.',
+                'Memory transfer rate is specified in MT/s. The Target Speed field below is the controller clock in MHz.',
+                'Describe your design in plain language. You can review and adjust the interpreted specification before generation starts.']:
+            note = QLabel(text)
+            note.setWordWrap(True)
+            guide.addRow(note)
+        form.addRow(self.spec_guide)
+        self.spec_guide.hide()
+        self.spec_guide_toggle.toggled.connect(self.spec_guide.setVisible)
+        self.spec_guide_toggle.toggled.connect(lambda checked: self.spec_guide_toggle.setText(
+            'Hide Specification Guide' if checked else 'Show Specification Guide'))
         self.frequency = QLineEdit()
         self.frequency.setPlaceholderText('Enter the target clock speed in MHz')
         self.frequency.setToolTip('Requested controller clock speed; actual performance depends on the completed design.')
@@ -250,6 +286,7 @@ class SetupPanel(QWidget):
         self.render_stage()
 
     def set_stage_navigation(self, available):
+        self.flow_status.graph.setVisible(available)
         for node in self.flow_status.graph.nodes.values():
             node.setProperty('stageNavigation', available)
             node.setCursor(Qt.CursorShape.PointingHandCursor if available else Qt.CursorShape.ArrowCursor)

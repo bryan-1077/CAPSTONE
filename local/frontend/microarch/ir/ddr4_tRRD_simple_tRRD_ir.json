@@ -1,0 +1,82 @@
+{
+  "design_name": "ddr4_tRRD_simple_tRRD",
+  "design_type": "datapath",
+  "clock": {
+    "name": "clk",
+    "frequency_mhz": null
+  },
+  "reset": {
+    "name": "rst_n",
+    "active_low": true,
+    "synchronous": false
+  },
+  "ports": [
+    {
+      "name": "act_pulse",
+      "direction": "input",
+      "width": 1,
+      "description": "Asserted for exactly one cycle when an ACT command is issued"
+    },
+    {
+      "name": "tRRD_block",
+      "direction": "output",
+      "width": 1,
+      "description": "High while the cooldown counter is non-zero"
+    }
+  ],
+  "fsm": null,
+  "metadata": {
+    "behavior": {
+      "combinational_behavior": "tRRD_block is asserted whenever counter > 0.\n",
+      "correctness_criteria": [
+        "counter must reload to TRRD_CYCLES - 1 on act_pulse",
+        "counter must decrement once per cycle while counter > 0 and no ACT occurs",
+        "counter must never go below 0",
+        "tRRD_block must equal (counter > 0)",
+        "counter must reset to 0 on asynchronous reset",
+        "all constants and parameters must be explicitly cast or sized to the consuming signal width"
+      ],
+      "implementation_type": "cooldown_counter",
+      "internal_signals": {
+        "counter": {
+          "description": "Cooldown counter. When act_pulse is asserted, the counter is loaded to TRRD_CYCLES - 1. Decrement by 1 each cycle while non-zero. Reset value: 0.\n",
+          "type": "logic",
+          "width": "$clog2(TRRD_CYCLES+1)"
+        }
+      },
+      "rtl_parameters": {
+        "TRRD_CYCLES": 6
+      },
+      "sequential_behavior": "On every rising clock edge:\n  1. If act_pulse is high, counter <= TRRD_CYCLES - 1.\n  2. Else if counter > 0, counter <= counter - 1.\n  3. Else counter remains 0.\nOn asynchronous reset (rst_n low):\n  counter <= 0\n",
+      "tRRD_cycles": 6
+    },
+    "forbidden_patterns": [
+      "timestamp tracking",
+      "window tracking",
+      "multi-event counting"
+    ],
+    "implementation_constraints": {
+      "forbidden": [
+        "timestamp_tracking",
+        "shift_register_window",
+        "multi_event_counting",
+        "decrement_outside_counter"
+      ],
+      "required": [
+        "use_cooldown_counter",
+        "cycle_based_model",
+        "decrement once per cycle while counter > 0",
+        "reset counter to 0",
+        "parameterize delay",
+        "explicitly resize parameter-based arithmetic to counter width"
+      ]
+    },
+    "invariants": [
+      "counter == 0 allows ACT",
+      "counter > 0 blocks ACT",
+      "act_pulse reloads counter to TRRD_CYCLES - 1",
+      "counter decrements by exactly 1 per cycle while counter > 0 and no ACT occurs",
+      "reset clears counter to 0"
+    ]
+  }
+}

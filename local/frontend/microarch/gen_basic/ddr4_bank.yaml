@@ -2,9 +2,9 @@ design_name: ddr4_bank
 design_type: memory_controller
 controller_config:
   protocol: DDR4
-  jedec_profile: DDR4-2400
-  page_policy: close_page
+  jedec_profile: DDR4-3200
+  page_policy: open_page
   topology:
-    banks: 1
+    banks: 4
   features:
   - basic_commands

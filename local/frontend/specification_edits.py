@@ -1,5 +1,6 @@
 """Atomic object-field edits for bounded specification repairs."""
 import copy
+import itertools
 import re
 
 from architecture import fingerprint
@@ -7,6 +8,22 @@ from specification import SpecificationError
 
 
 ROOTS = {'modules', 'internal_types', 'graph', 'verification', 'rule_owners'}
+
+
+class SpecificationEditError(SpecificationError):
+    """Retain the exact rejected operation for feedback and repeat detection."""
+    def __init__(self, message, edit):
+        super().__init__(message)
+        self.rejected_edit = copy.deepcopy(edit)
+
+
+def _field_paths(value, path):
+    for name in sorted(value):
+        child = path + '/' + name.replace('~', '~0').replace('/', '~1')
+        if isinstance(value[name], dict) and value[name]:
+            yield from _field_paths(value[name], child)
+        else:
+            yield child
 
 
 def apply_architecture_edits(base, response, *, narrow=False):
@@ -53,7 +70,11 @@ def _apply_edits(base, response, roots, label, *, narrow=False, allow_object_rem
         key = parts[-1]
         if (narrow and isinstance(parent.get(key), dict) and parent[key]
                 and (edit['op'] == 'set' or not allow_object_removal)):
-            raise SpecificationError(f'{label} edit must address fields within an existing object: {path}')
+            children = list(itertools.islice(_field_paths(parent[key], path), 8))
+            raise SpecificationEditError(
+                f'{label} edit must address fields within an existing object: {path}. '
+                f'Edit individual fields instead, for example: {", ".join(children)}. '
+                'For an endpoint binding correction, set its /endpoint field and preserve other fields.', edit)
         if edit['op'] == 'remove':
             if key not in parent:
                 raise SpecificationError(f'{label} edit cannot remove absent field: {path}')

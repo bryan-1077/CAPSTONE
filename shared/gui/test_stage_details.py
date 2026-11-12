@@ -30,6 +30,8 @@ class StageDetailsTests(unittest.TestCase):
         self.panel.deleteLater()
 
     def test_nodes_leave_draft_visible_until_run_starts_and_after_reset(self):
+        self.assertTrue(self.panel.flow_status.graph.isHidden())
+        self.assertTrue(self.panel.start.isVisible())
         self.panel.description.setPlainText('DDR4 controller with four banks')
         self.panel.frequency.setText('240')
         for node in self.panel.flow_status.graph.nodes.values():
@@ -43,11 +45,14 @@ class StageDetailsTests(unittest.TestCase):
         self.assertIsNone(self.panel.selected_stage)
         run = SavedRun(Path('/tmp/stage-test'), dict(current_stage='generate', status='running'))
         self.panel.update_stage_workspace(run, alive=True, pending=None)
+        self.assertTrue(self.panel.flow_status.graph.isVisible())
         node = self.panel.flow_status.graph.nodes['validation']
         QTest.mouseClick(node, Qt.MouseButton.LeftButton)
         self.assertEqual(self.panel.selected_stage, 'validation')
         self.assertEqual(node.cursor().shape(), Qt.CursorShape.PointingHandCursor)
         self.panel.reset_design()
+        self.assertTrue(self.panel.flow_status.graph.isHidden())
+        self.assertTrue(self.panel.start.isVisible())
         self.panel.description.setPlainText('Next draft')
         QTest.mouseClick(node, Qt.MouseButton.LeftButton)
         self.assertFalse(self.panel.scroll.isHidden())
@@ -74,10 +79,14 @@ class StageDetailsTests(unittest.TestCase):
         self.panel.update_stage_workspace(run, alive=True, pending=None)
         self.assertEqual(self.panel.selected_stage, 'backend')
         self.panel.update_stage_workspace(run, alive=True, pending={'kind': 'credential'})
+        self.assertTrue(self.panel.flow_status.graph.isHidden())
         self.assertTrue(self.panel.run_workspace.isHidden())
         self.assertFalse(self.panel.scroll.isHidden())
         QTest.mouseClick(node, Qt.MouseButton.LeftButton)
         self.assertTrue(self.panel.run_workspace.isHidden())
+        self.panel.update_stage_workspace(run, alive=True, pending=None)
+        self.assertTrue(self.panel.flow_status.graph.isVisible())
+        self.assertTrue(self.panel.run_workspace.isVisible())
 
     def test_log_has_no_outer_scroll_area_and_splitter_size_survives_refresh(self):
         run = SavedRun(Path('/tmp/stage-test'), dict(current_stage='validation', status='running'))

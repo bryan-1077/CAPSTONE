@@ -96,6 +96,17 @@ def run_specification(config, run_dir):
     code = stream_command(specification_command(request, root, config.cache, mode=mode, approval=approval,
                                                resume=bool(config.resume_build)), log)
     if code:
+        repair_status = root / 'repair/repair_status.json'
+        if repair_status.is_file():
+            recovery = json.loads(repair_status.read_text())
+            artifacts['repair_status'] = str(repair_status)
+            if recovery.get('status') == 'design_review_required':
+                artifacts.update(design_review_report=recovery['review_report'],
+                                 architecture=recovery['architecture'])
+                pending = [name for entries in recovery['pending_decisions'].values() for name in entries]
+                return StageResult('generate', 'needs_attention',
+                    f'Experimental design review required. Resolve pending choices: {", ".join(pending)}. '
+                    f'See {recovery["review_report"]}.', artifacts, code)
         return StageResult("generate", "failed", "Experimental frontend stopped; bounded frontend recovery exhausted or generation failed. Inspect frontend.log.", artifacts, code)
     build = root / "build"
     status = json.loads((build / "build_status.json").read_text())
