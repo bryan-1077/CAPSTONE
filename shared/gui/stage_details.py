@@ -8,8 +8,8 @@ from .display_tree import DisplayTree
 DESCRIPTIONS = {
     'generate': 'Produces RTL and runs the configured local simulation checks.',
     'validation': 'Checks the generated design. Module checks and system verification retain their recorded scope.',
-    'backend': 'Builds the physical layout and runs configured equivalence checks.',
-    'gdsii-validation': 'Checks the resulting layout using the configured GDSII validation flow.',
+    'backend': 'Synthesizes the RTL, builds the physical layout, and runs configured equivalence checks.',
+    'gdsii-validation': 'Runs the configured signoff checks on the resulting GDSII layout.',
 }
 
 
@@ -38,7 +38,7 @@ def evidence_rows(run, stage, *, alive=False):
                      'Included in generation; see recorded outcome and log'))
     if stage == 'backend':
         rows.append(('Equivalence checking', 'Skipped by configuration' if run.config.get('skip_lec') else
-                     'Enabled; results are recorded by the physical design stage'))
+                     'Enabled. See the recorded equivalence results for this stage.'))
     for index, result in enumerate(results, 1):
         rows.append((f'Attempt {index}', str(result.get('message') or result.get('status', 'unknown'))))
         for key, value in result.get('artifacts', {}).items():
@@ -87,13 +87,13 @@ class StageDetails(SectionCard):
         self.pages.addTab(self.agents, 'Agents')
         self.pages.setTabVisible(2, False)
         self.physical = DisplayTree()
-        self.physical.setHeaderLabels(['Physical Design Step / Detail', 'Status / Evidence'])
+        self.physical.setHeaderLabels(['Step / Detail', 'Status / Evidence'])
         self.physical.setWordWrap(True)
         self.physical.setExpandsOnDoubleClick(False)
         self.physical.itemClicked.connect(self.toggle_agent_details)
         self.physical.setColumnWidth(0, 290)
         self.physical.header().setStretchLastSection(True)
-        self.pages.addTab(self.physical, 'Physical Steps')
+        self.pages.addTab(self.physical, 'Stage Steps')
         self.pages.setTabVisible(3, False)
         from .layout_images import LayoutImages
         self.layout_images = LayoutImages()

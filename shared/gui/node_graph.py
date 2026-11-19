@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QFrame, QVBoxLayout,
 from .theme import theme_colors
 
 MAIN_NODES = [('generate', 'RTL Generation'), ('validation', 'Verification'),
-              ('backend', 'Physical Design'), ('gdsii-validation', 'GDSII Validation')]
+              ('backend', 'Synthesis & Physical Design'), ('gdsii-validation', 'Physical Signoff')]
 
 
 class StatusIcon(QWidget):

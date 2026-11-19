@@ -2,9 +2,13 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from shared.top_orchestrator.display import NODE_LABELS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUNS = REPO_ROOT / 'shared/top_orchestrator/runs'
+LOG_PREVIEW_LIMIT = 256 * 1024
+SECTION_HEADINGS = {f'SWITCHING TO {label}'.encode('ascii'): stage
+                    for stage, label in NODE_LABELS.items()}
 
 
 @dataclass
@@ -78,19 +82,50 @@ def discover(root):
                                               key=lambda p: p.stat().st_mtime, reverse=True)]
 
 
-def preview(path, limit=256 * 1024):
+def log_sections(path):
+    """Find stage headings and their byte offsets in a worker log."""
+    sections = []
+    try:
+        with Path(path).open('rb') as handle:
+            offset = 0
+            for line in handle:
+                stage = SECTION_HEADINGS.get(line.strip())
+                if stage is not None:
+                    sections.append((stage, offset))
+                offset += len(line)
+    except OSError:
+        return []
+    return sections
+
+
+def preview(path, limit=LOG_PREVIEW_LIMIT):
     """Bound log reads and avoid interpreting file content as rich text."""
+    return read_log_window(path, limit)[0]
+
+
+def read_log_window(path, limit=LOG_PREVIEW_LIMIT, *, section=None):
+    """Return a bounded log window and the requested heading's text block."""
     try:
         with Path(path).open('rb') as handle:
             handle.seek(0, 2)
             size = handle.tell()
-            handle.seek(max(0, size - limit))
+            start = max(0, size - limit)
+            banner = '[Showing final 256 KiB]\n' if start else ''
+            if section is not None and section < start:
+                start = section
+                banner = '[Showing section excerpt]\n'
+            handle.seek(start)
             data = handle.read(limit)
         if b'\x00' in data:
-            return 'Binary artifact. Use Open Selected to view externally.'
-        return ('[Showing final 256 KiB]\n' if size > limit else '') + data.decode('utf-8', errors='replace')
+            return 'Binary artifact. Use Open Selected to view externally.', None
+        block_number = None
+        if section is not None and 0 <= section - start < len(data):
+            before = banner + data[:section - start].decode('utf-8', errors='replace')
+            before = before.replace('\r\n', '\n')
+            block_number = before.count('\n') + before.count('\r') + before.count('\u2029')
+        return banner + data.decode('utf-8', errors='replace'), block_number
     except OSError as exc:
-        return str(exc)
+        return str(exc), None
 
 
 def summary(run):

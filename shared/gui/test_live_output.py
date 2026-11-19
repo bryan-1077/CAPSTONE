@@ -1,5 +1,7 @@
 """Reader control over live output during append and snapshot refreshes."""
 import os
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -8,6 +10,8 @@ from PySide6.QtCore import Qt, QPoint, QPointF
 from PySide6.QtGui import QWheelEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QAbstractSlider
+from .run_reader import LOG_PREVIEW_LIMIT, SavedRun
+from .run_review import RunReview
 from .setup import SetupPanel
 
 
@@ -92,3 +96,58 @@ class LiveOutputTests(unittest.TestCase):
         position = self.output.verticalScrollBar().value()
         self.output.update_snapshot(self.text + 'New output while reading\n')
         self.assertEqual(self.output.verticalScrollBar().value(), position)
+
+    def test_section_older_than_preview_and_back_to_live_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'worker.log'
+            rtl = '                          SWITCHING TO RTL GENERATION                           '
+            verif = '                           SWITCHING TO VERIFICATION                            '
+            content = f'{rtl}\n{self.text}\n{verif}\n' + self.text * 100
+            self.assertGreater(len(content), LOG_PREVIEW_LIMIT)
+            path.write_text(content, encoding='utf-8')
+            self.output.update_log(path)
+            self.assertNotIn(verif, self.output.toPlainText())
+            button = self.output.section_button
+            self.assertTrue(button.isVisible())
+            menu = button.menu()
+            menu.aboutToShow.emit()
+            actions = menu.actions()
+            self.assertEqual([action.text() for action in actions], ['RTL Generation', 'Verification'])
+            actions[1].trigger()
+            self.assertEqual(self.output.textCursor().block().text(), verif)
+            self.assertFalse(self.output.following)
+            self.assertFalse(self.panel.latest_output.isHidden())
+            path.write_text(content + 'New output\n', encoding='utf-8')
+            self.output.update_log(path)
+            self.assertEqual(self.output.textCursor().block().text(), verif)
+            self.panel.latest_output.click()
+            self.assertTrue(self.output.following)
+            self.assertTrue(self.output.toPlainText().endswith('New output\n'))
+            bar = self.output.verticalScrollBar()
+            self.assertEqual(bar.value(), bar.maximum())
+
+    def test_saved_run_jumps_to_each_attempt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            heading = '                           SWITCHING TO VERIFICATION                            '
+            content = f'{heading}\nFirst attempt\n{self.text}{heading}\nSecond attempt\n{self.text}'
+            (directory / 'worker.log').write_text(content, encoding='utf-8')
+            review = RunReview()
+            review.display(SavedRun(directory, {}))
+            review.log_toggle.setChecked(True)
+            review.resize(1050, 900)
+            review.show()
+            self.addCleanup(review.deleteLater)
+            self.addCleanup(review.close)
+            self.app.processEvents()
+            button = review.log.section_button
+            self.assertTrue(button.isVisible())
+            menu = button.menu()
+            menu.aboutToShow.emit()
+            actions = menu.actions()
+            self.assertEqual([action.text() for action in actions], ['Verification (1)', 'Verification (2)'])
+            for action, label in zip(reversed(actions), ('Second attempt', 'First attempt')):
+                action.trigger()
+                block = review.log.textCursor().block()
+                self.assertEqual(block.text(), heading)
+                self.assertEqual(block.next().text(), label)

@@ -67,7 +67,7 @@ class SetupPanel(QWidget):
         from .stage_details import StageDetails
         self.rtl_modules = self.stage_details = StageDetails()
         self.module_tree = self.stage_details.modules
-        self.setup_fields = SectionCard('Design Setup', 'Describe your design and choose its target speed. You can also load a saved specification instead of writing a description.')
+        self.setup_fields = SectionCard('Design Setup', 'Describe your design and choose its target frequency. You can also load a saved specification instead of writing a description.')
         form = QFormLayout()
         form.setVerticalSpacing(12)
         form.setHorizontalSpacing(16)
@@ -136,7 +136,7 @@ class SetupPanel(QWidget):
         for text in [
                 'With 2 or 4 banks, use simple scheduling. Round-robin scheduling is supported only with 1 bank.',
                 'Example: DDR4 2400 with 4 banks, simple scheduling, open-page policy, and refresh enabled.',
-                'Memory transfer rate is specified in MT/s. The Target Speed field below is the controller clock in MHz.',
+                'Memory transfer rate is specified in MT/s. Target Frequency is the controller clock frequency in MHz.',
                 'Describe your design in plain language. You can review and adjust the interpreted specification before generation starts.']:
             note = QLabel(text)
             note.setWordWrap(True)
@@ -147,9 +147,9 @@ class SetupPanel(QWidget):
         self.spec_guide_toggle.toggled.connect(lambda checked: self.spec_guide_toggle.setText(
             'Hide Specification Guide' if checked else 'Show Specification Guide'))
         self.frequency = QLineEdit()
-        self.frequency.setPlaceholderText('Enter the target clock speed in MHz')
-        self.frequency.setToolTip('Requested controller clock speed; actual performance depends on the completed design.')
-        form.addRow('Target Speed (MHz)', self.frequency)
+        self.frequency.setPlaceholderText('Enter the target clock frequency in MHz')
+        self.frequency.setToolTip('Requested controller clock frequency. Actual performance depends on the completed design.')
+        form.addRow('Target Frequency (MHz)', self.frequency)
         self.yaml = QLineEdit()
         self.yaml.setPlaceholderText('Leave blank when using a design description')
         file_row = QHBoxLayout()
@@ -166,7 +166,7 @@ class SetupPanel(QWidget):
         form.addRow(self.advanced_toggle)
         self.advanced = QGroupBox('Advanced Settings')
         advanced = QFormLayout(self.advanced)
-        self.review_frequency = QCheckBox('Review target speed and optionally ask for advice')
+        self.review_frequency = QCheckBox('Review target frequency and optionally ask for advice')
         advanced.addRow(self.review_frequency)
         self.remote = QLineEdit()
         self.remote.setPlaceholderText('Uses environment settings when blank')
@@ -177,7 +177,8 @@ class SetupPanel(QWidget):
         self.flags = {}
         for key, label in [('cache', 'Reuse generated design files'), ('no_bist', 'Skip built-in simulation'),
                            ('skip_verification', 'Skip design verification'),
-                           ('no_backend', 'Stop before physical design'), ('skip_lec', 'Skip equivalence checking')]:
+                           ('no_backend', 'Stop before synthesis && physical design'),
+                           ('skip_lec', 'Skip equivalence checking')]:
             self.flags[key] = QCheckBox(label)
             self.flags[key].setChecked(key == 'skip_lec')
             advanced.addRow(self.flags[key])
@@ -213,6 +214,7 @@ class SetupPanel(QWidget):
         self.output.setObjectName('runLogOutput')
         self.output.setProperty('technicalText', True)
         self.output.setMinimumSize(120, 80)
+        output_controls.addWidget(self.output.section_button)
         self.latest_output = QPushButton('Jump to Latest')
         self.latest_output.setObjectName('runLogLatest')
         self.latest_output.setToolTip('Scroll to the newest line and resume following output.')
@@ -486,7 +488,7 @@ class SetupPanel(QWidget):
         self.flow_status.update_run(state.state, alive=code is None, connected=connected,
                                     pending=pending, lifecycle=remote_state if code is None else receipt.get('lifecycle', 'interrupted'),
                                     elapsed=elapsed)
-        self.output.update_snapshot(preview(log))
+        self.output.update_log(log)
         if code is not None:
             self.input_panel.clear_request()
             self.timer.stop()

@@ -6,7 +6,6 @@ from .stage_details import StageDetails
 from .live_output import LiveOutput
 from .run_storage import worker_log_path, lifecycle_path
 from .registry import read_record
-from .run_reader import preview
 from .node_graph import MAIN_NODES
 from .action_button import ActionButton
 
@@ -47,11 +46,16 @@ class RunReview(QWidget):
         log_panel = QWidget()
         log_layout = QVBoxLayout(log_panel)
         log_layout.setContentsMargins(0, 0, 0, 0)
-        latest = QPushButton('Jump to Latest')
-        latest.hide()
-        log_layout.addWidget(latest, alignment=Qt.AlignmentFlag.AlignRight)
+        log_controls = QHBoxLayout()
+        log_controls.addStretch()
+        log_layout.addLayout(log_controls)
         self.log = LiveOutput()
         self.log.setProperty('technicalText', True)
+        log_controls.addWidget(self.log.section_button)
+        latest = QPushButton('Jump to Latest')
+        latest.setObjectName('runLogLatest')
+        latest.hide()
+        log_controls.addWidget(latest)
         self.log.following_changed.connect(lambda following: latest.setVisible(not following))
         latest.clicked.connect(self.log.jump_to_latest)
         log_layout.addWidget(self.log)
@@ -103,8 +107,9 @@ class RunReview(QWidget):
             result = next((r for r in reversed(self.run.results) if r.get('stage') == stage), {})
             candidate = result.get('artifacts', {}).get('log')
             log = self.run.resolve(candidate) if isinstance(candidate, str) else log
-        self.log.update_snapshot(preview(log) if log.is_file() else
-                                 'No local log is recorded here. Browse Files for stage reports and other evidence.')
+        self.log.update_log(
+            log if log.is_file() else None,
+            missing='No local log is recorded here. Browse Files for stage reports and other evidence.')
         for key, node in self.flow_status.graph.nodes.items():
             node.setProperty('inspecting', key == stage)
             node.style().unpolish(node)

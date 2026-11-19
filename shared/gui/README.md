@@ -28,10 +28,11 @@ Copy Run Name is also available beside the selected-run header.
 The workspace has three permanent tabs, all describing the selected run:
 
 - **Run** contains design setup or the four stage nodes and selected stage details.
-  RTL has module activity, verification has expandable agents, and physical design
-  has expandable preparation, synthesis, mapping, equivalence, and implementation
-  steps. Layout Images previews downloaded floorplan, placement, and routing PNGs
-  side by side, with a separate window for inspecting an individual image.
+  RTL has module activity, and Verification has expandable agents.
+  **Synthesis & Physical Design** has expandable preparation, synthesis, mapping,
+  equivalence, and implementation steps. Layout Images previews downloaded
+  floorplan, placement, and routing PNGs side by side, with a separate window
+  for inspecting an individual image.
   Stage Notes preserves attempts and artifact references. The optional log
   shares a resizable splitter with stage details and follows output until scrolled.
 - **Results** presents the design summary, outcome, failures and coverage gaps,
@@ -63,9 +64,9 @@ when moving a run without renaming its directory. Backend execution retrieves op
 from the final recorded implementation build into `backend_reports/layout_images/`,
 alongside the export manifest and a collection receipt. Capture or download failures
 do not change design outcomes. Inherited captures identify their source build.
-For older runs, use the download arrow on each image card under Physical Design →
-Layout Images. Manual downloads retrieve only that image; new runs still retrieve
-all available captures automatically. The masked
+For older runs, use the download arrow on each image card under
+**Synthesis & Physical Design → Layout Images**. Manual downloads retrieve the
+selected image. New runs retrieve all available captures automatically. The masked
 password prompt also permits a blank password to use SSH keys. Credentials are not
 saved. Downloads run in the background and publish completed files atomically;
 failed retries preserve images already downloaded from the same build.
@@ -106,10 +107,10 @@ repair, backend, LEC, and GDSII routing. No live end-to-end remote run has been
 performed to validate this GUI milestone.
 
 New designs default to Skip Equivalence Checking. Target Speed starts blank with
-a short MHz hint and requires a positive value before launch. When Stop Before
-Physical Design is selected, the LEC option is disabled and its flag is omitted
-from the effective configuration; turning physical design back on preserves the
-selected LEC preference. These defaults apply only to the GUI.
+a short MHz hint and requires a positive value before launch. Selecting
+**Stop before synthesis & physical design** disables the LEC option and omits its flag
+from the effective configuration. Turning synthesis and physical design back on
+preserves the selected LEC preference. These defaults apply only to the GUI.
 
 Remote credentials are requested through the same prominent pending-decision card
 as specification approval, with the server account, a masked password field, and
@@ -305,12 +306,11 @@ are limited to 512 KiB. Large trace reports are not loaded into the UI. Only thi
 run's latest validation attempt is inspected, avoiding old results on retries.
 
 The active-run panel draws the orchestrator's main route as connected nodes:
-RTL generation, Verification, Physical design, and GDSII validation. The display
-always has just these four nodes; active RTL repair is grouped under generation,
-while the activity text still explains that repair is running.
-BIST remains part of generation and LEC part of physical design; neither has an
-independent structured stage status. Each node has a separate title and status
-row, with a vector-drawn icon in a fixed-size slot and a visible gap before the
+RTL Generation, Verification, Synthesis & Physical Design, and Physical Signoff.
+Active RTL repair is grouped under RTL Generation while the activity text shows
+that repair is running. RTL Generation includes BIST, and Synthesis & Physical
+Design includes LEC. The flow diagram reports status for the four stages. Each
+node has a separate title and status row, with a vector-drawn icon in a fixed-size slot and a visible gap before the
 status text. Icons include a check for passed, play for running, clock for waiting,
 warning triangle for needs attention, and crossed circle for failed. Labels use
 colors. The activity bar uses an explicit animation clock throughout the worker's

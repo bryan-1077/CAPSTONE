@@ -118,8 +118,9 @@ def apply_theme(app, name=None):
         QToolButton#imageCardAction:checked { background: $hover; border-color: $gold; color: $gold; }
         QToolButton#imageCardAction:disabled { color: $disabled; background: $panel; }
         QToolButton#imageCardAction:focus { border-color: #79d6e8; }
-        QPushButton#runLogLatest { padding: 3px 7px; font-size: 12px; background: transparent; }
-        QPushButton#runLogLatest:hover { background: $hover; }
+        QPushButton#runLogLatest, QPushButton#runLogSections { padding: 3px 7px; font-size: 12px; background: transparent; }
+        QPushButton#runLogLatest:hover, QPushButton#runLogSections:hover { background: $hover; }
+        QPushButton#runLogSections::menu-indicator { subcontrol-origin: padding; subcontrol-position: right center; }
         QPlainTextEdit#runLogOutput { border-top-left-radius: 0; border-top-right-radius: 0; }
         QLineEdit, QPlainTextEdit, QListWidget, QTreeWidget { background: $field; color: $text; border: 1px solid $border; border-radius: 2px; }
         QTreeWidget#artifactBrowser { selection-background-color: $hover; selection-color: $text; }
